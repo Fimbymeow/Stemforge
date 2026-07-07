@@ -1,0 +1,77 @@
+﻿@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --paper: #fffdf9;
+  --ink: #111111;
+  --muted: #66615b;
+  --line: #e8e1d8;
+  --accent: #ff7514;
+  --white: #fbfaf5;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+.math-content p {
+  margin: 0 0 1rem;
+  line-height: 1.75;
+}
+
+.math-content p:last-child {
+  margin-bottom: 0;
+}
+
+.math-content .katex-display {
+  margin: 1.25rem 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.5rem 0;
+}
+
+.math-content {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.math-content .katex,
+.math-content .katex-html {
+  max-width: 100%;
+}
+
+.math-content :not(.katex-display) > .katex {
+  display: inline-block;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  vertical-align: middle;
+}
+
+:focus-visible {
+  outline: 3px solid rgba(255, 117, 20, 0.45);
+  outline-offset: 3px;
+}

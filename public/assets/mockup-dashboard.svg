@@ -1,0 +1,73 @@
+<svg width="1180" height="580" viewBox="0 0 1180 580" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="1" y="1" width="1178" height="578" rx="20" fill="#FFFFFF"/>
+  <rect x="1" y="1" width="1178" height="578" rx="20" stroke="#E8E1D8"/>
+
+  <rect x="1" y="1" width="230" height="578" rx="20" fill="#FFF9F3"/>
+  <path d="M231 1V579" stroke="#E8E1D8"/>
+
+  <path d="M38 44L56 34L74 44V64L56 74L38 64V44Z" stroke="#FF7514" stroke-width="4"/>
+  <text x="92" y="64" fill="#111111" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="850">STEM FORGE</text>
+
+  <rect x="30" y="118" width="166" height="48" rx="10" fill="#FFF0E4"/>
+  <circle cx="56" cy="142" r="8" fill="#FF7514"/>
+  <text x="86" y="148" fill="#FF7514" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="750">Dashboard</text>
+  <text x="66" y="214" fill="#222222" font-family="Inter, Arial, sans-serif" font-size="16">Subjects</text>
+  <text x="66" y="270" fill="#222222" font-family="Inter, Arial, sans-serif" font-size="16">Topics</text>
+  <text x="66" y="326" fill="#222222" font-family="Inter, Arial, sans-serif" font-size="16">Questions</text>
+  <text x="66" y="382" fill="#222222" font-family="Inter, Arial, sans-serif" font-size="16">Progress</text>
+  <text x="66" y="438" fill="#222222" font-family="Inter, Arial, sans-serif" font-size="16">Settings</text>
+
+  <text x="270" y="68" fill="#111111" font-family="Inter, Arial, sans-serif" font-size="30" font-weight="850">Welcome back, Finlay!</text>
+  <text x="900" y="66" fill="#FF7514" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="800">12 day streak</text>
+  <circle cx="1120" cy="56" r="22" fill="#EFECE6"/>
+  <text x="1113" y="64" fill="#111111" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="850">F</text>
+
+  <rect x="270" y="116" width="430" height="225" rx="12" fill="#FFFFFF" stroke="#E8E1D8"/>
+  <text x="302" y="162" fill="#111111" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="850">Continue Learning</text>
+  <text x="302" y="208" fill="#111111" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="800">Mechanics</text>
+  <text x="302" y="236" fill="#66615B" font-family="Inter, Arial, sans-serif" font-size="15">Kinematics</text>
+  <path d="M302 268H575" stroke="#EFECE6" stroke-width="6" stroke-linecap="round"/>
+  <path d="M302 268H470" stroke="#FF7514" stroke-width="6" stroke-linecap="round"/>
+  <text x="600" y="274" fill="#111111" font-family="Inter, Arial, sans-serif" font-size="16">62%</text>
+  <rect x="302" y="296" width="124" height="42" rx="8" fill="#FF7514"/>
+  <text x="334" y="323" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="850">Continue</text>
+
+  <rect x="730" y="116" width="400" height="225" rx="12" fill="#FFFFFF" stroke="#E8E1D8"/>
+  <text x="762" y="162" fill="#111111" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="850">Overall Progress</text>
+  <circle cx="815" cy="232" r="52" stroke="#E6E1D9" stroke-width="14"/>
+  <path d="M815 180A52 52 0 1 1 769 256" stroke="#FF7514" stroke-width="14" stroke-linecap="round"/>
+  <path d="M815 180A52 52 0 0 1 864 213" stroke="#229954" stroke-width="14" stroke-linecap="round"/>
+  <text x="786" y="236" fill="#111111" font-family="Inter, Arial, sans-serif" font-size="30" font-weight="900">72%</text>
+  <text x="800" y="261" fill="#66615B" font-family="Inter, Arial, sans-serif" font-size="12">Overall</text>
+
+  <circle cx="948" cy="198" r="6" fill="#229954"/>
+  <text x="972" y="204" fill="#333333" font-family="Inter, Arial, sans-serif" font-size="16">Mastered</text>
+  <text x="1092" y="204" fill="#333333" font-family="Inter, Arial, sans-serif" font-size="16" text-anchor="end">24%</text>
+  <circle cx="948" cy="238" r="6" fill="#FF7514"/>
+  <text x="972" y="244" fill="#333333" font-family="Inter, Arial, sans-serif" font-size="16">Practising</text>
+  <text x="1092" y="244" fill="#333333" font-family="Inter, Arial, sans-serif" font-size="16" text-anchor="end">48%</text>
+  <circle cx="948" cy="278" r="6" fill="#F2C9AE"/>
+  <text x="972" y="284" fill="#333333" font-family="Inter, Arial, sans-serif" font-size="16">Not started</text>
+  <text x="1092" y="284" fill="#333333" font-family="Inter, Arial, sans-serif" font-size="16" text-anchor="end">28%</text>
+
+  <rect x="270" y="374" width="545" height="150" rx="12" fill="#FFFFFF" stroke="#E8E1D8"/>
+  <text x="302" y="416" fill="#111111" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="850">Recent Topics</text>
+  <text x="302" y="462" fill="#111111" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="800">Kinematics</text>
+  <text x="446" y="462" fill="#77716A" font-family="Inter, Arial, sans-serif" font-size="15">Practised today</text>
+  <text x="650" y="462" fill="#111111" font-family="Inter, Arial, sans-serif" font-size="16">62%</text>
+  <path d="M712 456H780" stroke="#EFECE6" stroke-width="6" stroke-linecap="round"/>
+  <path d="M712 456H756" stroke="#FF7514" stroke-width="6" stroke-linecap="round"/>
+  <text x="302" y="504" fill="#111111" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="800">Dynamics</text>
+  <text x="446" y="504" fill="#77716A" font-family="Inter, Arial, sans-serif" font-size="15">Practised 2 days ago</text>
+  <text x="650" y="504" fill="#111111" font-family="Inter, Arial, sans-serif" font-size="16">45%</text>
+  <path d="M712 498H780" stroke="#EFECE6" stroke-width="6" stroke-linecap="round"/>
+  <path d="M712 498H746" stroke="#FF7514" stroke-width="6" stroke-linecap="round"/>
+
+  <rect x="842" y="374" width="288" height="150" rx="12" fill="#FFFFFF" stroke="#E8E1D8"/>
+  <text x="874" y="416" fill="#111111" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="850">Upcoming Goal</text>
+  <text x="874" y="462" fill="#333333" font-family="Inter, Arial, sans-serif" font-size="16">Complete 15 questions</text>
+  <text x="874" y="488" fill="#333333" font-family="Inter, Arial, sans-serif" font-size="16">in Mechanics</text>
+  <path d="M874 514H1012" stroke="#EFECE6" stroke-width="6" stroke-linecap="round"/>
+  <path d="M874 514H958" stroke="#FF7514" stroke-width="6" stroke-linecap="round"/>
+  <text x="1040" y="520" fill="#66615B" font-family="Inter, Arial, sans-serif" font-size="16">7 / 15</text>
+</svg>

@@ -1,0 +1,22 @@
+<svg width="760" height="420" viewBox="0 0 760 420" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="760" height="420" rx="14" fill="#FFFFFF"/>
+  <rect x="0.5" y="0.5" width="759" height="419" rx="13.5" stroke="#E8E1D8"/>
+  <rect x="24" y="24" width="712" height="332" rx="10" fill="#FFFFFF" stroke="#E8E1D8"/>
+  <path d="M374 24V356" stroke="#E8E1D8"/>
+  <path d="M374 74H736" stroke="#E8E1D8"/>
+  <text x="50" y="64" fill="#111111" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="800">Question 7</text>
+  <text x="50" y="122" fill="#111111" font-family="Inter, Arial, sans-serif" font-size="17">A car accelerates uniformly from rest</text>
+  <text x="50" y="150" fill="#111111" font-family="Inter, Arial, sans-serif" font-size="17">to 20 m/s in 10 seconds.</text>
+  <text x="50" y="196" fill="#111111" font-family="Inter, Arial, sans-serif" font-size="17">Calculate its acceleration.</text>
+  <text x="306" y="242" fill="#111111" font-family="Inter, Arial, sans-serif" font-size="14">[3 marks]</text>
+  <text x="414" y="58" fill="#111111" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="800">Solution</text>
+  <path d="M414 74H490" stroke="#FF7514" stroke-width="4"/>
+  <text x="566" y="58" fill="#66615B" font-family="Inter, Arial, sans-serif" font-size="15">Examiner Notes</text>
+  <text x="414" y="112" fill="#111111" font-family="Inter, Arial, sans-serif" font-size="15">Use the formula:</text>
+  <text x="445" y="158" fill="#111111" font-family="Georgia, serif" font-size="25" font-style="italic">a = (v - u) / t</text>
+  <text x="414" y="208" fill="#111111" font-family="Inter, Arial, sans-serif" font-size="15">Where:</text>
+  <text x="414" y="236" fill="#111111" font-family="Inter, Arial, sans-serif" font-size="15">u = 0 m/s, v = 20 m/s, t = 10 s</text>
+  <text x="414" y="284" fill="#111111" font-family="Georgia, serif" font-size="22">a = (20 - 0) / 10 = 2 m/s2</text>
+  <rect x="414" y="316" width="286" height="42" rx="7" fill="#E4F6EA" stroke="#8ED0A6"/>
+  <text x="438" y="342" fill="#116233" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="800">Answer: 2 m/s2</text>
+</svg>
