@@ -1,16 +1,13 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { ArrowRight, BookOpen, CheckCircle2, ClipboardList, GraduationCap, Layers3, Lock, PenLine } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { AppTopbar } from "@/components/layout/app-topbar";
 import { ButtonLink, Card, ProgressBar } from "@/components/ui";
 import { LockedCard } from "@/components/locked-card";
-import { FormulaCardsSection } from "@/components/learning/formula-cards-section";
-import { FlashcardsPreview } from "@/components/learning/flashcards-preview";
-import { LearningStagesSection } from "@/components/learning/learning-stages-section";
-import { NotesSection } from "@/components/learning/notes-section";
 import { PracticeSetsSection } from "@/components/learning/practice-sets-section";
-import { LocalRecommendedNextAction, LocalSkillPathProgressSummary } from "@/components/learning/local-skill-path-progress";
-import { WorkedExamplesSection } from "@/components/learning/worked-examples-section";
+import { LocalLearningPathSection } from "@/components/learning/local-learning-path-section";
+import { QuickRevisionResources } from "@/components/learning/quick-revision-resources";
+import { LocalProgressControls, LocalRecommendedNextAction, LocalSkillPathProgressOverview } from "@/components/learning/local-skill-path-progress";
 import { getFirstMathsQuestionForStage } from "@/data/question-registry";
 import { getFirstQuestionForStage, type QuestionStage } from "@/data/questions";
 import { getCourseArea, getLearningStages, getSpecArea, getSubject } from "@/data/subjects-registry";
@@ -293,14 +290,17 @@ export function SkillPathLearningPage({
           <Breadcrumbs items={["Subjects", subject.subjectName, courseArea.name, specArea.name, skillPath.name]} />
           <SkillPathHero subject={subject} courseArea={courseArea} specArea={specArea} skillPath={skillPath} />
           <LocalRecommendedNextAction skillPath={skillPath} />
+          <LocalSkillPathProgressOverview skillPath={skillPath} />
           <div className="grid gap-7">
-            <NotesSection notes={skillPath.notes} />
-            <FormulaCardsSection formulaCards={skillPath.formulaCards} />
-            <WorkedExamplesSection examples={skillPath.workedExamples} />
-            <FlashcardsPreview flashcards={skillPath.flashcards} />
-            <LearningStagesSection stages={learningStages} getStageHref={(stage) => stage.href ?? getStageQuestionHref(subjectSlug, stage.name)} />
+            <LocalLearningPathSection skillPath={skillPath} />
+            <QuickRevisionResources
+              notes={skillPath.notes}
+              formulaCards={skillPath.formulaCards}
+              workedExamples={skillPath.workedExamples}
+              flashcards={skillPath.flashcards}
+            />
             <PracticeSetsSection practiceSets={skillPath.practiceSets} />
-            <LocalSkillPathProgressSummary skillPath={skillPath} />
+            <LocalProgressControls skillPath={skillPath} />
           </div>
         </section>
         <aside className="grid content-start gap-5">
@@ -440,6 +440,7 @@ function SkillPathHero({ subject, courseArea, specArea, skillPath }: { subject: 
       </div>
       <h1 className="m-0 text-[clamp(42px,5vw,68px)] font-extrabold leading-none">{skillPath.name}</h1>
       <p className="mt-5 max-w-3xl text-xl leading-relaxed text-muted">{skillPath.description}</p>
+      <p className="mt-4 text-sm font-bold text-muted">Original SQA-style practice - Progress saved on this browser</p>
       <div className="mt-7 grid max-w-3xl grid-cols-3 gap-4 max-md:grid-cols-1">
         <HeroStat label="Questions" value={String(skillPath.questions)} />
         <HeroStat label="Mastery" value="Not started" />
