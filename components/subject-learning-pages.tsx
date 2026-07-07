@@ -1,16 +1,15 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { ArrowRight, BookOpen, CheckCircle2, ClipboardList, GraduationCap, Layers3, Lock, PenLine } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { AppTopbar } from "@/components/layout/app-topbar";
 import { ButtonLink, Card, ProgressBar } from "@/components/ui";
 import { LockedCard } from "@/components/locked-card";
-import { PracticeSetsSection } from "@/components/learning/practice-sets-section";
 import { LocalLearningPathSection } from "@/components/learning/local-learning-path-section";
-import { QuickRevisionResources } from "@/components/learning/quick-revision-resources";
 import { LocalProgressControls, LocalRecommendedNextAction, LocalSkillPathProgressOverview } from "@/components/learning/local-skill-path-progress";
 import { getFirstMathsQuestionForStage } from "@/data/question-registry";
 import { getFirstQuestionForStage, type QuestionStage } from "@/data/questions";
 import { getCourseArea, getLearningStages, getSpecArea, getSubject } from "@/data/subjects-registry";
+import { getActiveSkillPathHref } from "@/lib/learning-paths";
 import type { CourseArea, LearningStage, SkillPath, SpecArea, Subject } from "@/data/types";
 
 const stageIcons = {
@@ -54,8 +53,8 @@ export function SubjectCoursePage({ subjectSlug }: { subjectSlug: string }) {
   return (
     <AppShell demo active="Subjects">
       <Topbar />
-      <div className="mx-auto grid max-w-[1240px] grid-cols-[minmax(0,1fr)_320px] gap-6 max-lg:grid-cols-1">
-        <section className="grid gap-6">
+      <div className="mx-auto grid max-w-[1180px] grid-cols-[minmax(0,1fr)_300px] gap-5 max-lg:grid-cols-1">
+        <section className="grid gap-5">
           <Breadcrumbs items={["Subjects", subject.subjectName]} />
           <SubjectHero subject={subject} />
           <section>
@@ -72,7 +71,7 @@ export function SubjectCoursePage({ subjectSlug }: { subjectSlug: string }) {
         </section>
         <aside className="grid content-start gap-5">
           <RecommendedCourseArea subject={subject} />
-          <Card className="p-6">
+          <Card className="p-5">
             <h2 className="mb-5 text-xl font-extrabold">Course Progress</h2>
             <SideStat label="Areas started" value={subject.progress > 0 ? "1" : "0"} />
             <SideStat label="Questions completed" value={String(subject.questionsCompleted)} />
@@ -93,7 +92,7 @@ export function CourseAreaPage({ subjectSlug, courseAreaSlug }: { subjectSlug: s
   return (
     <AppShell demo active="Subjects">
       <Topbar />
-      <div className="mx-auto grid max-w-[1240px] grid-cols-[minmax(0,1fr)_320px] gap-6 max-lg:grid-cols-1">
+      <div className="mx-auto grid max-w-[1180px] grid-cols-[minmax(0,1fr)_300px] gap-5 max-lg:grid-cols-1">
         <section className="grid gap-7">
           <Breadcrumbs items={["Subjects", subject.subjectName, courseArea.name]} />
           <CourseAreaHero courseArea={courseArea} />
@@ -108,7 +107,7 @@ export function CourseAreaPage({ subjectSlug, courseAreaSlug }: { subjectSlug: s
           </section>
         </section>
         <aside className="grid content-start gap-5">
-          <Card className="p-6">
+          <Card className="p-5">
             <h2 className="mb-5 text-xl font-extrabold">Recommended Next</h2>
             <p className="mb-2 text-sm font-bold uppercase text-muted">Continue</p>
             <h3 className="text-2xl font-extrabold">{courseArea.specAreas[0]?.name}</h3>
@@ -121,7 +120,7 @@ export function CourseAreaPage({ subjectSlug, courseAreaSlug }: { subjectSlug: s
             </div>
             {courseArea.specAreas[0] && <ButtonLink href={courseArea.specAreas[0].href}>Open Spec Area</ButtonLink>}
           </Card>
-          <Card className="p-6">
+          <Card className="p-5">
             <h2 className="mb-5 text-xl font-extrabold">Area Progress</h2>
             <SideStat label="Spec areas" value={String(courseArea.specAreas.length)} />
             <SideStat label="Questions completed" value={String(courseArea.questionsCompleted)} />
@@ -155,7 +154,7 @@ export function SpecAreaLearningPathPage({
     return (
       <AppShell demo active="Subjects">
         <Topbar />
-        <div className="mx-auto grid max-w-[1240px] grid-cols-[minmax(0,1fr)_320px] gap-6 max-lg:grid-cols-1">
+        <div className="mx-auto grid max-w-[1180px] grid-cols-[minmax(0,1fr)_300px] gap-5 max-lg:grid-cols-1">
           <section className="grid gap-7">
             <Breadcrumbs items={["Subjects", subject.subjectName, courseArea.name, specArea.name]} />
             <SpecAreaHubHero subject={subject} courseArea={courseArea} specArea={specArea} />
@@ -170,7 +169,7 @@ export function SpecAreaLearningPathPage({
             </section>
           </section>
           <aside className="grid content-start gap-5">
-            <Card className="p-6">
+            <Card className="p-5">
               <h2 className="mb-5 text-xl font-extrabold">Recommended Next</h2>
               <p className="mb-2 text-sm font-bold uppercase text-muted">Start</p>
               <h3 className="text-3xl font-extrabold">{availablePath.name}</h3>
@@ -184,7 +183,7 @@ export function SpecAreaLearningPathPage({
               </div>
               <ButtonLink href={availablePath.href}>Open Path</ButtonLink>
             </Card>
-            <Card className="p-6">
+            <Card className="p-5">
               <h2 className="mb-5 text-xl font-extrabold">Topic Progress</h2>
               <SideStat label="Available paths" value={String(specArea.skillPaths.filter((path) => path.isAvailable).length)} />
               <SideStat label="Locked paths" value={String(specArea.skillPaths.filter((path) => !path.isAvailable).length)} />
@@ -199,7 +198,7 @@ export function SpecAreaLearningPathPage({
   return (
     <AppShell demo active="Subjects">
       <Topbar />
-      <div className="mx-auto grid max-w-[1240px] grid-cols-[minmax(0,1fr)_320px] gap-6 max-lg:grid-cols-1">
+      <div className="mx-auto grid max-w-[1180px] grid-cols-[minmax(0,1fr)_300px] gap-5 max-lg:grid-cols-1">
         <section className="grid gap-7">
           <Breadcrumbs items={["Subjects", subject.subjectName, courseArea.name, specArea.name]} />
           <SpecAreaHero subject={subject} courseArea={courseArea} specArea={specArea} />
@@ -214,7 +213,7 @@ export function SpecAreaLearningPathPage({
           </section>
         </section>
         <aside className="grid content-start gap-5">
-          <Card className="p-6">
+          <Card className="p-5">
             <h2 className="mb-5 text-xl font-extrabold">Recommended Next</h2>
             <p className="mb-2 text-sm font-bold uppercase text-muted">Start</p>
             <h3 className="text-3xl font-extrabold text-[#188246]">Foundations</h3>
@@ -228,7 +227,7 @@ export function SpecAreaLearningPathPage({
             </div>
             <ButtonLink href={getStageQuestionHref(subjectSlug, "Foundations")}>Start</ButtonLink>
           </Card>
-          <Card className="p-6">
+          <Card className="p-5">
             <h2 className="mb-5 text-xl font-extrabold">Stage Breakdown</h2>
             <div className="grid gap-4">
               {learningStages.map((stage) => (
@@ -236,7 +235,7 @@ export function SpecAreaLearningPathPage({
               ))}
             </div>
           </Card>
-          <Card className="bg-[#fffaf5] p-6">
+          <Card className="bg-[#fffaf5] p-5">
             <h2 className="mb-4 text-xl font-extrabold">Why this order?</h2>
             <p className="leading-relaxed text-muted">
               STEM Forge keeps each topic structured: learn the rule, apply it to standard problems, then practise exam-style questions.
@@ -285,30 +284,24 @@ export function SkillPathLearningPage({
   return (
     <AppShell demo active="Subjects">
       <Topbar />
-      <div className="mx-auto grid max-w-[1240px] grid-cols-[minmax(0,1fr)_320px] gap-6 max-lg:grid-cols-1">
+      <div className="mx-auto grid max-w-[1180px] grid-cols-[minmax(0,1fr)_300px] gap-5 max-lg:grid-cols-1">
         <section className="grid gap-7">
           <Breadcrumbs items={["Subjects", subject.subjectName, courseArea.name, specArea.name, skillPath.name]} />
           <SkillPathHero subject={subject} courseArea={courseArea} specArea={specArea} skillPath={skillPath} />
           <LocalRecommendedNextAction skillPath={skillPath} />
           <LocalSkillPathProgressOverview skillPath={skillPath} />
-          <div className="grid gap-7">
+          <div className="grid gap-5">
             <LocalLearningPathSection skillPath={skillPath} />
-            <QuickRevisionResources
-              notes={skillPath.notes}
-              formulaCards={skillPath.formulaCards}
-              workedExamples={skillPath.workedExamples}
-              flashcards={skillPath.flashcards}
-            />
-            <PracticeSetsSection practiceSets={skillPath.practiceSets} />
+            <RefresherLinks />
             <LocalProgressControls skillPath={skillPath} />
           </div>
         </section>
         <aside className="grid content-start gap-5">
-          <Card className="p-6">
+          <Card className="p-5">
             <h2 className="mb-4 text-xl font-extrabold">Current Path</h2>
             <p className="text-muted">{currentPathLabel}</p>
           </Card>
-          <Card className="p-6">
+          <Card className="p-5">
             <h2 className="mb-5 text-xl font-extrabold">Quick Links</h2>
             <div className="grid gap-3">
               {sidebarLinks.map((link) => (
@@ -321,11 +314,37 @@ export function SkillPathLearningPage({
     </AppShell>
   );
 }
+function RefresherLinks() {
+  const links = [
+    ["Revision Notes", "/subjects/higher-maths/revision-notes"],
+    ["Formula Cards", "/subjects/higher-maths/formula-cards"],
+    ["Worked Examples", "/subjects/higher-maths/worked-examples"],
+    ["Flashcards", "/subjects/higher-maths/flashcards"],
+  ] as const;
+
+  return (
+    <Card className="p-4">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="m-0 text-xl font-extrabold">Need a refresher?</h2>
+          <p className="mt-1 text-sm text-muted">Jump to compact Basic differentiation resources without leaving the study flow behind.</p>
+        </div>
+      </div>
+      <div className="grid grid-cols-4 gap-3 max-lg:grid-cols-2 max-md:grid-cols-1">
+        {links.map(([label, href]) => (
+          <Link key={href} href={href} className="inline-flex min-h-10 items-center justify-center rounded-lg border border-line bg-[#fffdf9] px-3 text-sm font-extrabold transition hover:border-forge hover:text-forge">
+            {label}
+          </Link>
+        ))}
+      </div>
+    </Card>
+  );
+}
 function LockedSubjectPage({ subject }: { subject: Subject }) {
   return (
     <AppShell demo active="Subjects">
       <Topbar />
-      <div className="mx-auto grid max-w-[920px] gap-6">
+      <div className="mx-auto grid max-w-[920px] gap-5">
         <Breadcrumbs items={["Subjects", subject.subjectName]} />
         <LockedCard
           title={`${subject.subjectName} is coming soon`}
@@ -337,7 +356,7 @@ function LockedSubjectPage({ subject }: { subject: Subject }) {
           <p className="mb-6 max-w-2xl leading-relaxed text-muted">
             Try the current vertical slice: Learn, practise, answer questions and review worked solutions in Basic differentiation.
           </p>
-          <ButtonLink href="/subjects/higher-maths/calculus/differentiation/basic-differentiation">
+          <ButtonLink href={getActiveSkillPathHref()}>
             Open Basic differentiation
           </ButtonLink>
         </Card>
@@ -348,7 +367,7 @@ function LockedSubjectPage({ subject }: { subject: Subject }) {
 
 function Topbar() {
   return (
-    <div className="mx-auto mb-6 flex max-w-[1240px] justify-end">
+    <div className="mx-auto mb-5 flex max-w-[1180px] justify-end">
       <AppTopbar demo />
     </div>
   );
@@ -369,8 +388,8 @@ function Breadcrumbs({ items }: { items: string[] }) {
 
 function SubjectHero({ subject }: { subject: Subject }) {
   return (
-    <Card className="p-8">
-      <div className="grid grid-cols-[1fr_auto] gap-8 max-md:grid-cols-1">
+    <Card className="p-5">
+      <div className="grid grid-cols-[1fr_auto] gap-5 max-md:grid-cols-1">
         <div>
           <span className="inline-flex rounded-lg bg-[#fff4ec] px-4 py-2 text-sm font-extrabold text-forge">
             {subject.isAvailable ? "Available Now" : "Coming Soon"}
@@ -378,7 +397,7 @@ function SubjectHero({ subject }: { subject: Subject }) {
           <h1 className="mb-4 mt-5 text-[clamp(38px,5vw,64px)] font-extrabold leading-none">{subject.subjectName}</h1>
           <p className="max-w-2xl text-xl leading-relaxed text-muted">{subject.longDescription}</p>
         </div>
-        <div className="grid min-w-[220px] content-center rounded-2xl border border-line bg-[#fffaf5] p-6 text-center">
+        <div className="grid min-w-[220px] content-center rounded-2xl border border-line bg-[#fffaf5] p-5 text-center">
           <GraduationCap className="mx-auto mb-4 size-12 text-forge" />
           <strong className="text-4xl">{subject.progress}%</strong>
           <span className="mt-2 text-muted">Course progress</span>
@@ -393,15 +412,15 @@ function SubjectHero({ subject }: { subject: Subject }) {
 
 function CourseAreaHero({ courseArea }: { courseArea: CourseArea }) {
   return (
-    <Card className="overflow-hidden p-8">
-      <h1 className="m-0 text-[clamp(42px,5vw,68px)] font-extrabold leading-none">{courseArea.name}</h1>
+    <Card className="overflow-hidden p-5">
+      <h1 className="m-0 text-[clamp(34px,4vw,52px)] font-extrabold leading-none">{courseArea.name}</h1>
       <p className="mt-4 max-w-2xl text-xl leading-relaxed text-muted">{courseArea.description}</p>
       <div className="mt-7 grid max-w-2xl grid-cols-3 gap-4 max-md:grid-cols-1">
         <HeroStat label="Spec Areas" value={String(courseArea.specAreas.length)} />
         <HeroStat label="Questions Completed" value={String(courseArea.questionsCompleted)} />
         <HeroStat label="Area Progress" value={`${courseArea.progress}%`} />
       </div>
-      <ProgressBar value={courseArea.progress} className="mt-8 h-3" />
+      <ProgressBar value={courseArea.progress} className="mt-5 h-3" />
     </Card>
   );
 }
@@ -412,12 +431,12 @@ function SpecAreaHubHero({ subject, courseArea, specArea }: { subject: Subject; 
   const lockedCount = specArea.skillPaths?.filter((path) => !path.isAvailable).length ?? 0;
 
   return (
-    <Card className="overflow-hidden p-8">
+    <Card className="overflow-hidden p-5">
       <div className="mb-6 flex flex-wrap items-center gap-3">
         <span className="rounded-lg bg-[#fff4ec] px-4 py-2 text-sm font-extrabold text-forge">{subject.subjectName}</span>
         <span className="rounded-lg border border-line px-4 py-2 text-sm font-bold text-muted">{courseArea.name}</span>
       </div>
-      <h1 className="m-0 text-[clamp(42px,5vw,68px)] font-extrabold leading-none">{specArea.name}</h1>
+      <h1 className="m-0 text-[clamp(34px,4vw,52px)] font-extrabold leading-none">{specArea.name}</h1>
       <p className="mt-5 max-w-3xl text-xl leading-relaxed text-muted">
         Choose a focused skill path. Basic differentiation is available now; the remaining paths are being prepared.
       </p>
@@ -432,13 +451,13 @@ function SpecAreaHubHero({ subject, courseArea, specArea }: { subject: Subject; 
 
 function SkillPathHero({ subject, courseArea, specArea, skillPath }: { subject: Subject; courseArea: CourseArea; specArea: SpecArea; skillPath: SkillPath }) {
   return (
-    <Card className="overflow-hidden p-8">
+    <Card className="overflow-hidden p-5">
       <div className="mb-6 flex flex-wrap items-center gap-3">
         <span className="rounded-lg bg-[#fff4ec] px-4 py-2 text-sm font-extrabold text-forge">{subject.subjectName}</span>
         <span className="rounded-lg border border-line px-4 py-2 text-sm font-bold text-muted">{courseArea.name}</span>
         <span className="rounded-lg border border-line px-4 py-2 text-sm font-bold text-muted">{specArea.name}</span>
       </div>
-      <h1 className="m-0 text-[clamp(42px,5vw,68px)] font-extrabold leading-none">{skillPath.name}</h1>
+      <h1 className="m-0 text-[clamp(34px,4vw,52px)] font-extrabold leading-none">{skillPath.name}</h1>
       <p className="mt-5 max-w-3xl text-xl leading-relaxed text-muted">{skillPath.description}</p>
       <p className="mt-4 text-sm font-bold text-muted">Original SQA-style practice - Progress saved on this browser</p>
       <div className="mt-7 grid max-w-3xl grid-cols-3 gap-4 max-md:grid-cols-1">
@@ -446,14 +465,14 @@ function SkillPathHero({ subject, courseArea, specArea, skillPath }: { subject: 
         <HeroStat label="Mastery" value="Not started" />
         <HeroStat label="Structure" value="Learn + Practice" />
       </div>
-      <ProgressBar value={skillPath.progress} className="mt-8 h-3" />
+      <ProgressBar value={skillPath.progress} className="mt-5 h-3" />
     </Card>
   );
 }
 
 function SkillPathCard({ path }: { path: SkillPath }) {
   const content = (
-    <Card className={`h-full p-6 transition ${path.isAvailable ? "border-forge/40 bg-gradient-to-br from-forge/10 to-white hover:-translate-y-0.5" : "bg-white opacity-70"}`}>
+    <Card className={`h-full p-5 transition ${path.isAvailable ? "border-forge/40 bg-gradient-to-br from-forge/10 to-white hover:-translate-y-0.5" : "bg-white opacity-70"}`}>
       <div className="mb-5 flex items-start justify-between gap-4">
         <span className="grid size-12 place-items-center rounded-xl bg-[#fff4ec] text-forge">
           {path.isAvailable ? <Layers3 className="size-6" /> : <Lock className="size-5" />}
@@ -479,26 +498,26 @@ function SkillPathCard({ path }: { path: SkillPath }) {
 
 function SpecAreaHero({ subject, courseArea, specArea }: { subject: Subject; courseArea: CourseArea; specArea: SpecArea }) {
   return (
-    <Card className="overflow-hidden p-8">
+    <Card className="overflow-hidden p-5">
       <div className="mb-6 flex flex-wrap items-center gap-3">
         <span className="rounded-lg bg-[#fff4ec] px-4 py-2 text-sm font-extrabold text-forge">{subject.subjectName}</span>
         <span className="rounded-lg border border-line px-4 py-2 text-sm font-bold text-muted">{courseArea.name}</span>
       </div>
-      <h1 className="m-0 text-[clamp(42px,5vw,68px)] font-extrabold leading-none">{specArea.name}</h1>
+      <h1 className="m-0 text-[clamp(34px,4vw,52px)] font-extrabold leading-none">{specArea.name}</h1>
       <p className="mt-5 max-w-3xl text-xl leading-relaxed text-muted">{specArea.description}</p>
       <div className="mt-7 grid max-w-2xl grid-cols-3 gap-4 max-md:grid-cols-1">
         <HeroStat label="Questions" value={String(specArea.questions)} />
         <HeroStat label="Complete" value={`${specArea.progress}%`} />
         <HeroStat label="Pathway" value="3 Stages" />
       </div>
-      <ProgressBar value={specArea.progress} className="mt-8 h-3" />
+      <ProgressBar value={specArea.progress} className="mt-5 h-3" />
     </Card>
   );
 }
 
 function CourseAreaCard({ area }: { area: CourseArea }) {
   const content = (
-    <Card className={`h-full p-6 transition ${area.available ? "border-forge/40 bg-gradient-to-br from-forge/10 to-white hover:-translate-y-0.5" : "bg-white opacity-70"}`}>
+    <Card className={`h-full p-5 transition ${area.available ? "border-forge/40 bg-gradient-to-br from-forge/10 to-white hover:-translate-y-0.5" : "bg-white opacity-70"}`}>
       <div className="mb-5 flex items-start justify-between gap-4">
         <div>
           <h3 className="m-0 text-2xl font-extrabold">{area.name}</h3>
@@ -523,7 +542,7 @@ function CourseAreaCard({ area }: { area: CourseArea }) {
 function SpecAreaCard({ specArea, index }: { specArea: SpecArea; index: number }) {
   return (
     <Link href={specArea.href} className="group">
-      <Card className="h-full p-6 transition group-hover:-translate-y-0.5 group-hover:border-forge/45">
+      <Card className="h-full p-5 transition group-hover:-translate-y-0.5 group-hover:border-forge/45">
         <div className="mb-5 flex items-start justify-between gap-4">
           <span className="grid size-11 shrink-0 place-items-center rounded-full bg-[#fff4ec] font-extrabold text-forge">
             {index + 1}
@@ -557,8 +576,8 @@ function LearningStageCard({ stage, index, subjectSlug }: { stage: LearningStage
           {index + 1}
         </span>
       </div>
-      <Card className={`p-6 ${accent.border}`}>
-        <div className="grid grid-cols-[auto_1fr_auto] items-center gap-6 max-md:grid-cols-1">
+      <Card className={`p-5 ${accent.border}`}>
+        <div className="grid grid-cols-[auto_1fr_auto] items-center gap-5 max-md:grid-cols-1">
           <span className={`grid size-20 place-items-center rounded-2xl ${accent.bg} ${accent.text}`}>
             <Icon className="size-10" />
           </span>
@@ -609,7 +628,7 @@ function StageBreakdownRow({ stage }: { stage: LearningStage }) {
 function RecommendedCourseArea({ subject }: { subject: Subject }) {
   const firstArea = subject.courseAreas.find((area) => area.available) ?? subject.courseAreas[0];
   return (
-    <Card className="p-6">
+    <Card className="p-5">
       <h2 className="mb-5 text-xl font-extrabold">Recommended Next</h2>
       <p className="mb-2 text-sm font-bold uppercase text-muted">Continue</p>
       <h3 className="text-2xl font-extrabold">{firstArea.name}</h3>
@@ -665,6 +684,8 @@ export const SubjectPageTemplate = SubjectCoursePage;
 export const CourseAreaPageTemplate = CourseAreaPage;
 export const TopicHubTemplate = SpecAreaLearningPathPage;
 export const SkillPathPageTemplate = SkillPathLearningPage;
+
+
 
 
 

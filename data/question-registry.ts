@@ -1,4 +1,5 @@
-import { higherMathsDifferentiationQuestions } from "@/content/questions/higher-maths/differentiation";
+﻿import { higherMathsDifferentiationQuestions } from "@/content/questions/higher-maths/differentiation";
+import { getQuestionById } from "@/lib/learning-paths";
 import { getQuestionById as getPhysicsQuestionById, questions as physicsQuestions } from "@/data/questions";
 
 export const mathsQuestions = higherMathsDifferentiationQuestions;
@@ -8,7 +9,7 @@ export function getMathsQuestionById(id: string) {
 }
 
 export function getAnyQuestionById(id: string) {
-  return getMathsQuestionById(id) ?? getPhysicsQuestionById(id);
+  return getQuestionById(id) ?? getPhysicsQuestionById(id);
 }
 
 export function getMathsQuestionPosition(id: string) {

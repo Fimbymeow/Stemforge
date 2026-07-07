@@ -1,3 +1,4 @@
+﻿import { getActiveSkillPathHref } from "@/lib/learning-paths";
 import Link from "next/link";
 
 export function Footer() {
@@ -7,7 +8,7 @@ export function Footer() {
         <Link href="#about">About</Link>
         <Link href="#tuition">Tuition</Link>
         <Link href="/subjects">Subjects</Link>
-        <Link href="/subjects/higher-maths/calculus/differentiation/basic-differentiation">Basic differentiation</Link>
+        <Link href={getActiveSkillPathHref()}>Basic differentiation</Link>
       </nav>
       <p className="m-0 max-w-3xl text-xs leading-relaxed">
         STEM Forge creates original SQA-style learning material and is not affiliated with or endorsed by the SQA.

@@ -81,6 +81,7 @@ export type SidebarLink = {
   href: string;
 };
 
+// Learning content should be added through data using this hierarchy: Subject -> Course Area -> Topic/Spec Area -> Skill Path -> Stage -> Question.
 export type SkillPath = {
   slug: string;
   name: string;
@@ -193,6 +194,7 @@ export type QuestionProgress = {
 };
 
 export type ContentResource = NoteBlock | FormulaCard | WorkedExample | Flashcard | PracticeSet;
+
 
 
 

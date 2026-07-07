@@ -1,3 +1,4 @@
+﻿import { getActiveSkillPathHref } from "@/lib/learning-paths";
 import Image from "next/image";
 import Link from "next/link";
 import { ButtonLink } from "@/components/ui";
@@ -23,7 +24,7 @@ export function Navbar() {
         </div>
         <div className="flex items-center gap-4 justify-self-end text-[13px] font-semibold text-[#1f1d1a] max-md:justify-self-center">
           <NavLink href="/dashboard">Dashboard</NavLink>
-          <ButtonLink href="/subjects/higher-maths/calculus/differentiation/basic-differentiation">Get Started</ButtonLink>
+          <ButtonLink href={getActiveSkillPathHref()}>Get Started</ButtonLink>
         </div>
       </nav>
     </header>
@@ -37,4 +38,5 @@ function NavLink({ href, children }: { href: string; children: React.ReactNode }
     </Link>
   );
 }
+
 

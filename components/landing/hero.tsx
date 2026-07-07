@@ -1,3 +1,4 @@
+﻿import { getActiveSkillPathHref } from "@/lib/learning-paths";
 import Image from "next/image";
 import { ButtonLink } from "@/components/ui";
 
@@ -14,7 +15,7 @@ export function Hero() {
             clear learning pathways.
           </p>
           <div className="mt-9 flex flex-wrap gap-4 max-lg:justify-center">
-            <ButtonLink href="/subjects/higher-maths/calculus/differentiation/basic-differentiation" size="lg">
+            <ButtonLink href={getActiveSkillPathHref()} size="lg">
               Start Learning
             </ButtonLink>
             <ButtonLink href="#features" variant="secondary" size="lg">
@@ -36,6 +37,7 @@ export function Hero() {
     </section>
   );
 }
+
 
 
 

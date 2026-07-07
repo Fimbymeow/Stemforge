@@ -1,5 +1,6 @@
 ﻿"use client";
 
+import { getActiveSkillPathHref } from "@/lib/learning-paths";
 import Link from "next/link";
 import { useEffect } from "react";
 import { Card } from "@/components/ui";
@@ -22,7 +23,7 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
             <button type="button" onClick={reset} className="inline-flex min-h-12 items-center justify-center rounded-lg bg-forge px-5 font-extrabold text-white">
               Try again
             </button>
-            <Link href="/subjects/higher-maths/calculus/differentiation/basic-differentiation" className="inline-flex min-h-12 items-center justify-center rounded-lg border border-line bg-white px-5 font-extrabold">
+            <Link href={getActiveSkillPathHref()} className="inline-flex min-h-12 items-center justify-center rounded-lg border border-line bg-white px-5 font-extrabold">
               Back to Basic differentiation
             </Link>
           </div>
@@ -31,3 +32,4 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
     </main>
   );
 }
+

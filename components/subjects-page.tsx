@@ -1,3 +1,4 @@
+﻿import { getActiveSkillPathHref } from "@/lib/learning-paths";
 import Link from "next/link";
 import { ArrowRight, Check, GraduationCap, Lock, Orbit, Sigma } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
@@ -69,7 +70,7 @@ function FeaturedSubjectCard({ demo }: { demo: boolean }) {
             </div>
             <div className="mt-8 flex flex-wrap gap-4">
               <ButtonLink href="/subjects/higher-maths">Open Higher Maths</ButtonLink>
-              <ButtonLink href="/subjects/higher-maths/calculus/differentiation/basic-differentiation" variant="secondary">
+              <ButtonLink href={getActiveSkillPathHref()} variant="secondary">
                 Try Basic differentiation
               </ButtonLink>
             </div>
@@ -163,7 +164,7 @@ function LearningCard({ demo }: { demo: boolean }) {
             <p className="mb-2 text-sm font-bold uppercase text-muted">Continue Learning</p>
             <strong className="block text-2xl">Basic differentiation</strong>
             <p className="mb-4 mt-2 text-sm text-muted">0% complete</p>
-            <ButtonLink href="/subjects/higher-maths/calculus/differentiation/basic-differentiation">Continue</ButtonLink>
+            <ButtonLink href={getActiveSkillPathHref()}>Continue</ButtonLink>
           </div>
         </div>
       ) : (
@@ -193,7 +194,7 @@ function RecommendationCard({ demo }: { demo: boolean }) {
             </div>
             <ProgressBar value={0} />
           </div>
-          <ButtonLink href="/subjects/higher-maths/calculus/differentiation/basic-differentiation">Continue Path</ButtonLink>
+          <ButtonLink href={getActiveSkillPathHref()}>Continue Path</ButtonLink>
         </>
       ) : (
         <p className="text-muted">A recommendation will appear when a subject is selected.</p>
@@ -262,6 +263,7 @@ function EmptyState({ title, copy }: { title: string; copy: string }) {
     </div>
   );
 }
+
 
 
 

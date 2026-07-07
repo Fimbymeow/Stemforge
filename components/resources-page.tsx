@@ -1,4 +1,5 @@
-﻿import Link from "next/link";
+﻿import { getActiveFirstQuestionHref, getActiveSkillPathHref } from "@/lib/learning-paths";
+import Link from "next/link";
 import { ArrowRight, FileText } from "lucide-react";
 import { ButtonLink, Card } from "@/components/ui";
 import { AppShell } from "@/components/layout/app-shell";
@@ -30,7 +31,7 @@ export function ResourcesPage() {
                 <p className="mt-3 max-w-2xl leading-relaxed text-muted">
                   Formula references and topic resources will be added carefully once they fit the Basic differentiation practice flow.
                 </p>
-                <ButtonLink href="/subjects/higher-maths/calculus/differentiation/basic-differentiation" className="mt-6">
+                <ButtonLink href={getActiveSkillPathHref()} className="mt-6">
                   Back to Basic differentiation
                 </ButtonLink>
               </div>
@@ -50,8 +51,8 @@ export function ResourcesPage() {
           <Card className="p-6">
             <h2 className="mb-5 text-xl font-extrabold">Quick Links</h2>
             <div className="grid gap-3">
-              <SideLink href="/subjects/higher-maths/calculus/differentiation/basic-differentiation">Basic differentiation</SideLink>
-              <SideLink href="/question/hm-calc-diff-basic-f-001">First question</SideLink>
+              <SideLink href={getActiveSkillPathHref()}>Basic differentiation</SideLink>
+              <SideLink href={getActiveFirstQuestionHref()}>First question</SideLink>
               <SideLink href="/subjects">Subjects</SideLink>
             </div>
           </Card>
@@ -69,5 +70,6 @@ function SideLink({ href, children }: { href: string; children: string }) {
     </Link>
   );
 }
+
 
 

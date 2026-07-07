@@ -1,5 +1,5 @@
-import { SubjectCoursePage } from "@/components/subject-learning-pages";
+import { HigherMathsHub } from "@/components/higher-maths-hub";
 
 export default function HigherMathsSubject() {
-  return <SubjectCoursePage subjectSlug="higher-maths" />;
+  return <HigherMathsHub />;
 }

@@ -1,3 +1,4 @@
+﻿import { getActiveSkillPathHref } from "@/lib/learning-paths";
 import Image from "next/image";
 import Link from "next/link";
 import { BookOpen, Compass, Home } from "lucide-react";
@@ -47,6 +48,7 @@ function getAppNavHref(key: string, demo: boolean) {
   void demo;
   if (key === "dashboard") return "/dashboard";
   if (key === "subjects") return "/subjects";
-  return "/subjects/higher-maths/calculus/differentiation/basic-differentiation";
+  return getActiveSkillPathHref();
 }
+
 

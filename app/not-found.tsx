@@ -1,4 +1,5 @@
-﻿import Link from "next/link";
+﻿import { getActiveSkillPathHref } from "@/lib/learning-paths";
+import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Card } from "@/components/ui";
 
@@ -13,7 +14,7 @@ export default function NotFound() {
             The page may have moved, or the route may not exist yet. You can return to the current Higher Maths proof-of-concept path or browse subjects.
           </p>
           <div className="mt-8 flex flex-wrap gap-4">
-            <Link href="/subjects/higher-maths/calculus/differentiation/basic-differentiation" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-forge px-5 font-extrabold text-white">
+            <Link href={getActiveSkillPathHref()} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-forge px-5 font-extrabold text-white">
               Back to Basic differentiation
               <ArrowRight className="size-5" />
             </Link>
@@ -26,3 +27,4 @@ export default function NotFound() {
     </main>
   );
 }
+

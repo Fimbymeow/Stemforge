@@ -5,11 +5,11 @@ import Link from "next/link";
 import { Gauge, Target } from "lucide-react";
 import { Card, ProgressBar } from "@/components/ui";
 import { LockedCard } from "@/components/locked-card";
-import { getBasicDifferentiationSkillPath } from "@/data/active-path";
+import { getActiveContinueHref, getActiveSkillPath } from "@/lib/learning-paths";
 import { getNextQuestionId, getSkillPathProgress } from "@/lib/local-progress";
 
 export function DashboardLocalProgressSection() {
-  const skillPath = getBasicDifferentiationSkillPath();
+  const skillPath = getActiveSkillPath();
   const [version, setVersion] = useState(0);
 
   useEffect(() => {
@@ -26,7 +26,7 @@ export function DashboardLocalProgressSection() {
   const progress = getSkillPathProgress(skillPath);
   const nextQuestionId = getNextQuestionId(skillPath);
 
-  const nextHref = nextQuestionId ? `/question/${nextQuestionId}` : skillPath.href;
+  const nextHref = getActiveContinueHref(nextQuestionId);
   const isComplete = progress.totalQuestions > 0 && progress.completedQuestionIds.length >= progress.totalQuestions;
 
   return (
@@ -41,7 +41,7 @@ export function DashboardLocalProgressSection() {
             <Target className="size-16 text-forge" />
           </div>
           <div>
-            <h3 className="m-0 text-[28px] font-extrabold">Basic differentiation</h3>
+            <h3 className="m-0 text-[28px] font-extrabold">{skillPath.name}</h3>
             <p className="mb-5 mt-2 text-lg text-muted">Higher Maths / Calculus / Differentiation</p>
             <div className="mb-6 flex items-center gap-3 font-semibold">
               <Target className="size-5 text-forge" />
@@ -53,7 +53,7 @@ export function DashboardLocalProgressSection() {
             </div>
           </div>
         </div>
-        <DashboardAction href={nextHref}>{isComplete ? "Review Basic differentiation" : "Continue Basic differentiation"}</DashboardAction>
+        <DashboardAction href={nextHref}>{isComplete ? `Review ${skillPath.name}` : `Continue ${skillPath.name}`}</DashboardAction>
       </Card>
 
       <Card className="min-h-[300px] p-8 max-md:p-5">
@@ -78,8 +78,8 @@ export function DashboardLocalProgressSection() {
 
       <Card className="p-7 max-md:p-5">
         <h2 className="mb-6 text-2xl font-extrabold">Continue Learning</h2>
-        <h3 className="text-[28px] font-extrabold">Basic differentiation</h3>
-        <p className="mb-7 mt-2 text-lg leading-relaxed text-muted">Current path: Calculus / Differentiation / Basic differentiation.</p>
+        <h3 className="text-[28px] font-extrabold">{skillPath.name}</h3>
+        <p className="mb-7 mt-2 text-lg leading-relaxed text-muted">Current path: {skillPath.currentPathLabel ?? "Higher Maths / Calculus / Differentiation"}.</p>
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-6 max-sm:grid-cols-1 max-sm:gap-3">
           <ProgressBar value={progress.completionPercentage} />
           <strong>{progress.completionPercentage}%</strong>
@@ -114,7 +114,7 @@ export function DashboardLocalProgressSection() {
         </div>
         <h3 className="text-[28px] font-extrabold">{isComplete ? "Review Path" : "Continue Practice"}</h3>
         <p className="max-w-[300px] text-lg leading-relaxed text-muted">
-          {isComplete ? "All Basic differentiation questions have been attempted locally." : "STEM Forge will send you to the next unanswered question."}
+          {isComplete ? "All questions in this path have been attempted locally." : "STEM Forge will send you to the next unanswered question."}
         </p>
         <DashboardAction href={nextHref}>{isComplete ? "Review" : "Continue"}</DashboardAction>
       </Card>
@@ -150,6 +150,7 @@ function StatRow({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+
 
 
 

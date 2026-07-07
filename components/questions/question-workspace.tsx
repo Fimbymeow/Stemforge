@@ -8,27 +8,39 @@ import { AppTopbar } from "@/components/layout/app-topbar";
 import { Card, ProgressBar } from "@/components/ui";
 import { MathContent } from "@/components/questions/math-content";
 import { QuestionAnswerInput } from "@/components/questions/answer-inputs";
-import { getMathsQuestionById, getMathsQuestionPosition } from "@/data/question-registry";
-import { getBasicDifferentiationSkillPath, getStageForQuestion } from "@/data/active-path";
-import { getNextQuestionId, saveQuestionAttempt } from "@/lib/local-progress";
+import { getQuestionHref, getQuestionsForSkillPath, getSkillPathForQuestion, getStageForQuestionInSkillPath } from "@/lib/learning-paths";
+import { getNextQuestionId, getSkillPathProgress, saveQuestionAttempt } from "@/lib/local-progress";
 import type { Question } from "@/data/types";
 
 export function QuestionWorkspace({ question }: { question: Question }) {
   const [answer, setAnswer] = useState("");
   const [submitted, setSubmitted] = useState(false);
-  const position = useMemo(() => getMathsQuestionPosition(question.id), [question.id]);
+  const skillPath = useMemo(() => getSkillPathForQuestion(question), [question]);
+  const skillPathQuestions = useMemo(() => (skillPath ? getQuestionsForSkillPath(skillPath) : [question]), [question, skillPath]);
+  const position = useMemo(() => {
+    const index = skillPathQuestions.findIndex((item) => item.id === question.id);
+    return {
+      index,
+      current: index >= 0 ? index + 1 : 0,
+      total: skillPathQuestions.length,
+      previous: index > 0 ? skillPathQuestions[index - 1] : undefined,
+      next: index >= 0 && index < skillPathQuestions.length - 1 ? skillPathQuestions[index + 1] : undefined,
+    };
+  }, [question.id, skillPathQuestions]);
   const hasPosition = position.index >= 0 && position.total > 0;
   const currentQuestion = hasPosition ? position.current : 1;
   const totalQuestions = hasPosition ? position.total : 1;
   const usesGuidedMarking = question.answerType === "written" || question.answerType === "multi_step";
   const isCorrect = submitted && !usesGuidedMarking && isAcceptedAnswer(answer, question.acceptedAnswers);
-  const progress = hasPosition ? Math.round((position.current / position.total) * 100) : 0;
-  const stage = getStageForQuestion(question.id);
-  const skillPath = getBasicDifferentiationSkillPath();
-  const nextQuestionId = submitted ? getNextQuestionId(skillPath) : null;
-  const nextQuestion = nextQuestionId ? getMathsQuestionById(nextQuestionId) : undefined;
-  const nextActionHref = nextQuestionId ? `/question/${nextQuestionId}` : skillPath.href;
-  const nextActionLabel = nextQuestion ? (nextQuestion.stage === question.stage ? `Continue ${nextQuestion.stage}` : `Move to ${nextQuestion.stage}`) : "Review Basic differentiation";
+  const questionPositionProgress = hasPosition ? Math.round((position.current / position.total) * 100) : 0;
+  const fallbackPathHref = skillPath?.href ?? "/subjects";
+  const stage = skillPath ? getStageForQuestionInSkillPath(skillPath, question.id) : undefined;
+  const localProgress = skillPath ? getSkillPathProgress(skillPath) : undefined;
+  const stageLocalProgress = stage ? localProgress?.stageProgress[stage.id] : undefined;
+  const nextQuestionId = submitted && skillPath ? getNextQuestionId(skillPath) : null;
+  const nextQuestion = nextQuestionId ? skillPathQuestions.find((item) => item.id === nextQuestionId) : undefined;
+  const nextActionHref = nextQuestionId ? getQuestionHref(nextQuestionId) : fallbackPathHref;
+  const nextActionLabel = nextQuestion ? (nextQuestion.stage === question.stage ? `Continue ${nextQuestion.stage}` : `Move to ${nextQuestion.stage}`) : `Review ${skillPath?.name ?? "path"}`;
 
   useEffect(() => {
     setAnswer("");
@@ -40,7 +52,7 @@ export function QuestionWorkspace({ question }: { question: Question }) {
     const markedCorrect = usesGuidedMarking ? null : isAcceptedAnswer(answer, question.acceptedAnswers);
     saveQuestionAttempt({
       questionId: question.id,
-      skillPathId: question.skillPathId ?? skillPath.slug,
+      skillPathId: question.skillPathId ?? skillPath?.slug ?? "unknown",
       stageId: question.stageId ?? stage?.id ?? question.stage,
       isCorrect: markedCorrect,
       answer,
@@ -51,10 +63,10 @@ export function QuestionWorkspace({ question }: { question: Question }) {
 
   return (
     <AppShell demo active="Current Path">
-      <div className="mx-auto mb-6 flex max-w-[1240px] justify-end">
+      <div className="mx-auto mb-5 flex max-w-[1180px] justify-end">
         <AppTopbar demo />
       </div>
-      <div className="mx-auto grid max-w-[1240px] grid-cols-[minmax(0,1fr)_320px] gap-6 max-lg:grid-cols-1 max-md:gap-4">
+      <div className="mx-auto grid max-w-[1180px] grid-cols-[minmax(0,1fr)_300px] gap-5 max-lg:grid-cols-1 max-md:gap-4">
         <section className="grid gap-5">
           <nav className="flex flex-wrap items-center gap-2 text-sm text-muted" aria-label="Breadcrumb">
             <Link href="/subjects">Subjects</Link>
@@ -65,7 +77,7 @@ export function QuestionWorkspace({ question }: { question: Question }) {
             <span>/</span>
             <Link href="/subjects/higher-maths/calculus/differentiation">Differentiation</Link>
             <span>/</span>
-            <span className="font-bold text-forge">Basic differentiation</span>
+            <span className="font-bold text-forge">{skillPath?.name ?? question.skillPath ?? "Question"}</span>
           </nav>
 
           <Card className="p-5 max-md:p-4">
@@ -82,14 +94,14 @@ export function QuestionWorkspace({ question }: { question: Question }) {
             </p>
           </Card>
 
-          <Card className="p-8 max-md:p-4">
-            <p className="mb-5 font-mono text-[13px] font-extrabold uppercase text-forge">
+          <Card className="p-5 max-md:p-4">
+            <p className="mb-3 font-mono text-[12px] font-extrabold uppercase text-forge">
               {question.stage} / Question {currentQuestion}
             </p>
-            <h1 className="mb-6 text-[clamp(30px,4vw,46px)] font-extrabold leading-tight">{question.title}</h1>
-            <div className="rounded-2xl border border-line bg-white p-8 shadow-[0_18px_54px_rgba(17,17,17,0.04)] max-md:p-4">
+            <h1 className="mb-5 text-[clamp(28px,3.6vw,42px)] font-extrabold leading-tight">{question.title}</h1>
+            <div className="rounded-2xl border border-line bg-white p-5 shadow-[0_18px_54px_rgba(17,17,17,0.04)] max-md:p-4">
               <MathContent>{question.questionText}</MathContent>
-              <div className="mt-7">
+              <div className="mt-5">
                 <label className="mb-2 block text-sm text-muted">Your answer</label>
                 <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-4 max-md:grid-cols-1">
                   <QuestionAnswerInput question={question} value={answer} submitted={submitted} onChange={setAnswer} />
@@ -97,7 +109,7 @@ export function QuestionWorkspace({ question }: { question: Question }) {
                   <button
                     onClick={handleSubmit}
                     disabled={!answer.trim() || submitted}
-                    className="min-h-14 rounded-lg bg-forge px-8 font-extrabold text-white disabled:cursor-not-allowed disabled:opacity-45 max-md:w-full"
+                    className="min-h-12 rounded-lg bg-forge px-6 font-extrabold text-white disabled:cursor-not-allowed disabled:opacity-45 max-md:w-full"
                   >
                     Submit Answer
                   </button>
@@ -108,7 +120,7 @@ export function QuestionWorkspace({ question }: { question: Question }) {
             {submitted && (
               <div
                 id="answer-feedback"
-                className={`mt-5 flex items-start gap-4 rounded-xl border p-5 max-md:grid max-md:p-4 ${isCorrect ? "border-[#8ed0a6] bg-[#f1fbf4]" : "border-[#f0b8a0] bg-[#fff4ec]"}`}
+                className={`mt-4 flex items-start gap-4 rounded-xl border p-4 max-md:grid ${isCorrect ? "border-[#8ed0a6] bg-[#f1fbf4]" : "border-[#f0b8a0] bg-[#fff4ec]"}`}
               >
                 <span className={`grid size-10 shrink-0 place-items-center rounded-full text-white ${isCorrect ? "bg-[#229954]" : "bg-forge"}`}>
                   {isCorrect ? <Check className="size-6" /> : <X className="size-6" />}
@@ -133,12 +145,12 @@ export function QuestionWorkspace({ question }: { question: Question }) {
 
           {submitted && (
             <>
-              <Card className="p-7 max-md:p-4">
+              <Card className="p-5 max-md:p-4">
                 <h2 className="mb-5 text-2xl font-extrabold">Worked Solution</h2>
                 <MathContent>{question.workedSolution}</MathContent>
               </Card>
               {question.commonMistake ? (
-                <Card className="p-7 max-md:p-4">
+                <Card className="p-5 max-md:p-4">
                   <h2 className="mb-3 text-xl font-extrabold">Common mistake</h2>
                   <MathContent>{question.commonMistake}</MathContent>
                 </Card>
@@ -146,16 +158,16 @@ export function QuestionWorkspace({ question }: { question: Question }) {
             </>
           )}
 
-          <div className="grid grid-cols-2 gap-5 max-md:grid-cols-1">
+          <div className="grid grid-cols-2 gap-4 max-md:grid-cols-1">
             <Link
-              href={position.previous ? `/question/${position.previous.id}` : "/subjects/higher-maths/calculus/differentiation/basic-differentiation"}
+              href={position.previous ? getQuestionHref(position.previous.id) : fallbackPathHref}
               className="inline-flex min-h-12 items-center justify-center gap-3 rounded-lg border border-line bg-white font-bold"
             >
               <ArrowLeft className="size-5" />
               Previous
             </Link>
             <Link
-              href={submitted ? nextActionHref : position.next ? `/question/${position.next.id}` : "/subjects/higher-maths/calculus/differentiation/basic-differentiation"}
+              href={submitted ? nextActionHref : position.next ? getQuestionHref(position.next.id) : fallbackPathHref}
               className="inline-flex min-h-12 items-center justify-center gap-3 rounded-lg bg-forge font-bold text-white"
             >
               {submitted ? nextActionLabel : "Next Question"}
@@ -164,13 +176,21 @@ export function QuestionWorkspace({ question }: { question: Question }) {
           </div>
         </section>
 
-        <aside className="grid content-start gap-5">
-          <Card className="p-6 max-md:p-4">
-            <h2 className="mb-5 text-xl font-extrabold">Your Progress</h2>
-            <PanelProgress label="Basic differentiation" value={progress} valueLabel={hasPosition ? `${currentQuestion} / ${totalQuestions}` : "Not tracked"} />
-            <PanelProgress label="Stage" value={stageProgress(question.stage)} valueLabel={question.stage} />
+        <aside className="grid content-start gap-4">
+          <Card className="p-5 max-md:p-4">
+            <h2 className="mb-4 text-lg font-extrabold">Your Progress</h2>
+            <PanelProgress
+              label={skillPath?.name ?? question.skillPath ?? "Current path"}
+              value={localProgress?.completionPercentage ?? questionPositionProgress}
+              valueLabel={localProgress ? `${localProgress.completedQuestionIds.length} / ${localProgress.totalQuestions}` : hasPosition ? `${currentQuestion} / ${totalQuestions}` : "Not tracked"}
+            />
+            <PanelProgress
+              label={stage?.name ?? "Stage"}
+              value={stageLocalProgress?.completionPercentage ?? 0}
+              valueLabel={stageLocalProgress ? `${stageLocalProgress.completedQuestionIds.length} / ${stageLocalProgress.totalQuestions}` : question.stage}
+            />
           </Card>
-          <Card className="p-6 max-md:p-4">
+          <Card className="p-5 max-md:p-4">
             <div className="mb-3 flex items-center gap-3">
               <span className="grid size-9 place-items-center rounded-full bg-[#fff4ec] text-forge">
                 <Lightbulb className="size-5" />
@@ -195,14 +215,15 @@ function isAcceptedAnswer(answer: string, acceptedAnswers: string[]) {
 }
 
 function normaliseAnswer(value: string) {
-  return value.toLowerCase().replace(/\s+/g, "").replace(/\*/g, "").replace(/\{|\}/g, "");
+  return value
+    .toLowerCase()
+    .replace(/\u2212/g, "-")
+    .replace(/\u03c0/g, "pi")
+    .replace(/\s+/g, "")
+    .replace(/\*/g, "")
+    .replace(/\{|\}/g, "");
 }
 
-function stageProgress(stage: string) {
-  if (stage === "Foundations") return 0;
-  if (stage === "Applications") return 0;
-  return 0;
-}
 
 function Badge({ children }: { children: string }) {
   return <span className="rounded-lg bg-[#fff4ec] px-4 py-2 font-bold text-forge">{children}</span>;
@@ -219,7 +240,7 @@ function HeaderMeta({ label, value }: { label: string; value: string }) {
 
 function PanelProgress({ label, value, valueLabel }: { label: string; value: number; valueLabel: string }) {
   return (
-    <div className="mb-7 last:mb-0">
+    <div className="mb-5 last:mb-0">
       <div className="mb-3 flex justify-between gap-4">
         <span>{label}</span>
         <strong>{valueLabel}</strong>
@@ -228,6 +249,10 @@ function PanelProgress({ label, value, valueLabel }: { label: string; value: num
     </div>
   );
 }
+
+
+
+
 
 
 

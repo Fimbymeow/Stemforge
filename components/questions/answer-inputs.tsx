@@ -1,6 +1,8 @@
-﻿"use client";
+"use client";
 
+import { useRef } from "react";
 import { MathContent } from "@/components/questions/math-content";
+import { MathKeypad } from "@/components/questions/math-keypad";
 import type { Question, QuestionOption } from "@/data/types";
 
 type InputProps = {
@@ -32,11 +34,11 @@ export function MultipleChoiceInput({ value, submitted, onChange, options }: Inp
 }
 
 export function NumericalInput(props: InputProps) {
-  return <TextInput {...props} placeholder="Enter a number" />;
+  return <TextInput {...props} placeholder="Enter a number" showKeypad />;
 }
 
 export function AlgebraicInput(props: InputProps) {
-  return <TextInput {...props} placeholder="Enter your answer" />;
+  return <TextInput {...props} placeholder="Enter your answer" showKeypad />;
 }
 
 export function WrittenAnswerInput(props: InputProps) {
@@ -47,16 +49,22 @@ export function MultiStepInput(props: InputProps) {
   return <TextAreaInput {...props} placeholder="Show your working. Structured multi-step marking will be added later." />;
 }
 
-function TextInput({ value, submitted, onChange, placeholder }: InputProps & { placeholder: string }) {
+function TextInput({ value, submitted, onChange, placeholder, showKeypad = false }: InputProps & { placeholder: string; showKeypad?: boolean }) {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
   return (
-    <input
-      value={value}
-      onChange={(event) => onChange(event.target.value)}
-      disabled={submitted}
-      placeholder={placeholder}
-      aria-describedby={submitted ? "answer-feedback" : undefined}
-      className="min-h-14 w-full rounded-lg border border-line bg-white px-4 text-lg outline-none transition focus:border-forge disabled:bg-[#fbf8f2]"
-    />
+    <div>
+      <input
+        ref={inputRef}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        disabled={submitted}
+        placeholder={placeholder}
+        aria-describedby={submitted ? "answer-feedback" : undefined}
+        className="min-h-14 w-full rounded-lg border border-line bg-white px-4 text-lg outline-none transition focus:border-forge disabled:bg-[#fbf8f2]"
+      />
+      {showKeypad ? <MathKeypad value={value} onChange={onChange} inputRef={inputRef} disabled={submitted} /> : null}
+    </div>
   );
 }
 
@@ -88,6 +96,3 @@ export function HintPanel() {
 export function CommonMistakePanel() {
   return null;
 }
-
-
-

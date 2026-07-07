@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -40,7 +40,7 @@ export function LocalRecommendedNextAction({ skillPath }: { skillPath: SkillPath
         <div>
           <p className="mb-2 text-sm font-extrabold uppercase text-forge">Recommended next</p>
           <h2 className="m-0 text-3xl font-extrabold max-md:text-2xl">
-            {isComplete ? "Review Basic differentiation" : nextStage?.name ?? "Foundations"}
+            {isComplete ? `Review ${skillPath.name}` : nextStage?.name ?? "Foundations"}
           </h2>
           <p className="mt-3 leading-relaxed text-muted">
             {isComplete
@@ -103,7 +103,7 @@ export function LocalSkillPathProgressOverview({ skillPath }: { skillPath: Skill
 
 export function LocalProgressControls({ skillPath }: { skillPath: SkillPath }) {
   function handleReset() {
-    const confirmed = window.confirm("This clears progress for Basic differentiation on this browser only.");
+    const confirmed = window.confirm(`This clears progress for ${skillPath.name} on this browser only.`);
     if (!confirmed) return;
     resetSkillPathProgress(skillPath.slug);
   }
