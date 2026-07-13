@@ -37,7 +37,7 @@ export function RecommendedNextAction({ title, copy, href, label }: { title: str
 
 function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-xl border border-line bg-[#fffdf9] p-4">
+    <div className="flex items-center justify-between gap-4 rounded-xl border border-line bg-paper p-4">
       <span className="text-muted">{label}</span>
       <strong>{value}</strong>
     </div>

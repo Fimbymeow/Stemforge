@@ -1,8 +1,13 @@
 ﻿import type { Question } from "@/data/types";
 
+import { ACTIVE_CONTENT_STATUS, INITIAL_CONTENT_REVISION, INITIAL_QUESTION_VERSION } from "@/data/content-metadata";
+
 export const higherMathsDifferentiationQuestions: Question[] = [
   {
     id: "hm-calc-diff-basic-f-001",
+    questionVersion: INITIAL_QUESTION_VERSION,
+    contentRevision: INITIAL_CONTENT_REVISION,
+    contentStatus: ACTIVE_CONTENT_STATUS,
     subject: "Higher Maths",
     courseArea: "Calculus",
     specArea: "Differentiation",
@@ -28,6 +33,9 @@ export const higherMathsDifferentiationQuestions: Question[] = [
   },
   {
     id: "hm-calc-diff-basic-f-002",
+    questionVersion: INITIAL_QUESTION_VERSION,
+    contentRevision: INITIAL_CONTENT_REVISION,
+    contentStatus: ACTIVE_CONTENT_STATUS,
     subject: "Higher Maths",
     courseArea: "Calculus",
     specArea: "Differentiation",
@@ -53,6 +61,9 @@ export const higherMathsDifferentiationQuestions: Question[] = [
   },
   {
     id: "hm-calc-diff-basic-f-003",
+    questionVersion: INITIAL_QUESTION_VERSION,
+    contentRevision: INITIAL_CONTENT_REVISION,
+    contentStatus: ACTIVE_CONTENT_STATUS,
     subject: "Higher Maths",
     courseArea: "Calculus",
     specArea: "Differentiation",
@@ -78,6 +89,9 @@ export const higherMathsDifferentiationQuestions: Question[] = [
   },
   {
     id: "hm-calc-diff-basic-a-001",
+    questionVersion: INITIAL_QUESTION_VERSION,
+    contentRevision: INITIAL_CONTENT_REVISION,
+    contentStatus: ACTIVE_CONTENT_STATUS,
     subject: "Higher Maths",
     courseArea: "Calculus",
     specArea: "Differentiation",
@@ -103,6 +117,9 @@ export const higherMathsDifferentiationQuestions: Question[] = [
   },
   {
     id: "hm-calc-diff-basic-a-002",
+    questionVersion: INITIAL_QUESTION_VERSION,
+    contentRevision: INITIAL_CONTENT_REVISION,
+    contentStatus: ACTIVE_CONTENT_STATUS,
     subject: "Higher Maths",
     courseArea: "Calculus",
     specArea: "Differentiation",
@@ -128,6 +145,9 @@ export const higherMathsDifferentiationQuestions: Question[] = [
   },
   {
     id: "hm-calc-diff-basic-a-003",
+    questionVersion: INITIAL_QUESTION_VERSION,
+    contentRevision: INITIAL_CONTENT_REVISION,
+    contentStatus: ACTIVE_CONTENT_STATUS,
     subject: "Higher Maths",
     courseArea: "Calculus",
     specArea: "Differentiation",
@@ -153,6 +173,9 @@ export const higherMathsDifferentiationQuestions: Question[] = [
   },
   {
     id: "hm-calc-diff-basic-ppq-001",
+    questionVersion: INITIAL_QUESTION_VERSION,
+    contentRevision: INITIAL_CONTENT_REVISION,
+    contentStatus: ACTIVE_CONTENT_STATUS,
     subject: "Higher Maths",
     courseArea: "Calculus",
     specArea: "Differentiation",
@@ -178,6 +201,9 @@ export const higherMathsDifferentiationQuestions: Question[] = [
   },
   {
     id: "hm-calc-diff-basic-ppq-002",
+    questionVersion: INITIAL_QUESTION_VERSION,
+    contentRevision: INITIAL_CONTENT_REVISION,
+    contentStatus: ACTIVE_CONTENT_STATUS,
     subject: "Higher Maths",
     courseArea: "Calculus",
     specArea: "Differentiation",

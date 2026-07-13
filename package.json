@@ -1,35 +1,54 @@
 {
-    "name":  "stemforge",
-    "version":  "0.1.0",
-    "private":  true,
-    "scripts":  {
-                    "dev":  "next dev",
-                    "build":  "next build",
-                    "start":  "next start",
-                    "lint":  "eslint .",
-                    "typecheck":  "tsc --noEmit"
-                },
-    "dependencies":  {
-                         "clsx":  "^2.1.1",
-                         "katex":  "^0.17.0",
-                         "lucide-react":  "^0.468.0",
-                         "next":  "^15.0.0",
-                         "react":  "^19.0.0",
-                         "react-dom":  "^19.0.0",
-                         "react-markdown":  "^10.1.0",
-                         "rehype-katex":  "^7.0.1",
-                         "remark-math":  "^6.0.0"
-                     },
-    "devDependencies":  {
-                            "@eslint/eslintrc":  "^3.3.5",
-                            "@types/node":  "^22.10.0",
-                            "@types/react":  "^19.0.0",
-                            "@types/react-dom":  "^19.0.0",
-                            "autoprefixer":  "^10.4.20",
-                            "eslint":  "^9.16.0",
-                            "eslint-config-next":  "^15.0.0",
-                            "postcss":  "^8.4.49",
-                            "tailwindcss":  "^3.4.16",
-                            "typescript":  "^5.7.0"
-                        }
+    "name": "stemforge",
+    "version": "0.1.0",
+    "private": true,
+    "scripts": {
+        "dev": "next dev",
+        "build": "pnpm run validate-content && next build",
+        "start": "next start",
+        "lint": "eslint .",
+        "typecheck": "tsc --noEmit",
+        "validate-content": "tsx scripts/validate-content.ts",
+        "test:content": "tsx --test tests/content-validation.test.ts tests/content-version.test.ts",
+        "test:content-version": "tsx --test tests/content-version.test.ts",
+        "test:answers": "tsx --test tests/answer-engine.test.ts tests/question-submission-boundary.test.ts",
+        "test:progress": "tsx --test tests/progress-payload.test.ts tests/progress-storage.test.ts tests/progress-calculations.test.ts tests/progress-migration.test.ts",
+        "test:version-progress": "tsx --test tests/version-aware-progress.test.ts",
+        "test:mastery": "tsx --test tests/mastery-model.test.ts",
+        "test:completion": "tsx --test tests/completion-tracking.test.ts",
+        "test:achievements": "tsx --test tests/achievements.test.ts",
+        "test:merge": "tsx --test tests/merge.test.ts",
+        "test": "pnpm run test:content && pnpm run test:answers && pnpm run test:progress && pnpm run test:version-progress && pnpm run test:mastery && pnpm run test:completion && pnpm run test:achievements && pnpm run test:merge",
+        "test:e2e": "playwright test",
+        "test:e2e:desktop": "playwright test --project=desktop-chromium",
+        "test:e2e:mobile": "playwright test --project=mobile-chromium",
+        "test:e2e:completion": "playwright test completion-experience.spec.ts --project=desktop-chromium",
+        "test:e2e:ui": "playwright test --ui",
+        "test:all": "pnpm run typecheck && pnpm run lint && pnpm run validate-content && pnpm test && pnpm run build && pnpm run test:e2e"
+    },
+    "dependencies": {
+        "clsx": "^2.1.1",
+        "katex": "^0.17.0",
+        "lucide-react": "^0.468.0",
+        "next": "^15.0.0",
+        "react": "^19.0.0",
+        "react-dom": "^19.0.0",
+        "react-markdown": "^10.1.0",
+        "rehype-katex": "^7.0.1",
+        "remark-math": "^6.0.0"
+    },
+    "devDependencies": {
+        "@eslint/eslintrc": "^3.3.5",
+        "@playwright/test": "^1.61.1",
+        "@types/node": "^22.10.0",
+        "@types/react": "^19.0.0",
+        "@types/react-dom": "^19.0.0",
+        "autoprefixer": "^10.4.20",
+        "eslint": "^9.16.0",
+        "eslint-config-next": "^15.0.0",
+        "postcss": "^8.4.49",
+        "tailwindcss": "^3.4.16",
+        "tsx": "^4.23.0",
+        "typescript": "^5.7.0"
+    }
 }

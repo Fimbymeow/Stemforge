@@ -5,7 +5,7 @@ import { Card } from "@/components/ui";
 
 export default function NotFound() {
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_82%_8%,rgba(255,117,20,0.08),transparent_30%),#fffdf9] px-5 py-16 text-ink">
+    <main className="min-h-screen bg-paper px-5 py-16 text-ink">
       <section className="mx-auto grid max-w-[760px] gap-6">
         <p className="m-0 text-sm font-extrabold uppercase text-forge">Page not found</p>
         <Card className="p-8 max-md:p-5">

@@ -27,7 +27,7 @@ export function AppSidebar({ demo, active = "Dashboard" }: { demo: boolean; acti
             key={label}
             href={getAppNavHref(key, demo)}
             className={`flex min-h-[58px] items-center rounded-xl px-5 text-lg font-semibold max-xl:min-h-[42px] max-xl:flex-none max-xl:px-4 max-xl:text-sm ${
-              label === active ? "bg-[#fff0e4] text-forge" : "text-ink"
+              label === active ? "bg-forge-soft text-forge" : "text-ink"
             }`}
           >
             <Icon className="mr-4 size-6 max-xl:hidden" strokeWidth={2} />
@@ -35,7 +35,7 @@ export function AppSidebar({ demo, active = "Dashboard" }: { demo: boolean; acti
           </Link>
         ))}
       </nav>
-      <div className="mt-auto rounded-2xl border border-line bg-white p-5 shadow-soft max-xl:hidden">
+      <div className="mt-auto rounded-2xl border border-line bg-white p-5 shadow-card max-xl:hidden">
         <p className="m-0 text-sm font-extrabold uppercase text-forge">Active proof of concept</p>
         <strong className="mt-3 block text-lg">Basic differentiation</strong>
         <p className="mb-0 mt-2 text-sm leading-relaxed text-muted">Higher Maths is available now. Higher Physics is coming soon.</p>

@@ -14,7 +14,7 @@ export function AppShell({
   className?: string;
 }) {
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_82%_8%,rgba(255,117,20,0.08),transparent_30%),#fffdf9] text-ink">
+    <div className="min-h-screen bg-paper text-ink">
       <AppSidebar demo={demo} active={active} />
       <PageContainer className={className}>{children}</PageContainer>
     </div>

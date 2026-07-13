@@ -1,5 +1,5 @@
-import { CourseAreaPage } from "@/components/subject-learning-pages";
+import { redirect } from "next/navigation";
 
 export default function HigherMathsCalculus() {
-  return <CourseAreaPage subjectSlug="higher-maths" courseAreaSlug="calculus" />;
+  redirect("/subjects/higher-maths");
 }

@@ -49,7 +49,7 @@ const accentClasses = {
   },
   orange: {
     border: "border-forge/45",
-    bg: "bg-[#fff4ec]",
+    bg: "bg-forge-soft",
     text: "text-forge",
     button: "bg-forge text-white",
     ring: "border-forge",
@@ -132,7 +132,7 @@ export function DynamicUniverseSubtopicPage({ slug, courseAreaSlug = "our-dynami
                 ))}
               </div>
             </section>
-            <Card className="border-forge/30 bg-[#fff4ec] p-6">
+            <Card className="border-forge/30 bg-forge-soft p-6">
               <div className="flex gap-4">
                 <span className="grid size-10 shrink-0 place-items-center rounded-full border border-forge text-forge">i</span>
                 <div>
@@ -241,7 +241,7 @@ function SubtopicCard({ topic, index }: { topic: SpecAreaCardData; index: number
     <Link href={`/subjects/higher-physics/our-dynamic-universe/${topic.slug}`} className="group">
       <Card className="h-full p-6 transition group-hover:-translate-y-0.5 group-hover:border-forge/45">
         <div className="mb-5 flex items-start justify-between gap-4">
-          <span className="grid size-11 shrink-0 place-items-center rounded-full bg-[#fff4ec] font-extrabold text-forge">
+          <span className="grid size-11 shrink-0 place-items-center rounded-full bg-forge-soft font-extrabold text-forge">
             {index + 1}
           </span>
           <ArrowRight className="size-5 text-muted transition group-hover:text-forge" />
@@ -384,7 +384,7 @@ function HeroStat({ label, value }: { label: string; value: string }) {
 
 function SideStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="mb-4 flex items-center justify-between gap-4 rounded-xl border border-line bg-[#fffdf9] p-4 last:mb-0">
+    <div className="mb-4 flex items-center justify-between gap-4 rounded-xl border border-line bg-paper p-4 last:mb-0">
       <span className="text-muted">{label}</span>
       <strong className="text-xl">{value}</strong>
     </div>
@@ -419,7 +419,7 @@ function BreakdownRow({
         </span>
         <strong>{value}</strong>
       </div>
-      <div className="h-2 overflow-hidden rounded-full bg-[#eeeae3]">
+      <div className="h-2 overflow-hidden rounded-full bg-line">
         <span className={`block h-full rounded-full ${color}`} style={{ width: `${progress}%` }} />
       </div>
     </div>

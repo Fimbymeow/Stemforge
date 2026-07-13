@@ -6,9 +6,10 @@ import { ArrowRight, BookOpen, Calculator, CheckCircle2, ChevronDown, ClipboardL
 import { AppShell } from "@/components/layout/app-shell";
 import { AppTopbar } from "@/components/layout/app-topbar";
 import { Card, ProgressBar } from "@/components/ui";
-import { getActiveSubject, getActiveSkillPath, getQuestionCountForSkillPath, getSkillPathHref } from "@/lib/learning-paths";
+import { getActiveSubject, getActiveSkillPath, getAllSkillPaths, getQuestionCountForSkillPath, getSkillPathHref } from "@/lib/learning-paths";
 
-import { getSkillPathProgress } from "@/lib/local-progress";
+import { getEmptyProgressEvidence, getSkillPathProgress } from "@/lib/local-progress";
+import { useHasMounted } from "@/lib/use-mounted";
 import type { SkillPath } from "@/data/types";
 
 type Filter = "all" | "not-started" | "in-progress" | "needs-work";
@@ -23,11 +24,12 @@ const filters: { id: Filter; label: string }[] = [
 export function HigherMathsQuestionBank() {
   const subject = getActiveSubject();
   const skillPath = getActiveSkillPath();
-  const skillPaths = subject.courseAreas.flatMap((area) => area.specAreas.flatMap((topic) => topic.skillPaths ?? []));
+  const skillPaths = getAllSkillPaths(subject);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
   const [stageFilter, setStageFilter] = useState("all");
   const [version, setVersion] = useState(0);
+  const hasMounted = useHasMounted();
 
   useEffect(() => {
     const update = () => setVersion((current) => current + 1);
@@ -40,16 +42,17 @@ export function HigherMathsQuestionBank() {
   }, []);
 
   void version;
-  const progress = getSkillPathProgress(skillPath);
-  const status = getStatus(progress.completedQuestionIds.length, progress.totalQuestions, progress.accuracyPercentage);
+  const evidenceOverride = hasMounted ? undefined : getEmptyProgressEvidence();
+  const progress = getSkillPathProgress(skillPath, evidenceOverride);
+  const status = getStatus(progress.status);
   const search = query.trim().toLowerCase();
   const visibleSkillPaths = skillPaths.filter((path) => {
     const matchesSearch = !search || path.name.toLowerCase().includes(search) || path.description.toLowerCase().includes(search);
     if (!matchesSearch) return false;
     if (filter === "all") return true;
     if (!path.isAvailable) return false;
-    const pathProgress = getSkillPathProgress(path);
-    const pathStatus = getStatus(pathProgress.completedQuestionIds.length, pathProgress.totalQuestions, pathProgress.accuracyPercentage);
+    const pathProgress = getSkillPathProgress(path, evidenceOverride);
+    const pathStatus = getStatus(pathProgress.status);
     if (filter === "not-started") return pathStatus.id === "not-started";
     if (filter === "in-progress") return pathStatus.id === "in-progress";
     if (filter === "needs-work") return pathStatus.needsWork;
@@ -58,21 +61,21 @@ export function HigherMathsQuestionBank() {
   });
   return (
     <AppShell demo active="Subjects">
-      <div className="mx-auto mb-4 flex max-w-[1180px] justify-end">
+      <div className="mx-auto mb-3 flex max-w-[1120px] justify-end">
         <AppTopbar demo />
       </div>
-      <main className="mx-auto grid max-w-[1180px] grid-cols-[minmax(0,1fr)_320px] gap-5 max-lg:grid-cols-1">
+      <main className="mx-auto grid max-w-[1120px] grid-cols-[minmax(0,1fr)_300px] gap-4 max-lg:grid-cols-1">
         <section className="grid content-start gap-4">
           <header>
-            <nav className="mb-4 flex flex-wrap items-center gap-2 text-sm text-muted" aria-label="Breadcrumb">
+            <nav className="mb-3 flex flex-wrap items-center gap-2 text-sm text-muted" aria-label="Breadcrumb">
               <Link href="/subjects/higher-maths">Higher Maths</Link>
               <ArrowRight className="size-4" />
               <span>Practice</span>
               <ArrowRight className="size-4" />
               <span className="font-bold text-forge">Question Bank</span>
             </nav>
-            <h1 className="m-0 text-[clamp(34px,4vw,50px)] font-extrabold leading-none">Higher Maths Question Bank</h1>
-            <p className="mt-3 max-w-3xl text-lg leading-relaxed text-muted">Browse original SQA-style questions by topic.</p>
+            <h1 className="m-0 text-[32px] font-extrabold leading-none">Higher Maths Question Bank</h1>
+            <p className="mt-2 max-w-3xl text-base leading-relaxed text-muted">Browse original SQA-style questions by topic.</p>
           </header>
 
           <div className="grid gap-4">
@@ -82,7 +85,7 @@ export function HigherMathsQuestionBank() {
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search topics or keywords..."
-                className="min-h-11 w-full rounded-xl border border-line bg-white pl-12 pr-4 text-base outline-none transition focus:border-forge"
+                className="min-h-10 w-full rounded-xl border border-line bg-white pl-12 pr-4 text-base outline-none transition focus:border-forge"
               />
             </label>
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -92,7 +95,7 @@ export function HigherMathsQuestionBank() {
                     key={item.id}
                     type="button"
                     onClick={() => setFilter(item.id)}
-                    className={`min-h-10 rounded-full border px-4 text-sm font-bold transition ${filter === item.id ? "border-forge bg-[#fff4ec] text-forge" : "border-line bg-white text-muted hover:border-forge/50"}`}
+                    className={`min-h-10 rounded-full border px-4 text-sm font-bold transition ${filter === item.id ? "border-forge bg-forge-soft text-forge" : "border-line bg-white text-muted hover:border-forge/50"}`}
                   >
                     {item.label}
                   </button>
@@ -124,25 +127,25 @@ export function HigherMathsQuestionBank() {
                   <SkillPathRow key={path.slug} path={path} stageFilter={stageFilter} />
                 ))
               ) : (
-                <div className="p-6 text-muted">No topics match the current search and filter.</div>
+                <div className="p-4 text-muted">No topics match the current search and filter.</div>
               )}
             </div>
           </Card>
 
-          <Card className="bg-[#fffaf5] p-5">
+          <Card className="bg-paper p-4">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
-                <h2 className="m-0 text-lg font-extrabold">New topics are being prepared carefully.</h2>
+                <h2 className="m-0 text-base font-extrabold">New topics are being prepared carefully.</h2>
                 <p className="mt-2 text-sm text-muted">For beta, {skillPath.name} is the available question-bank path.</p>
               </div>
-              <Link href={getSkillPathHref(skillPath)} className="inline-flex min-h-11 items-center justify-center rounded-lg border border-line bg-white px-5 font-extrabold transition hover:border-forge hover:text-forge max-md:w-full">
+              <Link href={getSkillPathHref(skillPath)} className="inline-flex min-h-10 items-center justify-center rounded-lg border border-line bg-white px-4 font-extrabold transition hover:border-forge hover:text-forge max-md:w-full">
                 Open active path
               </Link>
             </div>
           </Card>
         </section>
 
-        <aside className="grid content-start gap-5">
+        <aside className="grid content-start gap-4">
           <SelectedPathPanel progress={progress} status={status} />
         </aside>
       </main>
@@ -152,7 +155,7 @@ export function HigherMathsQuestionBank() {
 
 function TopicHeader() {
   return (
-    <div className="grid grid-cols-[1fr_auto] border-b border-line bg-[#fffdf9] px-6 py-4 text-sm font-bold text-muted">
+    <div className="grid grid-cols-[1fr_auto] border-b border-line bg-paper px-4 py-3 text-sm font-bold text-muted">
       <span>Topic</span>
       <span>Questions</span>
     </div>
@@ -164,8 +167,8 @@ function TopicRow({ icon, title, countLabel, depth, open = false }: { icon: Reac
     <div className="grid grid-cols-[1fr_auto] items-center gap-3 px-4 py-3" style={{ paddingLeft: `${24 + depth * 28}px` }}>
       <div className="flex items-center gap-4">
         <ChevronDown className={`size-4 text-muted ${open ? "" : "-rotate-90"}`} />
-        <span className="grid size-10 place-items-center rounded-xl border border-[#f3d8c5] bg-[#fff4ec] text-forge">{icon}</span>
-        <strong className="text-lg">{title}</strong>
+        <span className="grid size-10 place-items-center rounded-xl border border-forge-soft bg-forge-soft text-forge">{icon}</span>
+        <strong className="text-base">{title}</strong>
       </div>
       <span className="font-bold text-muted">{countLabel}</span>
     </div>
@@ -173,8 +176,9 @@ function TopicRow({ icon, title, countLabel, depth, open = false }: { icon: Reac
 }
 
 function SkillPathRow({ path, stageFilter }: { path: SkillPath; stageFilter: string }) {
-  const progress = getSkillPathProgress(path);
-  const status = getStatus(progress.completedQuestionIds.length, progress.totalQuestions, progress.accuracyPercentage);
+  const hasMounted = useHasMounted();
+  const progress = getSkillPathProgress(path, hasMounted ? undefined : getEmptyProgressEvidence());
+  const status = getStatus(progress.status);
   const isSelectedPath = path.slug === getActiveSkillPath().slug;
   const stages = (path.learningStages ?? []).filter((stage) => stageFilter === "all" || stage.id === stageFilter);
 
@@ -183,11 +187,11 @@ function SkillPathRow({ path, stageFilter }: { path: SkillPath; stageFilter: str
       <div className="bg-gradient-to-r from-forge/10 to-white px-4 py-4 max-md:px-4">
         <div className="grid grid-cols-[1fr_auto] gap-4 max-md:grid-cols-1">
           <div className="flex items-start gap-4 pl-14 max-md:pl-0">
-            <span className="grid size-11 shrink-0 place-items-center rounded-xl border border-[#f3d8c5] bg-white text-forge">
+            <span className="grid size-10 shrink-0 place-items-center rounded-xl border border-forge-soft bg-white text-forge">
               <Target className="size-5" />
             </span>
             <div>
-              <h3 className="m-0 text-xl font-extrabold">{path.name}</h3>
+              <h3 className="m-0 text-lg font-extrabold">{path.name}</h3>
               <p className="mt-1 text-sm font-bold text-[#188246]">{status.label}</p>
               <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted">Learn to differentiate algebraic expressions using the power rule.</p>
               <div className="mt-4 grid gap-3 border-l border-dashed border-line pl-5">
@@ -205,8 +209,8 @@ function SkillPathRow({ path, stageFilter }: { path: SkillPath; stageFilter: str
             </div>
           </div>
           <div className="grid content-start justify-items-end gap-3 max-md:justify-items-start">
-            <span className="grid size-10 place-items-center rounded-full border border-[#f3d8c5] bg-white font-extrabold text-forge">{getQuestionCountForSkillPath(path)}</span>
-            <Link href={getSkillPathHref(path)} className="inline-flex min-h-11 items-center justify-center rounded-lg bg-forge px-5 font-extrabold text-white max-md:w-full">
+            <span className="grid size-10 place-items-center rounded-full border border-forge-soft bg-white font-extrabold text-forge">{getQuestionCountForSkillPath(path)}</span>
+            <Link href={getSkillPathHref(path)} className="inline-flex min-h-10 items-center justify-center rounded-lg bg-forge px-4 font-extrabold text-white max-md:w-full">
               Open
             </Link>
           </div>
@@ -218,11 +222,11 @@ function SkillPathRow({ path, stageFilter }: { path: SkillPath; stageFilter: str
   return (
     <div className="grid grid-cols-[1fr_auto] items-center gap-3 px-4 py-3 opacity-70 max-md:px-4">
       <div className="flex items-center gap-4 pl-14 max-md:pl-0">
-        <span className="grid size-10 place-items-center rounded-xl border border-line bg-[#fff4ec] text-forge">
+        <span className="grid size-10 place-items-center rounded-xl border border-line bg-forge-soft text-forge">
           <Lock className="size-4" />
         </span>
         <div>
-          <h3 className="m-0 text-lg font-extrabold">{path.name}</h3>
+          <h3 className="m-0 text-base font-extrabold">{path.name}</h3>
           <p className="mt-1 text-sm text-muted">Coming soon</p>
         </div>
       </div>
@@ -235,39 +239,39 @@ function SelectedPathPanel({ progress, status }: { progress: ReturnType<typeof g
   const skillPath = getActiveSkillPath();
   return (
     <Card className="p-4">
-      <h2 className="mb-5 text-xl font-extrabold">Your selected path</h2>
-      <div className="mb-4 flex items-center gap-4">
-        <span className="grid size-12 place-items-center rounded-xl bg-[#fff4ec] text-xl font-extrabold text-forge">fx</span>
+      <h2 className="mb-5 text-lg font-extrabold">Your selected path</h2>
+      <div className="mb-3 flex items-center gap-4">
+        <span className="grid size-10 place-items-center rounded-xl bg-forge-soft text-lg font-extrabold text-forge">fx</span>
         <div>
-          <h3 className="m-0 text-xl font-extrabold">{skillPath.name}</h3>
+          <h3 className="m-0 text-lg font-extrabold">{skillPath.name}</h3>
           <p className="mt-1 text-muted">{getQuestionCountForSkillPath(skillPath)} questions</p>
         </div>
       </div>
       <span className={`inline-flex rounded-full px-3 py-1 text-sm font-bold ${status.badgeClass}`}>{status.label}</span>
       <div className="my-4 border-t border-line pt-4">
         <div className="mb-2 flex justify-between text-sm font-bold text-muted">
-          <span>{progress.completedQuestionIds.length} / {progress.totalQuestions} attempted</span>
+          <span>{progress.completedQuestionIds.length} / {progress.totalQuestions} completed</span>
           <span>{progress.completionPercentage}%</span>
         </div>
         <ProgressBar value={progress.completionPercentage} />
       </div>
-      <div className="mb-4 grid gap-3">
+      <div className="mb-3 grid gap-3">
         <h4 className="m-0 font-extrabold">Learning stages</h4>
         {skillPath.learningStages?.map((stage, index) => (
-          <div key={stage.id} className="flex items-center justify-between gap-4 rounded-xl border border-line bg-[#fffdf9] p-4">
+          <div key={stage.id} className="flex items-center justify-between gap-4 rounded-xl border border-line bg-paper p-4">
             <div className="flex items-center gap-3">
-              <span className="grid size-8 place-items-center rounded-full bg-[#fff4ec] text-sm font-extrabold text-forge">{index + 1}</span>
+              <span className="grid size-8 place-items-center rounded-full bg-forge-soft text-sm font-extrabold text-forge">{index + 1}</span>
               <span className="font-bold">{stage.name}</span>
             </div>
             <span className="text-sm text-muted">{stage.questions}</span>
           </div>
         ))}
       </div>
-      <div className="mb-4 border-t border-line pt-4">
+      <div className="mb-3 border-t border-line pt-4">
         <h4 className="mb-3 flex items-center gap-2 font-extrabold"><BookOpen className="size-5" /> About this topic</h4>
         <p className="text-sm leading-relaxed text-muted">Covers the power rule for algebraic expressions, constants and simple polynomials.</p>
       </div>
-      <Link href={getSkillPathHref(skillPath)} className="flex min-h-10 w-full items-center justify-center gap-2 rounded-lg bg-forge px-5 font-extrabold text-white">
+      <Link href={getSkillPathHref(skillPath)} className="flex min-h-10 w-full items-center justify-center gap-2 rounded-lg bg-forge px-4 font-extrabold text-white">
         Open {skillPath.name}
         <ArrowRight className="size-5" />
       </Link>
@@ -275,20 +279,15 @@ function SelectedPathPanel({ progress, status }: { progress: ReturnType<typeof g
   );
 }
 
-function getStatus(attempted: number, total: number, accuracy: number | null) {
-  if (total > 0 && attempted >= total) {
-    return { id: "complete", label: "Complete", needsWork: false, badgeClass: "bg-[#f1fbf4] text-[#188246]" };
-  }
-  if (attempted > 0) {
-    const needsWork = accuracy !== null && accuracy < 70;
-    return {
-      id: "in-progress",
-      label: needsWork ? "Needs work" : "In progress",
-      needsWork,
-      badgeClass: needsWork ? "bg-[#fff4ec] text-forge" : "bg-[#fff4ec] text-forge",
-    };
-  }
-  return { id: "not-started", label: "Not started", needsWork: false, badgeClass: "bg-[#f4f1eb] text-muted" };
+function getStatus(status: "not_started" | "in_progress" | "completed" | "secure" | "mastered") {
+  const id = status.replace("_", "-");
+  const label = status.split("_").map((part) => part[0]?.toUpperCase() + part.slice(1)).join(" ");
+  const isStrong = status === "secure" || status === "mastered";
+  return {
+    id,
+    label,
+    needsWork: false,
+    badgeClass: isStrong ? "bg-[#f1fbf4] text-[#188246]" : status === "not_started" ? "bg-[#f4f1eb] text-muted" : "bg-forge-soft text-forge",
+  };
 }
-
 

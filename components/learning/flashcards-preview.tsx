@@ -16,7 +16,7 @@ export function FlashcardsPreview({ flashcards }: { flashcards?: Flashcard[] }) 
       <h2 className="m-0 text-3xl font-extrabold">Flashcards Preview</h2>
       <p className="mt-2 text-muted">Quick checks before you practise.</p>
       <Card className="mt-6 p-7">
-        <span className="mb-5 grid size-12 place-items-center rounded-xl bg-[#fff4ec] text-forge">
+        <span className="mb-5 grid size-12 place-items-center rounded-xl bg-forge-soft text-forge">
           <ClipboardList className="size-6" />
         </span>
         <div className="grid gap-3">
@@ -24,7 +24,7 @@ export function FlashcardsPreview({ flashcards }: { flashcards?: Flashcard[] }) 
             const isRevealed = Boolean(revealed[card.id]);
 
             return (
-              <article key={card.id} className="rounded-xl border border-line bg-[#fffdf9] p-4">
+              <article key={card.id} className="rounded-xl border border-line bg-paper p-4">
                 <div className="font-extrabold text-ink">
                   <MathContent>{card.front}</MathContent>
                 </div>

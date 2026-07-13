@@ -1,5 +1,5 @@
-import { SpecAreaLearningPathPage } from "@/components/subject-learning-pages";
+import { redirect } from "next/navigation";
 
 export default function HigherMathsDifferentiation() {
-  return <SpecAreaLearningPathPage subjectSlug="higher-maths" courseAreaSlug="calculus" specAreaSlug="differentiation" />;
+  redirect("/subjects/higher-maths");
 }

@@ -1,159 +1,184 @@
-﻿import type { LearningStage, SkillPath } from "@/data/types";
+import type { LearningStage, SkillPath } from "@/data/types";
+import {
+  calculateSkillPathProgress,
+  calculateStageProgress,
+  getQuestionProgressForVersion as deriveQuestionProgress,
+  isGenuineAnswer,
+  selectNextQuestionId,
+} from "@/lib/progress/calculations";
+import { ProgressRepository } from "@/lib/progress/repository";
+import { createBrowserProgressStorage } from "@/lib/progress/storage";
+import type { LegacyQuestionAttempt, ProgressEvidence, QuestionAttempt } from "@/lib/progress/types";
+import { UNKNOWN_LEGACY_VERSION_EVIDENCE, type VersionEvidence } from "@/lib/progress/types";
+import { getMathsQuestionById, mathsQuestions } from "@/data/question-registry";
+import { createEventId } from "@/lib/progress/event-identity";
+import { getSkillPathById, subjects } from "@/lib/learning-paths";
+import type { StructuralAchievementContext } from "@/lib/progress/achievements";
 
-export type QuestionAttempt = {
-  questionId: string;
-  skillPathId: string;
-  stageId: string;
-  isCorrect: boolean | null;
-  answer: string;
-  attemptedAt: string;
-};
+export type {
+  DashboardProgressSummary,
+  LegacyQuestionAttempt,
+  ProgressEvidence,
+  ProgressLoadResult,
+  ProgressLoadStatus,
+  ProgressPayload,
+  ProgressPayloadV1,
+  ProgressPayloadV2,
+  ProgressPayloadV3,
+  ProgressPayloadV4,
+  ProgressStatus,
+  QuestionAttempt,
+  QuestionOutcome,
+  QuestionProgressState,
+  QuestionSupportEvent,
+  VersionEvidence,
+  SkillPathProgress,
+  StageProgress,
+} from "@/lib/progress/types";
 
-export type StageProgress = {
-  stageId: string;
-  attemptedQuestionIds: string[];
-  correctQuestionIds: string[];
-  completedQuestionIds: string[];
-  totalQuestions: number;
-  attemptedCount: number;
-  correctCount: number;
-  completionPercentage: number;
-  accuracyPercentage: number | null;
-};
+type SubmissionInput = LegacyQuestionAttempt & { hintViewedBeforeSubmission?: boolean };
 
-export type SkillPathProgress = {
-  skillPathId: string;
-  attemptedQuestionIds: string[];
-  correctQuestionIds: string[];
-  completedQuestionIds: string[];
-  totalQuestions: number;
-  correctCount: number;
-  attemptedCount: number;
-  completionPercentage: number;
-  accuracyPercentage: number | null;
-  stageProgress: Record<string, StageProgress>;
-};
-
-const STORAGE_KEY = "stemforge.localProgress.v1";
-
-function canUseStorage() {
-  return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
+function createRepository() {
+  return new ProgressRepository(createBrowserProgressStorage());
 }
 
-function readAttempts(): QuestionAttempt[] {
-  if (!canUseStorage()) return [];
+function readEvidence(): ProgressEvidence {
+  return createRepository().getEvidence();
+}
 
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.filter(isQuestionAttempt) : [];
-  } catch {
-    return [];
+function emptyEvidence(): ProgressEvidence {
+  return { attempts: [], supportEvents: [], achievementSnapshots: [] };
+}
+
+function dispatchProgressUpdate() {
+  if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("stemforge:local-progress-updated"));
+}
+
+function nextSequence(evidence: ProgressEvidence) {
+  return Math.max(0, ...evidence.attempts.map((item) => item.sequence), ...evidence.supportEvents.map((item) => item.sequence)) + 1;
+}
+
+export function getVersionEvidenceForQuestion(questionId: string): VersionEvidence {
+  const question = getMathsQuestionById(questionId);
+  return question
+    ? { kind: "known", questionVersion: question.questionVersion }
+    : { ...UNKNOWN_LEGACY_VERSION_EVIDENCE };
+}
+
+function sameVersionEvidence(left: VersionEvidence, right: VersionEvidence) {
+  return left.kind === right.kind && left.questionVersion === right.questionVersion;
+}
+
+const activeQuestionVersions: Readonly<Record<string, number>> = Object.fromEntries(
+  mathsQuestions.map((question) => [question.id, question.questionVersion]),
+);
+
+function getStructuralContext(skillPathId: string): StructuralAchievementContext | undefined {
+  const skillPath = getSkillPathById(skillPathId);
+  if (!skillPath) return undefined;
+  for (const subject of subjects) {
+    for (const course of subject.courseAreas) {
+      if (course.specAreas.some((area) => area.skillPaths?.some((path) => path.slug === skillPathId))) {
+        return { subjectId: subject.subjectSlug, courseId: course.slug, skillPath, questionVersions: activeQuestionVersions };
+      }
+    }
   }
-}
-
-function writeAttempts(attempts: QuestionAttempt[]) {
-  if (!canUseStorage()) return;
-
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(attempts));
-    window.dispatchEvent(new CustomEvent("stemforge:local-progress-updated"));
-  } catch {
-    // Local progress is a browser enhancement. If storage fails, keep the app usable.
-  }
-}
-
-function isQuestionAttempt(value: unknown): value is QuestionAttempt {
-  if (!value || typeof value !== "object") return false;
-  const attempt = value as QuestionAttempt;
-  return (
-    typeof attempt.questionId === "string" &&
-    typeof attempt.skillPathId === "string" &&
-    typeof attempt.stageId === "string" &&
-    (typeof attempt.isCorrect === "boolean" || attempt.isCorrect === null) &&
-    typeof attempt.answer === "string" &&
-    typeof attempt.attemptedAt === "string"
-  );
-}
-
-function getLatestAttempts(attempts: QuestionAttempt[]) {
-  const latest = new Map<string, QuestionAttempt>();
-  for (const attempt of attempts) {
-    latest.set(attempt.questionId, attempt);
-  }
-  return [...latest.values()];
-}
-
-function percent(part: number, total: number) {
-  return total > 0 ? Math.round((part / total) * 100) : 0;
+  return undefined;
 }
 
 export function getAllAttempts() {
-  return readAttempts();
+  return readEvidence().attempts;
+}
+
+export function getProgressEvidence() {
+  return readEvidence();
 }
 
 export function getAttemptsForSkillPath(skillPathId: string) {
-  return readAttempts().filter((attempt) => attempt.skillPathId === skillPathId);
+  return readEvidence().attempts.filter((attempt) => attempt.skillPathId === skillPathId);
 }
 
-export function saveQuestionAttempt(attempt: QuestionAttempt) {
-  writeAttempts([...readAttempts(), attempt]);
-}
-
-export function getStageProgress(skillPath: SkillPath, stage: LearningStage): StageProgress {
-  const latestAttempts = getLatestAttempts(getAttemptsForSkillPath(skillPath.slug)).filter((attempt) => attempt.stageId === stage.id);
-  const stageQuestionIds = new Set(stage.questionIds);
-  const completedQuestionIds = latestAttempts.map((attempt) => attempt.questionId).filter((questionId) => stageQuestionIds.has(questionId));
-  const correctQuestionIds = latestAttempts
-    .filter((attempt) => attempt.isCorrect === true && stageQuestionIds.has(attempt.questionId))
-    .map((attempt) => attempt.questionId);
-
-  return {
-    stageId: stage.id,
-    attemptedQuestionIds: completedQuestionIds,
-    completedQuestionIds,
-    correctQuestionIds,
-    totalQuestions: stage.questionIds.length,
-    attemptedCount: completedQuestionIds.length,
-    correctCount: correctQuestionIds.length,
-    completionPercentage: percent(completedQuestionIds.length, stage.questionIds.length),
-    accuracyPercentage: completedQuestionIds.length > 0 ? percent(correctQuestionIds.length, completedQuestionIds.length) : null,
+export function saveQuestionAttempt(input: SubmissionInput) {
+  if (!isGenuineAnswer(input.answer)) return false;
+  const repository = createRepository();
+  const evidence = repository.getEvidence();
+  const attempt: QuestionAttempt = {
+    ...input,
+    sequence: nextSequence(evidence),
+    isGenuine: true,
+    hintViewedBeforeSubmission: input.hintViewedBeforeSubmission ?? false,
+    supportKnowledge: "known",
+    versionEvidence: getVersionEvidenceForQuestion(input.questionId),
+    eventId: createEventId("attempt"),
   };
+  if (!repository.recordAttempt(attempt, getStructuralContext(input.skillPathId))) return false;
+  dispatchProgressUpdate();
+  return true;
 }
 
-export function getSkillPathProgress(skillPath: SkillPath): SkillPathProgress {
-  const stages = skillPath.learningStages ?? [];
-  const totalQuestionIds = stages.flatMap((stage) => stage.questionIds);
-  const knownQuestionIds = new Set(totalQuestionIds);
-  const latestAttempts = getLatestAttempts(getAttemptsForSkillPath(skillPath.slug)).filter((attempt) => knownQuestionIds.has(attempt.questionId));
-  const completedQuestionIds = latestAttempts.map((attempt) => attempt.questionId);
-  const correctQuestionIds = latestAttempts.filter((attempt) => attempt.isCorrect === true).map((attempt) => attempt.questionId);
-  const stageProgress = Object.fromEntries(stages.map((stage) => [stage.id, getStageProgress(skillPath, stage)]));
-
-  return {
-    skillPathId: skillPath.slug,
-    attemptedQuestionIds: completedQuestionIds,
-    completedQuestionIds,
-    correctQuestionIds,
-    totalQuestions: totalQuestionIds.length,
-    attemptedCount: completedQuestionIds.length,
-    correctCount: correctQuestionIds.length,
-    completionPercentage: percent(completedQuestionIds.length, totalQuestionIds.length),
-    accuracyPercentage: completedQuestionIds.length > 0 ? percent(correctQuestionIds.length, completedQuestionIds.length) : null,
-    stageProgress,
-  };
+export function recordHintViewed(input: Omit<LegacyQuestionAttempt, "isCorrect" | "answer">) {
+  return recordSupport("hint_viewed", input);
 }
 
-export function getNextQuestionId(skillPath: SkillPath) {
-  const completed = new Set(getSkillPathProgress(skillPath).completedQuestionIds);
-  for (const stage of skillPath.learningStages ?? []) {
-    const nextQuestionId = stage.questionIds.find((questionId) => !completed.has(questionId));
-    if (nextQuestionId) return nextQuestionId;
-  }
-  return null;
+export function recordWorkedSolutionViewed(input: Omit<LegacyQuestionAttempt, "isCorrect" | "answer">) {
+  const evidence = readEvidence();
+  const versionEvidence = getVersionEvidenceForQuestion(input.questionId);
+  const afterGenuineAttempt = evidence.attempts.some(
+    (attempt) => attempt.questionId === input.questionId && attempt.isGenuine && sameVersionEvidence(attempt.versionEvidence, versionEvidence),
+  );
+  if (!afterGenuineAttempt) return false;
+  return recordSupport("solution_viewed", input, true);
+}
+
+function recordSupport(
+  type: "hint_viewed" | "solution_viewed",
+  input: Omit<LegacyQuestionAttempt, "isCorrect" | "answer">,
+  knownAfterAttempt?: boolean,
+) {
+  const repository = createRepository();
+  const evidence = repository.getEvidence();
+  const versionEvidence = getVersionEvidenceForQuestion(input.questionId);
+  const alreadyRecorded = evidence.supportEvents.some(
+    (event) => event.questionId === input.questionId && event.type === type && sameVersionEvidence(event.versionEvidence, versionEvidence),
+  );
+  if (alreadyRecorded) return true;
+  const saved = repository.recordSupportEvent({
+    ...input,
+    type,
+    occurredAt: input.attemptedAt,
+    sequence: nextSequence(evidence),
+    afterGenuineAttempt:
+      knownAfterAttempt ?? evidence.attempts.some(
+        (attempt) => attempt.questionId === input.questionId && attempt.isGenuine && sameVersionEvidence(attempt.versionEvidence, versionEvidence),
+      ),
+    versionEvidence,
+    eventId: createEventId("support"),
+  }, getStructuralContext(input.skillPathId));
+  if (saved) dispatchProgressUpdate();
+  return saved;
+}
+
+export function getQuestionProgress(questionId: string, evidenceOverride?: ProgressEvidence) {
+  const version = getMathsQuestionById(questionId)?.questionVersion ?? 1;
+  return deriveQuestionProgress(questionId, version, evidenceOverride ?? readEvidence());
+}
+
+export function getStageProgress(skillPath: SkillPath, stage: LearningStage, evidenceOverride?: ProgressEvidence) {
+  return calculateStageProgress(skillPath, stage, evidenceOverride ?? readEvidence(), activeQuestionVersions);
+}
+
+export function getSkillPathProgress(skillPath: SkillPath, evidenceOverride?: ProgressEvidence) {
+  return calculateSkillPathProgress(skillPath, evidenceOverride ?? readEvidence(), activeQuestionVersions);
+}
+
+export function getNextQuestionId(skillPath: SkillPath, evidenceOverride?: ProgressEvidence) {
+  return selectNextQuestionId(skillPath, evidenceOverride ?? readEvidence(), activeQuestionVersions);
+}
+
+export function getEmptyProgressEvidence() {
+  return emptyEvidence();
 }
 
 export function resetSkillPathProgress(skillPathId: string) {
-  writeAttempts(readAttempts().filter((attempt) => attempt.skillPathId !== skillPathId));
+  if (createRepository().resetPath(skillPathId)) dispatchProgressUpdate();
 }

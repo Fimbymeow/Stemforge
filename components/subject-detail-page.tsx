@@ -86,15 +86,15 @@ function HeroCard() {
     <Card className="p-8">
       <div className="grid grid-cols-[1fr_auto] gap-8 max-md:grid-cols-1">
         <div>
-          <span className="inline-flex rounded-lg bg-[#fff4ec] px-4 py-2 text-sm font-extrabold text-forge">
+          <span className="inline-flex rounded-lg bg-forge-soft px-4 py-2 text-sm font-extrabold text-forge">
             Available Now
           </span>
-          <h1 className="mb-4 mt-5 text-[clamp(38px,5vw,64px)] font-extrabold leading-none">{higherPhysicsSubject.name}</h1>
+          <h1 className="mb-4 mt-5 text-[32px] font-extrabold leading-none">{higherPhysicsSubject.name}</h1>
           <p className="max-w-2xl text-xl leading-relaxed text-muted">
             {higherPhysicsSubject.longDescription}
           </p>
         </div>
-        <div className="grid min-w-[220px] content-center rounded-2xl border border-line bg-[#fffaf5] p-6 text-center">
+        <div className="grid min-w-[220px] content-center rounded-2xl border border-line bg-paper p-6 text-center">
           <Orbit className="mx-auto mb-4 size-12 text-forge" />
           <strong className="text-4xl">{higherPhysicsSubject.progress}%</strong>
           <span className="mt-2 text-muted">Course progress</span>
@@ -119,7 +119,7 @@ function TopicCard({ topic }: { topic: (typeof higherPhysicsCourseAreas)[number]
           <h3 className="m-0 text-2xl font-extrabold">{topic.name}</h3>
           <p className="mt-3 min-h-[72px] text-muted">{topic.description}</p>
         </div>
-        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[#fff4ec] text-forge">
+        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-forge-soft text-forge">
           <ArrowRight className="size-5" />
         </span>
       </div>
@@ -137,7 +137,7 @@ function TopicCard({ topic }: { topic: (typeof higherPhysicsCourseAreas)[number]
 
 function SideStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="mb-4 flex items-center justify-between gap-4 rounded-xl border border-line bg-[#fffdf9] p-4 last:mb-0">
+    <div className="mb-4 flex items-center justify-between gap-4 rounded-xl border border-line bg-paper p-4 last:mb-0">
       <span className="text-muted">{label}</span>
       <strong className="text-xl">{value}</strong>
     </div>
@@ -146,7 +146,7 @@ function SideStat({ label, value }: { label: string; value: string }) {
 
 function ActivityRow({ title, meta }: { title: string; meta: string }) {
   return (
-    <div className="rounded-xl border border-line bg-[#fffdf9] p-4">
+    <div className="rounded-xl border border-line bg-paper p-4">
       <p className="m-0 font-bold">{title}</p>
       <p className="mt-1 text-sm text-muted">{meta}</p>
     </div>

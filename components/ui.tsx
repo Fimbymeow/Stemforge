@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
+import type { HTMLAttributes, ReactNode } from "react";
 
 type ButtonLinkProps = {
   href: string;
@@ -32,14 +32,13 @@ export function ButtonLink({
   );
 }
 
-type CardProps = {
+type CardProps = HTMLAttributes<HTMLElement> & {
   children: ReactNode;
-  className?: string;
 };
 
-export function Card({ children, className = "" }: CardProps) {
+export function Card({ children, className = "", ...props }: CardProps) {
   return (
-    <article className={`rounded-2xl border border-line bg-white shadow-card ${className}`}>
+    <article {...props} className={`rounded-2xl border border-line bg-white shadow-card ${className}`}>
       {children}
     </article>
   );
@@ -51,11 +50,18 @@ type ProgressBarProps = {
 };
 
 export function ProgressBar({ value, className = "" }: ProgressBarProps) {
+  const safeValue = Math.max(0, Math.min(100, value));
   return (
-    <div className={`h-2 overflow-hidden rounded-full bg-[#eeeae3] ${className}`}>
+    <div
+      role="progressbar"
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={safeValue}
+      className={`h-2 overflow-hidden rounded-full bg-line ${className}`}
+    >
       <span
-        className="block h-full rounded-full bg-forge"
-        style={{ width: `${Math.max(0, Math.min(100, value))}%` }}
+        className="block h-full rounded-full bg-forge transition-[width] duration-500 ease-out"
+        style={{ width: `${safeValue}%` }}
       />
     </div>
   );

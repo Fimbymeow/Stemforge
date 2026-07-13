@@ -1,7 +1,10 @@
 ﻿import type { Subject } from "@/data/types";
 
+import { ACTIVE_CONTENT_STATUS, INITIAL_STAGE_VERSION } from "@/data/content-metadata";
+
 export const higherPhysics: Subject = {
   subjectSlug: "higher-physics",
+  contentStatus: ACTIVE_CONTENT_STATUS,
   subjectName: "Higher Physics",
   subject: "Physics",
   level: "Higher",
@@ -17,6 +20,7 @@ export const higherPhysics: Subject = {
   courseAreas: [
     {
       slug: "our-dynamic-universe",
+      contentStatus: ACTIVE_CONTENT_STATUS,
       name: "Our dynamic Universe",
       description: "Motion, forces, energy, power, collisions, impulse, gravitation and the expanding Universe.",
       href: "/subjects/higher-physics/our-dynamic-universe",
@@ -26,6 +30,7 @@ export const higherPhysics: Subject = {
       specAreas: [
         {
           slug: "motion-equations-and-graphs",
+          contentStatus: ACTIVE_CONTENT_STATUS,
           name: "Motion - equations and graphs",
           description: "Use equations and graphs to describe and solve constant-acceleration motion.",
           href: "/subjects/higher-physics/our-dynamic-universe/motion-equations-and-graphs",
@@ -35,6 +40,7 @@ export const higherPhysics: Subject = {
         },
         {
           slug: "forces-energy-and-power",
+          contentStatus: ACTIVE_CONTENT_STATUS,
           name: "Forces, energy and power",
           description: "Connect force, work done, energy changes and power in Higher Physics problems.",
           href: "/subjects/higher-physics/our-dynamic-universe/forces-energy-and-power",
@@ -44,6 +50,7 @@ export const higherPhysics: Subject = {
         },
         {
           slug: "collisions-explosions-and-impulse",
+          contentStatus: ACTIVE_CONTENT_STATUS,
           name: "Collisions, explosions and impulse",
           description: "Practise conservation of momentum, impulse and force-time graphs.",
           href: "/subjects/higher-physics/our-dynamic-universe/collisions-explosions-and-impulse",
@@ -53,6 +60,7 @@ export const higherPhysics: Subject = {
         },
         {
           slug: "gravitation",
+          contentStatus: ACTIVE_CONTENT_STATUS,
           name: "Gravitation",
           description: "Build confidence with gravitational fields, potential and satellite motion.",
           href: "/subjects/higher-physics/our-dynamic-universe/gravitation",
@@ -62,6 +70,7 @@ export const higherPhysics: Subject = {
         },
         {
           slug: "special-relativity",
+          contentStatus: ACTIVE_CONTENT_STATUS,
           name: "Special relativity",
           description: "Work through time dilation, length contraction and relativistic relationships.",
           href: "/subjects/higher-physics/our-dynamic-universe/special-relativity",
@@ -71,6 +80,7 @@ export const higherPhysics: Subject = {
         },
         {
           slug: "the-expanding-universe",
+          contentStatus: ACTIVE_CONTENT_STATUS,
           name: "The expanding Universe",
           description: "Explore redshift, Hubble's law and evidence for the expanding Universe.",
           href: "/subjects/higher-physics/our-dynamic-universe/the-expanding-universe",
@@ -82,6 +92,7 @@ export const higherPhysics: Subject = {
     },
     {
       slug: "particles-and-waves",
+      contentStatus: ACTIVE_CONTENT_STATUS,
       name: "Particles and Waves",
       description: "Charged particles, the Standard Model, nuclear reactions, spectra and refraction.",
       href: "/subjects/higher-physics/particles-and-waves",
@@ -91,6 +102,7 @@ export const higherPhysics: Subject = {
       specAreas: [
         {
           slug: "forces-on-charged-particles",
+          contentStatus: ACTIVE_CONTENT_STATUS,
           name: "Forces on charged particles",
           description: "Structured practice for electric and magnetic effects on charged particles.",
           href: "/subjects/higher-physics/particles-and-waves/forces-on-charged-particles",
@@ -100,6 +112,7 @@ export const higherPhysics: Subject = {
         },
         {
           slug: "the-standard-model",
+          contentStatus: ACTIVE_CONTENT_STATUS,
           name: "The Standard Model",
           description: "Structured practice for particle families, forces and exchange particles.",
           href: "/subjects/higher-physics/particles-and-waves/the-standard-model",
@@ -109,6 +122,7 @@ export const higherPhysics: Subject = {
         },
         {
           slug: "nuclear-reactions",
+          contentStatus: ACTIVE_CONTENT_STATUS,
           name: "Nuclear reactions",
           description: "Structured practice for nuclear equations, binding energy and activity.",
           href: "/subjects/higher-physics/particles-and-waves/nuclear-reactions",
@@ -118,6 +132,7 @@ export const higherPhysics: Subject = {
         },
         {
           slug: "inverse-square-law",
+          contentStatus: ACTIVE_CONTENT_STATUS,
           name: "Inverse square law",
           description: "Structured practice for radiation intensity and distance relationships.",
           href: "/subjects/higher-physics/particles-and-waves/inverse-square-law",
@@ -127,6 +142,7 @@ export const higherPhysics: Subject = {
         },
         {
           slug: "wave-particle-duality",
+          contentStatus: ACTIVE_CONTENT_STATUS,
           name: "Wave-particle duality",
           description: "Structured practice for photons, energy and de Broglie wavelength.",
           href: "/subjects/higher-physics/particles-and-waves/wave-particle-duality",
@@ -136,6 +152,7 @@ export const higherPhysics: Subject = {
         },
         {
           slug: "interference",
+          contentStatus: ACTIVE_CONTENT_STATUS,
           name: "Interference",
           description: "Structured practice for path difference, coherence and interference patterns.",
           href: "/subjects/higher-physics/particles-and-waves/interference",
@@ -145,6 +162,7 @@ export const higherPhysics: Subject = {
         },
         {
           slug: "spectra",
+          contentStatus: ACTIVE_CONTENT_STATUS,
           name: "Spectra",
           description: "Structured practice for emission, absorption and energy level transitions.",
           href: "/subjects/higher-physics/particles-and-waves/spectra",
@@ -154,6 +172,7 @@ export const higherPhysics: Subject = {
         },
         {
           slug: "refraction-of-light",
+          contentStatus: ACTIVE_CONTENT_STATUS,
           name: "Refraction of light",
           description: "Structured practice for refractive index, critical angle and ray behaviour.",
           href: "/subjects/higher-physics/particles-and-waves/refraction-of-light",
@@ -165,6 +184,7 @@ export const higherPhysics: Subject = {
     },
     {
       slug: "electricity",
+      contentStatus: ACTIVE_CONTENT_STATUS,
       name: "Electricity",
       description: "AC, resistance, sources, capacitors and semiconductors.",
       href: "/subjects/higher-physics/electricity",
@@ -174,6 +194,7 @@ export const higherPhysics: Subject = {
       specAreas: [
         {
           slug: "monitoring-and-measuring-ac",
+          contentStatus: ACTIVE_CONTENT_STATUS,
           name: "Monitoring and measuring AC",
           description: "Structured practice for AC measurements, frequency and oscilloscope traces.",
           href: "/subjects/higher-physics/electricity/monitoring-and-measuring-ac",
@@ -183,6 +204,7 @@ export const higherPhysics: Subject = {
         },
         {
           slug: "current-potential-difference-power-and-resistance",
+          contentStatus: ACTIVE_CONTENT_STATUS,
           name: "Current, potential difference, power and resistance",
           description: "Structured practice for electrical relationships and circuit calculations.",
           href: "/subjects/higher-physics/electricity/current-potential-difference-power-and-resistance",
@@ -192,6 +214,7 @@ export const higherPhysics: Subject = {
         },
         {
           slug: "electrical-sources-and-internal-resistance",
+          contentStatus: ACTIVE_CONTENT_STATUS,
           name: "Electrical sources and internal resistance",
           description: "Structured practice for emf, terminal potential difference and internal resistance.",
           href: "/subjects/higher-physics/electricity/electrical-sources-and-internal-resistance",
@@ -201,6 +224,7 @@ export const higherPhysics: Subject = {
         },
         {
           slug: "capacitors",
+          contentStatus: ACTIVE_CONTENT_STATUS,
           name: "Capacitors",
           description: "Structured practice for capacitance, charge, energy and capacitor graphs.",
           href: "/subjects/higher-physics/electricity/capacitors",
@@ -210,6 +234,7 @@ export const higherPhysics: Subject = {
         },
         {
           slug: "semiconductors-and-p-n-junctions",
+          contentStatus: ACTIVE_CONTENT_STATUS,
           name: "Semiconductors and p-n junctions",
           description: "Structured practice for semiconductors, diodes and p-n junction behaviour.",
           href: "/subjects/higher-physics/electricity/semiconductors-and-p-n-junctions",
@@ -223,6 +248,8 @@ export const higherPhysics: Subject = {
   learningStages: [
     {
       id: "higher-physics-stage-foundations",
+      stageVersion: INITIAL_STAGE_VERSION,
+      contentStatus: ACTIVE_CONTENT_STATUS,
       title: "Foundations",
       label: "Foundations",
       name: "Foundations",
@@ -238,6 +265,8 @@ export const higherPhysics: Subject = {
     },
     {
       id: "higher-physics-stage-applications",
+      stageVersion: INITIAL_STAGE_VERSION,
+      contentStatus: ACTIVE_CONTENT_STATUS,
       title: "Applications",
       label: "Applications",
       name: "Applications",
@@ -253,6 +282,8 @@ export const higherPhysics: Subject = {
     },
     {
       id: "higher-physics-stage-past-paper-style",
+      stageVersion: INITIAL_STAGE_VERSION,
+      contentStatus: ACTIVE_CONTENT_STATUS,
       title: "Past Paper-style Questions",
       label: "Past Paper-style Questions",
       name: "Past Paper-style Questions",

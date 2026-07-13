@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRef } from "react";
 import { MathContent } from "@/components/questions/math-content";
@@ -34,11 +34,11 @@ export function MultipleChoiceInput({ value, submitted, onChange, options }: Inp
 }
 
 export function NumericalInput(props: InputProps) {
-  return <TextInput {...props} placeholder="Enter a number" showKeypad />;
+  return <TextInput {...props} placeholder="Enter a number" helper="Use the keypad if helpful. Extra spaces are ignored when marking." showKeypad />;
 }
 
 export function AlgebraicInput(props: InputProps) {
-  return <TextInput {...props} placeholder="Enter your answer" showKeypad />;
+  return <TextInput {...props} placeholder="Example: 5x^4" helper="Type powers with ^, for example 5x^4. You can also use * for multiplication." showKeypad />;
 }
 
 export function WrittenAnswerInput(props: InputProps) {
@@ -49,20 +49,22 @@ export function MultiStepInput(props: InputProps) {
   return <TextAreaInput {...props} placeholder="Show your working. Structured multi-step marking will be added later." />;
 }
 
-function TextInput({ value, submitted, onChange, placeholder, showKeypad = false }: InputProps & { placeholder: string; showKeypad?: boolean }) {
+function TextInput({ value, submitted, onChange, placeholder, helper, showKeypad = false }: InputProps & { placeholder: string; helper?: string; showKeypad?: boolean }) {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   return (
     <div>
       <input
         ref={inputRef}
+        aria-label="Your answer"
         value={value}
         onChange={(event) => onChange(event.target.value)}
         disabled={submitted}
         placeholder={placeholder}
         aria-describedby={submitted ? "answer-feedback" : undefined}
-        className="min-h-14 w-full rounded-lg border border-line bg-white px-4 text-lg outline-none transition focus:border-forge disabled:bg-[#fbf8f2]"
+        className="min-h-11 w-full rounded-lg border border-line bg-white px-3.5 text-base outline-none transition focus:border-forge disabled:bg-line/40"
       />
+      {helper ? <p className="mt-2 text-sm leading-relaxed text-muted">{helper}</p> : null}
       {showKeypad ? <MathKeypad value={value} onChange={onChange} inputRef={inputRef} disabled={submitted} /> : null}
     </div>
   );
@@ -71,12 +73,13 @@ function TextInput({ value, submitted, onChange, placeholder, showKeypad = false
 function TextAreaInput({ value, submitted, onChange, placeholder }: InputProps & { placeholder: string }) {
   return (
     <textarea
+      aria-label="Your answer"
       value={value}
       onChange={(event) => onChange(event.target.value)}
       disabled={submitted}
       placeholder={placeholder}
-      rows={5}
-      className="min-h-32 w-full rounded-lg border border-line bg-white p-4 text-lg outline-none transition focus:border-forge disabled:bg-[#fbf8f2]"
+      rows={4}
+      className="min-h-28 w-full rounded-lg border border-line bg-white p-3.5 text-base outline-none transition focus:border-forge disabled:bg-line/40"
     />
   );
 }
@@ -96,3 +99,4 @@ export function HintPanel() {
 export function CommonMistakePanel() {
   return null;
 }
+

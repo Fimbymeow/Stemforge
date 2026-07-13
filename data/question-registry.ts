@@ -1,11 +1,12 @@
 ﻿import { higherMathsDifferentiationQuestions } from "@/content/questions/higher-maths/differentiation";
 import { getQuestionById } from "@/lib/learning-paths";
 import { getQuestionById as getPhysicsQuestionById, questions as physicsQuestions } from "@/data/questions";
+import { getActiveQuestionById, getActiveQuestions } from "@/lib/content-selectors";
 
-export const mathsQuestions = higherMathsDifferentiationQuestions;
+export const mathsQuestions = getActiveQuestions(higherMathsDifferentiationQuestions);
 
 export function getMathsQuestionById(id: string) {
-  return mathsQuestions.find((question) => question.id === id);
+  return getActiveQuestionById(mathsQuestions, id);
 }
 
 export function getAnyQuestionById(id: string) {

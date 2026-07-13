@@ -24,7 +24,7 @@ const accentClasses = {
   },
   orange: {
     border: "border-forge/45",
-    bg: "bg-[#fff4ec]",
+    bg: "bg-forge-soft",
     text: "text-forge",
     button: "bg-forge text-white",
   },

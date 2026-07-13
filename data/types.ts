@@ -1,5 +1,10 @@
 ﻿export type AvailabilityStatus = "available" | "coming-soon" | "locked";
 export type ProgressStatus = "not_started" | "in_progress" | "completed" | "mastered" | "locked";
+export type ContentStatus = "active" | "archived";
+export type QuestionVersion = number;
+export type ContentRevision = number;
+export type StageVersion = number;
+export type PathVersion = number;
 
 export type LearningStageName = "Foundations" | "Applications" | "Past Paper-style Questions";
 export type ContentVariant = "default" | "tip" | "warning" | "exam";
@@ -7,6 +12,8 @@ export type ContentVariant = "default" | "tip" | "warning" | "exam";
 export type ContentBase = {
   id: string;
   title: string;
+  contentRevision: ContentRevision;
+  contentStatus: ContentStatus;
   status?: AvailabilityStatus;
   progressStatus?: ProgressStatus;
   displayOrder?: number;
@@ -37,6 +44,8 @@ export type Flashcard = {
   id: string;
   front: string;
   back: string;
+  contentRevision: ContentRevision;
+  contentStatus: ContentStatus;
   hint?: string;
   title?: string;
   status?: AvailabilityStatus;
@@ -54,6 +63,8 @@ export type PracticeSet = ContentBase & {
 
 export type LearningStage = {
   id: string;
+  stageVersion: StageVersion;
+  contentStatus: ContentStatus;
   title: string;
   label: LearningStageName;
   name: LearningStageName;
@@ -84,6 +95,8 @@ export type SidebarLink = {
 // Learning content should be added through data using this hierarchy: Subject -> Course Area -> Topic/Spec Area -> Skill Path -> Stage -> Question.
 export type SkillPath = {
   slug: string;
+  pathVersion: PathVersion;
+  contentStatus: ContentStatus;
   name: string;
   description: string;
   href: string;
@@ -107,6 +120,7 @@ export type SkillPath = {
 
 export type Topic = {
   slug: string;
+  contentStatus: ContentStatus;
   name: string;
   description: string;
   href: string;
@@ -123,6 +137,7 @@ export type SpecArea = Topic;
 
 export type CourseArea = {
   slug: string;
+  contentStatus: ContentStatus;
   name: string;
   description: string;
   href: string;
@@ -136,6 +151,7 @@ export type CourseArea = {
 
 export type Subject = {
   subjectSlug: string;
+  contentStatus: ContentStatus;
   subjectName: string;
   subject: string;
   level: string;
@@ -161,6 +177,9 @@ export type QuestionOption = {
 
 export type Question = {
   id: string;
+  questionVersion: QuestionVersion;
+  contentRevision: ContentRevision;
+  contentStatus: ContentStatus;
   subject: string;
   courseArea: string;
   specArea: string;

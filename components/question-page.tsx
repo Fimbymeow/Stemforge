@@ -21,6 +21,7 @@ import { Card, ProgressBar } from "@/components/ui";
 import { getQuestionById, getQuestionPosition, questions, type StemForgeQuestion } from "@/data/questions";
 import { AppShell } from "@/components/layout/app-shell";
 import { AppTopbar } from "@/components/layout/app-topbar";
+import { getLegacyPhysicsDemoAnswerState } from "@/lib/answer-engine";
 
 type QuestionMode = "empty" | "demo";
 
@@ -138,7 +139,7 @@ function AnswerInput({ demo, question }: { demo?: boolean; question?: StemForgeQ
             placeholder="Enter your answer"
             className="min-w-0 flex-1 bg-transparent px-4 text-lg outline-none"
           />
-          <span className="grid min-w-24 place-items-center border-l border-line bg-[#fffdf9] font-bold">
+          <span className="grid min-w-24 place-items-center border-l border-line bg-paper font-bold">
             {question?.answerUnit ?? "unit"}
           </span>
         </div>
@@ -149,6 +150,7 @@ function AnswerInput({ demo, question }: { demo?: boolean; question?: StemForgeQ
 }
 
 function FeedbackState({ question }: { question: StemForgeQuestion }) {
+  const demoAnswer = getLegacyPhysicsDemoAnswerState(question);
   return (
     <div className="mt-5 flex items-center gap-5 rounded-xl border border-[#8ed0a6] bg-[#f1fbf4] p-5">
       <span className="grid size-10 place-items-center rounded-full bg-[#229954] text-white">
@@ -157,7 +159,7 @@ function FeedbackState({ question }: { question: StemForgeQuestion }) {
       <div className="min-w-0 flex-1">
         <h3 className="m-0 text-xl font-extrabold">Correct!</h3>
         <p className="mt-2 text-muted">
-          Correct: {question.answer} {question.answerUnit}. Well done. You&apos;ve got it.
+          Correct: {demoAnswer.displayedAnswer} {demoAnswer.displayedUnit}. Well done. You&apos;ve got it.
         </p>
       </div>
       <PartyPopper className="size-9 text-forge max-sm:hidden" />
@@ -279,13 +281,13 @@ function HeaderMeta({ label, value, badge }: { label: string; value: string; bad
   return (
     <div className="flex items-center gap-2">
       <span>{label}:</span>
-      <strong className={badge ? "rounded-md bg-[#fff4ec] px-2 py-1 text-forge" : ""}>{value}</strong>
+      <strong className={badge ? "rounded-md bg-forge-soft px-2 py-1 text-forge" : ""}>{value}</strong>
     </div>
   );
 }
 
 function Badge({ children }: { children: ReactNode }) {
-  return <span className="rounded-lg bg-[#fff4ec] px-4 py-2 font-bold text-forge">{children}</span>;
+  return <span className="rounded-lg bg-forge-soft px-4 py-2 font-bold text-forge">{children}</span>;
 }
 
 function SolutionStep({
@@ -352,6 +354,5 @@ function EmptyQuestionState() {
     </div>
   );
 }
-
 
 

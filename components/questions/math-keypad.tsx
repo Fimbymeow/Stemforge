@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { Trash2, X } from "lucide-react";
 import type { RefObject } from "react";
@@ -17,13 +17,13 @@ type KeyAction =
 const rows: KeyAction[][] = [
   [
     { label: "x", insert: "x" },
-    { label: "x²", insert: "x^2" },
-    { label: "x³", insert: "x^3" },
-    { label: "x^n", insert: "x^", ariaLabel: "insert x to a power" },
+    { label: "x\u00b2", insert: "x^2", ariaLabel: "insert x squared" },
+    { label: "x\u00b3", insert: "x^3", ariaLabel: "insert x cubed" },
+    { label: "x\u207f", insert: "x^", ariaLabel: "insert x to a power" },
     { label: "+", insert: "+" },
   ],
   [
-    { label: "−", insert: "-", ariaLabel: "minus" },
+    { label: "-", insert: "-", ariaLabel: "minus" },
     { label: "*", insert: "*", ariaLabel: "multiply" },
     { label: "/", insert: "/", ariaLabel: "divide" },
     { label: "(", insert: "(" },
@@ -31,8 +31,8 @@ const rows: KeyAction[][] = [
   ],
   [
     { label: "^", insert: "^", ariaLabel: "power" },
-    { label: "√", insert: "sqrt(", ariaLabel: "square root" },
-    { label: "π", insert: "pi", ariaLabel: "pi" },
+    { label: "\u221a", insert: "sqrt(", ariaLabel: "square root" },
+    { label: "\u03c0", insert: "pi", ariaLabel: "pi" },
     { label: "delete", action: "delete", ariaLabel: "delete previous character" },
     { label: "clear", action: "clear", ariaLabel: "clear answer" },
   ],
@@ -96,14 +96,14 @@ export function MathKeypad({ value, onChange, inputRef, disabled = false }: Math
   }
 
   return (
-    <div className="mt-4 rounded-xl border border-line bg-[#fffdf9] p-4">
-      <div className="mb-3 flex items-center justify-between gap-4">
-        <p className="m-0 text-sm font-extrabold uppercase text-forge">Maths keypad</p>
+    <div className="mt-3 rounded-xl border border-line bg-paper p-2.5">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <p className="m-0 text-xs font-extrabold uppercase text-forge">Optional keypad</p>
         <p className="m-0 text-xs font-semibold text-muted">Use ^ for powers, for example 5x^4.</p>
       </div>
-      <div className="grid gap-2">
+      <div className="grid gap-1.5">
         {rows.map((row, rowIndex) => (
-          <div key={rowIndex} className="grid grid-cols-5 gap-2">
+          <div key={rowIndex} className="grid grid-cols-5 gap-1.5">
             {row.map((key) => (
               <button
                 key={key.label}
@@ -111,7 +111,7 @@ export function MathKeypad({ value, onChange, inputRef, disabled = false }: Math
                 disabled={disabled}
                 onClick={() => handleKey(key)}
                 aria-label={key.ariaLabel ?? key.label}
-                className="min-h-11 rounded-lg border border-line bg-white px-2 text-sm font-extrabold text-ink transition hover:border-forge hover:text-forge disabled:cursor-not-allowed disabled:opacity-45 max-sm:min-h-12"
+                className="min-h-8 rounded-md border border-line bg-white px-2 text-sm font-extrabold text-ink transition hover:border-forge hover:text-forge disabled:cursor-not-allowed disabled:opacity-45 max-sm:min-h-10"
               >
                 {key.label === "delete" ? <Trash2 className="mx-auto size-4" /> : key.label === "clear" ? <X className="mx-auto size-4" /> : key.label}
               </button>
@@ -122,3 +122,5 @@ export function MathKeypad({ value, onChange, inputRef, disabled = false }: Math
     </div>
   );
 }
+
+

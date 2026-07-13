@@ -1,5 +1,7 @@
 ﻿import type { Subject } from "@/data/types";
 
+import { ACTIVE_CONTENT_STATUS, INITIAL_CONTENT_REVISION, INITIAL_PATH_VERSION, INITIAL_STAGE_VERSION } from "@/data/content-metadata";
+
 const basicDifferentiationStageQuestionIds = {
   foundations: ["hm-calc-diff-basic-f-001", "hm-calc-diff-basic-f-002", "hm-calc-diff-basic-f-003"],
   applications: ["hm-calc-diff-basic-a-001", "hm-calc-diff-basic-a-002", "hm-calc-diff-basic-a-003"],
@@ -8,6 +10,7 @@ const basicDifferentiationStageQuestionIds = {
 
 export const higherMaths: Subject = {
   subjectSlug: "higher-maths",
+  contentStatus: ACTIVE_CONTENT_STATUS,
   subjectName: "Higher Maths",
   subject: "Maths",
   level: "Higher",
@@ -23,6 +26,7 @@ export const higherMaths: Subject = {
   courseAreas: [
     {
       slug: "calculus",
+      contentStatus: ACTIVE_CONTENT_STATUS,
       name: "Calculus",
       description: "Build confidence with differentiation through a structured learning path.",
       href: "/subjects/higher-maths/calculus",
@@ -32,6 +36,7 @@ export const higherMaths: Subject = {
       specAreas: [
         {
           slug: "differentiation",
+          contentStatus: ACTIVE_CONTENT_STATUS,
           name: "Differentiation",
           description:
             "Develop fluency with derivatives, gradients, tangent questions and original exam-style differentiation problems.",
@@ -42,6 +47,8 @@ export const higherMaths: Subject = {
           skillPaths: [
             {
               slug: "basic-differentiation",
+              pathVersion: INITIAL_PATH_VERSION,
+              contentStatus: ACTIVE_CONTENT_STATUS,
               name: "Basic differentiation",
               description: "Start with the power rule, constants, sums of powers and simple derivative evaluation.",
               href: "/subjects/higher-maths/calculus/differentiation/basic-differentiation",
@@ -76,6 +83,8 @@ export const higherMaths: Subject = {
               notes: [
                 {
                   id: "basic-diff-note-what-differentiation-does",
+                  contentRevision: INITIAL_CONTENT_REVISION,
+                  contentStatus: ACTIVE_CONTENT_STATUS,
                   title: "What differentiation does",
                   body: "Differentiation finds the gradient function. The gradient function tells you the gradient of the curve at any $x$-value.",
                   variant: "default",
@@ -83,6 +92,8 @@ export const higherMaths: Subject = {
                 },
                 {
                   id: "basic-diff-note-power-rule",
+                  contentRevision: INITIAL_CONTENT_REVISION,
+                  contentStatus: ACTIVE_CONTENT_STATUS,
                   title: "The power rule",
                   body: "For powers of $x$, bring the power down to the front, then reduce the power by 1.",
                   mathContent: "$$\\frac{d}{dx}(x^n)=nx^{n-1}$$",
@@ -91,6 +102,8 @@ export const higherMaths: Subject = {
                 },
                 {
                   id: "basic-diff-note-constants-sums",
+                  contentRevision: INITIAL_CONTENT_REVISION,
+                  contentStatus: ACTIVE_CONTENT_STATUS,
                   title: "Constants and sums",
                   body: "Constants differentiate to 0. When a function has several terms, differentiate each term separately.",
                   variant: "default",
@@ -98,6 +111,8 @@ export const higherMaths: Subject = {
                 },
                 {
                   id: "basic-diff-note-evaluating-derivative",
+                  contentRevision: INITIAL_CONTENT_REVISION,
+                  contentStatus: ACTIVE_CONTENT_STATUS,
                   title: "Evaluating a derivative",
                   body: "First find the derivative, then substitute the required $x$-value into the gradient function.",
                   variant: "exam",
@@ -107,6 +122,8 @@ export const higherMaths: Subject = {
               formulaCards: [
                 {
                   id: "basic-diff-formula-power-rule",
+                  contentRevision: INITIAL_CONTENT_REVISION,
+                  contentStatus: ACTIVE_CONTENT_STATUS,
                   title: "Power rule",
                   formula: "$$\\frac{d}{dx}(x^n)=nx^{n-1}$$",
                   description: "Bring the power down, then reduce the power by 1.",
@@ -117,6 +134,8 @@ export const higherMaths: Subject = {
               workedExamples: [
                 {
                   id: "basic-diff-example-polynomial",
+                  contentRevision: INITIAL_CONTENT_REVISION,
+                  contentStatus: ACTIVE_CONTENT_STATUS,
                   title: "Differentiate a polynomial",
                   prompt: "Differentiate $$y=4x^3-5x^2+7$$",
                   steps: [
@@ -133,24 +152,32 @@ export const higherMaths: Subject = {
               flashcards: [
                 {
                   id: "basic-diff-flash-gradient-function",
+                  contentRevision: INITIAL_CONTENT_REVISION,
+                  contentStatus: ACTIVE_CONTENT_STATUS,
                   front: "What does differentiation find?",
                   back: "The gradient function.",
                   displayOrder: 1,
                 },
                 {
                   id: "basic-diff-flash-power-rule",
+                  contentRevision: INITIAL_CONTENT_REVISION,
+                  contentStatus: ACTIVE_CONTENT_STATUS,
                   front: "What is the power rule?",
                   back: "Bring the power down, then reduce the power by 1.",
                   displayOrder: 2,
                 },
                 {
                   id: "basic-diff-flash-constants",
+                  contentRevision: INITIAL_CONTENT_REVISION,
+                  contentStatus: ACTIVE_CONTENT_STATUS,
                   front: "What happens to constants when differentiating?",
                   back: "They differentiate to 0.",
                   displayOrder: 3,
                 },
                 {
                   id: "basic-diff-flash-derivative-at-a",
+                  contentRevision: INITIAL_CONTENT_REVISION,
+                  contentStatus: ACTIVE_CONTENT_STATUS,
                   front: "What does $$f'(a)$$ mean?",
                   back: "The gradient of the function at $$x=a$$.",
                   displayOrder: 4,
@@ -159,6 +186,8 @@ export const higherMaths: Subject = {
               practiceSets: [
                 {
                   id: "basic-diff-practice-set-1",
+                  contentRevision: INITIAL_CONTENT_REVISION,
+                  contentStatus: ACTIVE_CONTENT_STATUS,
                   title: "Basic differentiation practice set",
                   description: "A short mixed set covering powers, constants, sums and evaluating derivatives.",
                   stage: "Foundations",
@@ -171,6 +200,8 @@ export const higherMaths: Subject = {
               learningStages: [
                 {
                   id: "basic-diff-stage-foundations",
+                  stageVersion: INITIAL_STAGE_VERSION,
+                  contentStatus: ACTIVE_CONTENT_STATUS,
                   title: "Foundations",
                   label: "Foundations",
                   name: "Foundations",
@@ -187,6 +218,8 @@ export const higherMaths: Subject = {
                 },
                 {
                   id: "basic-diff-stage-applications",
+                  stageVersion: INITIAL_STAGE_VERSION,
+                  contentStatus: ACTIVE_CONTENT_STATUS,
                   title: "Applications",
                   label: "Applications",
                   name: "Applications",
@@ -203,6 +236,8 @@ export const higherMaths: Subject = {
                 },
                 {
                   id: "basic-diff-stage-past-paper-style",
+                  stageVersion: INITIAL_STAGE_VERSION,
+                  contentStatus: ACTIVE_CONTENT_STATUS,
                   title: "Past Paper-style Questions",
                   label: "Past Paper-style Questions",
                   name: "Past Paper-style Questions",
@@ -221,6 +256,8 @@ export const higherMaths: Subject = {
             },
             {
               slug: "chain-rule",
+              pathVersion: INITIAL_PATH_VERSION,
+              contentStatus: ACTIVE_CONTENT_STATUS,
               name: "Chain rule",
               description: "Differentiate composite functions once the basics are secure.",
               href: "/subjects/higher-maths/calculus/differentiation/chain-rule",
@@ -232,6 +269,8 @@ export const higherMaths: Subject = {
             },
             {
               slug: "trigonometric-differentiation",
+              pathVersion: INITIAL_PATH_VERSION,
+              contentStatus: ACTIVE_CONTENT_STATUS,
               name: "Trigonometric differentiation",
               description: "Practise derivatives of sine and cosine functions.",
               href: "/subjects/higher-maths/calculus/differentiation/trigonometric-differentiation",
@@ -243,6 +282,8 @@ export const higherMaths: Subject = {
             },
             {
               slug: "stationary-points",
+              pathVersion: INITIAL_PATH_VERSION,
+              contentStatus: ACTIVE_CONTENT_STATUS,
               name: "Stationary points",
               description: "Find stationary points using first derivatives.",
               href: "/subjects/higher-maths/calculus/differentiation/stationary-points",
@@ -254,6 +295,8 @@ export const higherMaths: Subject = {
             },
             {
               slug: "nature-of-stationary-points",
+              pathVersion: INITIAL_PATH_VERSION,
+              contentStatus: ACTIVE_CONTENT_STATUS,
               name: "Nature of stationary points",
               description: "Classify stationary points using derivative tests.",
               href: "/subjects/higher-maths/calculus/differentiation/nature-of-stationary-points",
@@ -265,6 +308,8 @@ export const higherMaths: Subject = {
             },
             {
               slug: "optimisation",
+              pathVersion: INITIAL_PATH_VERSION,
+              contentStatus: ACTIVE_CONTENT_STATUS,
               name: "Optimisation",
               description: "Use differentiation to find maximum and minimum values in context.",
               href: "/subjects/higher-maths/calculus/differentiation/optimisation",
@@ -276,6 +321,8 @@ export const higherMaths: Subject = {
             },
             {
               slug: "tangents-and-normals",
+              pathVersion: INITIAL_PATH_VERSION,
+              contentStatus: ACTIVE_CONTENT_STATUS,
               name: "Tangents and normals",
               description: "Find tangent and normal equations from gradient functions.",
               href: "/subjects/higher-maths/calculus/differentiation/tangents-and-normals",
@@ -287,6 +334,8 @@ export const higherMaths: Subject = {
             },
             {
               slug: "mixed-differentiation-practice",
+              pathVersion: INITIAL_PATH_VERSION,
+              contentStatus: ACTIVE_CONTENT_STATUS,
               name: "Mixed differentiation practice",
               description: "Bring differentiation skills together in mixed practice sets.",
               href: "/subjects/higher-maths/calculus/differentiation/mixed-differentiation-practice",
@@ -304,6 +353,8 @@ export const higherMaths: Subject = {
   learningStages: [
     {
       id: "higher-maths-stage-foundations",
+      stageVersion: INITIAL_STAGE_VERSION,
+      contentStatus: ACTIVE_CONTENT_STATUS,
       title: "Foundations",
       label: "Foundations",
       name: "Foundations",
@@ -320,6 +371,8 @@ export const higherMaths: Subject = {
     },
     {
       id: "higher-maths-stage-applications",
+      stageVersion: INITIAL_STAGE_VERSION,
+      contentStatus: ACTIVE_CONTENT_STATUS,
       title: "Applications",
       label: "Applications",
       name: "Applications",
@@ -336,6 +389,8 @@ export const higherMaths: Subject = {
     },
     {
       id: "higher-maths-stage-past-paper-style",
+      stageVersion: INITIAL_STAGE_VERSION,
+      contentStatus: ACTIVE_CONTENT_STATUS,
       title: "Past Paper-style Questions",
       label: "Past Paper-style Questions",
       name: "Past Paper-style Questions",
@@ -352,5 +407,4 @@ export const higherMaths: Subject = {
     },
   ],
 };
-
 

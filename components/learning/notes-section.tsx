@@ -23,7 +23,7 @@ export function NoteBlockCard({ note }: { note: NoteBlock }) {
   return (
     <Card className="p-7">
       <div className="mb-5 flex items-center gap-3">
-        <span className="grid size-12 place-items-center rounded-xl bg-[#fff4ec] text-forge">
+        <span className="grid size-12 place-items-center rounded-xl bg-forge-soft text-forge">
           <FileText className="size-6" />
         </span>
         <div>

@@ -70,11 +70,11 @@ export function QuickRevisionResources({ notes, formulaCards, workedExamples, fl
               <button
                 type="button"
                 onClick={() => setOpen(isOpen ? null : resource.key)}
-                className="flex min-h-24 w-full items-center justify-between gap-4 p-5 text-left transition hover:bg-[#fffaf5]"
+                className="flex min-h-24 w-full items-center justify-between gap-4 p-5 text-left transition hover:bg-paper"
                 aria-expanded={isOpen}
               >
                 <span className="flex items-center gap-4">
-                  <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-[#fff4ec] text-forge">
+                  <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-forge-soft text-forge">
                     <Icon className="size-6" />
                   </span>
                   <span>
@@ -85,7 +85,7 @@ export function QuickRevisionResources({ notes, formulaCards, workedExamples, fl
                 <ChevronDown className={`size-5 shrink-0 text-muted transition ${isOpen ? "rotate-180" : ""}`} />
               </button>
               {isOpen ? (
-                <div className="border-t border-line bg-[#fffdf9] p-5">
+                <div className="border-t border-line bg-paper p-5">
                   {resource.key === "notes" ? <NotesPanel notes={notes ?? []} /> : null}
                   {resource.key === "formula" ? <FormulaPanel formulaCards={formulaCards ?? []} /> : null}
                   {resource.key === "example" ? <WorkedExamplePanel examples={workedExamples ?? []} /> : null}
@@ -129,7 +129,7 @@ function FormulaPanel({ formulaCards }: { formulaCards: FormulaCard[] }) {
         <article key={formula.id} className="rounded-xl border border-line bg-white p-4">
           <h3 className="font-extrabold">{formula.title}</h3>
           <p className="mt-1 text-sm text-muted">{formula.description}</p>
-          <div className="mt-4 rounded-xl border border-line bg-[#fffdf9] p-4 text-center">
+          <div className="mt-4 rounded-xl border border-line bg-paper p-4 text-center">
             <MathContent>{formula.formula}</MathContent>
           </div>
           {formula.example ? (
@@ -149,18 +149,18 @@ function WorkedExamplePanel({ examples }: { examples: WorkedExample[] }) {
       {examples.map((example) => (
         <article key={example.id} className="rounded-xl border border-line bg-white p-4">
           <h3 className="font-extrabold">{example.title}</h3>
-          <div className="mt-3 rounded-lg border border-line bg-[#fffdf9] p-3 text-sm">
+          <div className="mt-3 rounded-lg border border-line bg-paper p-3 text-sm">
             <MathContent>{example.prompt}</MathContent>
           </div>
           <div className="mt-4 grid gap-3">
             {example.steps.map((step, index) => (
               <div key={`${example.id}-${index}`} className="grid grid-cols-[28px_1fr] gap-3 text-sm text-muted">
-                <span className="grid size-7 place-items-center rounded-full bg-[#fff4ec] text-xs font-extrabold text-forge">{index + 1}</span>
+                <span className="grid size-7 place-items-center rounded-full bg-forge-soft text-xs font-extrabold text-forge">{index + 1}</span>
                 <MathContent>{step}</MathContent>
               </div>
             ))}
           </div>
-          <div className="mt-4 rounded-lg border border-line bg-[#fffdf9] p-3 text-sm">
+          <div className="mt-4 rounded-lg border border-line bg-paper p-3 text-sm">
             <p className="mb-1 font-bold text-muted">Final answer</p>
             <MathContent>{example.finalAnswer}</MathContent>
           </div>
@@ -189,7 +189,7 @@ function FlashcardsPanel({
               <MathContent>{card.front}</MathContent>
             </div>
             {isRevealed ? (
-              <div className="mt-3 rounded-lg border border-line bg-[#fffdf9] p-3 text-sm text-muted">
+              <div className="mt-3 rounded-lg border border-line bg-paper p-3 text-sm text-muted">
                 <MathContent>{card.back}</MathContent>
               </div>
             ) : null}

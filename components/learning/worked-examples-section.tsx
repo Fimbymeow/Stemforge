@@ -22,17 +22,17 @@ export function WorkedExamplesSection({ examples }: { examples?: WorkedExample[]
 export function WorkedExampleCard({ example }: { example: WorkedExample }) {
   return (
     <Card className="p-7">
-      <span className="mb-5 grid size-12 place-items-center rounded-xl bg-[#fff4ec] text-forge">
+      <span className="mb-5 grid size-12 place-items-center rounded-xl bg-forge-soft text-forge">
         <Layers3 className="size-6" />
       </span>
       <h3 className="m-0 text-2xl font-extrabold">{example.title}</h3>
-      <div className="mt-4 rounded-xl border border-line bg-[#fffdf9] p-4">
+      <div className="mt-4 rounded-xl border border-line bg-paper p-4">
         <MathContent>{example.prompt}</MathContent>
       </div>
       <div className="mt-5 grid gap-3">
         {example.steps.map((step, index) => (
-          <div key={`${example.id}-step-${index}`} className="grid grid-cols-[32px_1fr] gap-3 rounded-xl border border-line bg-[#fffdf9] p-4">
-            <span className="grid size-8 place-items-center rounded-full bg-[#fff4ec] text-sm font-extrabold text-forge">
+          <div key={`${example.id}-step-${index}`} className="grid grid-cols-[32px_1fr] gap-3 rounded-xl border border-line bg-paper p-4">
+            <span className="grid size-8 place-items-center rounded-full bg-forge-soft text-sm font-extrabold text-forge">
               {index + 1}
             </span>
             <MathContent>{step}</MathContent>
@@ -47,7 +47,7 @@ export function WorkedExampleCard({ example }: { example: WorkedExample }) {
         <MathContent>{example.explanation}</MathContent>
       </div>
       {example.commonMistake ? (
-        <div className="mt-4 rounded-xl border border-[#f3d8c5] bg-[#fff4ec] p-4 text-muted">
+        <div className="mt-4 rounded-xl border border-forge-soft bg-forge-soft p-4 text-muted">
           <p className="mb-2 font-extrabold text-ink">Common mistake</p>
           <MathContent>{example.commonMistake}</MathContent>
         </div>

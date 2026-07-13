@@ -9,7 +9,7 @@ export function AppTopbar({ demo }: { demo: boolean }) {
       <button className="relative grid size-11 place-items-center rounded-full border border-line bg-white" aria-label="Notifications">
         <Bell className="size-5" />
       </button>
-      <button className="grid size-14 place-items-center rounded-full bg-[#ffeadb] text-2xl font-extrabold" aria-label="Profile preview">
+      <button className="grid size-14 place-items-center rounded-full bg-forge-soft text-forge text-2xl font-extrabold" aria-label="Profile preview">
         F
       </button>
     </div>

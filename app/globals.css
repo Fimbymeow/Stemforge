@@ -3,12 +3,8 @@
 @tailwind utilities;
 
 :root {
-  --paper: #fffdf9;
-  --ink: #111111;
-  --muted: #66615b;
-  --line: #e8e1d8;
-  --accent: #ff7514;
-  --white: #fbfaf5;
+  --paper: #f5f4f0;
+  --ink: #16191c;
 }
 
 * {
@@ -72,6 +68,62 @@ select {
 }
 
 :focus-visible {
-  outline: 3px solid rgba(255, 117, 20, 0.45);
+  outline: 3px solid rgba(35, 75, 110, 0.45);
   outline-offset: 3px;
+}
+
+@keyframes fade-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-rise {
+  animation: fade-rise 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Path-completion moment (question-workspace.tsx, path-completion-panel.tsx). Fixed r=16
+   circle, circumference ~101, so stroke-dashoffset is a constant rather than computed. */
+@keyframes ring-fill {
+  from {
+    stroke-dashoffset: 101;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.animate-ring-fill {
+  animation: ring-fill 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes check-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-check-pop {
+  animation: check-pop 200ms cubic-bezier(0.25, 1, 0.5, 1) 150ms both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
