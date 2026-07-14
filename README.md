@@ -163,7 +163,7 @@ Local progress now uses payload V4. Attempts, support events, and structural ach
 - Higher Physics locked state.
 - Public tester URL opens without login or deployment protection.
 
-See `docs/private-beta-checklist.md` for the practical tester checklist.
+See `STEM_FORGE_PRIVATE_BETA_READINESS.md` for the verified readiness decision, `docs/private-beta-checklist.md` for the practical session checklist, and `docs/private-beta-feedback-template.md` for reusable tester questions.
 
 ## Current Limitations
 

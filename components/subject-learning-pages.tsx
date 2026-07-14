@@ -264,8 +264,15 @@ function LockedSubjectPage({ subject }: { subject: Subject }) {
       <Topbar />
       <div className="mx-auto grid max-w-[920px] gap-4">
         <Breadcrumbs items={["Subjects", subject.subjectName]} />
+        <header>
+          <p className="mb-2 text-sm font-extrabold uppercase text-forge">Coming soon</p>
+          <h1 className="m-0 text-[32px] font-extrabold leading-none">{subject.subjectName}</h1>
+          <p className="mt-2 max-w-2xl leading-relaxed text-muted">
+            This subject is visible for orientation but is not available for learner practice in the private beta.
+          </p>
+        </header>
         <LockedCard
-          title={`${subject.subjectName} is coming soon`}
+          title="Learning paths are being prepared"
           description="Structured SQA Higher Physics learning paths are being prepared. Higher Maths Basic differentiation is the active STEM Forge proof of concept for now."
           badge="Coming Soon"
         />
@@ -570,7 +577,6 @@ export const SubjectPageTemplate = SubjectCoursePage;
 export const CourseAreaPageTemplate = CourseAreaPage;
 export const TopicHubTemplate = SpecAreaLearningPathPage;
 export const SkillPathPageTemplate = SkillPathLearningPage;
-
 
 
 

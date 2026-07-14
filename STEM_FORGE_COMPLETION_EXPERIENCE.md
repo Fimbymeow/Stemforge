@@ -96,7 +96,7 @@ The inline completion panel uses `role="status"` and `aria-live="polite"`. It do
 
 Acknowledgements are keyed by stable logical path ID. Renaming a path without changing that ID retains acknowledgement. Harmless content revisions do not automatically replay completion. Archived or unknown paths do not crash lookup.
 
-Sprint 8 V3 progress migration and question-version evidence do not alter this store or replay completion. A future major path version may explicitly choose to permit a new acknowledgement, but that decision remains deferred and must never make this store a source of progress truth.
+Sprint 9 V4 progress migration, event identities, question-version evidence, and structural snapshots do not alter this store or replay completion. A future major path version may explicitly choose to permit a new acknowledgement, but that decision remains deferred and must never make this store a source of progress truth.
 
 ## Known limitations
 

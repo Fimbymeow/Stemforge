@@ -83,6 +83,6 @@ Minor equivalent edits increment `contentRevision`; materially assessable questi
 
 `tests/content-version.test.ts` covers defaults, selector ordering, archive exclusion, historical lookup, learner-facing count recalculation, invalid versions/revisions/statuses, duplicate version pairs, multiple active versions, valid archived history, archived-only stage references, active-path/archive conflicts, and the retained legacy warning. Run `pnpm run test:content-version` for the focused suite or `pnpm run test:content` for all content tests.
 
-## Deferred work
+## Current V4 relationship and deferred work
 
-Sprint 8 completed persisted question-version evidence. Historical stage/path completion snapshots, database event schemas, account merging, admin publishing, legacy Physics migration, multiple-version authoring storage, and a fuller student-facing version-history UI remain deferred.
+Sprint 8 completed persisted question-version evidence. Sprint 9 added immutable structural achievement snapshots and pure deterministic evidence merging. Database event storage, account workflows, remote sync, admin publishing, legacy Physics migration, multiple-version authoring storage, distributed reset, and a fuller student-facing version-history UI remain deferred.

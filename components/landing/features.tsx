@@ -6,7 +6,7 @@ const features = [
     title: "Structured Learning Paths",
     image: "/assets/mockup-learning-paths.svg",
     alt: "Structured learning path preview",
-    copy: "Know exactly what to study next with topic-by-topic progression across your courses.",
+    copy: "Know what to study next through the current Basic differentiation learning path.",
   },
   {
     title: "Worked Solutions",

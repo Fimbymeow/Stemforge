@@ -1,143 +1,101 @@
 # STEM Forge Conversation Handoff
 
-Last updated: 13 July 2026
+Last updated: 14 July 2026
+Current checkpoint: Sprint 10 private-beta readiness
 
-This document is the starting point for a new Codex conversation. Read it before
-making changes, then inspect the current code. The repository may contain user or
-Claude frontend changes, so preserve existing work and never revert unfamiliar
-changes without Finlay's explicit approval.
+This is the durable starting point for a new Codex conversation. Inspect the repository before editing. Preserve unfamiliar Finlay, Claude, or Codex changes and never reset a dirty tree without explicit approval.
 
-## Product Direction
+## Product vision
 
-STEM Forge is a premium structured learning platform for Scottish STEM students.
-It is not a random question bank. Its learning model is:
+STEM Forge is a structured Scottish SQA STEM learning platform, not a random question bank. Its learning loop is:
 
 **Learn -> Practise -> Exam Questions -> Master**
 
-Within each skill path, the stages are:
+The canonical hierarchy is Subject -> Course -> Skill Path -> Stage -> Question. Stages are Foundations, Applications, and Past Paper-style Questions.
 
-1. Foundations
-2. Applications
-3. Past Paper-style Questions
-
-Current proof of concept:
+The only active learner-ready vertical slice is:
 
 **Higher Maths -> Calculus -> Differentiation -> Basic differentiation**
 
-- Higher Maths is the only available subject in the active UI.
-- Higher Physics remains in the data/codebase but is deliberately locked and
-  presented as coming soon.
-- Basic differentiation is the active vertical slice.
-- The active accent colour is blue. Do not assume older orange mockups represent
-  the current visual direction.
-- Claude may handle visual frontend work. Codex should protect architecture,
-  data contracts, answer logic, progress/mastery semantics, tests and routing.
+It contains eight active canonical questions in a 3/3/2 stage structure. Higher Physics is a separate locked/read-only legacy demonstration and has not been migrated. Other visible paths and subjects are coming soon, not available practice.
 
-## Hard Boundaries
+The approved visual baseline uses warm off-white backgrounds, white cards, subtle borders/shadows, and muted blue as the main application accent. Orange is supporting brand colour only.
 
-Do not add any of the following unless Finlay explicitly changes the strategy:
+## Private-beta position
 
-- authentication or user accounts
-- Supabase or another database/backend
-- payments
-- AI tutor or AI marking
-- analytics
-- CMS
-- external services
-- large amounts of new course content
+The product is browser-local and needs no account or network after the application is loaded. Progress is saved on the current browser only. The private-beta package is in `docs/private-beta-checklist.md`, the reusable feedback questions are in `docs/private-beta-feedback-template.md`, and readiness evidence is in `STEM_FORGE_PRIVATE_BETA_READINESS.md`.
 
-Progress is browser-local. The UI must be honest:
+No authentication or database was added in Sprint 10. Accounts, remote persistence, and sync are permitted future roadmap work, but only through a separately approved sprint after beta evidence justifies them.
 
-- Progress saved on this browser.
-- No account needed.
-- Local progress only.
+## Current progress source of truth
 
-Question content must be original SQA-style or exam-style material. Do not imply
-that STEM Forge contains official or copied SQA questions. STEM Forge is not
-affiliated with or endorsed by SQA.
+The LocalStorage key remains `stemforge.localProgress.v1`. Canonical writes use V4:
 
-## Architecture Completed
+```ts
+{
+  version: 4,
+  data: {
+    attempts: QuestionAttempt[],
+    supportEvents: QuestionSupportEvent[],
+    achievementSnapshots: AchievementSnapshot[]
+  }
+}
+```
 
-### Foundation and content architecture
+- Attempts and support events are append-oriented evidence with explicit stable event IDs.
+- New IDs use platform UUIDs through an injectable factory.
+- V3/V2/V1/unversioned records receive deterministic migration IDs derived from retained content and original position.
+- Unknown legacy question versions remain explicitly unknown.
+- Structural snapshots are immutable stage/path Completed, Secure, and Mastered events carrying canonical structural versions.
+- Migration never invents structural snapshots.
+- Path reset clears current attempts/support events for that path and preserves snapshots.
+- Current readiness is always recalculated from active content, current question versions, and current-version evidence.
 
-- Next.js 15 App Router, TypeScript and Tailwind CSS.
-- Reusable application shell, sidebar, top bar and page container.
-- Subject-agnostic hierarchy:
-  Subject -> Course Area -> Spec Area/Topic Hub -> Skill Path -> Stages -> Questions.
-- Canonical Higher Maths and Higher Physics data.
-- Data-driven subject, course-area, topic and skill-path pages.
-- Central question registry and learning-path helpers.
-- Markdown and KaTeX rendering for mathematical content.
-- Dedicated question workspace with numerical, algebraic and multiple-choice
-  answer handling.
-- Content validation tooling and schema tests.
+Read `STEM_FORGE_STRUCTURAL_ACHIEVEMENTS_AND_MERGING.md`, `STEM_FORGE_PROGRESS_ARCHITECTURE.md`, and `STEM_FORGE_VERSION_AWARE_PROGRESS.md` before changing this boundary.
 
-### Answer engine
+## Deterministic evidence merging
 
-- Answer acceptance logic was extracted and tested independently.
-- Submission boundary tests protect the connection between the UI and answer
-  engine.
-- Do not casually change accepted-answer normalization or marking behaviour.
-- Written/multi-step placeholders must not pretend to be automatically marked.
+`mergeProgressEvidence` unions V4 attempts, support events, and snapshots. Exact equal IDs deduplicate; different IDs remain distinct. Same-ID conflicts are reported and resolved with an order-independent canonical representation. Output ordering is timestamp then event ID within each evidence type.
 
-### Browser-local progress and mastery
+Focused tests establish immutable, idempotent, commutative, and associative payload merging. Unsupported future payloads are refused rather than downgraded. Merge remains pure and has no LocalStorage, React, network, account, or database dependency.
 
-- Progress uses a repository/storage abstraction rather than direct scattered
-  localStorage calls.
-- Current payload is version 2 and remains backward-compatible with version 1
-  and older unversioned data.
-- Incorrect-only attempts do not count as completion.
-- Completion occurs after an independent correct answer, or after viewing the
-  worked solution following a genuine attempt.
-- Hint use and worked-solution use are recorded.
-- Best outcome is preserved so a later mistake does not erase stronger earlier
-  evidence.
-- Mastery, completion, accuracy and support usage are separate concepts.
-- Legacy records migrate conservatively; no existing progress is intentionally
-  deleted.
+## Protected product contracts
 
-Read before changing progress or mastery:
+- Answer acceptance/rejection and normalized exact-string Maths comparison must not change casually.
+- Do not introduce mathematical equivalence checking.
+- Empty input is not a genuine attempt; incorrect-only input does not complete a new question.
+- Completion, mastery, accuracy, support, review, and acknowledgement are separate concepts.
+- Hint use is supportive. Worked-solution completion creates review evidence.
+- Mastery weights and thresholds are fixed by `STEM_FORGE_PROGRESS_AND_MASTERY_RULES.md`.
+- Later weaker activity cannot erase stronger evidence.
+- Snapshots preserve history but never determine current readiness.
+- `stemforge.pathCelebration.v1` is UI acknowledgement only and remains separate from progress truth.
+- Unsupported future storage must not be overwritten.
+- Active/archive filtering stays centralized in `lib/content-selectors.ts`.
+- Local-only learning, reduced motion, keyboard access, mobile usability, and the blue accent must remain.
+- Do not delete historical progress or migrate legacy Physics.
 
-- `STEM_FORGE_PROGRESS_AND_MASTERY_RULES.md`
-- `STEM_FORGE_PROGRESS_ARCHITECTURE.md`
-- `STEM_FORGE_MASTERY_ARCHITECTURE.md`
+## Content and answer boundaries
 
-### Automated quality coverage
+Canonical Higher Maths content has stable logical IDs, positive question/stage/path versions, content revisions, and active/archive lifecycle. Validation protects duplicates, hierarchy relationships, answers, lifecycle, and version invariants. Eight canonical Maths questions are active. Fifteen legacy Physics questions produce the one expected compatibility warning.
 
-- 71 unit/integration tests currently cover content, answer engine, submission
-  boundary, progress payload/storage/calculations/migration and mastery.
-- Playwright browser coverage contains 20 tests:
-  - 19 desktop Chromium tests
-  - 1 complete mobile Chromium journey
-- Browser tests cover navigation, correct/incorrect submissions, hints, worked
-  solutions, retries, next/previous navigation, progress consistency, reset,
-  malformed storage, legacy migration, invalid routes and mobile overflow.
-- Browser tests fail on unexpected page errors and console errors.
-- Stable accessibility/test hooks were added only where necessary.
+Question content is original SQA-style practice. Do not imply it is official, copied, affiliated with, or endorsed by SQA.
 
-Read before changing browser tests:
+## Current verification baseline
 
-- `STEM_FORGE_BROWSER_TESTING.md`
-- `playwright.config.ts`
-- `e2e/`
+Sprint 10 began from commit `d515ca2` and reproduced:
 
-### Content version policy
+- frozen lockfile install: consistent/already up to date;
+- TypeScript: passing;
+- ESLint: passing;
+- content validation: 0 errors, 1 expected legacy Physics warning;
+- unit/integration tests: 124 passing;
+- production build: passing, 22 routes;
+- Playwright: 38 passing baseline tests with Chromium actually launched.
 
-The policy is documented but full runtime content versioning is intentionally not
-implemented yet. It defines:
+Sprint 10 adds three focused private-beta browser assertions, so the final expected browser total is 41 when the final matrix is green. Consult `STEM_FORGE_PRIVATE_BETA_READINESS.md` for the final exact result rather than relying on this expectation.
 
-- stable logical question IDs
-- monotonic `questionVersion` for material assessment changes
-- `contentRevision` for minor wording/presentation fixes
-- stage/path versions for structural changes
-- archive rather than delete
-- conservative treatment of legacy evidence
-
-Read:
-
-- `STEM_FORGE_CONTENT_VERSION_POLICY.md`
-
-## Current Important Routes
+## Important routes
 
 - `/`
 - `/dashboard`
@@ -152,100 +110,50 @@ Read:
 - `/subjects/higher-physics` (locked/coming soon)
 - `/resources`
 
-At the end of Sprint 6, all listed production routes returned HTTP 200 and the
-intentional not-found journey was covered by Playwright.
+## Remaining vertical-slice assumptions
 
-## Last Verified State
+These are known scaling preconditions, not Sprint 10 defects:
 
-At the end of Sprint 6:
+- global active subject/path constants select Higher Maths and Basic differentiation;
+- shared lookup imports Higher Maths differentiation questions directly;
+- question breadcrumbs and the subject badge assume Higher Maths/Calculus/Differentiation;
+- some Higher Maths hub/resource links are fixed;
+- question positioning is global across the Maths question set rather than fully path-scoped.
 
-- `pnpm run typecheck` passed.
-- `pnpm run lint` passed.
-- `pnpm run validate-content` passed with zero errors and one expected legacy
-  Higher Physics warning.
-- `pnpm test` passed: 71/71.
-- `pnpm build` passed and generated 22 routes.
-- `pnpm run test:e2e:desktop` passed: 19/19.
-- `pnpm run test:e2e:mobile` passed: 1/1.
-- `pnpm run test:e2e` passed: 20/20 with zero retries.
+Do not perform a generic-routing rewrite until controlled multi-path import is the approved next sprint. Fix an assumption earlier only if it breaks the current beta journey.
 
-These results describe the state at that checkpoint. Re-run checks after any
-new Claude, Finlay or Codex changes.
+## Intentional limitations
 
-## Commands
+- No accounts, database, remote sync, distributed reset, analytics, payments, AI marking, CMS, or admin workflow.
+- Progress and completion acknowledgement are local to one browser/device.
+- No live feedback form/service; the facilitator supplies the Markdown feedback template.
+- Chromium desktop/mobile are automated; Safari, Firefox, screen-reader, and public deployment audits remain owner/future checks.
+- No multi-path authoring/import and no wider content bank has been added.
+- Client clocks are untrusted; a future server may record trusted receive time separately.
 
-Normal commands:
+## Verification commands
 
 ```powershell
-pnpm dev
+pnpm install --frozen-lockfile
 pnpm run typecheck
 pnpm run lint
+pnpm run validate-content
 pnpm test
+pnpm run build
+pnpm run test:e2e:desktop
+pnpm run test:e2e:mobile
 pnpm run test:e2e
-pnpm build
+pnpm run test:all
 ```
 
-If `pnpm` is not available in Finlay's terminal, use Corepack:
+Do not weaken tests, add retries, or ignore application console errors to obtain a pass.
 
-```powershell
-corepack enable
-corepack pnpm dev
-```
+## Decision gate after private beta
 
-Do not paste the visible PowerShell prompt (`PS C:\...>`) as part of a command.
+Do not begin Sprint 11 without tester evidence.
 
-## Recommended Next Sprint
+- Choose remote evidence/database foundations if students value the journey and local-only/cross-device progress is the material blocker, with ownership/privacy/retention/reset requirements understood.
+- Choose generic multi-path infrastructure and controlled content import if learners mainly need more material and the hardcoded vertical slice is the scaling blocker.
+- Choose focused learner-experience correction if product purpose, navigation, input, status language, mobile, or accessibility is confusing or blocking.
 
-The next architecture sprint should implement the smallest safe portion of the
-content-version policy, without adding a backend:
-
-1. Add canonical optional version fields to question/path data types.
-2. Validate stable IDs, positive versions and archive status.
-3. Mark archived content without deleting it or exposing it as current practice.
-4. Preserve old progress as historical evidence when a material question version
-   changes.
-5. Add focused unit tests before connecting version awareness to the UI.
-6. Keep all current version 1, version 2 and unversioned local progress readable.
-
-Before starting, inspect any newer Claude frontend changes. Keep this sprint
-limited to data contracts, validation, migration policy and tests. Do not mix it
-with a visual redesign.
-
-## Product Follow-Ups To Revisit Later
-
-Finlay explicitly asked to be reminded about these ideas:
-
-- Add estimated completion times to learning stages.
-- Add exam weighting to spec areas when reliable data is available.
-- Later make question pages more interactive with confidence ratings and error
-  tracking.
-- Make Recommended Next data-driven using accuracy and recency instead of
-  hardcoded suggestions.
-
-These are not automatically the next sprint. They should wait until the content
-and progress infrastructure is stable enough to support them honestly.
-
-## Protected Statements
-
-When reporting changes around the answer/progress system, verify and preserve
-these statements unless the task explicitly changes them:
-
-- Answer acceptance and rejection behaviour did not change.
-- Progress and mastery semantics did not change.
-- Existing version 1, version 2 and unversioned LocalStorage progress remains
-  readable.
-- No existing progress records were intentionally deleted.
-- No database or authentication functionality was added.
-
-## Suggested Opening Message For The New Conversation
-
-Paste this into the next Codex conversation:
-
-> We are continuing the STEM Forge project in
-> `C:\Users\Finlay\Documents\STEMFORGE`. Read `STEM_FORGE_HANDOFF.md` first,
-> then inspect the current code and any newer changes. Do not revert unfamiliar
-> Claude or user frontend work. Preserve the answer engine and progress/mastery
-> semantics. Higher Maths Basic differentiation is the active proof of concept;
-> Higher Physics is locked/coming soon. Start by confirming the handoff against
-> the codebase and recommend the smallest next sprint before editing anything.
-
+The owner must first verify the public deployment is accessible without login/protection, record the tested build/commit, provide the feedback template to testers, and review the collected feedback against `STEM_FORGE_PRIVATE_BETA_READINESS.md`.

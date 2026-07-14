@@ -99,7 +99,7 @@ Review remains the signal for weak or supported current evidence. Unknown legacy
 
 ## 22. UI mapping
 
-Ordinary current V3 evidence renders as before. The path page adds one calm notice only for unknown evidence, required reassessment, or new practice. Raw version numbers are not shown.
+Ordinary V4 evidence carrying current-version records renders as before. The path page adds one calm notice only for unknown evidence, required reassessment, or new practice. Raw version numbers are not shown.
 
 ## 23. Completion acknowledgement boundary
 

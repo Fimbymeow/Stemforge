@@ -9,7 +9,6 @@ import { Card, ProgressBar } from "@/components/ui";
 import { MathContent } from "@/components/questions/math-content";
 import { QuestionAnswerInput } from "@/components/questions/answer-inputs";
 import { PathCompletionPanel } from "@/components/learning/path-completion-panel";
-import { BETA_FEEDBACK_URL } from "@/lib/beta";
 import { canSubmitAnswer, markQuestionAnswer } from "@/lib/answer-engine";
 import { recordPathCelebrated } from "@/lib/completion-tracking";
 import { getQuestionHref, getQuestionsForSkillPath, getSkillPathForQuestion, getStageForQuestionInSkillPath } from "@/lib/learning-paths";
@@ -194,18 +193,23 @@ export function QuestionWorkspace({ question }: { question: Question }) {
               <MathContent>{question.questionText}</MathContent>
               <div className="mt-4">
                 <label className="mb-2 block text-sm text-muted">Your answer</label>
-                <div>
+                <form
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    handleSubmit();
+                  }}
+                >
                   <QuestionAnswerInput question={question} value={answer} submitted={submitted} onChange={setAnswer} />
                   <div className="mt-3 flex justify-end">
                     <button
-                      onClick={handleSubmit}
+                      type="submit"
                       disabled={!canSubmitAnswer(answer) || submitted}
                       className="inline-flex min-h-10 items-center justify-center rounded-lg bg-forge px-5 text-sm font-extrabold text-white disabled:cursor-not-allowed disabled:opacity-45 max-sm:w-full"
                     >
                       Submit Answer
                     </button>
                   </div>
-                </div>
+                </form>
               </div>
             </div>
 
@@ -332,10 +336,10 @@ export function QuestionWorkspace({ question }: { question: Question }) {
               </div>
             )}
           </Card>
-          <Link href={BETA_FEEDBACK_URL} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-line bg-white px-4 text-sm font-bold text-muted transition hover:border-forge hover:text-forge">
+          <div className="flex min-h-10 items-center justify-center gap-2 rounded-lg border border-line bg-white px-4 text-center text-sm font-bold text-muted">
             <MessageSquare className="size-4" />
-            Give feedback on this question
-          </Link>
+            Record question feedback using your private-beta tester guide
+          </div>
         </aside>
       </div>
     </AppShell>
@@ -366,8 +370,6 @@ function PanelProgress({ label, value, valueLabel }: { label: string; value: num
     </div>
   );
 }
-
-
 
 
 

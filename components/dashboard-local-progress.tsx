@@ -4,7 +4,6 @@ import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { ClipboardList, FileText, MessageSquare, Target } from "lucide-react";
 import { Card, ProgressBar } from "@/components/ui";
-import { BETA_FEEDBACK_URL } from "@/lib/beta";
 import { getActiveContinueHref, getActiveSkillPath, getQuestionBankHref, getResourceHref } from "@/lib/learning-paths";
 import { getEmptyProgressEvidence, getNextQuestionId, getSkillPathProgress } from "@/lib/local-progress";
 import { useHasMounted } from "@/lib/use-mounted";
@@ -98,9 +97,9 @@ export function DashboardLocalProgressSection() {
               <p className="mt-1 text-sm leading-relaxed text-muted">Spot something confusing, broken, or slow? Send quick feedback so STEM Forge can improve before more students test it.</p>
             </div>
           </div>
-          <Link href={BETA_FEEDBACK_URL} className="inline-flex min-h-10 items-center justify-center rounded-lg border border-line bg-white px-4 text-sm font-extrabold transition hover:border-forge hover:text-forge max-sm:w-full">
-            Give feedback
-          </Link>
+          <p className="m-0 max-w-sm text-sm font-semibold text-muted">
+            Use the feedback questions supplied with your private-beta invitation.
+          </p>
         </div>
       </Card>
     </section>

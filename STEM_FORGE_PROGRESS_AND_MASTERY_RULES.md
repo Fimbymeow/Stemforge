@@ -50,4 +50,4 @@ Review is recommended for solution-assisted completion, repeated incorrect answe
 
 ## Migration and content changes
 
-V1 and unversioned records are retained in V2. Their old visible completion is preserved through `legacyCompleted`, but support independence is `unknown_legacy`. Removed questions remain in history and stop affecting current totals. New active questions enter current denominators. Content-version infrastructure is deferred.
+V1 and unversioned records migrate conservatively into V4. Their old visible completion is preserved through `legacyCompleted`, while support and question-version evidence remain explicitly unknown. V2 and V3 remain readable; deterministic migration IDs preserve repeated records. Removed questions remain in history and stop affecting current totals. New active questions enter current denominators. Immutable snapshots record only genuine future structural transitions and never determine current readiness.

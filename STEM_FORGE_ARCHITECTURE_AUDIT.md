@@ -4,6 +4,8 @@ Audit date: 11 July 2026
 Audit scope: repository inspection, runtime verification and documentation only  
 Repository: `C:\Users\Finlay\Documents\STEMFORGE`
 
+> Historical checkpoint: this audit records the repository as inspected on 11 July 2026. For current V4 architecture, verification counts, feedback handling, and private-beta instructions, use `STEM_FORGE_HANDOFF.md` and `STEM_FORGE_PRIVATE_BETA_READINESS.md`.
+
 ## 1. Executive summary
 
 STEM Forge is a frontend-only Next.js 15 application with one complete active learning slice: Higher Maths -> Calculus -> Differentiation -> Basic differentiation. The student-facing shell, content hierarchy, eight-question path, maths rendering and browser-local progress flow are coherent enough for a small private beta. The production build succeeds and all current major routes render.

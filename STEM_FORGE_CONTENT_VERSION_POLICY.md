@@ -1,7 +1,7 @@
 # STEM Forge Content Version Policy
 
 Updated: 13 July 2026  
-Status: policy with Sprint 7 canonical metadata and Sprint 8 V3 question-version evidence implemented.
+Status: active policy with Sprint 7 metadata, Sprint 8 question-version evidence, and Sprint 9 V4 structural snapshots implemented.
 
 ## Sprint 7 implementation status
 
@@ -55,7 +55,7 @@ The future model therefore needs both a completion snapshot/version and current-
 
 ## Legacy V2 compatibility
 
-Current V2 local attempts have no question content version. Future migration must retain them with `legacyVersionUnknown: true` rather than invent a version. Existing completion remains visible under the same conservative principle used for V1 progress migration. A later valid attempt can attach a known current question version and improve current evidence.
+V2 local attempts have no question content version. Current V4 migration retains them as explicit `unknown_legacy` version evidence rather than inventing a version. Existing completion remains visible under the same conservative principle used for V1 progress migration. A later valid attempt can attach known current-version evidence and improve current readiness.
 
 ## Future database implications
 
@@ -94,6 +94,6 @@ Prefer calm labels: “New practice available,” “Updated question,” “Rea
 | Stage reordered, same requirements | No | Minor path revision | Yes | Yes | None | Learning path updated only if useful |
 | Path structure/required stages changed | No unless questions change | Increment path; affected stages as needed | Prior path historical; current recalculated | Earlier-version mastery only until requirements met | Recommended or required when new required evidence exists | Learning path updated / New practice available |
 
-## Sprint 7 implemented boundary
+## Historical Sprint 7 boundary and current extension
 
-Sprint 7 added canonical version fields and validation, conservative data defaults, and active/archived filtering. It did not invent versions for legacy attempts, delete history, or collapse historical and current completion into one flag. Persisted version-aware progress derivation remains future work.
+Sprint 7 added canonical version fields and validation, conservative data defaults, and active/archived filtering. Sprint 8 subsequently delivered persisted version-aware derivation, and Sprint 9 delivered V4 stable event IDs, structural snapshots, and deterministic merge rules. None invent legacy question versions, delete history, or collapse historical and current readiness.

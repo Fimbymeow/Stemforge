@@ -1,6 +1,6 @@
 # STEM Forge Browser Testing
 
-Updated: 12 July 2026
+Updated: 14 July 2026
 
 ## 1. Framework
 
@@ -49,7 +49,7 @@ Every Playwright test gets a fresh browser context. `seedStoredProgress` first o
 
 ## 8. Progress fixtures
 
-Fixtures create real V3 known-version attempts/support events, V2 payloads for conservative migration, V1 payloads, and unversioned arrays using production IDs and payload types. Browser tests read storage only when verifying persistence, migration, evidence scope, best outcome, or non-destructive behavior.
+Fixtures create V4 evidence identities plus deliberate V3, V2, V1, and unversioned payloads for conservative migration coverage. Browser tests read storage only when verifying persistence, migration, snapshots, evidence scope, best outcome, or non-destructive behavior.
 
 ## 9. Selector strategy
 
@@ -57,7 +57,7 @@ Tests prefer headings, labels, roles, link names, and button names. The few test
 
 ## 10. Accessibility strategy
 
-The answer input now has an accessible name. Progress bars expose `progressbar`, `aria-valuemin`, `aria-valuemax`, and `aria-valuenow`. These changes improve keyboard/screen-reader semantics and stable testing without visual changes.
+The answer input has an accessible name and its surrounding form submits the existing answer action with Enter. Progress bars expose `progressbar`, `aria-valuemin`, `aria-valuemax`, and `aria-valuenow`. These changes improve keyboard/screen-reader semantics and stable testing without changing marking behavior.
 
 ## 11. Console-error policy
 
@@ -70,11 +70,12 @@ Uncaught page errors and console errors fail every test. The only ignored browse
 - cross-page consistency and reset;
 - V2/V1/unversioned migration, version evidence, and corrupted/future storage;
 - completion variants, replay prevention, mastery upgrades and acknowledgement storage safety;
-- full mobile interaction and overflow.
+- full mobile interaction and overflow;
+- bounded private-beta homepage promise, locked Higher Physics recovery, and keyboard answer submission.
 
 ## 13. Covered journeys
 
-Coverage includes fresh navigation, blank input, unresolved incorrect answers, independent correctness, hints, worked solutions, reattempts, strongest-outcome preservation, next/previous/end-of-path navigation, dashboard/hub/path consistency, path reset, migration, corruption, unsupported versions, completion/replay/mastery-upgrade acknowledgement, reduced motion, and mobile progression.
+Coverage includes homepage promise, fresh navigation, blank input, unresolved incorrect answers, independent correctness, hints, worked solutions, reattempts, strongest-outcome preservation, next/previous/end-of-path navigation, dashboard/hub/path consistency, path reset with snapshot preservation, migration, corruption, unsupported versions, locked Physics recovery, completion/replay/mastery-upgrade acknowledgement, reduced motion, and mobile progression.
 
 Completion-specific storage, reset, accessibility and future-version rules are documented in `STEM_FORGE_COMPLETION_EXPERIENCE.md`.
 

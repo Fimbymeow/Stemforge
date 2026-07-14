@@ -18,10 +18,11 @@ The current payload is:
 
 ```ts
 {
-  version: 3,
+  version: 4,
   data: {
-    attempts: QuestionAttempt[], // required version evidence
-    supportEvents: QuestionSupportEvent[] // required version evidence
+    attempts: QuestionAttempt[], // stable ID + required version evidence
+    supportEvents: QuestionSupportEvent[], // stable ID + required version evidence
+    achievementSnapshots: AchievementSnapshot[] // immutable structural history
   }
 }
 ```
@@ -56,7 +57,7 @@ Missing `window`, blocked LocalStorage, read/write failures, malformed JSON, and
 
 ## Reset and content
 
-Path reset removes that path's attempts and support events after confirmation. Other paths remain. Removed questions remain historical but do not affect current totals; newly added active questions enter current denominators.
+Path reset removes that path's attempts and support events after confirmation and preserves immutable achievement snapshots. Other paths remain. Removed questions remain historical but do not affect current totals; newly added active questions enter current denominators.
 
 ## Commands
 
@@ -82,4 +83,4 @@ Pure merging unions all three evidence types by ID, reports conflicts, and appli
 
 ## Historical note
 
-V1 treated any submitted answer as completion and used the latest result as its single accuracy measure. That behavior is retained only when interpreting migrated historical completion. New V3 activity follows the approved mastery model and records exact canonical question-version evidence.
+V1 treated any submitted answer as completion and used the latest result as its single accuracy measure. That behavior is retained only when interpreting migrated historical completion. New V4 activity follows the approved mastery model, records exact canonical question-version evidence, and assigns stable event identity.

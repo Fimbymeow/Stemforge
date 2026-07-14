@@ -1,5 +1,4 @@
 ﻿import { getActiveSkillPathHref } from "@/lib/learning-paths";
-import { BETA_FEEDBACK_URL } from "@/lib/beta";
 import Link from "next/link";
 
 export function Footer() {
@@ -10,10 +9,12 @@ export function Footer() {
         <Link href="#tuition">Tuition</Link>
         <Link href="/subjects">Subjects</Link>
         <Link href={getActiveSkillPathHref()}>Basic differentiation</Link>
-        <Link href={BETA_FEEDBACK_URL}>Give feedback</Link>
       </nav>
       <p className="m-0 max-w-3xl text-xs leading-relaxed">
         STEM Forge creates original SQA-style practice materials and is not affiliated with or endorsed by SQA.
+      </p>
+      <p className="m-0 max-w-3xl text-xs leading-relaxed">
+        Private-beta testers should use the feedback instructions supplied with their test invitation.
       </p>
     </footer>
   );
