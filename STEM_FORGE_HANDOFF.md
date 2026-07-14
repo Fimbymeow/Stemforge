@@ -1,7 +1,7 @@
 # STEM Forge Conversation Handoff
 
 Last updated: 14 July 2026
-Current checkpoint: Sprint 11 SQA-aligned taxonomy and generic multi-path runtime
+Current checkpoint: Sprint 12 PostgreSQL append-only remote evidence foundation
 
 This is the durable starting point for a new Codex conversation. Inspect the repository before editing. Preserve unfamiliar Finlay, Claude, or Codex changes and never reset a dirty tree without explicit approval.
 
@@ -59,6 +59,14 @@ Read `STEM_FORGE_STRUCTURAL_ACHIEVEMENTS_AND_MERGING.md`, `STEM_FORGE_PROGRESS_A
 
 Focused tests establish immutable, idempotent, commutative, and associative payload merging. Unsupported future payloads are refused rather than downgraded. Merge remains pure and has no LocalStorage, React, network, account, or database dependency.
 
+## Remote evidence foundation
+
+Sprint 12 adds a server-only asynchronous PostgreSQL repository without connecting it to the learner application. `pg` is the runtime driver, `node-pg-migrate` applies committed forward-only migrations, and `embedded-postgres` is a dev-only native PostgreSQL 17 integration harness. The schema stores attempts, support events, snapshots and conflicts as immutable owner-scoped JSONB rows with database receive timestamps and one global receive cursor.
+
+Database triggers reject UPDATE, DELETE and TRUNCATE. Identical retries are idempotent; same-ID/different-payload arrivals preserve the accepted row and append one deduplicated conflict. `lib/remote-evidence/validation.ts` accepts canonical V4 only while retaining `unknown_legacy` and archived/unknown logical references. No API route, authentication, sync or browser import exists.
+
+Read `STEM_FORGE_REMOTE_EVIDENCE_FOUNDATION.md` before authentication or remote transport work. `STEMFORGE_DATABASE_URL` is runtime-only; migration/test URLs are separate. Missing database configuration affects only explicit remote repository invocation. LocalStorage remains the complete active learner runtime.
+
 ## Protected product contracts
 
 - Answer acceptance/rejection and normalized exact-string Maths comparison must not change casually.
@@ -101,7 +109,7 @@ Sprint 10 began from commit `d515ca2` and reproduced:
 - production build: passing, 22 routes;
 - Playwright: 38 passing baseline tests with Chromium actually launched.
 
-Sprint 10 completed at commit `007eae8` with 124 unit/integration tests, 39 desktop tests, 2 mobile tests and 41 total browser tests. Sprint 11 adds 12 focused unit/integration tests and four browser assertions (three desktop, one mobile). The verified Sprint 11 totals are recorded after the final matrix below: 136 unit/integration, 42 desktop, 3 mobile and 45 total browser tests.
+Sprint 10 completed at commit `007eae8` with 124 unit/integration tests, 39 desktop tests, 2 mobile tests and 41 total browser tests. Sprint 11 completed at `311b8a3` with 136 unit/integration tests, 42 desktop tests, 3 mobile tests and 45 total browser tests. Sprint 12 verifies 144 unit/integration tests, 10 focused real PostgreSQL integration tests, 42 desktop tests, 3 mobile tests, 45 total browser tests and a 22-route production build.
 
 ## Important routes
 
@@ -137,7 +145,8 @@ Future paths should be added through canonical data plus a single registry impor
 - No live feedback form/service; the facilitator supplies the Markdown feedback template.
 - Chromium desktop/mobile are automated; Safari, Firefox, screen-reader, and public deployment audits remain owner/future checks.
 - No production multi-path bank or wider content bank has been added; the second-path proof is test-only.
-- Client clocks are untrusted; a future server may record trusted receive time separately.
+- Client clocks remain untrusted event chronology; the remote repository records separate database-controlled receive time and order.
+- The remote repository has no authenticated transport and is intentionally unused by learner pages.
 
 ## Verification commands
 
@@ -146,6 +155,8 @@ pnpm install --frozen-lockfile
 pnpm run typecheck
 pnpm run lint
 pnpm run validate-content
+pnpm run test:remote-evidence
+pnpm run test:database
 pnpm test
 pnpm run build
 pnpm run test:e2e:desktop

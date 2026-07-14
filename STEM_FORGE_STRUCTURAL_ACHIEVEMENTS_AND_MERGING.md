@@ -116,9 +116,9 @@ V3 preserves version evidence and gains deterministic IDs. V2, V1, and unversion
 
 `stemforge.pathCelebration.v1` remains independent UI acknowledgement state. It neither stores snapshots nor calculates readiness, and snapshot creation does not replay a celebration.
 
-## 30. Future database implications
+## 30. Remote database foundation
 
-Store evidence as immutable rows keyed by event ID, validate versions and fields server-side, preserve orphan references, and recalculate projections from the union rather than overwriting a payload.
+Sprint 12 implements the server-only PostgreSQL boundary described in `STEM_FORGE_REMOTE_EVIDENCE_FOUNDATION.md`. Attempts, support events and snapshots are immutable owner-scoped rows with trusted receive metadata. Identical IDs and payloads are idempotent; same-ID/different-payload arrivals preserve accepted evidence and append a deduplicated conflict record. The learner application is not connected to this repository.
 
 ## 31. Future sync implications
 
@@ -138,4 +138,4 @@ Pure tests cover migration identities, validation, transitions, reset, history, 
 
 ## 35. Known limitations
 
-Client timestamps are untrusted, the fallback runtime ID generator is weaker than UUID, there is no remote conflict telemetry, local reset cannot propagate, migration cannot reconstruct old structural achievements, and no historical-achievement UI is exposed.
+Client timestamps remain untrusted event chronology, the fallback runtime ID generator is weaker than UUID, there is no authenticated remote transport or conflict telemetry, local reset cannot propagate, migration cannot reconstruct old structural achievements, and no historical-achievement UI is exposed.
