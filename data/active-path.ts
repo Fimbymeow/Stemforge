@@ -1,57 +1,33 @@
-﻿import {
-  getActiveSkillPath,
-  getQuestionHref,
-  getStageForQuestionInSkillPath,
-} from "@/lib/learning-paths";
+import { getActiveSkillPath, getQuestionContext, getQuestionHref } from "@/lib/learning-paths";
 import type { LearningStage, SkillPath } from "@/data/types";
 
-// Beta shortcut: the active available path is currently Basic differentiation, resolved from data.
+// Private-beta entry helper retained for current homepage/dashboard entry points.
 export function getBasicDifferentiationSkillPath(): SkillPath {
   return getActiveSkillPath();
 }
 
 export function getStageForQuestion(questionId: string): LearningStage | undefined {
-  return getStageForQuestionInSkillPath(getActiveSkillPath(), questionId);
+  return getQuestionContext(questionId)?.stage;
 }
 
 export function getNextActionForQuestion(questionId: string) {
-  const skillPath = getActiveSkillPath();
-  const stages = skillPath.learningStages ?? [];
-  const currentStageIndex = stages.findIndex((stage) => stage.questionIds.includes(questionId));
-  const currentStage = currentStageIndex >= 0 ? stages[currentStageIndex] : undefined;
-  const reviewLabel = `Review ${skillPath.name}`;
+  const context = getQuestionContext(questionId);
+  if (!context) return { label: "Browse subjects", href: "/subjects", title: "Browse subjects" };
 
-  if (!currentStage) {
+  const reviewLabel = `Review ${context.skillPath.name}`;
+  if (context.nextQuestion?.stageId === context.stage.id) {
     return {
-      label: reviewLabel,
-      href: skillPath.href,
-      title: reviewLabel,
+      label: `Continue ${context.stage.name}`,
+      href: getQuestionHref(context.nextQuestion.id),
+      title: `Continue ${context.stage.name}`,
     };
   }
-
-  const questionIndex = currentStage.questionIds.indexOf(questionId);
-  const nextInStage = currentStage.questionIds[questionIndex + 1];
-  if (nextInStage) {
+  if (context.nextStage && context.nextQuestion) {
     return {
-      label: `Continue ${currentStage.name}`,
-      href: getQuestionHref(nextInStage),
-      title: `Continue ${currentStage.name}`,
+      label: `Move to ${context.nextStage.name}`,
+      href: getQuestionHref(context.nextQuestion.id),
+      title: `Move to ${context.nextStage.name}`,
     };
   }
-
-  const nextStage = stages[currentStageIndex + 1];
-  const firstQuestionInNextStage = nextStage?.questionIds[0];
-  if (nextStage && firstQuestionInNextStage) {
-    return {
-      label: `Move to ${nextStage.name}`,
-      href: getQuestionHref(firstQuestionInNextStage),
-      title: `Move to ${nextStage.name}`,
-    };
-  }
-
-  return {
-    label: reviewLabel,
-    href: skillPath.href,
-    title: reviewLabel,
-  };
+  return { label: reviewLabel, href: context.skillPath.href, title: reviewLabel };
 }

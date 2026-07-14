@@ -1,7 +1,7 @@
 # STEM Forge Conversation Handoff
 
 Last updated: 14 July 2026
-Current checkpoint: Sprint 10 private-beta readiness
+Current checkpoint: Sprint 11 SQA-aligned taxonomy and generic multi-path runtime
 
 This is the durable starting point for a new Codex conversation. Inspect the repository before editing. Preserve unfamiliar Finlay, Claude, or Codex changes and never reset a dirty tree without explicit approval.
 
@@ -11,11 +11,11 @@ STEM Forge is a structured Scottish SQA STEM learning platform, not a random que
 
 **Learn -> Practise -> Exam Questions -> Master**
 
-The canonical hierarchy is Subject -> Course -> Skill Path -> Stage -> Question. Stages are Foundations, Applications, and Past Paper-style Questions.
+The canonical learner hierarchy is Subject -> Course area -> Specification strand -> Skill path -> Stage -> Question. Stages are Foundations, Applications, and Past Paper-style Questions. Specification strands expose official SQA structure; skill paths remain the progress and mastery unit.
 
 The only active learner-ready vertical slice is:
 
-**Higher Maths -> Calculus -> Differentiation -> Basic differentiation**
+**Higher Maths -> Calculus -> Differentiating functions -> Basic differentiation**
 
 It contains eight active canonical questions in a 3/3/2 stage structure. Higher Physics is a separate locked/read-only legacy demonstration and has not been migrated. Other visible paths and subjects are coming soon, not available practice.
 
@@ -81,6 +81,14 @@ Canonical Higher Maths content has stable logical IDs, positive question/stage/p
 
 Question content is original SQA-style practice. Do not imply it is official, copied, affiliated with, or endorsed by SQA.
 
+## Sprint 11 runtime source of truth
+
+`data/canonical-content.ts` is the sole production canonical registry and `lib/content-resolver.ts` is the pure Higher Maths resolution boundary. It resolves subject, course area, specification strand, path, stage, question, path-scoped position, previous/next and destinations. Shared helpers no longer import Basic Differentiation questions directly. `lib/question-bank-query.ts` owns pure search/filter/sort derivation, and `lib/dashboard-derivations.ts` exposes path-agnostic future dashboard summaries.
+
+The six official Calculus headings are explicit ordered specification strands. Thirteen active path records exist: Basic Differentiation remains the sole learner-ready path and the others are honest metadata-only coming-soon paths. A second available path and its three questions exist only in `tests/fixtures/multi-path-content.ts`; they prove genericity without production content.
+
+No stable existing ID, production URL, question/stage/path assessment version, persisted progress shape, marking rule, completion rule or mastery rule changed. Higher Physics remains the separate unmigrated legacy boundary. Read `STEM_FORGE_SQA_TAXONOMY_AND_MULTI_PATH_RUNTIME.md` before importing another path.
+
 ## Current verification baseline
 
 Sprint 10 began from commit `d515ca2` and reproduced:
@@ -93,7 +101,7 @@ Sprint 10 began from commit `d515ca2` and reproduced:
 - production build: passing, 22 routes;
 - Playwright: 38 passing baseline tests with Chromium actually launched.
 
-Sprint 10 adds three focused private-beta browser assertions, so the final expected browser total is 41 when the final matrix is green. Consult `STEM_FORGE_PRIVATE_BETA_READINESS.md` for the final exact result rather than relying on this expectation.
+Sprint 10 completed at commit `007eae8` with 124 unit/integration tests, 39 desktop tests, 2 mobile tests and 41 total browser tests. Sprint 11 adds 12 focused unit/integration tests and four browser assertions (three desktop, one mobile). The verified Sprint 11 totals are recorded after the final matrix below: 136 unit/integration, 42 desktop, 3 mobile and 45 total browser tests.
 
 ## Important routes
 
@@ -104,6 +112,7 @@ Sprint 10 adds three focused private-beta browser assertions, so the final expec
 - `/subjects/higher-maths/calculus`
 - `/subjects/higher-maths/calculus/differentiation`
 - `/subjects/higher-maths/calculus/differentiation/basic-differentiation`
+- `/subjects/higher-maths/calculus/integration/basic-integration` (coming-soon metadata route)
 - `/question/hm-calc-diff-basic-f-001`
 - `/question/hm-calc-diff-basic-a-001`
 - `/question/hm-calc-diff-basic-ppq-001`
@@ -112,15 +121,14 @@ Sprint 10 adds three focused private-beta browser assertions, so the final expec
 
 ## Remaining vertical-slice assumptions
 
-These are known scaling preconditions, not Sprint 10 defects:
+These are intentional product limits, not resolver defects:
 
-- global active subject/path constants select Higher Maths and Basic differentiation;
-- shared lookup imports Higher Maths differentiation questions directly;
-- question breadcrumbs and the subject badge assume Higher Maths/Calculus/Differentiation;
-- some Higher Maths hub/resource links are fixed;
-- question positioning is global across the Maths question set rather than fully path-scoped.
+- the homepage/dashboard retain an explicit current beta entry point because only Basic Differentiation is published;
+- planned paths contain taxonomy metadata but no learner questions;
+- the question-bank UI is minimally wired to the pure query contract and awaits a separately scoped dense-interface design;
+- content import/review is still manual and no authoring system exists.
 
-Do not perform a generic-routing rewrite until controlled multi-path import is the approved next sprint. Fix an assumption earlier only if it breaks the current beta journey.
+Future paths should be added through canonical data plus a single registry import, not by adding component-specific conditionals.
 
 ## Intentional limitations
 
@@ -128,7 +136,7 @@ Do not perform a generic-routing rewrite until controlled multi-path import is t
 - Progress and completion acknowledgement are local to one browser/device.
 - No live feedback form/service; the facilitator supplies the Markdown feedback template.
 - Chromium desktop/mobile are automated; Safari, Firefox, screen-reader, and public deployment audits remain owner/future checks.
-- No multi-path authoring/import and no wider content bank has been added.
+- No production multi-path bank or wider content bank has been added; the second-path proof is test-only.
 - Client clocks are untrusted; a future server may record trusted receive time separately.
 
 ## Verification commands

@@ -12,7 +12,7 @@ import type { LegacyQuestionAttempt, ProgressEvidence, QuestionAttempt } from "@
 import { UNKNOWN_LEGACY_VERSION_EVIDENCE, type VersionEvidence } from "@/lib/progress/types";
 import { getMathsQuestionById, mathsQuestions } from "@/data/question-registry";
 import { createEventId } from "@/lib/progress/event-identity";
-import { getSkillPathById, subjects } from "@/lib/learning-paths";
+import { getSkillPathContext } from "@/lib/learning-paths";
 import type { StructuralAchievementContext } from "@/lib/progress/achievements";
 
 export type {
@@ -74,16 +74,10 @@ const activeQuestionVersions: Readonly<Record<string, number>> = Object.fromEntr
 );
 
 function getStructuralContext(skillPathId: string): StructuralAchievementContext | undefined {
-  const skillPath = getSkillPathById(skillPathId);
-  if (!skillPath) return undefined;
-  for (const subject of subjects) {
-    for (const course of subject.courseAreas) {
-      if (course.specAreas.some((area) => area.skillPaths?.some((path) => path.slug === skillPathId))) {
-        return { subjectId: subject.subjectSlug, courseId: course.slug, skillPath, questionVersions: activeQuestionVersions };
-      }
-    }
-  }
-  return undefined;
+  const context = getSkillPathContext(skillPathId);
+  return context
+    ? { subjectId: context.subject.subjectSlug, courseId: context.courseArea.slug, skillPath: context.skillPath, questionVersions: activeQuestionVersions }
+    : undefined;
 }
 
 export function getAllAttempts() {

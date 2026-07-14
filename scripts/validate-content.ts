@@ -1,12 +1,10 @@
-import { higherMathsDifferentiationQuestions } from "../content/questions/higher-maths/differentiation";
-import { higherMaths } from "../data/higher-maths";
-import { higherPhysics } from "../data/higher-physics";
+import { canonicalContent } from "../data/canonical-content";
 import { questions as legacyPhysicsQuestions } from "../data/questions";
 import { formatValidationReport, validateContent } from "../lib/content-validation";
 
 const report = validateContent({
-  subjects: [higherMaths, higherPhysics],
-  questions: higherMathsDifferentiationQuestions,
+  subjects: [...canonicalContent.subjects],
+  questions: [...canonicalContent.questions],
   legacyQuestions: legacyPhysicsQuestions,
 });
 

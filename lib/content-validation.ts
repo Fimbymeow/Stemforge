@@ -8,6 +8,7 @@ import type {
   PracticeSet,
   Question,
   SkillPath,
+  SpecificationStrand,
   Subject,
   WorkedExample,
 } from "@/data/types";
@@ -23,6 +24,7 @@ export type ContentValidationCounts = {
   subjects: number;
   courses: number;
   specAreas: number;
+  specificationStrands: number;
   skillPaths: number;
   stages: number;
   questions: number;
@@ -63,6 +65,7 @@ type SkillPathContext = {
   subject: Subject;
   courseName: string;
   specAreaName: string;
+  specificationStrand: SpecificationStrand;
   skillPath: SkillPath;
   location: string;
 };
@@ -83,6 +86,7 @@ export function validateContent(input: ContentValidationInput): ContentValidatio
     subjects: input.subjects.length,
     courses: 0,
     specAreas: 0,
+    specificationStrands: 0,
     skillPaths: 0,
     stages: 0,
     questions: input.questions.length,
@@ -139,6 +143,23 @@ export function validateContent(input: ContentValidationInput): ContentValidatio
       validateRequiredText(course.name, "Course name", courseLocation, issue);
       validateContentStatus(course.contentStatus, "Course", course.slug, courseLocation, issue);
       validateParentLifecycle(subject.contentStatus, course.contentStatus, "subject", subject.subjectSlug, "course", course.slug, subjectLocation, courseLocation, issue);
+      const specificationStrands = course.specificationStrands ?? [];
+      counts.specificationStrands += specificationStrands.length;
+      const strandOrders = new Map<number, string>();
+      for (const strand of specificationStrands) {
+        const strandLocation = `${courseLocation}/specification-strand:${strand.id}`;
+        validateId(strand.id, "Specification strand", strandLocation, `specification-strand:${subject.subjectSlug}:${course.slug}:${strand.id}`);
+        validateRequiredText(strand.name, "Specification strand name", strandLocation, issue);
+        validateRequiredText(strand.description, "Specification strand description", strandLocation, issue);
+        validateRequiredText(strand.href, "Specification strand href", strandLocation, issue);
+        validatePositiveInteger(strand.displayOrder, "displayOrder", "Specification strand", strand.id, strandLocation, issue, "invalid-strand-display-order");
+        validateContentStatus(strand.contentStatus, "Specification strand", strand.id, strandLocation, issue);
+        validateParentLifecycle(course.contentStatus, strand.contentStatus, "course", course.slug, "specification strand", strand.id, courseLocation, strandLocation, issue);
+        const existingOrder = strandOrders.get(strand.displayOrder);
+        if (existingOrder) issue("error", "duplicate-strand-display-order", `Specification strands "${existingOrder}" and "${strand.id}" share displayOrder ${String(strand.displayOrder)}.`, courseLocation);
+        else strandOrders.set(strand.displayOrder, strand.id);
+      }
+      const pathOrdersByStrand = new Map<string, Map<number, string>>();
       validateSiblingSlugs(course.specAreas.map((specArea) => specArea.slug), "spec area", courseLocation, issue);
       counts.specAreas += course.specAreas.length;
 
@@ -152,11 +173,28 @@ export function validateContent(input: ContentValidationInput): ContentValidatio
 
         for (const skillPath of specArea.skillPaths ?? []) {
           const pathLocation = `${specLocation}/skill-path:${skillPath.slug}`;
+          const specificationStrand = specificationStrands.find((strand) => strand.id === skillPath.specificationStrandId);
           validateId(skillPath.slug, "Skill path", pathLocation, `skill-path:${skillPath.slug}:v${String(skillPath.pathVersion)}`);
           validateRequiredText(skillPath.name, "Skill path name", pathLocation, issue);
           validatePositiveInteger(skillPath.pathVersion, "pathVersion", "Skill path", skillPath.slug, pathLocation, issue, "invalid-path-version");
           validateContentStatus(skillPath.contentStatus, "Skill path", skillPath.slug, pathLocation, issue);
           validateParentLifecycle(specArea.contentStatus, skillPath.contentStatus, "spec area", specArea.slug, "skill path", skillPath.slug, specLocation, pathLocation, issue);
+          if (specificationStrands.length && !skillPath.specificationStrandId) {
+            issue("error", "missing-specification-strand-reference", `Skill path "${skillPath.slug}" has no specificationStrandId.`, pathLocation);
+          } else if (specificationStrands.length && !specificationStrand) {
+            issue("error", "invalid-specification-strand-reference", `Skill path "${skillPath.slug}" references missing specification strand "${String(skillPath.specificationStrandId)}".`, pathLocation, courseLocation);
+          }
+          if (specificationStrand) {
+            validateParentLifecycle(specificationStrand.contentStatus, skillPath.contentStatus, "specification strand", specificationStrand.id, "skill path", skillPath.slug, `${courseLocation}/specification-strand:${specificationStrand.id}`, pathLocation, issue);
+            validatePositiveInteger(skillPath.displayOrder, "displayOrder", "Skill path", skillPath.slug, pathLocation, issue, "invalid-path-display-order");
+            if (Number.isInteger(skillPath.displayOrder)) {
+              const orders = pathOrdersByStrand.get(specificationStrand.id) ?? new Map<number, string>();
+              const existingOrder = orders.get(skillPath.displayOrder as number);
+              if (existingOrder) issue("error", "duplicate-path-display-order", `Skill paths "${existingOrder}" and "${skillPath.slug}" share displayOrder ${String(skillPath.displayOrder)} within specification strand "${specificationStrand.id}".`, pathLocation);
+              else orders.set(skillPath.displayOrder as number, skillPath.slug);
+              pathOrdersByStrand.set(specificationStrand.id, orders);
+            }
+          }
           countLifecycle(skillPath.contentStatus, "path", counts);
           counts.skillPaths += 1;
           counts.stages += skillPath.learningStages?.length ?? 0;
@@ -166,8 +204,8 @@ export function validateContent(input: ContentValidationInput): ContentValidatio
           const existingPath = skillPaths.get(skillPath.slug);
           if (skillPath.contentStatus === "active" && existingPath) {
             issue("error", "multiple-active-path-versions", `Skill path "${skillPath.slug}" has more than one active version.`, existingPath.location, pathLocation);
-          } else if (skillPath.contentStatus === "active") {
-            skillPaths.set(skillPath.slug, { subject, courseName: course.name, specAreaName: specArea.name, skillPath, location: pathLocation });
+          } else if (skillPath.contentStatus === "active" && specificationStrand) {
+            skillPaths.set(skillPath.slug, { subject, courseName: course.name, specAreaName: specArea.name, specificationStrand, skillPath, location: pathLocation });
           }
 
           validateResources(skillPath, pathLocation, validateId, issue);
@@ -184,7 +222,7 @@ export function validateContent(input: ContentValidationInput): ContentValidatio
             }
             const existingStage = stages.get(stage.id);
             if (stage.contentStatus === "active" && existingStage) issue("error", "multiple-active-stage-versions", `Stage "${stage.id}" has more than one active version.`, existingStage.location, stageLocation);
-            else if (stage.contentStatus === "active") stages.set(stage.id, { subject, courseName: course.name, specAreaName: specArea.name, skillPath, stage, location: stageLocation });
+            else if (stage.contentStatus === "active" && specificationStrand) stages.set(stage.id, { subject, courseName: course.name, specAreaName: specArea.name, specificationStrand, skillPath, stage, location: stageLocation });
 
             for (const questionId of findDuplicates(stage.questionIds)) {
               issue("error", "duplicate-stage-question", `Stage "${stage.id}" contains question "${questionId}" more than once.`, stageLocation);
@@ -251,6 +289,9 @@ export function validateContent(input: ContentValidationInput): ContentValidatio
       compareReference(question.subject, path.subject.subjectName, "subject", question.id, location, issue);
       compareReference(question.courseArea, path.courseName, "course area", question.id, location, issue);
       compareReference(question.specArea, path.specAreaName, "spec area", question.id, location, issue);
+      if (question.specificationStrandId && question.specificationStrandId !== path.specificationStrand.id) {
+        issue("error", "specification-strand-mismatch", `Question "${question.id}" specificationStrandId is "${question.specificationStrandId}" but its path belongs to "${path.specificationStrand.id}".`, location, path.location);
+      }
       if (question.skillPath) compareReference(question.skillPath, path.skillPath.name, "skill path name", question.id, location, issue);
     }
     if (stage) {
@@ -278,6 +319,7 @@ export function formatValidationReport(report: ContentValidationReport) {
     `Subjects: ${report.counts.subjects}`,
     `Courses: ${report.counts.courses}`,
     `Spec areas: ${report.counts.specAreas}`,
+    `Specification strands: ${report.counts.specificationStrands}`,
     `Skill paths: ${report.counts.skillPaths}`,
     `Active skill paths: ${report.counts.activeSkillPaths}`,
     `Archived skill paths: ${report.counts.archivedSkillPaths}`,

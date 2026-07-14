@@ -1,6 +1,6 @@
 # STEM Forge Content Version Architecture
 
-Updated: 13 July 2026  
+Updated: 14 July 2026
 Status: Sprint 7 implemented foundation
 
 ## Outcome
@@ -16,8 +16,11 @@ STEM Forge now has an explicit, validated content-version and lifecycle foundati
 | Skill path | `slug` | `pathVersion` | `contentStatus` |
 | Resource | `id` | `contentRevision` | `contentStatus` |
 | Subject/course/spec area | existing slug | none in this sprint | `contentStatus` |
+| Specification strand | stable `id` | none (navigational taxonomy) | `contentStatus` |
 
 Versions and revisions are positive whole numbers. Lifecycle is exactly `active` or `archived`. Availability (`available`, `coming-soon`, `locked`) remains a separate product concept: a coming-soon path can still be active canonical content.
+
+Sprint 11 deliberately adds no strand version. A strand groups navigation and does not define assessable evidence. Moving or relabelling taxonomy alone must not invalidate question, stage or path evidence; no existing assessment version changed in Sprint 11.
 
 ## Conservative migration defaults
 

@@ -1,31 +1,34 @@
-﻿import { higherMathsDifferentiationQuestions } from "@/content/questions/higher-maths/differentiation";
-import { getQuestionById } from "@/lib/learning-paths";
 import { getQuestionById as getPhysicsQuestionById, questions as physicsQuestions } from "@/data/questions";
-import { getActiveQuestionById, getActiveQuestions } from "@/lib/content-selectors";
+import { contentResolver } from "@/lib/content-resolver";
 
-export const mathsQuestions = getActiveQuestions(higherMathsDifferentiationQuestions);
+export const mathsQuestions = contentResolver.getQuestions();
 
 export function getMathsQuestionById(id: string) {
-  return getActiveQuestionById(mathsQuestions, id);
+  return contentResolver.getQuestion(id);
 }
 
 export function getAnyQuestionById(id: string) {
-  return getQuestionById(id) ?? getPhysicsQuestionById(id);
+  return contentResolver.getQuestion(id) ?? getPhysicsQuestionById(id);
 }
 
 export function getMathsQuestionPosition(id: string) {
-  const index = mathsQuestions.findIndex((question) => question.id === id);
+  const context = contentResolver.getQuestionContext(id);
   return {
-    index,
-    current: index >= 0 ? index + 1 : 0,
-    total: mathsQuestions.length,
-    previous: index > 0 ? mathsQuestions[index - 1] : undefined,
-    next: index >= 0 && index < mathsQuestions.length - 1 ? mathsQuestions[index + 1] : undefined,
+    index: context?.questionIndexInPath ?? -1,
+    current: context ? context.questionIndexInPath + 1 : 0,
+    total: context?.pathQuestions.length ?? 0,
+    previous: context?.previousQuestion,
+    next: context?.nextQuestion,
   };
 }
 
 export function getFirstMathsQuestionForStage(stage: string) {
-  return mathsQuestions.find((question) => question.stage === stage);
+  for (const context of contentResolver.getAllPathContexts()) {
+    const targetStage = context.skillPath.learningStages?.find((candidate) => candidate.id === stage || candidate.name === stage || candidate.label === stage);
+    const questionId = targetStage?.questionIds[0];
+    if (questionId) return contentResolver.getQuestion(questionId);
+  }
+  return undefined;
 }
 
 export { physicsQuestions };

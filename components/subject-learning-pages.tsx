@@ -10,8 +10,8 @@ import { TopicRoadmap } from "@/components/learning/topic-roadmap";
 import { getFirstMathsQuestionForStage } from "@/data/question-registry";
 import { getFirstQuestionForStage, type QuestionStage } from "@/data/questions";
 import { getCourseArea, getLearningStages, getSpecArea, getSubject } from "@/data/subjects-registry";
-import { getActiveSkillPathHref } from "@/lib/learning-paths";
-import type { CourseArea, LearningStage, SkillPath, SpecArea, Subject } from "@/data/types";
+import { getActiveSkillPathHref, getSkillPathContextByRoute } from "@/lib/learning-paths";
+import type { CourseArea, LearningStage, SkillPath, SpecArea, SpecificationStrand, Subject } from "@/data/types";
 
 const stageIcons = {
   Foundations: BookOpen,
@@ -226,22 +226,47 @@ export function SkillPathLearningPage({
   specAreaSlug: string;
   skillPathSlug: string;
 }) {
-  const subject = getSubject(subjectSlug);
-  const courseArea = getCourseArea(subjectSlug, courseAreaSlug);
-  const specArea = getSpecArea(subjectSlug, courseAreaSlug, specAreaSlug);
-  const skillPath = specArea?.skillPaths?.find((path) => path.slug === skillPathSlug);
-  if (!subject || !courseArea || !specArea || !skillPath) return null;
+  const context = getSkillPathContextByRoute(subjectSlug, courseAreaSlug, specAreaSlug, skillPathSlug);
+  if (!context) return null;
+  const { subject, courseArea, specificationStrand, skillPath } = context;
   if (!subject.isAvailable) return <LockedSubjectPage subject={subject} />;
+  if (!skillPath.isAvailable) {
+    return (
+      <AppShell demo active="Subjects">
+        <Topbar />
+          <div className="mx-auto grid max-w-[920px] gap-4">
+            <Breadcrumbs items={["Subjects", subject.subjectName, courseArea.name, specificationStrand.name, skillPath.name]} />
+            <header className="rounded-xl border border-line bg-surface p-5 shadow-sm">
+              <p className="mb-1 text-sm font-extrabold uppercase tracking-wide text-forge">Coming soon</p>
+              <h1 className="text-3xl font-black tracking-tight text-ink">{skillPath.name}</h1>
+              <p className="mt-2 text-muted">{specificationStrand.name}</p>
+            </header>
+            <LockedCard
+              title="Reviewed questions are being prepared"
+            description="This learner-sized path is mapped into the official course structure, but its reviewed questions have not been published."
+            badge="Coming Soon"
+          />
+          <Card className="p-4">
+            <h2 className="mb-3 text-xl font-extrabold">Continue the available path</h2>
+            <p className="mb-5 text-muted">Basic differentiation remains the current learner-ready Higher Maths path.</p>
+            <Link href={getActiveSkillPathHref()} className="inline-flex min-h-10 items-center justify-center rounded-lg bg-forge px-5 text-sm font-extrabold text-white">
+              Open Basic differentiation
+            </Link>
+          </Card>
+        </div>
+      </AppShell>
+    );
+  }
 
-  const currentPathLabel = skillPath.currentPathLabel ?? `${subject.subjectName} / ${courseArea.name} / ${specArea.name} / ${skillPath.name}`;
+  const currentPathLabel = `${subject.subjectName} / ${courseArea.name} / ${specificationStrand.name} / ${skillPath.name}`;
 
   return (
     <AppShell demo active="Subjects">
       <Topbar />
       <div className="mx-auto grid max-w-[1120px] grid-cols-[minmax(0,1fr)_280px] gap-4 max-lg:grid-cols-1">
         <section className="grid gap-4">
-          <Breadcrumbs items={["Subjects", subject.subjectName, courseArea.name, specArea.name, skillPath.name]} />
-          <SkillPathHero subject={subject} courseArea={courseArea} specArea={specArea} skillPath={skillPath} />
+          <Breadcrumbs items={["Subjects", subject.subjectName, courseArea.name, specificationStrand.name, skillPath.name]} />
+          <SkillPathHero subject={subject} courseArea={courseArea} specificationStrand={specificationStrand} skillPath={skillPath} />
           <div className="grid gap-4">
             <LocalLearningPathSection skillPath={skillPath} />
             <LocalProgressControls skillPath={skillPath} />
@@ -374,13 +399,13 @@ function SpecAreaHubHero({ subject, courseArea, specArea }: { subject: Subject; 
   );
 }
 
-function SkillPathHero({ subject, courseArea, specArea, skillPath }: { subject: Subject; courseArea: CourseArea; specArea: SpecArea; skillPath: SkillPath }) {
+function SkillPathHero({ subject, courseArea, specificationStrand, skillPath }: { subject: Subject; courseArea: CourseArea; specificationStrand: SpecificationStrand; skillPath: SkillPath }) {
   return (
     <Card className="overflow-hidden p-4">
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <span className="rounded-lg bg-forge-soft px-3 py-1.5 text-sm font-extrabold text-forge">{subject.subjectName}</span>
         <span className="rounded-lg border border-line px-3 py-1.5 text-sm font-bold text-muted">{courseArea.name}</span>
-        <span className="rounded-lg border border-line px-3 py-1.5 text-sm font-bold text-muted">{specArea.name}</span>
+        <span className="rounded-lg border border-line px-3 py-1.5 text-sm font-bold text-muted">{specificationStrand.name}</span>
       </div>
       <h1 className="m-0 text-[30px] font-extrabold leading-none">{skillPath.name}</h1>
       <p className="mt-3 max-w-3xl text-base leading-relaxed text-muted">{skillPath.description}</p>
@@ -577,10 +602,6 @@ export const SubjectPageTemplate = SubjectCoursePage;
 export const CourseAreaPageTemplate = CourseAreaPage;
 export const TopicHubTemplate = SpecAreaLearningPathPage;
 export const SkillPathPageTemplate = SkillPathLearningPage;
-
-
-
-
 
 
 

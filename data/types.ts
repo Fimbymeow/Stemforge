@@ -80,6 +80,15 @@ export type LearningStage = {
   href?: string;
 };
 
+export type SpecificationStrand = {
+  id: string;
+  contentStatus: ContentStatus;
+  name: string;
+  description: string;
+  displayOrder: number;
+  href: string;
+};
+
 export type RecommendedAction = {
   title: string;
   copy: string;
@@ -95,6 +104,8 @@ export type SidebarLink = {
 // Learning content should be added through data using this hierarchy: Subject -> Course Area -> Topic/Spec Area -> Skill Path -> Stage -> Question.
 export type SkillPath = {
   slug: string;
+  specificationStrandId?: string;
+  displayOrder?: number;
   pathVersion: PathVersion;
   contentStatus: ContentStatus;
   name: string;
@@ -107,7 +118,6 @@ export type SkillPath = {
   questions: number;
   progressStatus?: ProgressStatus;
   masteryStatus?: string;
-  currentPathLabel?: string;
   recommendedAction?: RecommendedAction;
   sidebarLinks?: SidebarLink[];
   notes?: NoteBlock[];
@@ -145,6 +155,7 @@ export type CourseArea = {
   progress: number;
   questionsCompleted: number;
   progressStatus?: ProgressStatus;
+  specificationStrands?: SpecificationStrand[];
   specAreas: SpecArea[];
   topics?: Topic[];
 };
@@ -183,6 +194,7 @@ export type Question = {
   subject: string;
   courseArea: string;
   specArea: string;
+  specificationStrandId?: string;
   skillPath?: string;
   skillPathId?: string;
   stageId?: string;

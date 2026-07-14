@@ -10,6 +10,7 @@ type Level = "unit" | "spec" | "topics";
 
 function defaultLevel(units: CourseArea[]): Level {
   if (units.length > 1) return "unit";
+  if (units[0]?.specAreas[0]?.skillPaths?.some((path) => path.isAvailable)) return "topics";
   if ((units[0]?.specAreas.length ?? 0) > 1) return "spec";
   return "topics";
 }

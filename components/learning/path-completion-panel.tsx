@@ -1,12 +1,10 @@
 import Link from "next/link";
 import { Check } from "lucide-react";
 import { Card } from "@/components/ui";
-import { getQuestionHref, getSkillPathHref } from "@/lib/learning-paths";
+import { getQuestionHref, getSkillPathHref, getSubjectForSkillPath } from "@/lib/learning-paths";
 import { MasteryBadge, ReviewBadge, type CompletedTierStatus } from "@/components/learning/mastery-badge";
 import type { SkillPath } from "@/data/types";
 import type { SkillPathProgress } from "@/lib/local-progress";
-
-const HIGHER_MATHS_HUB_HREF = "/subjects/higher-maths";
 
 export function getPathCompletionSupportingSentence(status: CompletedTierStatus, reviewCount: number) {
   if (reviewCount > 0) {
@@ -26,13 +24,15 @@ export function PathCompletionPanel({ skillPath, progress }: { skillPath: SkillP
   const reviewCount = progress.reviewQuestionIds.length;
   const heading = `${skillPath.name} ${status === "completed" ? "complete" : status}`;
   const supporting = getPathCompletionSupportingSentence(status, reviewCount);
+  const subject = getSubjectForSkillPath(skillPath);
+  const subjectAction = { href: subject?.href ?? "/subjects", label: `Return to ${subject?.subjectName ?? "subject"}` };
 
   const reviewHref = reviewCount > 0 ? getQuestionHref(progress.reviewQuestionIds[0]) : undefined;
   const primary = reviewHref
     ? { href: reviewHref, label: "Review recommended questions" }
-    : { href: HIGHER_MATHS_HUB_HREF, label: "Return to Higher Maths" };
+    : subjectAction;
   const secondary = reviewHref
-    ? { href: HIGHER_MATHS_HUB_HREF, label: "Return to Higher Maths" }
+    ? subjectAction
     : { href: getSkillPathHref(skillPath), label: "Review a stage" };
 
   return (

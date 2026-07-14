@@ -7,12 +7,10 @@ import { Card, ProgressBar } from "@/components/ui";
 import { isCompletedTierStatus, MasteryBadge, ReviewBadge, type CompletedTierStatus } from "@/components/learning/mastery-badge";
 import { getPathCompletionSupportingSentence } from "@/components/learning/path-completion-panel";
 import { acknowledgeStatus, clearPathCelebration, getPathCelebration, isAcknowledgedStatusUpgrade } from "@/lib/completion-tracking";
-import { getQuestionHref, getSkillPathHref } from "@/lib/learning-paths";
+import { getQuestionHref, getSkillPathHref, getSubjectForSkillPath } from "@/lib/learning-paths";
 import { getEmptyProgressEvidence, getNextQuestionId, getSkillPathProgress, resetSkillPathProgress, type SkillPathProgress } from "@/lib/local-progress";
 import { useHasMounted } from "@/lib/use-mounted";
 import type { SkillPath } from "@/data/types";
-
-const HIGHER_MATHS_HUB_HREF = "/subjects/higher-maths";
 
 function useLocalSkillPathProgress(skillPath: SkillPath) {
   const [version, setVersion] = useState(0);
@@ -108,12 +106,14 @@ function CompletedPathCard({ skillPath, progress, status }: { skillPath: SkillPa
   const reviewCount = progress.reviewQuestionIds.length;
   const heading = `${skillPath.name} ${status === "completed" ? "complete" : status}`;
   const supporting = getPathCompletionSupportingSentence(status, reviewCount);
+  const subject = getSubjectForSkillPath(skillPath);
+  const subjectAction = { href: subject?.href ?? "/subjects", label: `Return to ${subject?.subjectName ?? "subject"}` };
   const reviewHref = reviewCount > 0 ? getQuestionHref(progress.reviewQuestionIds[0]) : undefined;
   const primary = reviewHref
     ? { href: reviewHref, label: "Review recommended questions" }
-    : { href: HIGHER_MATHS_HUB_HREF, label: "Return to Higher Maths" };
+    : subjectAction;
   const secondary = reviewHref
-    ? { href: HIGHER_MATHS_HUB_HREF, label: "Return to Higher Maths" }
+    ? subjectAction
     : { href: getSkillPathHref(skillPath), label: "Review a stage" };
 
   return (

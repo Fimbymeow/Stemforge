@@ -58,3 +58,15 @@ test("mobile final completion is readable, stacked and free of horizontal overfl
   await primary.focus();
   await expect(primary).toBeFocused();
 });
+
+test("mobile taxonomy and question context remain readable without page overflow", async ({ page }) => {
+  await page.goto("/subjects/higher-maths/question-bank");
+  await expect(page.getByText("Differentiating functions", { exact: true })).toBeVisible();
+  await expect(page.getByText("Applying integral calculus", { exact: true })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
+
+  await page.goto("/question/hm-calc-diff-basic-a-001");
+  const breadcrumb = page.getByRole("navigation", { name: "Breadcrumb" });
+  await expect(breadcrumb).toContainText("Differentiating functions");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
+});

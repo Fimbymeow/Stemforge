@@ -1,6 +1,6 @@
 # STEM Forge Content Architecture
 
-Updated: 11 July 2026  
+Updated: 14 July 2026
 Scope: canonical static content model and validation infrastructure
 
 ## Purpose
@@ -18,12 +18,12 @@ Validation protects the existing student experience without changing routes, que
 
 ## Content hierarchy
 
-The existing hierarchy is preserved:
+The current learner hierarchy is:
 
 ```text
 Subject
 -> CourseArea
--> SpecArea / Topic
+-> SpecificationStrand
 -> SkillPath
 -> LearningStage
 -> Question
@@ -49,7 +49,9 @@ SkillPath
 | Higher Physics hierarchy | `Subject` | `data/higher-physics.ts` |
 | Basic differentiation questions | `Question[]` | `content/questions/higher-maths/differentiation.ts` |
 | Legacy Physics questions | `StemForgeQuestion[]` | `data/questions.ts` |
-| Catalog traversal | helper functions | `lib/learning-paths.ts`, `data/subjects-registry.ts` |
+| Canonical production registry | `CanonicalContentSource` | `data/canonical-content.ts` |
+| Catalog traversal and ownership | pure resolver | `lib/content-resolver.ts` |
+| Bank querying | pure query contract | `lib/question-bank-query.ts` |
 | Validation | pure validator and formatter | `lib/content-validation.ts` |
 | Validation command | repository entry point | `scripts/validate-content.ts` |
 | Integrity tests | Node test suite | `tests/content-validation.test.ts` |
@@ -78,6 +80,10 @@ A course area owns:
 - availability/progress presentation data;
 - spec areas.
 
+### Specification strand
+
+An official, explicitly ordered curriculum grouping with a stable ID, label, route and active/archive lifecycle. It owns navigation grouping but not learner progress or mastery. Higher Maths Calculus uses the six official SQA course-specification headings.
+
 ### SpecArea / Topic
 
 `SpecArea` is currently an alias of `Topic`. It owns:
@@ -88,6 +94,8 @@ A course area owns:
 - optional skill paths.
 
 The alias is preserved because changing it would be a broader domain refactor.
+
+In the Higher Maths runtime, existing route topics remain URL containers while specification strands are the learner-facing canonical grouping. The resolver owns the relationship so components do not infer it from URLs.
 
 ### SkillPath
 

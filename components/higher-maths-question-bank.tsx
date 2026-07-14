@@ -1,24 +1,24 @@
 ﻿"use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { ArrowRight, BookOpen, Calculator, CheckCircle2, ChevronDown, ClipboardList, Lock, Search, Target } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { AppTopbar } from "@/components/layout/app-topbar";
 import { Card, ProgressBar } from "@/components/ui";
 import { getActiveSubject, getActiveSkillPath, getAllSkillPaths, getQuestionCountForSkillPath, getSkillPathHref } from "@/lib/learning-paths";
-
-import { getEmptyProgressEvidence, getSkillPathProgress } from "@/lib/local-progress";
+import { contentResolver } from "@/lib/content-resolver";
+import { getEmptyProgressEvidence, getProgressEvidence, getSkillPathProgress } from "@/lib/local-progress";
+import { queryQuestionBank, type QuestionBankProgressFilter, type QuestionBankSort, type QuestionBankStageFilter } from "@/lib/question-bank-query";
 import { useHasMounted } from "@/lib/use-mounted";
 import type { SkillPath } from "@/data/types";
 
-type Filter = "all" | "not-started" | "in-progress" | "needs-work";
-
-const filters: { id: Filter; label: string }[] = [
+const filters: { id: QuestionBankProgressFilter; label: string }[] = [
   { id: "all", label: "All" },
   { id: "not-started", label: "Not started" },
   { id: "in-progress", label: "In progress" },
-  { id: "needs-work", label: "Needs work" },
+  { id: "completed", label: "Completed" },
+  { id: "review-recommended", label: "Review recommended" },
 ];
 
 export function HigherMathsQuestionBank() {
@@ -26,8 +26,9 @@ export function HigherMathsQuestionBank() {
   const skillPath = getActiveSkillPath();
   const skillPaths = getAllSkillPaths(subject);
   const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState<Filter>("all");
-  const [stageFilter, setStageFilter] = useState("all");
+  const [filter, setFilter] = useState<QuestionBankProgressFilter>("all");
+  const [stageFilter, setStageFilter] = useState<QuestionBankStageFilter>("all");
+  const [sort, setSort] = useState<QuestionBankSort>("default");
   const [version, setVersion] = useState(0);
   const hasMounted = useHasMounted();
 
@@ -42,23 +43,11 @@ export function HigherMathsQuestionBank() {
   }, []);
 
   void version;
-  const evidenceOverride = hasMounted ? undefined : getEmptyProgressEvidence();
-  const progress = getSkillPathProgress(skillPath, evidenceOverride);
+  const evidence = hasMounted ? getProgressEvidence() : getEmptyProgressEvidence();
+  const progress = getSkillPathProgress(skillPath, evidence);
   const status = getStatus(progress.status);
-  const search = query.trim().toLowerCase();
-  const visibleSkillPaths = skillPaths.filter((path) => {
-    const matchesSearch = !search || path.name.toLowerCase().includes(search) || path.description.toLowerCase().includes(search);
-    if (!matchesSearch) return false;
-    if (filter === "all") return true;
-    if (!path.isAvailable) return false;
-    const pathProgress = getSkillPathProgress(path, evidenceOverride);
-    const pathStatus = getStatus(pathProgress.status);
-    if (filter === "not-started") return pathStatus.id === "not-started";
-    if (filter === "in-progress") return pathStatus.id === "in-progress";
-    if (filter === "needs-work") return pathStatus.needsWork;
-
-    return true;
-  });
+  const visibleEntries = queryQuestionBank(contentResolver, evidence, { search: query, progressFilter: filter, stageFilter, sort });
+  const strands = contentResolver.getSpecificationStrands(contentResolver.getCourseArea("higher-maths", "calculus"));
   return (
     <AppShell demo active="Subjects">
       <div className="mx-auto mb-3 flex max-w-[1120px] justify-end">
@@ -82,6 +71,7 @@ export function HigherMathsQuestionBank() {
             <label className="relative block max-w-[560px]">
               <Search className="absolute left-4 top-1/2 size-5 -translate-y-1/2 text-muted" />
               <input
+                aria-label="Search question bank"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search topics or keywords..."
@@ -104,14 +94,19 @@ export function HigherMathsQuestionBank() {
               <div className="flex flex-wrap gap-2">
                 <select
                   value={stageFilter}
-                  onChange={(event) => setStageFilter(event.target.value)}
+                  onChange={(event) => setStageFilter(event.target.value as QuestionBankStageFilter)}
                   className="min-h-10 rounded-lg border border-line bg-white px-4 text-sm font-bold text-muted outline-none focus:border-forge"
                 >
                   <option value="all">Stage: All stages</option>
-                  {skillPath.learningStages?.map((stage) => <option key={stage.id} value={stage.id}>{stage.name}</option>)}
+                  <option value="Foundations">Foundations</option>
+                  <option value="Applications">Applications</option>
+                  <option value="Past Paper-style Questions">Past Paper-style Questions</option>
                 </select>
-                <select className="min-h-10 rounded-lg border border-line bg-white px-4 text-sm font-bold text-muted outline-none focus:border-forge" defaultValue="default">
+                <select value={sort} onChange={(event) => setSort(event.target.value as QuestionBankSort)} className="min-h-10 rounded-lg border border-line bg-white px-4 text-sm font-bold text-muted outline-none focus:border-forge">
                   <option value="default">Sort: Default</option>
+                  <option value="recently-practised">Sort: Recently practised</option>
+                  <option value="review-priority">Sort: Review priority</option>
+                  <option value="completion-status">Sort: Completion status</option>
                 </select>
               </div>
             </div>
@@ -120,12 +115,20 @@ export function HigherMathsQuestionBank() {
           <Card className="overflow-hidden p-0">
             <TopicHeader />
             <div className="divide-y divide-line">
-              <TopicRow icon={<Calculator className="size-5" />} title="Calculus" countLabel="1 path" depth={0} />
-              <TopicRow icon={<BookOpen className="size-5" />} title="Differentiation" countLabel={`${skillPaths.length} paths`} depth={1} open />
-              {visibleSkillPaths.length ? (
-                visibleSkillPaths.map((path) => (
-                  <SkillPathRow key={path.slug} path={path} stageFilter={stageFilter} />
-                ))
+              <TopicRow icon={<Calculator className="size-5" />} title="Calculus" countLabel={`${skillPaths.length} paths`} depth={0} open />
+              {visibleEntries.length ? (
+                strands.map((strand) => {
+                  const strandEntries = visibleEntries.filter((entry) => entry.context.specificationStrand.id === strand.id);
+                  if (!strandEntries.length) return null;
+                  return (
+                    <Fragment key={strand.id}>
+                      <TopicRow icon={<BookOpen className="size-5" />} title={strand.name} countLabel={`${strandEntries.length} path${strandEntries.length === 1 ? "" : "s"}`} depth={1} open />
+                      {strandEntries.map((entry) => (
+                        <SkillPathRow key={entry.id} path={entry.context.skillPath} stageFilter={stageFilter} />
+                      ))}
+                    </Fragment>
+                  );
+                })
               ) : (
                 <div className="p-4 text-muted">No topics match the current search and filter.</div>
               )}
@@ -175,12 +178,12 @@ function TopicRow({ icon, title, countLabel, depth, open = false }: { icon: Reac
   );
 }
 
-function SkillPathRow({ path, stageFilter }: { path: SkillPath; stageFilter: string }) {
+function SkillPathRow({ path, stageFilter }: { path: SkillPath; stageFilter: QuestionBankStageFilter }) {
   const hasMounted = useHasMounted();
   const progress = getSkillPathProgress(path, hasMounted ? undefined : getEmptyProgressEvidence());
   const status = getStatus(progress.status);
   const isSelectedPath = path.slug === getActiveSkillPath().slug;
-  const stages = (path.learningStages ?? []).filter((stage) => stageFilter === "all" || stage.id === stageFilter);
+  const stages = (path.learningStages ?? []).filter((stage) => stageFilter === "all" || stage.name === stageFilter);
 
   if (path.isAvailable && isSelectedPath) {
     return (
@@ -290,4 +293,3 @@ function getStatus(status: "not_started" | "in_progress" | "completed" | "secure
     badgeClass: isStrong ? "bg-[#f1fbf4] text-[#188246]" : status === "not_started" ? "bg-[#f4f1eb] text-muted" : "bg-forge-soft text-forge",
   };
 }
-

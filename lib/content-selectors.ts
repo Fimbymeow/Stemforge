@@ -6,6 +6,7 @@ import type {
   Question,
   SkillPath,
   SpecArea,
+  SpecificationStrand,
   Subject,
 } from "@/data/types";
 
@@ -18,6 +19,10 @@ export function getActiveRecords<T extends LifecycleRecord>(records: readonly T[
 export const getActiveSubjects = (subjects: readonly Subject[]) => getActiveRecords(subjects);
 export const getActiveCourseAreas = (subject: Subject) => getActiveRecords(subject.courseAreas);
 export const getActiveSpecAreas = (courseArea: CourseArea) => getActiveRecords(courseArea.specAreas);
+export const getActiveSpecificationStrands = (courseArea: CourseArea) =>
+  getActiveRecords(courseArea.specificationStrands ?? []).sort(
+    (left: SpecificationStrand, right: SpecificationStrand) => left.displayOrder - right.displayOrder || left.id.localeCompare(right.id),
+  );
 export const getActiveSkillPaths = (specArea: SpecArea) => getActiveRecords(specArea.skillPaths ?? []);
 export const getActiveStages = (skillPath: SkillPath) => getActiveRecords(skillPath.learningStages ?? []);
 export const getActiveResources = (resources: readonly ContentResource[]) => getActiveRecords(resources);
@@ -72,6 +77,7 @@ export function createActiveSubjectView(subject: Subject, questions: readonly Qu
     ...subject,
     courseAreas: getActiveCourseAreas(subject).map((courseArea) => ({
       ...courseArea,
+      specificationStrands: getActiveSpecificationStrands(courseArea),
       specAreas: getActiveSpecAreas(courseArea).map((specArea) => ({
         ...specArea,
         skillPaths: getActiveSkillPaths(specArea).map((path) => createActiveSkillPathView(path, questions)),

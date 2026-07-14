@@ -11,7 +11,7 @@ import { QuestionAnswerInput } from "@/components/questions/answer-inputs";
 import { PathCompletionPanel } from "@/components/learning/path-completion-panel";
 import { canSubmitAnswer, markQuestionAnswer } from "@/lib/answer-engine";
 import { recordPathCelebrated } from "@/lib/completion-tracking";
-import { getQuestionHref, getQuestionsForSkillPath, getSkillPathForQuestion, getStageForQuestionInSkillPath } from "@/lib/learning-paths";
+import { getQuestionContext, getQuestionHref } from "@/lib/learning-paths";
 import {
   getEmptyProgressEvidence,
   getNextQuestionId,
@@ -32,18 +32,16 @@ export function QuestionWorkspace({ question }: { question: Question }) {
   const [showCompletionPanel, setShowCompletionPanel] = useState(false);
   const wasPathCompleteRef = useRef<boolean | null>(null);
   const hasMounted = useHasMounted();
-  const skillPath = useMemo(() => getSkillPathForQuestion(question), [question]);
-  const skillPathQuestions = useMemo(() => (skillPath ? getQuestionsForSkillPath(skillPath) : [question]), [question, skillPath]);
-  const position = useMemo(() => {
-    const index = skillPathQuestions.findIndex((item) => item.id === question.id);
-    return {
-      index,
-      current: index >= 0 ? index + 1 : 0,
-      total: skillPathQuestions.length,
-      previous: index > 0 ? skillPathQuestions[index - 1] : undefined,
-      next: index >= 0 && index < skillPathQuestions.length - 1 ? skillPathQuestions[index + 1] : undefined,
-    };
-  }, [question.id, skillPathQuestions]);
+  const context = useMemo(() => getQuestionContext(question.id), [question.id]);
+  const skillPath = context?.skillPath;
+  const skillPathQuestions = context?.pathQuestions ?? [question];
+  const position = {
+    index: context?.questionIndexInPath ?? -1,
+    current: context ? context.questionIndexInPath + 1 : 0,
+    total: context?.pathQuestions.length ?? 0,
+    previous: context?.previousQuestion,
+    next: context?.nextQuestion,
+  };
   const hasPosition = position.index >= 0 && position.total > 0;
   const currentQuestion = hasPosition ? position.current : 1;
   const totalQuestions = hasPosition ? position.total : 1;
@@ -52,7 +50,7 @@ export function QuestionWorkspace({ question }: { question: Question }) {
   const isCorrect = markingResult?.isCorrect === true;
   const questionPositionProgress = hasPosition ? Math.round((position.current / position.total) * 100) : 0;
   const fallbackPathHref = skillPath?.href ?? "/subjects";
-  const stage = skillPath ? getStageForQuestionInSkillPath(skillPath, question.id) : undefined;
+  const stage = context?.stage;
   const evidenceOverride = hasMounted ? undefined : getEmptyProgressEvidence();
   void progressVersion;
   const localProgress = skillPath ? getSkillPathProgress(skillPath, evidenceOverride) : undefined;
@@ -161,18 +159,18 @@ export function QuestionWorkspace({ question }: { question: Question }) {
           <nav className="flex flex-wrap items-center gap-2 text-sm text-muted" aria-label="Breadcrumb">
             <Link href="/subjects">Subjects</Link>
             <span>/</span>
-            <Link href="/subjects/higher-maths">Higher Maths</Link>
+            <Link href={context?.subject.href ?? "/subjects"}>{context?.subject.subjectName ?? question.subject}</Link>
             <span>/</span>
-            <Link href="/subjects/higher-maths/calculus">Calculus</Link>
+            <Link href={context?.courseArea.href ?? "/subjects"}>{context?.courseArea.name ?? question.courseArea}</Link>
             <span>/</span>
-            <Link href="/subjects/higher-maths/calculus/differentiation">Differentiation</Link>
+            <Link href={context?.specificationStrand.href ?? fallbackPathHref}>{context?.specificationStrand.name ?? question.specArea}</Link>
             <span>/</span>
             <span className="font-bold text-forge">{skillPath?.name ?? question.skillPath ?? "Question"}</span>
           </nav>
 
           <Card className="p-4">
             <div className="flex flex-wrap items-center gap-x-7 gap-y-2">
-              <Badge>Higher Maths</Badge>
+              <Badge>{context?.subject.subjectName ?? question.subject}</Badge>
               <HeaderMeta label="Stage" value={question.stage} />
               <HeaderMeta label="Source" value={question.source} />
               <HeaderMeta label="Skill" value={question.skill} />
@@ -370,7 +368,6 @@ function PanelProgress({ label, value, valueLabel }: { label: string; value: num
     </div>
   );
 }
-
 
 
 

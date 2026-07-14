@@ -71,7 +71,8 @@ Uncaught page errors and console errors fail every test. The only ignored browse
 - V2/V1/unversioned migration, version evidence, and corrupted/future storage;
 - completion variants, replay prevention, mastery upgrades and acknowledgement storage safety;
 - full mobile interaction and overflow;
-- bounded private-beta homepage promise, locked Higher Physics recovery, and keyboard answer submission.
+- bounded private-beta homepage promise, locked Higher Physics recovery, and keyboard answer submission;
+- canonical strand/question context, path-scoped navigation, pure question-bank states, planned-path recovery, and 390 x 844 taxonomy overflow coverage.
 
 ## 13. Covered journeys
 
