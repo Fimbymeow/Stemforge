@@ -8,5 +8,7 @@ build
 *.log
 .vercel
 playwright-report
+playwright-auth-enabled-report
 test-results
+test-results-auth-enabled
 blob-report

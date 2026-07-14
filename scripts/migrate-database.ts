@@ -1,7 +1,10 @@
-import { runRemoteEvidenceMigrations } from "@/scripts/database/migration-runner";
+import { loadEnvConfig } from "@next/env";
+import { migrateConfiguredDatabase, reportMigrationFailure } from "@/scripts/database/migration-command";
 
-const databaseUrl = process.env.STEMFORGE_DATABASE_MIGRATION_URL;
-if (!databaseUrl) throw new Error("STEMFORGE_DATABASE_MIGRATION_URL is required to apply production/development migrations.");
-await runRemoteEvidenceMigrations(databaseUrl);
-console.log("Remote evidence migrations applied.");
+async function main() {
+  loadEnvConfig(process.cwd());
+  await migrateConfiguredDatabase(process.env);
+  console.log("STEM Forge database migrations applied.");
+}
 
+void main().catch(() => reportMigrationFailure("STEM Forge database migration"));

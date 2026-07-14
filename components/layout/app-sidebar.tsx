@@ -1,7 +1,10 @@
-﻿import { getActiveSkillPathHref } from "@/lib/learning-paths";
+"use client";
+
+import { getActiveSkillPathHref } from "@/lib/learning-paths";
 import Image from "next/image";
 import Link from "next/link";
-import { BookOpen, Compass, Home } from "lucide-react";
+import { BookOpen, Compass, Home, UserRound } from "lucide-react";
+import { useAuthFeatureAvailable } from "@/components/auth-feature-provider";
 
 const navItems = [
   ["Dashboard", Home, "dashboard"],
@@ -10,6 +13,10 @@ const navItems = [
 ] as const;
 
 export function AppSidebar({ demo, active = "Dashboard" }: { demo: boolean; active?: string }) {
+  const accountsAvailable = useAuthFeatureAvailable();
+  const visibleNavItems = accountsAvailable
+    ? [...navItems, ["Account", UserRound, "account"] as const]
+    : navItems;
   return (
     <aside className="fixed inset-y-0 left-0 z-10 flex w-[268px] flex-col border-r border-line bg-paper/90 px-5 py-8 backdrop-blur-xl max-xl:sticky max-xl:top-0 max-xl:h-auto max-xl:w-full max-xl:border-b max-xl:border-r-0 max-xl:px-5 max-xl:py-4">
       <Link href="/" className="mb-11 block w-[210px] max-xl:mb-3 max-xl:w-[156px]">
@@ -22,7 +29,7 @@ export function AppSidebar({ demo, active = "Dashboard" }: { demo: boolean; acti
         Back to website
       </Link>
       <nav className="grid gap-3 max-xl:flex max-xl:gap-2 max-xl:overflow-x-auto max-xl:pb-1">
-        {navItems.map(([label, Icon, key]) => (
+        {visibleNavItems.map(([label, Icon, key]) => (
           <Link
             key={label}
             href={getAppNavHref(key, demo)}
@@ -48,7 +55,6 @@ function getAppNavHref(key: string, demo: boolean) {
   void demo;
   if (key === "dashboard") return "/dashboard";
   if (key === "subjects") return "/subjects";
+  if (key === "account") return "/account";
   return getActiveSkillPathHref();
 }
-
-

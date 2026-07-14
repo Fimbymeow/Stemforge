@@ -4,6 +4,7 @@ const baseURL = "http://127.0.0.1:3070";
 
 export default defineConfig({
   testDir: "./e2e",
+  testIgnore: /auth-enabled-navigation\.spec\.ts/,
   outputDir: "test-results",
   fullyParallel: false,
   workers: 1,
@@ -17,16 +18,10 @@ export default defineConfig({
     screenshot: "only-on-failure",
     video: "retain-on-failure",
   },
-  webServer: {
-    command: "pnpm run build && pnpm start --port 3070",
-    url: baseURL,
-    reuseExistingServer: false,
-    timeout: 180_000,
-  },
   projects: [
     {
       name: "desktop-chromium",
-      testIgnore: /mobile\.spec\.ts/,
+      testIgnore: /(mobile|auth-enabled-navigation)\.spec\.ts/,
       use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } },
     },
     {

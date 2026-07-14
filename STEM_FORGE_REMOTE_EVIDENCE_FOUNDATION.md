@@ -1,7 +1,7 @@
 # STEM Forge Remote Evidence Foundation
 
 Updated: 14 July 2026
-Status: Sprint 12 PostgreSQL foundation implemented; not connected to learner runtime
+Status: Sprint 12 PostgreSQL foundation preserved; Sprint 13 trusted owner mapping added but still not connected to learner runtime
 
 ## 1. Outcome
 
@@ -94,9 +94,9 @@ No database URL uses a `NEXT_PUBLIC_` prefix, no secret is committed or logged, 
 
 The application has no verified learner identity, consent/retention model, network API or sync state machine. Connecting remote storage now would make ownership ambiguous and risk evidence loss. Existing local V4 writes, migrations, reset, mastery, merge and completion acknowledgement remain unchanged. Builds and browser rendering require no database configuration or connection.
 
-## 18. Sprint 13 authentication requirements
+## 18. Sprint 13 authentication outcome
 
-Sprint 13 must define verified principal-to-owner mapping, session protection, authorization on every repository call, account lifecycle, privacy/retention requirements, CSRF/request protections and rate/batch controls. It must keep owner IDs opaque and prevent clients from choosing another owner's ID. A public progress route must not exist until those controls are tested.
+Sprint 13 adds optional Supabase Auth SSR sessions and the separate `stemforge_identity` PostgreSQL schema. A verified Supabase user subject maps race-safely to one opaque application owner through a canonical server-only method. Emails are not ownership IDs or stored in the application schema. No public progress route exists, and neither account routes nor owner creation call this evidence repository. See `STEM_FORGE_AUTHENTICATION_AND_OWNERSHIP.md`.
 
 ## 19. Later guest merge and sync rules
 
@@ -105,4 +105,3 @@ Later adoption must union evidence by stable owner-scoped event identity and rec
 ## 20. Known limitations and deferred decisions
 
 There is no authenticated owner provisioning, API, sync, remote reset/deletion/tombstone model, retention job, conflict administration UI, projection cache or operational monitoring. Runtime-role grants are deployment responsibilities because managed PostgreSQL role names differ. Receive order is a persistence cursor, not event chronology. Global erase and distributed reset require a separately designed privacy/deletion event model.
-

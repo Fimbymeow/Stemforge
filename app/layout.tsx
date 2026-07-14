@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { AuthFeatureProvider } from "@/components/auth-feature-provider";
+import { isAuthFeatureAvailable } from "@/lib/auth/config";
 import "katex/dist/katex.min.css";
 import "./globals.css";
 
@@ -50,9 +52,13 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const accountsAvailable = isAuthFeatureAvailable();
+
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        <AuthFeatureProvider accountsAvailable={accountsAvailable}>{children}</AuthFeatureProvider>
+      </body>
     </html>
   );
 }

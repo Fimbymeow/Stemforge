@@ -1,7 +1,7 @@
 # STEM Forge Conversation Handoff
 
 Last updated: 14 July 2026
-Current checkpoint: Sprint 12 PostgreSQL append-only remote evidence foundation
+Current checkpoint: Sprint 13 optional authentication and trusted user ownership (genuine Supabase session verified)
 
 This is the durable starting point for a new Codex conversation. Inspect the repository before editing. Preserve unfamiliar Finlay, Claude, or Codex changes and never reset a dirty tree without explicit approval.
 
@@ -67,6 +67,14 @@ Database triggers reject UPDATE, DELETE and TRUNCATE. Identical retries are idem
 
 Read `STEM_FORGE_REMOTE_EVIDENCE_FOUNDATION.md` before authentication or remote transport work. `STEMFORGE_DATABASE_URL` is runtime-only; migration/test URLs are separate. Missing database configuration affects only explicit remote repository invocation. LocalStorage remains the complete active learner runtime.
 
+## Authentication and trusted ownership
+
+Sprint 13 adds feature-controlled Supabase email/password account routes using cookie-based SSR and PKCE callback exchange. The server verifies current users with Supabase `getUser()` and maps the immutable provider subject to a database-generated opaque owner through `stemforge_identity`. Transaction advisory locking makes concurrent first mapping stable without orphan owners. Identity rows are immutable and contain no email/profile.
+
+The canonical production boundary is `resolveCurrentAuthenticatedOwner()`. Browser owner IDs are never inputs. It is intentionally not connected to remote evidence append/read, merge or LocalStorage. Accounts are hidden unless `STEMFORGE_AUTH_ENABLED=true` and configuration is complete. The real development migration and Auth health check succeeded. A permitted auto-confirmed test user completed genuine application signin, refresh persistence, stable owner mapping and signout; its mapped owner had zero remote evidence rows and 1/8 browser-local progress survived unchanged. The recovery boundary returned its generic response, although mailbox delivery and an email-confirmation link were not inspected. Read `STEM_FORGE_AUTHENTICATION_AND_OWNERSHIP.md` before guest merge or sync work.
+
+The server `RootLayout` resolves account availability and serializes one stable boolean through a client context; client navigation never reads the server-only flag. The ordinary Playwright regression server forces auth off and blanks optional auth/database test variables, so `.env.local` cannot change the deterministic guest-learning suite. A separate synthetic enabled-rendering test proves the Account entry hydrates without console or page errors. Genuine Supabase checks remain a separate, explicitly configured verification path. A repository runner owns the direct Next child and bounded cleanup because Playwright 1.61's shell-based Windows `webServer` teardown could wait indefinitely after report generation.
+
 ## Protected product contracts
 
 - Answer acceptance/rejection and normalized exact-string Maths comparison must not change casually.
@@ -111,6 +119,8 @@ Sprint 10 began from commit `d515ca2` and reproduced:
 
 Sprint 10 completed at commit `007eae8` with 124 unit/integration tests, 39 desktop tests, 2 mobile tests and 41 total browser tests. Sprint 11 completed at `311b8a3` with 136 unit/integration tests, 42 desktop tests, 3 mobile tests and 45 total browser tests. Sprint 12 verifies 144 unit/integration tests, 10 focused real PostgreSQL integration tests, 42 desktop tests, 3 mobile tests, 45 total browser tests and a 22-route production build.
 
+The current Sprint 13 worktree verifies 158 unit/integration tests, a 28-route production build, 43 ordinary desktop tests, 4 ordinary mobile tests and 1 isolated synthetic auth-enabled hydration test. The complete Windows gate exits cleanly after both browser servers shut down.
+
 ## Important routes
 
 - `/`
@@ -140,7 +150,7 @@ Future paths should be added through canonical data plus a single registry impor
 
 ## Intentional limitations
 
-- No accounts, database, remote sync, distributed reset, analytics, payments, AI marking, CMS, or admin workflow.
+- Optional account code and trusted owner mapping now exist; the feature remains disabled by default, and the dedicated development Supabase flow has been verified. There is still no remote sync, distributed reset, analytics, payments, AI marking, CMS, or admin workflow.
 - Progress and completion acknowledgement are local to one browser/device.
 - No live feedback form/service; the facilitator supplies the Markdown feedback template.
 - Chromium desktop/mobile are automated; Safari, Firefox, screen-reader, and public deployment audits remain owner/future checks.

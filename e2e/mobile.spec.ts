@@ -70,3 +70,10 @@ test("mobile taxonomy and question context remain readable without page overflow
   await expect(breadcrumb).toContainText("Differentiating functions");
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
 });
+
+test("mobile disabled account state remains readable and offers guest continuation", async ({ page }) => {
+  await page.goto("/account");
+  await expect(page.getByRole("heading", { name: "Accounts are not available" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Continue as a guest" })).toBeVisible();
+  await expectNoHorizontalOverflow(page);
+});

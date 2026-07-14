@@ -8,6 +8,7 @@ import { after, before, test } from "node:test";
 import EmbeddedPostgres from "embedded-postgres";
 import { Pool } from "pg";
 import { PostgresRemoteEvidenceRepository } from "../lib/remote-evidence/postgres-repository.server";
+import { PostgresOwnerMappingRepository } from "../lib/auth/postgres-owner-repository.server";
 import { runRemoteEvidenceMigrations } from "../scripts/database/migration-runner";
 import { assertSafeTestDatabaseUrl } from "../scripts/database/safety";
 import { attempt, supportEvent } from "./progress-fixtures";
@@ -16,6 +17,7 @@ import type { AchievementSnapshot, ProgressPayload } from "../lib/progress/types
 let postgres: EmbeddedPostgres;
 let pool: Pool;
 let repository: PostgresRemoteEvidenceRepository;
+let ownerRepository: PostgresOwnerMappingRepository;
 let databaseUrl: string;
 let databaseDir: string;
 
@@ -41,6 +43,7 @@ before(async () => {
   await runRemoteEvidenceMigrations(databaseUrl);
   pool = new Pool({ connectionString: databaseUrl, max: 4 });
   repository = new PostgresRemoteEvidenceRepository(pool);
+  ownerRepository = new PostgresOwnerMappingRepository(pool);
 });
 
 after(async () => {
@@ -59,6 +62,62 @@ test("clean migrations create the append-only evidence schema", async () => {
   assert.deepEqual(result.rows.map((row) => row.table_name), [
     "achievement_snapshots", "evidence_conflicts", "question_attempts", "support_events",
   ]);
+});
+
+test("clean migrations create the immutable owner schema", async () => {
+  const result = await pool.query<{ table_name: string }>(`
+    SELECT table_name FROM information_schema.tables
+    WHERE table_schema = 'stemforge_identity' ORDER BY table_name
+  `);
+  assert.deepEqual(result.rows.map((row) => row.table_name), ["application_owners", "external_auth_identities"]);
+});
+
+test("first and repeated identity resolution returns one stable owner", async () => {
+  const identity = { verified: true as const, provider: "supabase", subject: `user_${randomUUID()}` };
+  const first = await ownerRepository.getOrCreateOwner(identity);
+  assert.equal(await ownerRepository.getOrCreateOwner(identity), first);
+  const count = await pool.query<{ count: string }>("SELECT count(*)::text AS count FROM stemforge_identity.application_owners WHERE owner_id = $1", [first]);
+  assert.equal(count.rows[0].count, "1");
+});
+
+test("concurrent first resolution is race-safe and leaves no orphan owner", async () => {
+  const before = await pool.query<{ count: string }>("SELECT count(*)::text AS count FROM stemforge_identity.application_owners");
+  const identity = { verified: true as const, provider: "supabase", subject: `concurrent_${randomUUID()}` };
+  const owners = await Promise.all(Array.from({ length: 8 }, () => ownerRepository.getOrCreateOwner(identity)));
+  assert.equal(new Set(owners).size, 1);
+  const after = await pool.query<{ count: string }>("SELECT count(*)::text AS count FROM stemforge_identity.application_owners");
+  assert.equal(BigInt(after.rows[0].count) - BigInt(before.rows[0].count), BigInt(1));
+});
+
+test("providers are isolated and separate identities receive separate owners", async () => {
+  const subject = `shared_${randomUUID()}`;
+  const supabaseOwner = await ownerRepository.getOrCreateOwner({ verified: true, provider: "supabase", subject });
+  const futureOwner = await ownerRepository.getOrCreateOwner({ verified: true, provider: "future_provider", subject });
+  const secondSupabaseOwner = await ownerRepository.getOrCreateOwner({ verified: true, provider: "supabase", subject: `${subject}_two` });
+  assert.notEqual(supabaseOwner, futureOwner);
+  assert.notEqual(supabaseOwner, secondSupabaseOwner);
+});
+
+test("identity mapping cannot be reassigned and stores no mutable email/profile", async () => {
+  const identity = { verified: true as const, provider: "supabase", subject: `immutable_${randomUUID()}` };
+  const owner = await ownerRepository.getOrCreateOwner(identity);
+  const other = await ownerRepository.getOrCreateOwner({ verified: true, provider: "supabase", subject: `${identity.subject}_other` });
+  await assert.rejects(pool.query(`
+    UPDATE stemforge_identity.external_auth_identities SET owner_id = $1
+    WHERE provider = $2 AND provider_subject = $3
+  `, [other, identity.provider, identity.subject]), /immutable/i);
+  const columns = await pool.query<{ column_name: string }>(`
+    SELECT column_name FROM information_schema.columns
+    WHERE table_schema = 'stemforge_identity' AND table_name = 'external_auth_identities'
+  `);
+  assert.equal(columns.rows.some((row) => /email|profile/i.test(row.column_name)), false);
+  assert.notEqual(owner, other);
+});
+
+test("owner creation has no remote evidence side effect", async () => {
+  const before = await evidenceRowCount();
+  await ownerRepository.getOrCreateOwner({ verified: true, provider: "supabase", subject: `no_evidence_${randomUUID()}` });
+  assert.equal(await evidenceRowCount(), before);
 });
 
 test("attempts, support events and snapshots round-trip without payload loss", async () => {
@@ -198,4 +257,16 @@ async function availablePort() {
       server.close(() => resolve(address.port));
     });
   });
+}
+
+async function evidenceRowCount() {
+  const result = await pool.query<{ count: string }>(`
+    SELECT (
+      (SELECT count(*) FROM stemforge_remote.question_attempts) +
+      (SELECT count(*) FROM stemforge_remote.support_events) +
+      (SELECT count(*) FROM stemforge_remote.achievement_snapshots) +
+      (SELECT count(*) FROM stemforge_remote.evidence_conflicts)
+    )::text AS count
+  `);
+  return result.rows[0].count;
 }

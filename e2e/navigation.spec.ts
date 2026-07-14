@@ -33,3 +33,17 @@ test("invalid question and learning routes render the not-found recovery page", 
   expect(pathResponse?.status()).toBe(404);
   await expect(page.getByRole("heading", { name: "This page could not be found." })).toBeVisible();
 });
+
+test("disabled account navigation hydrates without console or page errors and fails safely", async ({
+  page,
+  seriousBrowserErrors,
+}) => {
+  await page.goto("/");
+  await expect(page.getByRole("link", { name: "Account" })).toHaveCount(0);
+  await page.goto("/account");
+  await expect(page.getByRole("heading", { name: "Accounts are not available" })).toBeVisible();
+  await page.getByRole("link", { name: "Continue as a guest" }).click();
+  await expect(page).toHaveURL(/\/dashboard$/);
+  await expect(page.getByTestId("dashboard-progress-summary")).toContainText("0 / 8 completed");
+  expect(seriousBrowserErrors).toEqual([]);
+});
