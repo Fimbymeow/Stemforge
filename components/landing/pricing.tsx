@@ -4,7 +4,7 @@ import { ButtonLink, Card } from "@/components/ui";
 
 export function Pricing() {
   return (
-    <section id="tuition" className="mx-auto w-[min(1220px,calc(100%_-_40px))] py-[68px]">
+    <section id="pricing" className="mx-auto w-[min(1220px,calc(100%_-_40px))] py-[68px]">
       <p className="mb-4 text-center font-mono text-[13px] font-extrabold uppercase">
         Simple access while the platform grows
       </p>

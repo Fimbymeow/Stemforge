@@ -87,6 +87,29 @@ select {
   animation: fade-rise 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+/* Tuition sub-brand's own, slightly slower pace for scroll reveals and tab crossfades —
+   kept separate from .animate-fade-rise above so the rest of the app's product-register
+   feedback timing (question workspace, completion panel) is untouched. */
+.animate-tuition-reveal {
+  animation: fade-rise 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Larger, slower variant reserved for the one hero entrance per page. */
+@keyframes hero-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-hero-rise {
+  animation: hero-rise 850ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 /* Path-completion moment (question-workspace.tsx, path-completion-panel.tsx). Fixed r=16
    circle, circumference ~101, so stroke-dashoffset is a constant rather than computed. */
 @keyframes ring-fill {

@@ -23,7 +23,7 @@ export function Navbar() {
         </Link>
         <div className="flex items-center gap-4 text-[13px] font-semibold text-[#1f1d1a]">
           <NavLink href="#features">Features</NavLink>
-          <NavLink href="#tuition">Tuition</NavLink>
+          <NavLink href="/tuition">Tuition</NavLink>
           <Link href="#about">About</Link>
         </div>
         <div className="flex items-center gap-4 justify-self-end text-[13px] font-semibold text-[#1f1d1a] max-md:justify-self-center">
