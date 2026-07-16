@@ -17,7 +17,9 @@ No external service, account, database, or network connection is used while test
 
 ## 3. Configuration
 
-`playwright.config.ts` owns the base URL, projects, server, artifacts, and retry policy. Tests live in `e2e/`; reusable actions and progress fixtures live in `e2e/fixtures/`.
+`playwright.config.ts` owns ordinary projects, artifacts and retry policy. `scripts/run-playwright-suite.ts` owns isolated builds, server startup/readiness and bounded Windows process-tree teardown. Tests live in `e2e/`; reusable actions and progress fixtures live in `e2e/fixtures/`.
+
+Ordinary regression forces authentication and database configuration off. `playwright.auth-enabled.config.ts` separately proves hydration-safe enabled-auth navigation with synthetic public configuration. `playwright.import.config.ts` is an explicit real-session import path that requires a permitted team test user and starts its own disposable embedded PostgreSQL database; it never targets the configured development database, is not part of the credential-free ordinary gate, and prints no configured values.
 
 ## 4. Commands
 

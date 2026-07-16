@@ -30,7 +30,7 @@ export function AccountShell({
         </Card>
         <p className="mt-6 text-center text-sm leading-relaxed text-muted">
           Accounts are optional. Learning works without one, and existing progress remains stored only in this browser.
-          Signing in does not upload or merge it, and cross-device progress is not active yet.
+          Signing in never uploads it automatically. Confirmed imports add evidence to an account; continuous cross-device sync is not active yet.
         </p>
       </div>
     </main>

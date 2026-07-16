@@ -1,12 +1,12 @@
 # STEM Forge — orientation for Claude Code
 
-STEM Forge is a private-beta, frontend-focused learning platform for Scottish SQA STEM students (Next.js 15 App Router, React 19, Tailwind 3). Higher Maths → Calculus → Differentiation → Basic differentiation is the one complete vertical slice. Higher Physics exists in the data but is locked/coming-soon. No backend, no auth, no payments — progress is `localStorage` only.
+STEM Forge is a private-beta learning platform for Scottish SQA STEM students (Next.js 15 App Router, React 19, Tailwind 3). Higher Maths → Calculus → Differentiation → Basic differentiation is the complete production slice; the content resolver and routes are multi-path capable. Guest progress is canonical V4 evidence in localStorage. Optional Supabase SSR authentication maps verified users to immutable PostgreSQL owners, and Sprint 14 adds explicit append-only guest-progress import while retaining the local copy. Continuous sync is not implemented.
 
 **Read `docs/frontend-work-plan.md` before starting new frontend work.** It has the current status and prioritized next steps from the last session in detail; this file is orientation, that file is the punch list.
 
-## ⚠️ Parallel work you did not do and should not assume you understand
+## Historical frontend-session note
 
-As of this write-up, `git status` shows a large body of **uncommitted, non-frontend work already in the working tree** that a prior/parallel session or the user produced — none of it was touched by the frontend session that wrote this file:
+The following paragraph originally described uncommitted parallel work. That work was subsequently reviewed, integrated and committed in Sprints 1–14; it is retained only to explain older design notes.
 
 - `lib/progress/` (`calculations.ts`, `payload.ts`, `repository.ts`, `storage.ts`, `types.ts`) — a versioned (`ProgressPayloadV2`) progress/mastery data model with hint-tracking, "genuine attempt" tracking, and legacy migration from a V1 shape. This looks like it may be intended to **replace** `lib/local-progress.ts`, which the frontend session extended (see below). Diff the two before assuming either is the source of truth.
 - `lib/answer-engine.ts`, `lib/content-validation.ts`, `scripts/validate-content.ts` — `pnpm build` now runs `validate-content` before `next build`.
@@ -14,7 +14,7 @@ As of this write-up, `git status` shows a large body of **uncommitted, non-front
 - Root-level docs: `STEM_FORGE_ANSWER_ENGINE.md`, `STEM_FORGE_ARCHITECTURE_AUDIT.md`, `STEM_FORGE_BROWSER_TESTING.md`, `STEM_FORGE_CONTENT_ARCHITECTURE.md`, `STEM_FORGE_CONTENT_VERSION_POLICY.md`, `STEM_FORGE_MASTERY_ARCHITECTURE.md`, `STEM_FORGE_PROGRESS_AND_MASTERY_RULES.md`, `STEM_FORGE_PROGRESS_ARCHITECTURE.md`.
 - `package.json` gained `@playwright/test`, `tsx`, and a full `test`/`test:e2e`/`validate-content` script set.
 
-**Before touching progress/answer/mastery logic, read those docs and check whether `lib/progress/` supersedes `lib/local-progress.ts`.** `pnpm run test` (43+ tests, all passing as of last session) covers that other work — run it after any change that touches progress, answers, or content data, not just `typecheck`/`lint`/`build`.
+`lib/progress/` is the canonical evidence/storage/calculation architecture. `lib/local-progress.ts` is the active compatibility boundary used by components. Read the current handoff and architecture documents before changing either, and run the focused plus complete gates.
 
 ## Design system (established this session)
 
@@ -53,4 +53,4 @@ Running `pnpm run build` while a `pnpm run dev` server is live against the same 
 
 ## Scope boundaries (still apply)
 
-Frontend visual work only. Do not change: question logic, answer-checking/marking logic (`normaliseAnswer` in `question-workspace.tsx` has a known risk — strips `*`/braces before comparing — flagged, not fixed, out of scope), routes' underlying data (only 2 redirects added, both for pages made redundant by the new roadmap nav, not data changes), local-progress *computation* logic (only read-timing was changed, not values), Higher Maths/Physics availability rules, SQA-independence or beta/no-account copy. No new dependencies, no backend, no auth/payments/AI/analytics.
+Preserve the existing answer, progress, content-version, archive, guest-access and SQA-independence rules unless a sprint explicitly changes them. Never trust a client owner ID, mutate accepted remote evidence, treat historical snapshots as current readiness, import celebration acknowledgement state, or imply that confirmed import is continuous sync. Payments, AI marking and analytics remain out of scope.

@@ -1,7 +1,7 @@
 # STEM Forge Conversation Handoff
 
 Last updated: 14 July 2026
-Current checkpoint: Sprint 13 optional authentication and trusted user ownership (genuine Supabase session verified)
+Current checkpoint: Sprint 14 confirmed guest progress import and append-only account merge
 
 This is the durable starting point for a new Codex conversation. Inspect the repository before editing. Preserve unfamiliar Finlay, Claude, or Codex changes and never reset a dirty tree without explicit approval.
 
@@ -25,7 +25,7 @@ The approved visual baseline uses warm off-white backgrounds, white cards, subtl
 
 The product is browser-local and needs no account or network after the application is loaded. Progress is saved on the current browser only. The private-beta package is in `docs/private-beta-checklist.md`, the reusable feedback questions are in `docs/private-beta-feedback-template.md`, and readiness evidence is in `STEM_FORGE_PRIVATE_BETA_READINESS.md`.
 
-No authentication or database was added in Sprint 10. Accounts, remote persistence, and sync are permitted future roadmap work, but only through a separately approved sprint after beta evidence justifies them.
+Historical Sprint 10 boundary: no authentication or database was added in that sprint. Sprints 12–14 subsequently added remote persistence, optional accounts, trusted ownership and explicitly confirmed import through separately approved work.
 
 ## Current progress source of truth
 
@@ -71,7 +71,7 @@ Read `STEM_FORGE_REMOTE_EVIDENCE_FOUNDATION.md` before authentication or remote 
 
 Sprint 13 adds feature-controlled Supabase email/password account routes using cookie-based SSR and PKCE callback exchange. The server verifies current users with Supabase `getUser()` and maps the immutable provider subject to a database-generated opaque owner through `stemforge_identity`. Transaction advisory locking makes concurrent first mapping stable without orphan owners. Identity rows are immutable and contain no email/profile.
 
-The canonical production boundary is `resolveCurrentAuthenticatedOwner()`. Browser owner IDs are never inputs. It is intentionally not connected to remote evidence append/read, merge or LocalStorage. Accounts are hidden unless `STEMFORGE_AUTH_ENABLED=true` and configuration is complete. The real development migration and Auth health check succeeded. A permitted auto-confirmed test user completed genuine application signin, refresh persistence, stable owner mapping and signout; its mapped owner had zero remote evidence rows and 1/8 browser-local progress survived unchanged. The recovery boundary returned its generic response, although mailbox delivery and an email-confirmation link were not inspected. Read `STEM_FORGE_AUTHENTICATION_AND_OWNERSHIP.md` before guest merge or sync work.
+The canonical production boundary is `resolveCurrentAuthenticatedOwner()`. Browser owner IDs are never inputs. Sprint 14 connects that boundary to remote append only through the confirmed `/api/progress/import` route; remote read and continuous sync remain disconnected from the learner runtime. Accounts are hidden unless `STEMFORGE_AUTH_ENABLED=true` and configuration is complete. The real development migration and Auth health check succeeded. A permitted auto-confirmed test user completed genuine application signin, refresh persistence, stable owner mapping and signout; its mapped owner had zero remote evidence rows and 1/8 browser-local progress survived unchanged. Sprint 14 subsequently verified real confirmed import against disposable PostgreSQL. The recovery boundary returned its generic response, although mailbox delivery and an email-confirmation link were not inspected. Read `STEM_FORGE_AUTHENTICATION_AND_OWNERSHIP.md` before sync work.
 
 The server `RootLayout` resolves account availability and serializes one stable boolean through a client context; client navigation never reads the server-only flag. The ordinary Playwright regression server forces auth off and blanks optional auth/database test variables, so `.env.local` cannot change the deterministic guest-learning suite. A separate synthetic enabled-rendering test proves the Account entry hydrates without console or page errors. Genuine Supabase checks remain a separate, explicitly configured verification path. A repository runner owns the direct Next child and bounded cleanup because Playwright 1.61's shell-based Windows `webServer` teardown could wait indefinitely after report generation.
 
@@ -119,7 +119,19 @@ Sprint 10 began from commit `d515ca2` and reproduced:
 
 Sprint 10 completed at commit `007eae8` with 124 unit/integration tests, 39 desktop tests, 2 mobile tests and 41 total browser tests. Sprint 11 completed at `311b8a3` with 136 unit/integration tests, 42 desktop tests, 3 mobile tests and 45 total browser tests. Sprint 12 verifies 144 unit/integration tests, 10 focused real PostgreSQL integration tests, 42 desktop tests, 3 mobile tests, 45 total browser tests and a 22-route production build.
 
-The current Sprint 13 worktree verifies 158 unit/integration tests, a 28-route production build, 43 ordinary desktop tests, 4 ordinary mobile tests and 1 isolated synthetic auth-enabled hydration test. The complete Windows gate exits cleanly after both browser servers shut down.
+The Sprint 13 checkpoint verified 158 unit/integration tests, a 28-route production build, 43 ordinary desktop tests, 4 ordinary mobile tests and 1 isolated synthetic auth-enabled hydration test. Later Tuition routes and Sprint 14 import coverage supersede those historical counts; use the latest completed gate recorded below.
+
+## Sprint 14 confirmed import
+
+The authenticated account page now detects canonical browser evidence after hydration and shows a neutral summary. Import is never automatic: the learner reviews and confirms before `POST /api/progress/import` sends a strict V4 envelope. The route bounds raw and canonical sizes, requires configured same-origin JSON, resolves the owner only from the verified session, and returns minimum per-event committed classifications.
+
+Accepted account evidence remains append-only. Identical retries return the original trusted receive cursor/time, same-ID semantic conflicts remain in `evidence_conflicts`, and unexpected SQL failure rolls back the valid batch. Four `NOT VALID` owner foreign keys enforce real application owners for new rows while preserving historical pre-authentication evidence.
+
+Canonical local evidence remains unchanged. Separate `stemforge.progressImport.v1` metadata stores acknowledged IDs per non-sensitive account fingerprint. It unions latest acknowledgements under a Web Lock where available, warns about prior different-account acknowledgement, and leaves rejected or ambiguous events pending. Celebration acknowledgement is not imported. This remains confirmed import only; continuous push/pull sync, distributed reset and deletion are deferred to separately approved work.
+
+## Current verified baseline
+
+The completed Sprint 14 gate verifies 174 unit/integration tests, a 33-route production build, 43 ordinary desktop tests, 4 ordinary mobile tests, 1 isolated synthetic auth-enabled hydration test, and 19 embedded PostgreSQL migration/repository tests. The separate genuine Supabase import path passes 4/4 across desktop and mobile while using a newly created disposable local PostgreSQL database. Browser fixtures report no console or page errors. `test:all`, `test:database`, the explicit real-import command and `git diff --check` all return cleanly.
 
 ## Important routes
 
@@ -150,13 +162,13 @@ Future paths should be added through canonical data plus a single registry impor
 
 ## Intentional limitations
 
-- Optional account code and trusted owner mapping now exist; the feature remains disabled by default, and the dedicated development Supabase flow has been verified. There is still no remote sync, distributed reset, analytics, payments, AI marking, CMS, or admin workflow.
-- Progress and completion acknowledgement are local to one browser/device.
+- Optional account code, trusted owner mapping and confirmed import now exist; the feature remains disabled by default. There is still no continuous remote sync, distributed reset, analytics, payments, AI marking, CMS, or admin workflow.
+- Active progress and completion acknowledgement remain local to one browser/device; confirmed import appends a retained copy of learning evidence to an account.
 - No live feedback form/service; the facilitator supplies the Markdown feedback template.
 - Chromium desktop/mobile are automated; Safari, Firefox, screen-reader, and public deployment audits remain owner/future checks.
 - No production multi-path bank or wider content bank has been added; the second-path proof is test-only.
 - Client clocks remain untrusted event chronology; the remote repository records separate database-controlled receive time and order.
-- The remote repository has no authenticated transport and is intentionally unused by learner pages.
+- The remote repository is reachable only through the authenticated confirmed-import route; remote reads are still unused by learner pages.
 
 ## Verification commands
 
@@ -172,12 +184,13 @@ pnpm run build
 pnpm run test:e2e:desktop
 pnpm run test:e2e:mobile
 pnpm run test:e2e
+pnpm run test:e2e:import:real
 pnpm run test:all
 ```
 
 Do not weaken tests, add retries, or ignore application console errors to obtain a pass.
 
-## Decision gate after private beta
+## Historical Sprint 10 decision gate after private beta
 
 Do not begin Sprint 11 without tester evidence.
 

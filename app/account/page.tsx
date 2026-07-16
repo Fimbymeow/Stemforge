@@ -3,6 +3,8 @@ import { AccountShell, AccountUnavailable, buttonClass } from "@/components/acco
 import { getAuthFeatureConfiguration } from "@/lib/auth/config";
 import { resolveCurrentAuthenticatedOwner } from "@/lib/auth/current-owner.server";
 import { signOut } from "@/app/account/actions";
+import { GuestProgressImport } from "@/components/account/guest-progress-import";
+import { createAccountFingerprint } from "@/lib/remote-evidence/authenticated-import.server";
 
 export const dynamic = "force-dynamic";
 
@@ -10,9 +12,11 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   if (getAuthFeatureConfiguration().status !== "enabled") return <AccountUnavailable />;
   const { result } = await searchParams;
   let ownerState: "authenticated" | "unauthenticated" | "owner-unavailable" = "unauthenticated";
+  let accountFingerprint: string | null = null;
   try {
     const context = await resolveCurrentAuthenticatedOwner();
     ownerState = context.authenticated ? "authenticated" : "unauthenticated";
+    accountFingerprint = context.authenticated ? createAccountFingerprint(context.ownerId) : null;
   } catch {
     ownerState = "owner-unavailable";
   }
@@ -36,8 +40,9 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
     >
       <div className="mt-6 rounded-xl border border-line bg-paper p-4">
         <strong>{ownerState === "authenticated" ? "Account ready" : "Owner setup unavailable"}</strong>
-        <p className="mb-0 mt-2 text-sm leading-relaxed text-muted">Your progress in this browser has not been uploaded, read remotely, merged or changed.</p>
+        <p className="mb-0 mt-2 text-sm leading-relaxed text-muted">Browser progress stays local unless you explicitly choose to add it to this account.</p>
       </div>
+      {accountFingerprint ? <GuestProgressImport accountFingerprint={accountFingerprint} /> : null}
       <form action={signOut}><button type="submit" className={buttonClass}>Sign out</button></form>
     </AccountShell>
   );

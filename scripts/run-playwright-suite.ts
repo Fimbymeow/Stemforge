@@ -1,17 +1,27 @@
 import { spawn, type ChildProcess } from "node:child_process";
+import { randomUUID } from "node:crypto";
+import { rm } from "node:fs/promises";
+import net from "node:net";
+import os from "node:os";
 import path from "node:path";
+import { loadEnvConfig } from "@next/env";
+import EmbeddedPostgres from "embedded-postgres";
+import { runRemoteEvidenceMigrations } from "@/scripts/database/migration-runner";
+import { assertSafeTestDatabaseUrl } from "@/scripts/database/safety";
 
 const root = process.cwd();
 const enabledMode = process.argv.includes("--auth-enabled");
+const realImportMode = process.argv.includes("--real-import");
 const separatorIndex = process.argv.indexOf("--");
 const forwardedArgs = separatorIndex >= 0 ? process.argv.slice(separatorIndex + 1) : [];
-const port = enabledMode ? 3079 : 3070;
+if (realImportMode) loadEnvConfig(root);
+const port = realImportMode ? 3081 : enabledMode ? 3079 : 3070;
 const baseURL = `http://127.0.0.1:${port}`;
-const configFile = enabledMode ? "playwright.auth-enabled.config.ts" : "playwright.config.ts";
+const configFile = realImportMode ? "playwright.import.config.ts" : enabledMode ? "playwright.auth-enabled.config.ts" : "playwright.config.ts";
 const nextCli = path.join(root, "node_modules", "next", "dist", "bin", "next");
 const playwrightCli = path.join(root, "node_modules", "@playwright", "test", "cli.js");
 
-const isolatedEnvironment: NodeJS.ProcessEnv = {
+let isolatedEnvironment: NodeJS.ProcessEnv = {
   ...process.env,
   STEMFORGE_AUTH_ENABLED: enabledMode ? "true" : "false",
   NEXT_PUBLIC_SUPABASE_URL: enabledMode ? "https://test-project.supabase.co" : "",
@@ -22,6 +32,22 @@ const isolatedEnvironment: NodeJS.ProcessEnv = {
   STEMFORGE_AUTH_TEST_EMAIL: "",
   STEMFORGE_AUTH_TEST_PASSWORD: "",
 };
+
+if (realImportMode) {
+  const required = [
+    "NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
+    "STEMFORGE_AUTH_TEST_EMAIL", "STEMFORGE_AUTH_TEST_PASSWORD",
+  ];
+  const missing = required.filter((name) => !process.env[name]?.trim());
+  if (missing.length > 0) throw new Error(`Real import verification requires: ${missing.join(", ")}. No values were printed.`);
+  isolatedEnvironment = {
+    ...process.env,
+    STEMFORGE_AUTH_ENABLED: "true",
+    STEMFORGE_AUTH_SITE_URL: baseURL,
+    STEMFORGE_DATABASE_URL: "",
+    STEMFORGE_DATABASE_MIGRATION_URL: "",
+  };
+}
 
 async function run(command: string, args: string[], environment = isolatedEnvironment) {
   const child = spawn(command, args, {
@@ -95,35 +121,87 @@ async function exitsWithin(child: ChildProcess, milliseconds: number) {
 }
 
 async function main() {
-  const packageManager = process.env.npm_execpath;
-  const buildCode = packageManager && !packageManager.toLowerCase().endsWith(".cmd")
-    ? await run(process.execPath, [packageManager, "run", "build"])
-    : process.platform === "win32"
-      ? await run(process.env.ComSpec ?? "cmd.exe", ["/d", "/s", "/c", "pnpm run build"])
-      : await run("pnpm", ["run", "build"]);
-  if (buildCode !== 0) return buildCode;
-
-  const server = spawn(process.execPath, [nextCli, "start", "--port", String(port)], {
-    cwd: root,
-    env: isolatedEnvironment,
-    stdio: "inherit",
-    shell: false,
-  });
-
+  const realDatabase = realImportMode ? await startDisposableImportDatabase() : null;
   try {
-    await waitForServer(server);
-    return await run(process.execPath, [playwrightCli, "test", `--config=${configFile}`, ...forwardedArgs]);
+    if (realDatabase) {
+      isolatedEnvironment = { ...isolatedEnvironment, STEMFORGE_DATABASE_URL: realDatabase.databaseUrl };
+      await runRemoteEvidenceMigrations(realDatabase.databaseUrl);
+    }
+    const packageManager = process.env.npm_execpath;
+    const buildCode = packageManager && !packageManager.toLowerCase().endsWith(".cmd")
+      ? await run(process.execPath, [packageManager, "run", "build"])
+      : process.platform === "win32"
+        ? await run(process.env.ComSpec ?? "cmd.exe", ["/d", "/s", "/c", "pnpm run build"])
+        : await run("pnpm", ["run", "build"]);
+    if (buildCode !== 0) return buildCode;
+
+    const server = spawn(process.execPath, [nextCli, "start", "--port", String(port)], {
+      cwd: root,
+      env: isolatedEnvironment,
+      stdio: "inherit",
+      shell: false,
+    });
+    try {
+      await waitForServer(server);
+      return await run(process.execPath, [playwrightCli, "test", `--config=${configFile}`, ...forwardedArgs]);
+    } finally {
+      await stopServer(server);
+    }
   } finally {
-    await stopServer(server);
+    await realDatabase?.cleanup();
   }
+}
+
+async function startDisposableImportDatabase() {
+  const databaseDir = path.join(os.tmpdir(), `stemforge-import-postgres-${randomUUID()}`);
+  const database = `stemforge_import_test_${randomUUID().replaceAll("-", "")}`;
+  const user = "stemforge_import_test";
+  const password = `test_${randomUUID()}`;
+  const databasePort = await availablePort();
+  const postgres = new EmbeddedPostgres({
+    databaseDir,
+    port: databasePort,
+    user,
+    password,
+    persistent: true,
+    onLog: () => undefined,
+    onError: () => console.error("The disposable PostgreSQL import test process reported an error."),
+  });
+  await postgres.initialise();
+  await postgres.start();
+  await postgres.createDatabase(database);
+  const databaseUrl = assertSafeTestDatabaseUrl(
+    `postgresql://${user}:${encodeURIComponent(password)}@127.0.0.1:${databasePort}/${database}`,
+    process.env.STEMFORGE_DATABASE_URL,
+  );
+  return {
+    databaseUrl,
+    cleanup: async () => {
+      await postgres.stop();
+      if (databaseDir.startsWith(os.tmpdir())) await rm(databaseDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    },
+  };
+}
+
+async function availablePort() {
+  return new Promise<number>((resolve, reject) => {
+    const server = net.createServer();
+    server.unref();
+    server.on("error", reject);
+    server.listen(0, "127.0.0.1", () => {
+      const address = server.address();
+      if (!address || typeof address === "string") return reject(new Error("Could not reserve a PostgreSQL import-test port."));
+      server.close(() => resolve(address.port));
+    });
+  });
 }
 
 main()
   .then((code) => {
-    process.exitCode = code;
+    process.exit(code);
   })
   .catch((error: unknown) => {
     const message = error instanceof Error ? error.message : "Unknown browser test runner error.";
     console.error(message);
-    process.exitCode = 1;
+    process.exit(1);
   });

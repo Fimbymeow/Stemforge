@@ -1,7 +1,7 @@
 # STEM Forge Authentication and Trusted Ownership
 
 Updated: 14 July 2026  
-Status: Sprint 13 implementation, real database migration and genuine Supabase session verified
+Status: Sprint 13 authentication verified; Sprint 14 confirmed import boundary connected
 
 ## Provider decision
 
@@ -116,6 +116,14 @@ Sprint 14 must require explicit learner confirmation; resolve ownership only thr
 ## Sprint 15 sync contract
 
 Sync must remain owner-scoped, append-only, incremental by trusted receive cursor and resilient to retry/offline delivery. It must not infer chronology from client clocks, overwrite accepted evidence, clear unacknowledged local evidence, distribute a destructive reset, or turn snapshots into current readiness truth.
+
+## Sprint 14 confirmed guest-progress import
+
+Sprint 14 connects trusted owner resolution to remote evidence only through `POST /api/progress/import`. The browser submits a strict protocol-versioned canonical V4 payload and never supplies an authoritative owner. The route requires JSON, a bounded raw body and the configured same origin; it resolves a verified session through `resolveCurrentAuthenticatedOwner()` and appends through the existing repository transaction.
+
+Nothing uploads on sign-in. The authenticated account page reads browser-local evidence only after hydration, shows a neutral summary and requires explicit confirmation. Accepted, identical and conflict-retained records receive per-event durable acknowledgement. Canonical local evidence remains untouched and completion-celebration acknowledgement is never included. A domain-separated owner hash is exposed only as a non-authenticating local account-switch marker; owner ID, email and provider subject remain server-only.
+
+This is confirmed import, not continuous synchronization. Cursor pulling, background upload, distributed reset, deletion and account erasure remain future work.
 
 ## Official references used
 

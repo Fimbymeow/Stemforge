@@ -1,6 +1,6 @@
 ﻿# STEM Forge
 
-STEM Forge is a calm, structured learning platform for Scottish SQA STEM students. It is currently a private beta, frontend-only proof of concept focused on one complete Higher Maths learning path.
+STEM Forge is a calm, structured learning platform for Scottish SQA STEM students. It is currently a private beta with one complete Higher Maths learning path, a generic multi-path content runtime, optional Supabase accounts, and explicitly confirmed browser-progress import.
 
 ## Current Beta Status
 
@@ -167,22 +167,22 @@ See `STEM_FORGE_PRIVATE_BETA_READINESS.md` for the verified readiness decision, 
 
 ## Current Limitations
 
-- No authentication or user accounts.
-- No database.
-- No Supabase.
+- Authentication is optional and controlled by the server; guest learning remains available.
+- Confirmed import is not continuous cross-device synchronization.
+- Remote evidence is append-only; distributed reset, deletion and account erasure are not implemented.
 - No payments or Stripe.
 - No AI tutor or AI marking.
 - No analytics.
 - No CMS.
-- Local progress is saved only in the current browser using localStorage.
+- Active learning continues to save progress in the current browser using localStorage. A signed-in learner may explicitly add that evidence to their account without deleting the local copy.
 - Reset is local-only; distributed deletion/tombstones are not implemented.
 - Higher Maths Basic differentiation is the only active proof-of-concept path.
 - Higher Physics is visible but locked / coming soon.
-- Future skill paths still need dynamic route support before scaling content.
+- Generic dynamic path routing exists, but only Basic differentiation has reviewed production questions.
 
 ## Deployment Notes
 
-This project is deployment-ready as a static/frontend Next.js MVP. There are no required environment variables for the current proof of concept. Set `NEXT_PUBLIC_SITE_URL` to the deployed beta URL when publishing so social preview metadata uses the correct domain.
+Guest-only builds remain credential-free. Optional accounts and confirmed import require the server-side auth and PostgreSQL settings documented in `.env.example`. Set `NEXT_PUBLIC_SITE_URL` to the deployed beta URL when publishing so social preview metadata uses the correct domain.
 
 Deployment hygiene:
 
@@ -190,16 +190,16 @@ Deployment hygiene:
 - `node_modules` is ignored.
 - `.env` and `.env.local` are ignored.
 - `.vercel` is ignored.
-- No backend service is required.
+- Guest learning does not require a backend service. Account import requires configured Supabase Auth and restricted PostgreSQL runtime access.
 - No localhost-only runtime URLs are required.
 
-## Do Not Build Yet
+## Explicitly Deferred
 
-Do not add these until the product direction explicitly changes:
+Do not add these until separately authorized:
 
-- Supabase
-- Authentication
-- User accounts
+- Continuous background progress sync
+- Remote cursor pulling and automatic merge
+- Distributed reset, deletion or account erasure
 - Payments / Stripe
 - AI tutor
 - AI marking
@@ -215,4 +215,4 @@ Do not add these until the product direction explicitly changes:
 - Use original SQA-style and exam-style questions.
 - Keep the stage label: `Past Paper-style Questions`.
 - Avoid Easy / Medium / Hard in the active learning journey.
-- Keep progress copy honest: local progress only, saved on this browser, no account needed.
+- Keep progress copy honest: learning is saved on this browser and needs no account; only an explicit confirmed import adds evidence to an account, and continuous sync is not active.

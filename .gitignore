@@ -11,4 +11,6 @@ playwright-report
 playwright-auth-enabled-report
 test-results
 test-results-auth-enabled
+playwright-import-real-report
+test-results-import-real
 blob-report

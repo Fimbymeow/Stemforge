@@ -108,7 +108,12 @@ export class PostgresRemoteEvidenceRepository {
     const accepted = existing.rows[0];
     if (!accepted) throw new Error(`Accepted ${kind} ${eventId} disappeared during append classification.`);
     if (canonicalJsonEqual(accepted.payload, item)) {
-      result.duplicates.push({ kind, eventId });
+      result.duplicates.push({
+        kind,
+        eventId,
+        receiveCursor: accepted.receive_order,
+        receivedAt: accepted.received_at.toISOString(),
+      });
       return;
     }
 
@@ -156,4 +161,3 @@ function toConflict(kind: RemoteEvidenceKind, eventId: string, row: ConflictRow)
     receivedAt: row.received_at.toISOString(),
   };
 }
-

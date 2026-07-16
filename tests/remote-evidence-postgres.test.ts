@@ -7,6 +7,7 @@ import path from "node:path";
 import { after, before, test } from "node:test";
 import EmbeddedPostgres from "embedded-postgres";
 import { Pool } from "pg";
+import { runner } from "node-pg-migrate";
 import { PostgresRemoteEvidenceRepository } from "../lib/remote-evidence/postgres-repository.server";
 import { PostgresOwnerMappingRepository } from "../lib/auth/postgres-owner-repository.server";
 import { runRemoteEvidenceMigrations } from "../scripts/database/migration-runner";
@@ -72,6 +73,75 @@ test("clean migrations create the immutable owner schema", async () => {
   assert.deepEqual(result.rows.map((row) => row.table_name), ["application_owners", "external_auth_identities"]);
 });
 
+test("all four remote owner foreign keys are present, not yet validated and enforce new rows", async () => {
+  const constraints = await pool.query<{ conname: string; convalidated: boolean }>(`
+    SELECT conname, convalidated FROM pg_constraint
+    WHERE conname IN (
+      'question_attempts_owner_fk', 'support_events_owner_fk',
+      'achievement_snapshots_owner_fk', 'evidence_conflicts_owner_fk'
+    ) ORDER BY conname
+  `);
+  assert.equal(constraints.rows.length, 4);
+  assert.equal(constraints.rows.every((item) => item.convalidated === false), true);
+  const invalidOwner = "owner_00000000000000000000000000000000";
+  await assert.rejects(pool.query(
+    "INSERT INTO stemforge_remote.question_attempts (owner_id, event_id, payload) VALUES ($1, 'invalid_owner_attempt', '{}'::jsonb)",
+    [invalidOwner],
+  ), /foreign key/i);
+  await assert.rejects(pool.query(
+    "INSERT INTO stemforge_remote.support_events (owner_id, event_id, payload) VALUES ($1, 'invalid_owner_support', '{}'::jsonb)",
+    [invalidOwner],
+  ), /foreign key/i);
+  await assert.rejects(pool.query(
+    "INSERT INTO stemforge_remote.achievement_snapshots (owner_id, event_id, payload) VALUES ($1, 'invalid_owner_snapshot', '{}'::jsonb)",
+    [invalidOwner],
+  ), /foreign key/i);
+  await assert.rejects(pool.query(`
+    INSERT INTO stemforge_remote.evidence_conflicts
+      (owner_id, evidence_kind, event_id, accepted_payload_hash, incoming_payload)
+    VALUES ($1, 'attempt', 'invalid_owner_conflict', $2, '{}'::jsonb)
+  `, [invalidOwner, "0".repeat(64)]), /foreign key/i);
+});
+
+test("owner-integrity migration preserves a historical pre-auth row while enforcing future inserts", async () => {
+  const historicalDatabase = `stemforge_historical_test_${randomUUID().replaceAll("-", "")}`;
+  await postgres.createDatabase(historicalDatabase);
+  const historicalUrl = new URL(databaseUrl);
+  historicalUrl.pathname = `/${historicalDatabase}`;
+  await runner({
+    databaseUrl: historicalUrl.toString(),
+    dir: path.resolve(process.cwd(), "migrations"),
+    direction: "up",
+    count: 2,
+    migrationsTable: "pgmigrations",
+    migrationsSchema: "stemforge_remote_migrations",
+    createMigrationsSchema: true,
+    checkOrder: true,
+    singleTransaction: true,
+    log: () => undefined,
+  });
+  const historicalPool = new Pool({ connectionString: historicalUrl.toString() });
+  try {
+    const oldOwner = "pre_auth_historical_owner";
+    await historicalPool.query(
+      "INSERT INTO stemforge_remote.question_attempts (owner_id, event_id, payload) VALUES ($1, 'historical_attempt', '{}'::jsonb)",
+      [oldOwner],
+    );
+    await runRemoteEvidenceMigrations(historicalUrl.toString());
+    const retained = await historicalPool.query<{ count: string }>(
+      "SELECT count(*)::text AS count FROM stemforge_remote.question_attempts WHERE owner_id = $1",
+      [oldOwner],
+    );
+    assert.equal(retained.rows[0].count, "1");
+    await assert.rejects(historicalPool.query(
+      "INSERT INTO stemforge_remote.question_attempts (owner_id, event_id, payload) VALUES ($1, 'new_invalid_attempt', '{}'::jsonb)",
+      [oldOwner],
+    ), /foreign key/i);
+  } finally {
+    await historicalPool.end();
+  }
+});
+
 test("first and repeated identity resolution returns one stable owner", async () => {
   const identity = { verified: true as const, provider: "supabase", subject: `user_${randomUUID()}` };
   const first = await ownerRepository.getOrCreateOwner(identity);
@@ -121,7 +191,7 @@ test("owner creation has no remote evidence side effect", async () => {
 });
 
 test("attempts, support events and snapshots round-trip without payload loss", async () => {
-  const owner = ownerId();
+  const owner = await ownerId();
   const source = batch(
     [attempt({ eventId: "attempt_round_trip", versionEvidence: { kind: "unknown_legacy", questionVersion: null } })],
     [supportEvent({ eventId: "support_round_trip" })],
@@ -135,16 +205,17 @@ test("attempts, support events and snapshots round-trip without payload loss", a
 });
 
 test("identical retries are idempotent", async () => {
-  const owner = ownerId();
+  const owner = await ownerId();
   const source = batch([attempt({ eventId: "attempt_retry" })]);
-  assert.equal((await repository.append(owner, source)).accepted.length, 1);
+  const first = await repository.append(owner, source);
+  assert.equal(first.accepted.length, 1);
   const retry = await repository.append(owner, structuredClone(source));
-  assert.deepEqual(retry.duplicates, [{ kind: "attempt", eventId: "attempt_retry" }]);
+  assert.deepEqual(retry.duplicates, [first.accepted[0]]);
   assert.equal((await repository.read(owner)).payload.data.attempts.length, 1);
 });
 
 test("same-ID conflicts preserve accepted evidence and repeated conflicts deduplicate", async () => {
-  const owner = ownerId();
+  const owner = await ownerId();
   const accepted = attempt({ eventId: "attempt_conflict", answer: "first" });
   const incoming = attempt({ eventId: "attempt_conflict", answer: "different" });
   await repository.append(owner, batch([accepted]));
@@ -158,7 +229,7 @@ test("same-ID conflicts preserve accepted evidence and repeated conflicts dedupl
 });
 
 test("a mixed batch accepts new evidence while reporting a conflict", async () => {
-  const owner = ownerId();
+  const owner = await ownerId();
   await repository.append(owner, batch([attempt({ eventId: "attempt_existing", answer: "accepted" })]));
   const mixed = batch([
     attempt({ eventId: "attempt_existing", answer: "conflicting" }),
@@ -170,19 +241,45 @@ test("a mixed batch accepts new evidence while reporting a conflict", async () =
   assert.equal((await repository.read(owner)).payload.data.attempts.length, 2);
 });
 
+test("an unexpected insert failure rolls back earlier valid records in the batch", async () => {
+  const owner = await ownerId();
+  await pool.query(`
+    CREATE FUNCTION stemforge_remote.reject_test_support_insert()
+    RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN
+      RAISE EXCEPTION 'deliberate integration failure';
+    END; $$;
+    CREATE TRIGGER support_events_test_failure
+      BEFORE INSERT ON stemforge_remote.support_events
+      FOR EACH ROW WHEN (NEW.event_id = 'support_force_rollback')
+      EXECUTE FUNCTION stemforge_remote.reject_test_support_insert();
+  `);
+  try {
+    await assert.rejects(repository.append(owner, batch(
+      [attempt({ eventId: "attempt_should_rollback" })],
+      [supportEvent({ eventId: "support_force_rollback" })],
+    )), /deliberate integration failure/);
+    assert.equal((await repository.read(owner)).records.length, 0);
+  } finally {
+    await pool.query(`
+      DROP TRIGGER support_events_test_failure ON stemforge_remote.support_events;
+      DROP FUNCTION stemforge_remote.reject_test_support_insert();
+    `);
+  }
+});
+
 test("owners are isolated and may use the same deterministic event ID", async () => {
-  const ownerA = ownerId();
-  const ownerB = ownerId();
+  const ownerA = await ownerId();
+  const ownerB = await ownerId();
   const shared = attempt({ eventId: "migrated_attempt_0_12345678" });
   assert.equal((await repository.append(ownerA, batch([shared]))).accepted.length, 1);
   assert.equal((await repository.append(ownerB, batch([shared]))).accepted.length, 1);
   assert.equal((await repository.read(ownerA)).payload.data.attempts.length, 1);
   assert.equal((await repository.read(ownerB)).payload.data.attempts.length, 1);
-  assert.equal((await repository.read(ownerId())).payload.data.attempts.length, 0);
+  assert.equal((await repository.read(await ownerId())).payload.data.attempts.length, 0);
 });
 
 test("trusted receive timestamps and global cursors support deterministic incremental reads", async () => {
-  const owner = ownerId();
+  const owner = await ownerId();
   const clientFuture = attempt({ eventId: "attempt_cursor_1", attemptedAt: "2099-01-01T00:00:00.000Z" });
   const first = await repository.append(owner, batch([clientFuture]));
   const cursor = first.accepted[0].receiveCursor;
@@ -194,20 +291,20 @@ test("trusted receive timestamps and global cursors support deterministic increm
 });
 
 test("database triggers reject update of accepted evidence", async () => {
-  const owner = ownerId();
+  const owner = await ownerId();
   await repository.append(owner, batch([attempt({ eventId: "attempt_no_update" })]));
   await assert.rejects(pool.query("UPDATE stemforge_remote.question_attempts SET event_id = 'changed' WHERE owner_id = $1", [owner]), /append-only/i);
 });
 
 test("database triggers reject deletion of accepted evidence", async () => {
-  const owner = ownerId();
+  const owner = await ownerId();
   await repository.append(owner, batch([], [supportEvent({ eventId: "support_no_delete" })]));
   await assert.rejects(pool.query("DELETE FROM stemforge_remote.support_events WHERE owner_id = $1", [owner]), /append-only/i);
 });
 
 test("database triggers reject truncation and reads remain deterministic", async () => {
   await assert.rejects(pool.query("TRUNCATE stemforge_remote.achievement_snapshots"), /append-only/i);
-  const owner = ownerId();
+  const owner = await ownerId();
   await repository.append(owner, batch([
     attempt({ eventId: "attempt_order_b" }),
     attempt({ eventId: "attempt_order_a", sequence: 2 }),
@@ -218,7 +315,9 @@ test("database triggers reject truncation and reads remain deterministic", async
   assert.deepEqual(first.payload.data.attempts.map((item) => item.eventId), ["attempt_order_b", "attempt_order_a"]);
 });
 
-function ownerId() { return `owner_${randomUUID()}`; }
+async function ownerId() {
+  return ownerRepository.getOrCreateOwner({ verified: true, provider: "database_test", subject: randomUUID() });
+}
 
 function batch(
   attempts = [attempt()],

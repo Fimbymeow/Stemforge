@@ -28,7 +28,7 @@ export type RejectedRemoteEvidence = {
 
 export type AppendRemoteEvidenceResult = {
   accepted: AcceptedRemoteEvidence[];
-  duplicates: RemoteEvidenceRef[];
+  duplicates: AcceptedRemoteEvidence[];
   conflicts: RemoteEvidenceConflict[];
   rejected: RejectedRemoteEvidence[];
 };
@@ -38,4 +38,3 @@ export type RemoteEvidenceRead = {
   records: AcceptedRemoteEvidence[];
   nextCursor: string | null;
 };
-

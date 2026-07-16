@@ -4,7 +4,7 @@ const baseURL = "http://127.0.0.1:3070";
 
 export default defineConfig({
   testDir: "./e2e",
-  testIgnore: /auth-enabled-navigation\.spec\.ts/,
+  testIgnore: /(auth-enabled-navigation|guest-progress-import-real)\.spec\.ts/,
   outputDir: "test-results",
   fullyParallel: false,
   workers: 1,
@@ -21,7 +21,7 @@ export default defineConfig({
   projects: [
     {
       name: "desktop-chromium",
-      testIgnore: /(mobile|auth-enabled-navigation)\.spec\.ts/,
+      testIgnore: /(mobile|auth-enabled-navigation|guest-progress-import-real)\.spec\.ts/,
       use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } },
     },
     {
