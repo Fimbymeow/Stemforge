@@ -14,6 +14,8 @@ export type EvidenceProvenanceEntry = {
   source: EvidenceProvenanceSource;
   accountFingerprint: string | null;
   firstObservedAt: string;
+  acknowledgedAccountFingerprint?: string;
+  acknowledgedGeneration?: string;
 };
 
 export type EvidenceProvenanceMetadata = {
@@ -140,6 +142,31 @@ export function referencesForAccount(metadata: EvidenceProvenanceMetadata, finge
     .map(([reference]) => reference));
 }
 
+export function markEvidenceAcknowledged(
+  metadata: EvidenceProvenanceMetadata,
+  references: Iterable<string>,
+  fingerprint: string,
+  generation: string,
+) {
+  const next = structuredClone(metadata);
+  if (!isAccountFingerprint(fingerprint) || !/^[1-9]\d*$/.test(generation)) return next;
+  for (const reference of references) {
+    const entry = next.records[reference];
+    if (entry) {
+      entry.acknowledgedAccountFingerprint = fingerprint;
+      entry.acknowledgedGeneration = generation;
+    }
+  }
+  return next;
+}
+
+export function referencesAcknowledgedInGeneration(metadata: EvidenceProvenanceMetadata, fingerprint: string, generation: string) {
+  return new Set(Object.entries(metadata.records).filter(([, entry]) =>
+    (entry.accountFingerprint === fingerprint && (entry.source === "local_associated" || entry.source === "remote_pull")) ||
+    (entry.acknowledgedAccountFingerprint === fingerprint && entry.acknowledgedGeneration === generation),
+  ).map(([reference]) => reference));
+}
+
 function payloadReferences(payload: ProgressPayload) {
   return new Map<string, string>([
     ...payload.data.attempts.map((item) => [`attempt:${item.eventId}`, item.attemptedAt] as const),
@@ -155,7 +182,9 @@ function isEntry(value: unknown): value is EvidenceProvenanceEntry {
   const account = entry.source === "local_anonymous" || entry.source === "legacy_unknown"
     ? entry.accountFingerprint === null
     : isAccountFingerprint(entry.accountFingerprint);
-  return source && account && isTimestamp(entry.firstObservedAt);
+  const acknowledgement = entry.acknowledgedAccountFingerprint === undefined && entry.acknowledgedGeneration === undefined ||
+    isAccountFingerprint(entry.acknowledgedAccountFingerprint) && typeof entry.acknowledgedGeneration === "string" && /^[1-9]\d*$/.test(entry.acknowledgedGeneration);
+  return source && account && acknowledgement && isTimestamp(entry.firstObservedAt);
 }
 
 function isTimestamp(value: unknown): value is string {

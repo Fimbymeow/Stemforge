@@ -175,7 +175,7 @@ See `STEM_FORGE_PRIVATE_BETA_READINESS.md` for the verified readiness decision, 
 
 - Authentication is optional and controlled by the server; guest learning remains available.
 - Confirmed import is not continuous cross-device synchronization.
-- Remote evidence is append-only; distributed reset, deletion and account erasure are not implemented.
+- Remote evidence is append-only for normal traffic. Confirmed account learning-data erasure is implemented for remote evidence only; full account closure, Supabase identity deletion, distributed reset tombstones and legal retention automation remain deferred.
 - No payments or Stripe.
 - No AI tutor or AI marking.
 - No analytics.
@@ -203,7 +203,7 @@ Deployment hygiene:
 
 Do not add these until separately authorized:
 
-- Distributed reset, deletion or account erasure
+- Distributed reset, full account closure, identity deletion or legal retention automation
 - Payments / Stripe
 - AI tutor
 - AI marking

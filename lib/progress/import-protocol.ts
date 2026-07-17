@@ -6,6 +6,7 @@ export const MAX_PROGRESS_IMPORT_REQUEST_BYTES = 1_050_000;
 
 export type ProgressImportEnvelope = {
   protocolVersion: typeof PROGRESS_IMPORT_PROTOCOL_VERSION;
+  expectedGeneration?: string;
   evidence: ProgressPayload;
 };
 
@@ -33,6 +34,7 @@ export type ImportNotProcessedEvent = {
 export type ProgressImportResponse = {
   protocolVersion: typeof PROGRESS_IMPORT_PROTOCOL_VERSION;
   accountFingerprint: string;
+  accountGeneration?: string;
   committedAt: string;
   batchStatus: "committed" | "partly_committed" | "rejected";
   accepted: ImportAcknowledgedEvent[];
@@ -44,7 +46,8 @@ export type ProgressImportResponse = {
 
 export type ProgressImportErrorResponse = {
   protocolVersion: typeof PROGRESS_IMPORT_PROTOCOL_VERSION;
-  error: "invalid_request" | "sign_in_required" | "forbidden" | "too_large" | "temporarily_unavailable" | "unexpected_error";
+  error: "invalid_request" | "sign_in_required" | "forbidden" | "too_large" | "temporarily_unavailable" | "unexpected_error" |
+    "generation_required" | "account_generation_mismatch" | "erasure_in_progress" | "account_closed";
   message: string;
 };
 
@@ -56,8 +59,8 @@ export function parseProgressImportEnvelope(value: unknown):
   }
   const candidate = value as Record<string, unknown>;
   const keys = Object.keys(candidate);
-  if (keys.length !== 2 || !keys.includes("protocolVersion") || !keys.includes("evidence")) {
-    return { ok: false, message: "Only protocolVersion and evidence are accepted." };
+  if (!keys.includes("protocolVersion") || !keys.includes("evidence") || keys.some((key) => !["protocolVersion", "expectedGeneration", "evidence"].includes(key))) {
+    return { ok: false, message: "Only protocolVersion, expectedGeneration and evidence are accepted." };
   }
   if (candidate.protocolVersion !== PROGRESS_IMPORT_PROTOCOL_VERSION) {
     return { ok: false, message: "Unsupported progress import protocol version." };
@@ -66,6 +69,9 @@ export function parseProgressImportEnvelope(value: unknown):
     ok: true,
     envelope: {
       protocolVersion: PROGRESS_IMPORT_PROTOCOL_VERSION,
+      expectedGeneration: typeof candidate.expectedGeneration === "string" && /^\d+$/.test(candidate.expectedGeneration)
+        ? candidate.expectedGeneration
+        : undefined,
       evidence: candidate.evidence as ProgressPayload,
     },
   };

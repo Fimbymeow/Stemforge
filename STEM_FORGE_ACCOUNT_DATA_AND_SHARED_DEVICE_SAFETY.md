@@ -1,11 +1,11 @@
 # STEM Forge Account Data and Shared-Device Safety
 
 Updated: 17 July 2026
-Status: Sprint 16 implementation
+Status: Sprint 17 first-stage implementation
 
 ## Outcome
 
-The account page is the control centre for synchronization and browser-resident learning data. Synchronization remains an explicit choice for each browser/account pairing. A remembered choice may resume when the same account returns to the same browser; a different account must confirm before either push or pull. Confirmed Sprint 14 import does not enable continuous synchronization.
+The account page is the control centre for synchronization, browser-resident learning data, remote learning-data export and confirmed remote learning-data deletion. Synchronization remains an explicit choice for each browser/account pairing. A remembered choice may resume when the same account returns to the same browser; a different account must confirm before either push or pull. Confirmed Sprint 14 import does not enable continuous synchronization.
 
 Learning remains local-first and guest learning is unchanged. Network work never blocks recording an attempt or support event.
 
@@ -45,11 +45,35 @@ All destructive actions suspend transport, acquire the existing Web Locks/Indexe
 
 Each destructive evidence action has an explicit accessible confirmation. Browser removal never rewinds a cursor to simulate remote deletion.
 
+## Remote learning-data export
+
+Signed-in learners can export the learning evidence stored in their STEM Forge account after password reauthentication. The export is private, non-cacheable JSON with a stable schema version, category counts, trusted receive metadata and a SHA-256 digest over the canonical export body. It includes accepted remote attempts, support events, achievement snapshots and retained conflict evidence for that account. It does not expose owner IDs, provider subjects, payload hashes, credentials or `.env` values.
+
+The current-browser export remains separate and also works when accounts are disabled. It contains only data stored in that browser, including local progress, provenance, import/sync metadata and completion acknowledgements.
+
+## Remote learning-data erasure
+
+Sprint 17 first stage implements deletion of account learning evidence only. It does not delete the Supabase identity, close the login account, delete support/admin/audit data outside the learning evidence tables, or claim backup expiry completion.
+
+The erasure flow is:
+
+1. Start a learning-data deletion request.
+2. Reauthenticate with the current password.
+3. Type the exact confirmation phrase.
+4. Wait through a 10-minute cancellation window.
+5. Once processing starts, deletion is irreversible.
+
+While a request is scheduled or processing, the account state is not `active`, sync and import writes are rejected, and clients pause transport. Processing deletes accepted attempts, support events, achievement snapshots and retained conflicts for the request owner inside a request-scoped database function, then advances the account data generation. Old browser generations cannot push or pull until reviewed.
+
+After completion, each browser can reconcile local data. Reconciliation removes locally stored evidence attributable to the erased account generation, records a local receipt and preserves anonymous, unknown-origin and other-account evidence unless it was acknowledged as remote account evidence for the erased generation.
+
 ## Reset and remote retention
 
 A path reset removes current attempts and support events for that path from this browser while structural historical snapshots may remain. It does not delete already synchronized account evidence and does not affect another device. Remote evidence may therefore return through a later recovery or pull.
 
-PostgreSQL evidence remains append-only. Sprint 16 adds no migration and no delete endpoint. Account erasure, legal retention, tombstones, distributed reset, selective device revocation and remote evidence deletion require a separately designed and authorized workflow.
+PostgreSQL evidence remains append-only for normal application traffic. Sprint 17 adds a narrow, request-scoped exception for confirmed learning-data erasure. Distributed path reset, selective device revocation, Supabase identity deletion, full account closure, audit-log deletion and legally reviewed backup expiry remain separately deferred.
+
+The UI states that deleted learning data may remain in restricted backups until backups expire. The provisional operational target documented in-product is a 30-day rolling retention window, subject to deployment and legal confirmation.
 
 ## Session expiry and recovery
 
@@ -63,8 +87,8 @@ Permanent rejection is digest-bound: an unchanged invalid record is not retried 
 
 ## Verification paths
 
-Credential-free unit and ordinary browser tests cover provenance, removal scopes, guest behavior, reset copy and confirmations. `pnpm run test:e2e:account-safety:real` is the isolated real-Supabase/disposable-PostgreSQL path for shared-device, two-context, session-expiry, account-switching, mobile, focus and remote-retention behavior. It does not print configured values or target the configured development evidence database.
+Credential-free unit and ordinary browser tests cover provenance, removal scopes, browser export, guest behavior, reset copy and confirmations. Embedded PostgreSQL tests cover account generations, scheduled write blocking, cancellation and request-scoped hard delete. `pnpm run test:e2e:account-safety:real` is the isolated real-Supabase/disposable-PostgreSQL path for shared-device, two-context, session-expiry, account-switching, remote export, confirmed erasure and stale-device reconciliation. It does not print configured values or target the configured development evidence database.
 
 ## Sprint 17 boundary
 
-The next sprint should begin with a separately approved design for remote account-data export/erasure and retention policy only if product and legal requirements are ready. Sprint 16 does not provide or imply distributed deletion.
+Implemented in this first stage: remote learning-data export, confirmed learning-evidence erasure, account generation fencing, stale-device cleanup and verification. Still deferred: Supabase identity deletion, full account closure, selective device revocation, distributed reset tombstones, legal retention automation and admin/support workflows.

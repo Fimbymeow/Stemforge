@@ -6,9 +6,10 @@ import {
   commitVerifiedStorageChanges,
   removeAccountAssociation,
   removeAccountProgressFromBrowser,
+  reconcileBrowserAfterRemoteErasure,
   type BrowserProgressDataState,
 } from "../lib/progress/browser-data-controls";
-import { assignEvidenceProvenance, createDefaultEvidenceProvenance } from "../lib/progress/evidence-provenance";
+import { assignEvidenceProvenance, createDefaultEvidenceProvenance, markEvidenceAcknowledged } from "../lib/progress/evidence-provenance";
 import { confirmProgressSyncAssociation, createDefaultProgressSyncMetadata } from "../lib/progress/sync-metadata";
 import { createDefaultProgressImportMetadata } from "../lib/progress/import-metadata";
 
@@ -68,6 +69,19 @@ test("verified clear detects a lying storage implementation", () => {
   assert.throws(() => commitVerifiedStorageChanges(storage, new Map([["progress", null]])), /verification failed/);
 });
 
+test("remote erasure reconciliation removes acknowledged account copies and preserves guest-local evidence", () => {
+  const state = browserState();
+  state.provenance = markEvidenceAcknowledged(state.provenance, ["attempt:anonymous"], fingerprintA, "1");
+  const result = reconcileBrowserAfterRemoteErasure(state, fingerprintA, "1");
+  assert.equal(result.removedEvidenceCount, 3);
+  assert.deepEqual(result.payload.data.attempts.map((item) => item.eventId), ["other", "unknown"]);
+  assert.equal(result.payload.data.supportEvents.length, 0);
+  assert.equal(result.sync.accounts[fingerprintA], undefined);
+  assert.ok(result.sync.accounts[fingerprintB]);
+  assert.equal(result.imported.accounts[fingerprintA], undefined);
+  assert.ok(result.imported.accounts[fingerprintB]);
+});
+
 function browserState(): BrowserProgressDataState {
   const payload = { version: 4 as const, data: {
     attempts: [
@@ -84,7 +98,7 @@ function browserState(): BrowserProgressDataState {
   provenance = assignEvidenceProvenance(provenance, payload, ["attempt:associated"], "local_associated", fingerprintA);
   provenance = assignEvidenceProvenance(provenance, payload, ["support_event:pulled"], "remote_pull", fingerprintA);
   provenance = assignEvidenceProvenance(provenance, payload, ["attempt:other"], "remote_pull", fingerprintB);
-  let sync = confirmProgressSyncAssociation(createDefaultProgressSyncMetadata(), fingerprintA);
+  let sync = confirmProgressSyncAssociation(createDefaultProgressSyncMetadata(), fingerprintA, "1");
   sync.accounts[fingerprintB] = structuredClone(sync.accounts[fingerprintA]);
   const imported = createDefaultProgressImportMetadata();
   imported.lastAccountFingerprint = fingerprintA;

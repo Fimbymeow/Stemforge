@@ -15,6 +15,8 @@ import {
   type ProgressImportMetadata,
 } from "@/lib/progress/import-metadata";
 import { isProgressImportResponse, type ProgressImportErrorResponse } from "@/lib/progress/import-protocol";
+import { isProgressSyncContextResponse } from "@/lib/progress/sync-protocol";
+import { recordRemoteEvidenceAcknowledgements } from "@/lib/progress/local-progress-transaction";
 
 type ImportState = "checking" | "ready" | "confirming" | "importing" | "success" | "partial" | "failure" | "session_expired";
 
@@ -57,11 +59,16 @@ export function GuestProgressImport({ accountFingerprint }: { accountFingerprint
     setState("importing");
     let partial = false;
     try {
+      const contextResponse = await fetch("/api/progress/sync/context", { cache: "no-store" });
+      const contextBody: unknown = await contextResponse.json().catch(() => null);
+      if (!contextResponse.ok || !isProgressSyncContextResponse(contextBody) || !contextBody.authenticated || contextBody.accountDataStatus !== "active") {
+        throw new Error("account_context_unavailable");
+      }
       for (const evidence of batchProgressEvidence(pending)) {
         const response = await fetch("/api/progress/import", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ protocolVersion: 1, evidence }),
+          body: JSON.stringify({ protocolVersion: 1, expectedGeneration: contextBody.accountGeneration, evidence }),
         });
         const body: unknown = await response.json().catch(() => null);
         if (response.status === 401) {
@@ -75,6 +82,9 @@ export function GuestProgressImport({ accountFingerprint }: { accountFingerprint
           return;
         }
         const merged = await persistAcknowledgements(body);
+        await recordRemoteEvidenceAcknowledgements(accountFingerprint, contextBody.accountGeneration, [
+          ...body.accepted, ...body.alreadyPresent, ...body.conflictRetained,
+        ].map((item) => `${item.kind}:${item.eventId}`));
         setMetadata(merged);
         partial ||= body.batchStatus !== "committed" || body.rejected.length > 0 || body.notProcessed.length > 0;
       }

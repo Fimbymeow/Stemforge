@@ -12,6 +12,7 @@ import type {
 } from "@/lib/remote-evidence/types";
 import { validateOwnerId, validateRemoteEvidenceBatch } from "@/lib/remote-evidence/validation";
 import type { AchievementSnapshot, ProgressPayload, QuestionAttempt, QuestionSupportEvent } from "@/lib/progress/types";
+import { PostgresAccountDataRepository, ownerLock } from "@/lib/account-data/postgres-account-data.server";
 
 const TABLES: Record<RemoteEvidenceKind, string> = {
   attempt: "stemforge_remote.question_attempts",
@@ -25,7 +26,7 @@ type StoredRow = { payload: EvidenceItem; payload_hash: string; receive_order: s
 export class PostgresRemoteEvidenceRepository {
   constructor(private readonly pool: Pool) {}
 
-  async append(ownerId: unknown, input: unknown): Promise<AppendRemoteEvidenceResult> {
+  async append(ownerId: unknown, input: unknown, expectedGeneration?: string): Promise<AppendRemoteEvidenceResult> {
     const result: AppendRemoteEvidenceResult = { accepted: [], duplicates: [], conflicts: [], rejected: [] };
     if (!validateOwnerId(ownerId)) {
       result.rejected.push({ reason: "A non-empty opaque owner ID using safe identifier characters is required." });
@@ -38,10 +39,14 @@ export class PostgresRemoteEvidenceRepository {
     const client = await this.pool.connect();
     try {
       await client.query("BEGIN");
-      await client.query("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))", [`stemforge_remote_append:${ownerId}`]);
-      for (const item of validated.payload.data.attempts) await this.appendOne(client, ownerId, "attempt", item, result);
-      for (const item of validated.payload.data.supportEvents) await this.appendOne(client, ownerId, "support_event", item, result);
-      for (const item of validated.payload.data.achievementSnapshots) await this.appendOne(client, ownerId, "achievement_snapshot", item, result);
+      await ownerLock(client, ownerId);
+      const account = new PostgresAccountDataRepository(this.pool);
+      const state = expectedGeneration === undefined
+        ? await this.readActiveStateForInternalUse(client, ownerId)
+        : await account.assertActiveGeneration(client, ownerId, expectedGeneration);
+      for (const item of validated.payload.data.attempts) await this.appendOne(client, ownerId, state.generation, "attempt", item, result);
+      for (const item of validated.payload.data.supportEvents) await this.appendOne(client, ownerId, state.generation, "support_event", item, result);
+      for (const item of validated.payload.data.achievementSnapshots) await this.appendOne(client, ownerId, state.generation, "achievement_snapshot", item, result);
       await client.query("COMMIT");
       return result;
     } catch (error) {
@@ -82,30 +87,38 @@ export class PostgresRemoteEvidenceRepository {
     return { payload, records, nextCursor: records.at(-1)?.receiveCursor ?? afterCursor ?? null };
   }
 
-  async readPage(ownerId: unknown, afterCursor: string | undefined, limit: number): Promise<RemoteEvidencePage> {
+  async readPage(ownerId: unknown, afterCursor: string | undefined, limit: number, expectedGeneration?: string): Promise<RemoteEvidencePage> {
     if (!validateOwnerId(ownerId)) throw new Error("A valid opaque owner ID is required.");
     if (afterCursor !== undefined && !/^\d+$/.test(afterCursor)) throw new Error("Receive cursor must be an unsigned integer string.");
     if (!Number.isInteger(limit) || limit < 1 || limit > 501) throw new Error("Remote evidence page limit is invalid.");
-    const query = await this.pool.query<StoredPageRow>(`
+    const client = await this.pool.connect();
+    try {
+      await client.query("BEGIN");
+      await ownerLock(client, ownerId);
+      const state = expectedGeneration === undefined
+        ? await this.readActiveStateForInternalUse(client, ownerId)
+        : await new PostgresAccountDataRepository(this.pool).assertActiveGeneration(client, ownerId, expectedGeneration);
+      const query = await client.query<StoredPageRow>(`
       SELECT evidence_kind, event_id, payload, disposition, receive_order::text, received_at
       FROM (
         SELECT 'attempt'::text AS evidence_kind, event_id, payload, 'accepted'::text AS disposition, receive_order, received_at
-          FROM stemforge_remote.question_attempts WHERE owner_id = $1
+          FROM stemforge_remote.question_attempts WHERE owner_id = $1 AND account_generation = $4
         UNION ALL
         SELECT 'support_event'::text, event_id, payload, 'accepted'::text, receive_order, received_at
-          FROM stemforge_remote.support_events WHERE owner_id = $1
+          FROM stemforge_remote.support_events WHERE owner_id = $1 AND account_generation = $4
         UNION ALL
         SELECT 'achievement_snapshot'::text, event_id, payload, 'accepted'::text, receive_order, received_at
-          FROM stemforge_remote.achievement_snapshots WHERE owner_id = $1
+          FROM stemforge_remote.achievement_snapshots WHERE owner_id = $1 AND account_generation = $4
         UNION ALL
         SELECT evidence_kind, event_id, incoming_payload, 'conflict_retained'::text, receive_order, received_at
-          FROM stemforge_remote.evidence_conflicts WHERE owner_id = $1
+          FROM stemforge_remote.evidence_conflicts WHERE owner_id = $1 AND account_generation = $4
       ) evidence
       WHERE ($2::bigint IS NULL OR receive_order > $2::bigint)
       ORDER BY receive_order, evidence_kind, event_id
       LIMIT $3
-    `, [ownerId, afterCursor ?? null, limit]);
-    return {
+    `, [ownerId, afterCursor ?? null, limit, state.generation]);
+      await client.query("COMMIT");
+      return {
       records: query.rows.map((row) => ({
         kind: row.evidence_kind,
         eventId: row.event_id,
@@ -114,12 +127,19 @@ export class PostgresRemoteEvidenceRepository {
         receivedAt: row.received_at.toISOString(),
         evidence: row.payload,
       })),
-    };
+      };
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   private async appendOne(
     client: PoolClient,
     ownerId: string,
+    accountGeneration: string,
     kind: RemoteEvidenceKind,
     item: EvidenceItem,
     result: AppendRemoteEvidenceResult,
@@ -127,11 +147,11 @@ export class PostgresRemoteEvidenceRepository {
     const eventId = kind === "achievement_snapshot" ? (item as AchievementSnapshot).snapshotId : (item as QuestionAttempt).eventId;
     const table = TABLES[kind];
     const inserted = await client.query<StoredRow>(`
-      INSERT INTO ${table} (owner_id, event_id, payload)
-      VALUES ($1, $2, $3::jsonb)
+      INSERT INTO ${table} (owner_id, event_id, payload, account_generation)
+      VALUES ($1, $2, $3::jsonb, $4::bigint)
       ON CONFLICT (owner_id, event_id) DO NOTHING
       RETURNING payload, payload_hash, receive_order::text, received_at
-    `, [ownerId, eventId, JSON.stringify(item)]);
+    `, [ownerId, eventId, JSON.stringify(item), accountGeneration]);
     if (inserted.rowCount === 1) {
       const row = inserted.rows[0];
       result.accepted.push({ kind, eventId, receiveCursor: row.receive_order, receivedAt: row.received_at.toISOString() });
@@ -156,11 +176,11 @@ export class PostgresRemoteEvidenceRepository {
 
     const conflict = await client.query<ConflictRow>(`
       INSERT INTO stemforge_remote.evidence_conflicts
-        (owner_id, evidence_kind, event_id, accepted_payload_hash, incoming_payload)
-      VALUES ($1, $2, $3, $4, $5::jsonb)
+        (owner_id, evidence_kind, event_id, accepted_payload_hash, incoming_payload, account_generation)
+      VALUES ($1, $2, $3, $4, $5::jsonb, $6::bigint)
       ON CONFLICT (owner_id, evidence_kind, event_id, accepted_payload_hash, incoming_payload_hash) DO NOTHING
       RETURNING conflict_id::text, accepted_payload_hash, incoming_payload_hash, receive_order::text, received_at
-    `, [ownerId, kind, eventId, accepted.payload_hash, JSON.stringify(item)]);
+    `, [ownerId, kind, eventId, accepted.payload_hash, JSON.stringify(item), accountGeneration]);
     const conflictRow = conflict.rows[0] ?? (await client.query<ConflictRow>(`
       SELECT conflict_id::text, accepted_payload_hash, incoming_payload_hash, receive_order::text, received_at
       FROM stemforge_remote.evidence_conflicts
@@ -169,6 +189,15 @@ export class PostgresRemoteEvidenceRepository {
         AND incoming_payload_hash = encode(digest(convert_to($5::jsonb::text, 'UTF8'), 'sha256'), 'hex')
     `, [ownerId, kind, eventId, accepted.payload_hash, JSON.stringify(item)])).rows[0];
     result.conflicts.push(toConflict(kind, eventId, conflictRow));
+  }
+
+  private async readActiveStateForInternalUse(client: PoolClient, ownerId: string) {
+    const result = await client.query<{ generation: string; status: string }>(`
+      SELECT generation::text, status FROM stemforge_account_data.account_state WHERE owner_id=$1 FOR UPDATE
+    `, [ownerId]);
+    const state = result.rows[0];
+    if (!state || state.status !== "active") throw new Error("Account data is not active.");
+    return state;
   }
 }
 

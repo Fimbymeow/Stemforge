@@ -8,19 +8,21 @@ export type TrustedOwnerContext = { authenticated: false } | { authenticated: tr
 export async function importEvidenceForTrustedOwner(
   evidence: ProgressPayload,
   resolveOwner: () => Promise<TrustedOwnerContext>,
-  append: (ownerId: string, evidence: ProgressPayload) => Promise<AppendRemoteEvidenceResult>,
+  append: (ownerId: string, evidence: ProgressPayload, expectedGeneration?: string) => Promise<AppendRemoteEvidenceResult>,
+  expectedGeneration?: string,
 ) {
-  return appendEvidenceForTrustedOwner(evidence, resolveOwner, append);
+  return appendEvidenceForTrustedOwner(evidence, resolveOwner, append, expectedGeneration);
 }
 
 export async function appendEvidenceForTrustedOwner(
   evidence: ProgressPayload,
   resolveOwner: () => Promise<TrustedOwnerContext>,
-  append: (ownerId: string, evidence: ProgressPayload) => Promise<AppendRemoteEvidenceResult>,
+  append: (ownerId: string, evidence: ProgressPayload, expectedGeneration?: string) => Promise<AppendRemoteEvidenceResult>,
+  expectedGeneration?: string,
 ) {
   const owner = await resolveOwner();
   if (!owner.authenticated) return { authenticated: false as const };
-  const result = await append(owner.ownerId, evidence);
+  const result = await append(owner.ownerId, evidence, expectedGeneration);
   const conflictRetained = result.conflicts.map(({ kind, eventId, receiveCursor, receivedAt }) => ({
     kind, eventId, receiveCursor, receivedAt,
   }));
@@ -28,6 +30,7 @@ export async function appendEvidenceForTrustedOwner(
   const response: ProgressImportResponse = {
     protocolVersion: 1,
     accountFingerprint: createAccountFingerprint(owner.ownerId),
+    accountGeneration: expectedGeneration,
     committedAt: new Date().toISOString(),
     batchStatus: result.rejected.length > 0 ? (hasCommitted ? "partly_committed" : "rejected") : "committed",
     accepted: result.accepted,

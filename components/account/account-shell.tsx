@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Card } from "@/components/ui";
 import { AUTH_RESULT_MESSAGES, readAuthResultCode } from "@/lib/auth/results";
+import { CurrentBrowserExportButton } from "@/components/account/account-learning-data";
 
 export function AccountShell({
   title,
@@ -43,6 +44,7 @@ export function AccountUnavailable() {
       <Link href="/dashboard" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-md bg-forge px-6 text-sm font-extrabold uppercase text-white">
         Continue as a guest
       </Link>
+      <CurrentBrowserExportButton />
     </AccountShell>
   );
 }

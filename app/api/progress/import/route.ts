@@ -7,6 +7,7 @@ import {
 } from "@/lib/progress/import-protocol";
 import { isProgressImportJson, isProgressImportSameOrigin, parseProgressImportBody } from "@/lib/progress/import-http";
 import { importCurrentBrowserEvidence } from "@/lib/remote-evidence/authenticated-import.server";
+import { AccountDataAccessError } from "@/lib/account-data/types";
 
 export const dynamic = "force-dynamic";
 
@@ -32,12 +33,20 @@ export async function POST(request: NextRequest) {
   if (!parsed.ok) return error(parsed.status, parsed.status === 413 ? "too_large" : "invalid_request", parsed.message);
 
   try {
-    const imported = await importCurrentBrowserEvidence(parsed.envelope.evidence);
+    const imported = await importCurrentBrowserEvidence(parsed.envelope.evidence, parsed.envelope.expectedGeneration);
     if (!imported.authenticated) return error(401, "sign_in_required", "Your session has expired. Sign in again to continue.");
     return NextResponse.json(imported.response, { status: 200, headers: { "Cache-Control": "no-store" } });
-  } catch {
+  } catch (cause) {
+    if (cause instanceof AccountDataAccessError) return accountDataError(cause);
     return error(503, "temporarily_unavailable", "Progress could not be added just now. Nothing was deleted—please try again.");
   }
+}
+
+function accountDataError(cause: AccountDataAccessError) {
+  const message = cause.code === "account_generation_mismatch" || cause.code === "generation_required"
+    ? "Refresh account context and review this browser's older progress before importing."
+    : cause.code === "account_closed" ? "This account is closed." : "Learning-data deletion is in progress. Import is paused.";
+  return error(409, cause.code, message);
 }
 
 function error(status: number, code: ProgressImportErrorResponse["error"], message: string) {

@@ -11,12 +11,14 @@ import {
   getActiveBrowserAccountFingerprint,
   readEvidenceProvenance,
   reconcileEvidenceProvenance,
+  markEvidenceAcknowledged,
 } from "@/lib/progress/evidence-provenance";
 import {
   clearAllBrowserProgressState,
   commitVerifiedStorageChanges,
   removeAccountAssociation,
   removeAccountProgressFromBrowser,
+  reconcileBrowserAfterRemoteErasure,
   type BrowserProgressDataState,
 } from "@/lib/progress/browser-data-controls";
 import {
@@ -131,6 +133,7 @@ export function reconcileLocalEvidenceProvenance(payload: ProgressPayload) {
 }
 
 export type BrowserDataControlAction = "remove_association" | "remove_account_progress" | "clear_all";
+export const LOCAL_ERASURE_RECEIPT_KEY = "stemforge.localErasure.v1";
 
 export function runBrowserDataControl(action: BrowserDataControlAction, fingerprint: string | null) {
   return withLocalProgressTransaction(() => {
@@ -169,6 +172,43 @@ export function runBrowserDataControl(action: BrowserDataControlAction, fingerpr
         [PROGRESS_IMPORT_METADATA_KEY, JSON.stringify(result.imported)],
       ]);
     commitVerifiedStorageChanges(window.localStorage, changes);
+    notifyBrowserDataUpdated();
+    return result;
+  }, true);
+}
+
+export function recordRemoteEvidenceAcknowledgements(
+  fingerprint: string,
+  generation: string,
+  references: Iterable<string>,
+) {
+  return withLocalProgressTransaction(() => {
+    const storage = createBrowserProgressStorage();
+    const loaded = storage.load();
+    if (loaded.status === "unsupported-version" || loaded.status === "unavailable") throw new Error("Browser progress cannot be safely read.");
+    const read = readEvidenceProvenance(window.localStorage.getItem(EVIDENCE_PROVENANCE_KEY), loaded.payload);
+    if (read.status === "unsupported_future") throw new Error("Browser evidence provenance uses a newer format.");
+    writeVerified(EVIDENCE_PROVENANCE_KEY, JSON.stringify(markEvidenceAcknowledged(read.metadata, references, fingerprint, generation)));
+  }, true);
+}
+
+export function reconcileAfterRemoteErasure(fingerprint: string, erasedGeneration: string, currentGeneration: string) {
+  return withLocalProgressTransaction(() => {
+    const storage = createBrowserProgressStorage();
+    const loaded = storage.load();
+    if (loaded.status === "unsupported-version" || loaded.status === "unavailable") throw new Error("Browser progress cannot be safely changed.");
+    const provenanceRead = readEvidenceProvenance(window.localStorage.getItem(EVIDENCE_PROVENANCE_KEY), loaded.payload);
+    if (provenanceRead.status === "unsupported_future") throw new Error("Browser evidence provenance uses a newer format.");
+    const state: BrowserProgressDataState = { payload: loaded.payload, provenance: provenanceRead.metadata,
+      sync: readCurrentSyncMetadata(), imported: readProgressImportMetadata(window.localStorage.getItem(PROGRESS_IMPORT_METADATA_KEY)) };
+    const result = reconcileBrowserAfterRemoteErasure(state, fingerprint, erasedGeneration);
+    const receipt = { version: 1, accountFingerprint: fingerprint, erasedGeneration, currentGeneration,
+      reconciledAt: new Date().toISOString(), removedEvidenceCount: result.removedEvidenceCount };
+    commitVerifiedStorageChanges(window.localStorage, new Map([
+      [PROGRESS_STORAGE_KEY, JSON.stringify(result.payload)], [EVIDENCE_PROVENANCE_KEY, JSON.stringify(result.provenance)],
+      [PROGRESS_SYNC_METADATA_KEY, JSON.stringify(result.sync)], [PROGRESS_IMPORT_METADATA_KEY, JSON.stringify(result.imported)],
+      [LOCAL_ERASURE_RECEIPT_KEY, JSON.stringify(receipt)],
+    ]));
     notifyBrowserDataUpdated();
     return result;
   }, true);

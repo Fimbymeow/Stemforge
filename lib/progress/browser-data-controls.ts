@@ -4,6 +4,7 @@ import {
   createDefaultEvidenceProvenance,
   reconcileEvidenceProvenance,
   referencesForAccount,
+  referencesAcknowledgedInGeneration,
   type EvidenceProvenanceMetadata,
 } from "@/lib/progress/evidence-provenance";
 import { createDefaultProgressSyncMetadata, type ProgressSyncMetadata } from "@/lib/progress/sync-metadata";
@@ -20,6 +21,11 @@ export type BrowserProgressDataState = {
 
 export type BrowserDataRemovalResult = BrowserProgressDataState & {
   removedEvidenceCount: number;
+};
+
+export type BrowserErasureReconciliationResult = BrowserDataRemovalResult & {
+  preservedAnonymousCount: number;
+  preservedUnknownCount: number;
 };
 
 export function removeAccountAssociation(
@@ -56,6 +62,26 @@ export function clearAllBrowserProgressState(): BrowserDataRemovalResult {
     sync: createDefaultProgressSyncMetadata(),
     imported: createDefaultProgressImportMetadata(),
     removedEvidenceCount: 0,
+  };
+}
+
+export function reconcileBrowserAfterRemoteErasure(
+  state: BrowserProgressDataState,
+  fingerprint: string,
+  erasedGeneration: string,
+): BrowserErasureReconciliationResult {
+  const removable = referencesAcknowledgedInGeneration(state.provenance, fingerprint, erasedGeneration);
+  const payload = filterPayload(state.payload, (reference) => !removable.has(reference));
+  const provenance = reconcileEvidenceProvenance(state.provenance, payload);
+  const preserved = Object.values(provenance.records);
+  return {
+    payload,
+    provenance,
+    sync: removeSyncAccount(state.sync, fingerprint),
+    imported: removeImportAccount(state.imported, fingerprint),
+    removedEvidenceCount: removable.size,
+    preservedAnonymousCount: preserved.filter((entry) => entry.source === "local_anonymous" && !entry.acknowledgedAccountFingerprint).length,
+    preservedUnknownCount: preserved.filter((entry) => entry.source === "legacy_unknown").length,
   };
 }
 

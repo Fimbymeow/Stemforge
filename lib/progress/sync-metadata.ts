@@ -18,6 +18,8 @@ export type ProgressSyncAcknowledgement = {
 };
 
 export type ProgressSyncAccountState = {
+  accountGeneration: string | null;
+  cleanupRequired: boolean;
   syncEnabled: boolean;
   associationConfirmed: boolean;
   acknowledged: Record<string, ProgressSyncAcknowledgement>;
@@ -45,6 +47,7 @@ export type ProgressSyncStatus =
   | "temporary_error"
   | "authentication_required"
   | "association_required"
+  | "cleanup_required"
   | "paused";
 
 export function createDefaultProgressSyncMetadata(): ProgressSyncMetadata {
@@ -53,6 +56,8 @@ export function createDefaultProgressSyncMetadata(): ProgressSyncMetadata {
 
 export function createDefaultProgressSyncAccount(): ProgressSyncAccountState {
   return {
+    accountGeneration: null,
+    cleanupRequired: false,
     syncEnabled: false,
     associationConfirmed: false,
     acknowledged: {},
@@ -78,11 +83,15 @@ export function readProgressSyncMetadata(raw: string | null, importRaw: string |
   return metadata;
 }
 
-export function confirmProgressSyncAssociation(metadata: ProgressSyncMetadata, fingerprint: string) {
+export function confirmProgressSyncAssociation(metadata: ProgressSyncMetadata, fingerprint: string, generation?: string) {
   const next = structuredClone(metadata);
   const account = next.accounts[fingerprint] ?? createDefaultProgressSyncAccount();
   account.syncEnabled = true;
   account.associationConfirmed = true;
+  if (generation && /^[1-9]\d*$/.test(generation)) {
+    account.accountGeneration = generation;
+    account.cleanupRequired = false;
+  }
   next.accounts[fingerprint] = account;
   next.lastAssociatedAccountFingerprint = fingerprint;
   return next;
@@ -197,7 +206,20 @@ export function pendingProgressSyncEvidence(payload: ProgressPayload, metadata: 
 
 export function canRunProgressSync(metadata: ProgressSyncMetadata, fingerprint: string) {
   const account = metadata.accounts[fingerprint];
-  return Boolean(account?.syncEnabled && account.associationConfirmed && metadata.lastAssociatedAccountFingerprint === fingerprint);
+  return Boolean(account?.syncEnabled && account.associationConfirmed && !account.cleanupRequired && account.accountGeneration && metadata.lastAssociatedAccountFingerprint === fingerprint);
+}
+
+export function markProgressSyncGenerationMismatch(metadata: ProgressSyncMetadata, fingerprint: string, currentGeneration: string) {
+  const next = structuredClone(metadata);
+  const account = next.accounts[fingerprint] ?? createDefaultProgressSyncAccount();
+  account.syncEnabled = false;
+  account.associationConfirmed = false;
+  account.cleanupRequired = true;
+  if (/^[1-9]\d*$/.test(currentGeneration)) account.accountGeneration = currentGeneration;
+  account.lastPulledCursor = null;
+  account.retry = { consecutiveFailures: 0, nextRetryAt: null, lastFailureKind: null };
+  next.accounts[fingerprint] = account;
+  return next;
 }
 
 export function progressSyncRequiresAssociation(metadata: ProgressSyncMetadata, fingerprint: string) {
@@ -226,6 +248,8 @@ function parseMetadata(raw: string | null): ProgressSyncMetadata {
 
 function sanitizeAccount(value: Partial<ProgressSyncAccountState>): ProgressSyncAccountState {
   const account = createDefaultProgressSyncAccount();
+  account.accountGeneration = typeof value.accountGeneration === "string" && /^[1-9]\d*$/.test(value.accountGeneration) ? value.accountGeneration : null;
+  account.cleanupRequired = value.cleanupRequired === true;
   account.syncEnabled = value.syncEnabled === true;
   account.associationConfirmed = value.associationConfirmed === true;
   account.lastPulledCursor = typeof value.lastPulledCursor === "string" ? value.lastPulledCursor : null;

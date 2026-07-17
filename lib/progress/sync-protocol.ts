@@ -15,18 +15,20 @@ export const MAX_PROGRESS_SYNC_PULL_BYTES = 512_000;
 export type ProgressSyncContextResponse = {
   protocolVersion: typeof PROGRESS_SYNC_PROTOCOL_VERSION;
 } & (
-  | { authenticated: true; accountFingerprint: string }
+  | { authenticated: true; accountFingerprint: string; accountGeneration: string; accountDataStatus: "active" | "erasure_pending" | "processing" | "closed" }
   | { authenticated: false }
 );
 
 export type ProgressSyncErrorResponse = {
   protocolVersion: typeof PROGRESS_SYNC_PROTOCOL_VERSION;
-  error: "invalid_request" | "sign_in_required" | "forbidden" | "too_large" | "temporarily_unavailable";
+  error: "invalid_request" | "sign_in_required" | "forbidden" | "too_large" | "temporarily_unavailable" |
+    "generation_required" | "account_generation_mismatch" | "erasure_in_progress" | "account_closed";
   message: string;
 };
 
 export type ProgressSyncPushEnvelope = {
   protocolVersion: typeof PROGRESS_SYNC_PROTOCOL_VERSION;
+  expectedGeneration: string;
   evidence: ProgressPayload;
 };
 
@@ -46,6 +48,7 @@ export type ProgressSyncPulledEvent = {
 export type ProgressSyncPullResponse = {
   protocolVersion: typeof PROGRESS_SYNC_PROTOCOL_VERSION;
   accountFingerprint: string;
+  accountGeneration: string;
   events: ProgressSyncPulledEvent[];
   skipped: Array<{ kind?: RemoteEvidenceKind; eventId?: string; reasonCode: string }>;
   nextCursor: string | null;
@@ -53,25 +56,26 @@ export type ProgressSyncPullResponse = {
   caughtUpAt: string;
 };
 
-export function encodeProgressSyncCursor(accountFingerprint: string, receiveCursor: string) {
-  if (!isAccountFingerprint(accountFingerprint) || !isReceiveCursor(receiveCursor)) {
-    throw new Error("A valid account fingerprint and receive cursor are required.");
+export function encodeProgressSyncCursor(accountFingerprint: string, accountGeneration: string, receiveCursor: string) {
+  if (!isAccountFingerprint(accountFingerprint) || !isGeneration(accountGeneration) || !isReceiveCursor(receiveCursor)) {
+    throw new Error("A valid account fingerprint, generation and receive cursor are required.");
   }
-  return `v1.${accountFingerprint}.${receiveCursor}`;
+  return `v2.${accountFingerprint}.${accountGeneration}.${receiveCursor}`;
 }
 
-export function decodeProgressSyncCursor(value: string | null | undefined, expectedFingerprint: string) {
+export function decodeProgressSyncCursor(value: string | null | undefined, expectedFingerprint: string, expectedGeneration: string) {
   if (value === null || value === undefined || value === "") return { ok: true as const, receiveCursor: undefined };
-  const match = /^v1\.([A-Za-z0-9_-]{43})\.(\d+)$/.exec(value);
-  if (!match || match[1] !== expectedFingerprint) return { ok: false as const };
-  return { ok: true as const, receiveCursor: match[2] };
+  const match = /^v2\.([A-Za-z0-9_-]{43})\.(\d+)\.(\d+)$/.exec(value);
+  if (!match || match[1] !== expectedFingerprint || match[2] !== expectedGeneration) return { ok: false as const };
+  return { ok: true as const, receiveCursor: match[3] };
 }
 
 export function isProgressSyncContextResponse(value: unknown): value is ProgressSyncContextResponse {
   if (!value || typeof value !== "object") return false;
   const candidate = value as Partial<ProgressSyncContextResponse>;
   return candidate.protocolVersion === PROGRESS_SYNC_PROTOCOL_VERSION &&
-    (candidate.authenticated === false || (candidate.authenticated === true && isAccountFingerprint(candidate.accountFingerprint)));
+    (candidate.authenticated === false || (candidate.authenticated === true && isAccountFingerprint(candidate.accountFingerprint) &&
+      isGeneration(candidate.accountGeneration) && ["active", "erasure_pending", "processing", "closed"].includes(candidate.accountDataStatus ?? "")));
 }
 
 export function isProgressSyncPullResponse(value: unknown): value is ProgressSyncPullResponse {
@@ -79,6 +83,7 @@ export function isProgressSyncPullResponse(value: unknown): value is ProgressSyn
   const candidate = value as Partial<ProgressSyncPullResponse>;
   return candidate.protocolVersion === PROGRESS_SYNC_PROTOCOL_VERSION &&
     isAccountFingerprint(candidate.accountFingerprint) &&
+    isGeneration(candidate.accountGeneration) &&
     (candidate.nextCursor === null || typeof candidate.nextCursor === "string") &&
     typeof candidate.hasMore === "boolean" && isIsoTimestamp(candidate.caughtUpAt) &&
     Array.isArray(candidate.events) && candidate.events.every(isPulledEvent) &&
@@ -101,6 +106,10 @@ export function evidenceReference(kind: RemoteEvidenceKind, eventId: string) {
 
 export function isAccountFingerprint(value: unknown): value is string {
   return typeof value === "string" && /^[A-Za-z0-9_-]{43}$/.test(value);
+}
+
+function isGeneration(value: unknown): value is string {
+  return typeof value === "string" && /^[1-9]\d*$/.test(value);
 }
 
 function isPulledEvent(value: unknown): value is ProgressSyncPulledEvent {

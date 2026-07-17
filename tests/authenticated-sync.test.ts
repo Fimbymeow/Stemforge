@@ -12,6 +12,7 @@ import { createAccountFingerprint } from "../lib/remote-evidence/authenticated-i
 
 const ownerId = "owner_12345678901234567890123456789012";
 const fingerprint = createAccountFingerprint(ownerId);
+const generation = "1";
 const receivedAt = "2026-07-16T12:00:00.000Z";
 
 test("sync browser boundary rejects cross-site requests and private responses are non-cacheable", () => {
@@ -24,7 +25,7 @@ test("sync browser boundary rejects cross-site requests and private responses ar
 test("sync context exposes only an opaque account fingerprint after trusted resolution", async () => {
   assert.deepEqual(await resolveProgressSyncContext(async () => ({ authenticated: false })), { authenticated: false });
   const result = await resolveProgressSyncContext(async () => ({ authenticated: true, ownerId }));
-  assert.deepEqual(result, { authenticated: true, accountFingerprint: fingerprint });
+  assert.deepEqual(result, { authenticated: true, accountFingerprint: fingerprint, accountGeneration: generation, accountDataStatus: "active" });
   assert.equal(JSON.stringify(result).includes(ownerId), false);
 });
 
@@ -40,7 +41,7 @@ test("sync push reuses durable trusted append classifications", async () => {
 
 test("pull rejects a cursor from another account before repository access", async () => {
   let read = false;
-  const result = await pullEvidenceForTrustedOwner(`v1.${"B".repeat(43)}.10`, async () => ({ authenticated: true, ownerId }), async () => {
+  const result = await pullEvidenceForTrustedOwner(`v2.${"B".repeat(43)}.${generation}.10`, generation, async () => ({ authenticated: true, ownerId }), async () => {
     read = true;
     return { records: [] };
   });
@@ -54,32 +55,32 @@ test("pull is exclusive, bounded and returns a replay-safe account cursor", asyn
     const evidence = attempt({ eventId: `attempt_page_${index}` });
     return { kind: "attempt" as const, eventId: evidence.eventId, disposition: "accepted" as const, receiveCursor: String(index + 1), receivedAt, evidence };
   });
-  const result = await pullEvidenceForTrustedOwner(null, async () => ({ authenticated: true, ownerId }), async (_owner, after, limit) => {
+  const result = await pullEvidenceForTrustedOwner(null, generation, async () => ({ authenticated: true, ownerId }), async (_owner: string, after: string | undefined, limit: number) => {
     assert.equal(after, undefined);
     assert.equal(limit, MAX_PROGRESS_SYNC_PULL_ITEMS + 1);
     return { records };
   });
   assert.equal(result.authenticated, true);
-  if (!result.authenticated || result.invalidCursor) return;
+  if (!result.authenticated || result.invalidCursor || result.generationRequired) return;
   assert.equal(result.response.events.length, MAX_PROGRESS_SYNC_PULL_ITEMS);
   assert.equal(result.response.hasMore, true);
-  assert.equal(result.response.nextCursor, `v1.${fingerprint}.200`);
+  assert.equal(result.response.nextCursor, `v2.${fingerprint}.${generation}.200`);
 });
 
 test("pull includes canonical retained conflict evidence without internal hashes", async () => {
   const evidence = attempt({ eventId: "attempt_conflict_pull", answer: "different" });
-  const result = await pullEvidenceForTrustedOwner(null, async () => ({ authenticated: true, ownerId }), async () => ({ records: [{
+  const result = await pullEvidenceForTrustedOwner(null, generation, async () => ({ authenticated: true, ownerId }), async () => ({ records: [{
     kind: "attempt", eventId: evidence.eventId, disposition: "conflict_retained", receiveCursor: "7", receivedAt, evidence,
   }] }));
   assert.equal(result.authenticated, true);
-  if (!result.authenticated || result.invalidCursor) return;
+  if (!result.authenticated || result.invalidCursor || result.generationRequired) return;
   assert.equal(result.response.events[0].disposition, "conflict_retained");
   assert.equal(JSON.stringify(result.response).includes("payloadHash"), false);
 });
 
 test("unverified pull never invokes the repository", async () => {
   let read = false;
-  const result = await pullEvidenceForTrustedOwner(null, async () => ({ authenticated: false }), async () => {
+  const result = await pullEvidenceForTrustedOwner(null, generation, async () => ({ authenticated: false }), async () => {
     read = true;
     return { records: [] };
   });

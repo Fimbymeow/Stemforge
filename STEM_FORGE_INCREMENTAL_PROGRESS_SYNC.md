@@ -1,7 +1,7 @@
 # STEM Forge Incremental Cross-Device Evidence Sync
 
-Updated: 16 July 2026
-Status: Sprint 15 implementation
+Updated: 17 July 2026
+Status: Sprint 17 compatible implementation
 
 ## Outcome
 
@@ -11,13 +11,13 @@ Sprint 14 remains the separate, confirmed `/api/progress/import` recovery bounda
 
 ## Protocol and ownership
 
-- `GET /api/progress/sync/context` reports signed-out state or an opaque account fingerprint.
-- `POST /api/progress/sync/push` accepts bounded canonical V4 batches and uses the same durable classifications as import.
-- `GET /api/progress/sync/pull?after=<cursor>` returns at most 200 owner-scoped records and 512,000 encoded bytes in trusted receive order.
+- `GET /api/progress/sync/context` reports signed-out state or an opaque account fingerprint, active account data generation and account-data status.
+- `POST /api/progress/sync/push` accepts bounded canonical V4 batches and the expected account generation, then uses the same durable classifications as import.
+- `GET /api/progress/sync/pull?generation=<generation>&after=<cursor>` returns at most 200 owner-scoped records and 512,000 encoded bytes in trusted receive order.
 
-Every route resolves the owner from the verified server session. No browser owner ID, provider subject, email, database hash or credential is accepted or returned. Authenticated responses are private and non-cacheable; cross-site browser requests are refused. Pull cursors are exclusive `v1.<account-fingerprint>.<receive-order>` tokens and cannot be reused for another account.
+Every route resolves the owner from the verified server session. No browser owner ID, provider subject, email, database hash or credential is accepted or returned. Authenticated responses are private and non-cacheable; cross-site browser requests are refused. Pull cursors are exclusive `v2.<account-fingerprint>.<generation>.<receive-order>` tokens and cannot be reused for another account or an erased account generation.
 
-PostgreSQL remains append-only. A transaction-scoped, per-owner advisory lock makes receive-cursor allocation reflect commit order for concurrent appends. Pull reads accepted evidence and retained incoming conflicts in one deterministic owner-filtered order. No schema migration was required.
+PostgreSQL remains append-only for normal application traffic. A transaction-scoped, per-owner advisory lock makes receive-cursor allocation reflect commit order for concurrent appends. Pull reads accepted evidence and retained incoming conflicts in one deterministic owner-filtered order. Sprint 17 adds account generations; confirmed remote learning-data erasure is the only request-scoped delete exception and advances the generation afterward.
 
 ## Browser metadata and atomic merge
 
@@ -35,7 +35,7 @@ Requests time out after 15 seconds. Temporary failure uses persisted jittered ba
 
 Sign-out pauses and de-associates synchronization but leaves browser evidence intact. A different account must be explicitly associated before any browser evidence uploads. Reset remains browser-local: already synchronized evidence is not remotely deleted and may return on a later pull. Distributed reset, deletion tombstones, account erasure, device revocation, WebSockets and shared-device isolation are not implemented in Sprint 15.
 
-Sprint 16 supersedes the shared-device UX limitation without changing the protocol or append-only server model. Same-account consent may be remembered, different-account transport is cancelled until confirmation, provenance permits conservative current-account removal, and sign-out offers keep or remove-local-data outcomes. Authentication expiry is a non-retrying auth-required state. No remote deletion was added; see `STEM_FORGE_ACCOUNT_DATA_AND_SHARED_DEVICE_SAFETY.md`.
+Sprint 16 superseded the shared-device UX limitation. Sprint 17 adds account-generation fencing for remote erasure. Same-account consent may be remembered only for the same generation; a changed generation marks the browser for cleanup before sync can resume. See `STEM_FORGE_ACCOUNT_DATA_AND_SHARED_DEVICE_SAFETY.md`.
 
 ## Verification
 

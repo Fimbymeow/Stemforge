@@ -14,6 +14,7 @@ import {
   createDefaultProgressSyncAccount,
   mergeProgressSyncPushResponse,
   markProgressSyncCaughtUp,
+  markProgressSyncGenerationMismatch,
   pauseProgressSync,
   pendingProgressSyncEvidence,
   progressSyncRequiresAssociation,
@@ -36,6 +37,8 @@ import {
   applyProgressSyncPullPage,
   inspectBrowserProgressData,
   runBrowserDataControl,
+  recordRemoteEvidenceAcknowledgements,
+  reconcileAfterRemoteErasure,
   updateProgressSyncMetadata,
 } from "@/lib/progress/local-progress-transaction";
 import { setActiveBrowserAccountFingerprint, type EvidenceProvenanceSummary } from "@/lib/progress/evidence-provenance";
@@ -65,6 +68,7 @@ type ProgressSyncContextValue = {
   syncNow(): Promise<void>;
   removeAssociation(): Promise<void>;
   removeCurrentAccountData(): Promise<number>;
+  reconcileRemoteErasure(erasedGeneration: string, currentGeneration: string): Promise<number>;
   clearAllBrowserProgress(): Promise<void>;
   prepareForSignOut(removeAccountData: boolean): Promise<void>;
 };
@@ -81,6 +85,7 @@ export function ProgressSyncProvider({ accountsAvailable, children }: { accounts
   const [diagnostics, setDiagnostics] = useState<ProgressSyncDiagnostics>(emptyDiagnostics);
   const inFlight = useRef<Promise<void> | null>(null);
   const fingerprintRef = useRef<string | null>(null);
+  const accountGenerationRef = useRef<string | null>(null);
   const suspendedRef = useRef(false);
   const authenticationRequiredRef = useRef(false);
   const generationRef = useRef(0);
@@ -110,7 +115,8 @@ export function ProgressSyncProvider({ accountsAvailable, children }: { accounts
       browserData: browser.summary,
       coordination: typeof navigator !== "undefined" && navigator.locks ? "web_locks" : typeof indexedDB !== "undefined" ? "indexeddb" : "unavailable",
     });
-    if (progressSyncRequiresAssociation(metadata, fingerprint)) setStatus("association_required");
+    if (account?.cleanupRequired) setStatus("cleanup_required");
+    else if (progressSyncRequiresAssociation(metadata, fingerprint)) setStatus("association_required");
     else if (!account?.syncEnabled) setStatus("paused");
     else if (pending > 0) setStatus("pending_upload");
     return { metadata, local, pending };
@@ -143,9 +149,26 @@ export function ProgressSyncProvider({ accountsAvailable, children }: { accounts
     }
     const state = inspect(fingerprint);
     if (!canRunProgressSync(state.metadata, fingerprint)) return;
+    const accountGeneration = state.metadata.accounts[fingerprint]?.accountGeneration;
+    if (!accountGeneration) { setStatus("cleanup_required"); return; }
     if (state.local.status === "invalid" || state.local.status === "unsupported") {
       setStatus("paused");
       return;
+    }
+    const contextResponse = await fetchWithTimeout("/api/progress/sync/context", undefined, signal);
+    if (contextResponse.status === 401) throw new SyncAuthenticationError();
+    const contextBody: unknown = await contextResponse.json().catch(() => null);
+    if (!contextResponse.ok || !isProgressSyncContextResponse(contextBody)) throw new Error("context_failed");
+    if (!contextBody.authenticated || contextBody.accountFingerprint !== fingerprint) throw new SyncAuthenticationError();
+    if (contextBody.accountDataStatus !== "active") {
+      setStatus("paused");
+      throw new SyncCancelledError();
+    }
+    if (contextBody.accountGeneration !== accountGeneration) {
+      accountGenerationRef.current = contextBody.accountGeneration;
+      await updateProgressSyncMetadata((latest) => markProgressSyncGenerationMismatch(latest, fingerprint, contextBody.accountGeneration));
+      setStatus("cleanup_required");
+      throw new SyncCancelledError();
     }
     setStatus("syncing");
     if (state.local.status === "importable") {
@@ -154,13 +177,17 @@ export function ProgressSyncProvider({ accountsAvailable, children }: { accounts
         const response = await fetchWithTimeout("/api/progress/sync/push", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ protocolVersion: 1, evidence }),
+          body: JSON.stringify({ protocolVersion: 1, expectedGeneration: accountGeneration, evidence }),
         }, signal);
         if (response.status === 401) throw new SyncAuthenticationError();
+        if (response.status === 409) throw new SyncGenerationError();
         assertCurrentCycle(fingerprint, generation, signal);
         const body: unknown = await response.json().catch(() => null);
         if (!response.ok || !isProgressImportResponse(body) || body.accountFingerprint !== fingerprint) throw new Error("push_failed");
         await updateProgressSyncMetadata((latest) => mergeProgressSyncPushResponse(latest, body, evidence));
+        await recordRemoteEvidenceAcknowledgements(fingerprint, accountGeneration, [
+          ...body.accepted, ...body.alreadyPresent, ...body.conflictRetained,
+        ].map((item) => `${item.kind}:${item.eventId}`));
       }
     }
 
@@ -168,9 +195,11 @@ export function ProgressSyncProvider({ accountsAvailable, children }: { accounts
     for (let page = 0; page < 20 && hasMore; page += 1) {
       const latest = readMetadata();
       const cursor = latest.accounts[fingerprint]?.lastPulledCursor;
-      const url = cursor ? `/api/progress/sync/pull?after=${encodeURIComponent(cursor)}` : "/api/progress/sync/pull";
+      const generationQuery = `generation=${encodeURIComponent(accountGeneration)}`;
+      const url = cursor ? `/api/progress/sync/pull?${generationQuery}&after=${encodeURIComponent(cursor)}` : `/api/progress/sync/pull?${generationQuery}`;
       const response = await fetchWithTimeout(url, undefined, signal);
       if (response.status === 401) throw new SyncAuthenticationError();
+      if (response.status === 409) throw new SyncGenerationError();
       assertCurrentCycle(fingerprint, generation, signal);
       const body: unknown = await response.json().catch(() => null);
       if (!response.ok || !isProgressSyncPullResponse(body) || body.accountFingerprint !== fingerprint) throw new Error("pull_failed");
@@ -220,6 +249,12 @@ export function ProgressSyncProvider({ accountsAvailable, children }: { accounts
           setStatus("authentication_required");
           return;
         }
+        if (error instanceof SyncGenerationError) {
+          const currentGeneration = accountGenerationRef.current;
+          if (currentGeneration) await updateProgressSyncMetadata((latest) => markProgressSyncGenerationMismatch(latest, fingerprint, currentGeneration));
+          setStatus("cleanup_required");
+          return;
+        }
         setStatus(navigator.onLine ? "temporary_error" : "offline");
         await scheduleRetry(fingerprint, navigator.onLine ? "temporary_error" : "offline").catch(() => undefined);
       } finally {
@@ -255,11 +290,23 @@ export function ProgressSyncProvider({ accountsAvailable, children }: { accounts
       }
       if (fingerprintRef.current && fingerprintRef.current !== body.accountFingerprint) await suspendAndAwait();
       fingerprintRef.current = body.accountFingerprint;
+      accountGenerationRef.current = body.accountGeneration;
       setActiveBrowserAccountFingerprint(body.accountFingerprint);
       setAccountFingerprint(body.accountFingerprint);
       authenticationRequiredRef.current = false;
-      suspendedRef.current = false;
+      if (body.accountDataStatus !== "active") {
+        await suspendAndAwait();
+        setStatus("paused");
+        return;
+      }
+      const before = readMetadata().accounts[body.accountFingerprint];
+      if (before && before.accountGeneration !== body.accountGeneration) {
+        await updateProgressSyncMetadata((latest) => markProgressSyncGenerationMismatch(latest, body.accountFingerprint, body.accountGeneration));
+        setStatus("cleanup_required");
+        return;
+      }
       const state = inspect(body.accountFingerprint);
+      suspendedRef.current = false;
       if (canRunProgressSync(state.metadata, body.accountFingerprint)) void runForFingerprint(body.accountFingerprint);
     } catch {
       setStatus(navigator.onLine ? "temporary_error" : "offline");
@@ -316,7 +363,9 @@ export function ProgressSyncProvider({ accountsAvailable, children }: { accounts
     if (!fingerprint) return;
     authenticationRequiredRef.current = false;
     suspendedRef.current = false;
-    await updateProgressSyncMetadata((metadata) => confirmProgressSyncAssociation(metadata, fingerprint));
+    const accountGeneration = accountGenerationRef.current;
+    if (!accountGeneration) return;
+    await updateProgressSyncMetadata((metadata) => confirmProgressSyncAssociation(metadata, fingerprint, accountGeneration));
     inspect(fingerprint);
     await runForFingerprint(fingerprint);
   }
@@ -364,6 +413,16 @@ export function ProgressSyncProvider({ accountsAvailable, children }: { accounts
     return result.removedEvidenceCount;
   }
 
+  async function reconcileRemoteErasure(erasedGeneration: string, currentGeneration: string) {
+    const fingerprint = fingerprintRef.current;
+    if (!fingerprint) return 0;
+    await suspendAndAwait();
+    const result = await reconcileAfterRemoteErasure(fingerprint, erasedGeneration, currentGeneration);
+    inspect(fingerprint);
+    setStatus("association_required");
+    return result.removedEvidenceCount;
+  }
+
   async function clearAllBrowserProgress() {
     await suspendAndAwait();
     await runBrowserDataControl("clear_all", null);
@@ -396,7 +455,7 @@ export function ProgressSyncProvider({ accountsAvailable, children }: { accounts
     <ProgressSyncContext.Provider value={{
       status, accountFingerprint, pendingCount, lastSuccessfulSyncAt, differentAccount, diagnostics,
       confirmAssociation, pause, resume, syncNow, removeAssociation, removeCurrentAccountData,
-      clearAllBrowserProgress, prepareForSignOut,
+      reconcileRemoteErasure, clearAllBrowserProgress, prepareForSignOut,
     }}>
       {children}
     </ProgressSyncContext.Provider>
@@ -441,6 +500,7 @@ const disabledContext: ProgressSyncContextValue = {
   syncNow: async () => undefined,
   removeAssociation: async () => undefined,
   removeCurrentAccountData: async () => 0,
+  reconcileRemoteErasure: async () => 0,
   clearAllBrowserProgress: async () => undefined,
   prepareForSignOut: async () => undefined,
 };
@@ -465,4 +525,5 @@ function latestTimestamp(left: string | null, right: string | null) {
 }
 
 class SyncAuthenticationError extends Error {}
+class SyncGenerationError extends Error {}
 class SyncCancelledError extends Error {}

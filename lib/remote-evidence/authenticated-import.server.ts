@@ -8,13 +8,14 @@ import { createAccountFingerprint, importEvidenceForTrustedOwner } from "@/lib/r
 
 let importPool: ReturnType<typeof createRemoteEvidencePool> | undefined;
 
-export async function importCurrentBrowserEvidence(evidence: ProgressPayload) {
+export async function importCurrentBrowserEvidence(evidence: ProgressPayload, expectedGeneration?: string) {
   importPool ??= createRemoteEvidencePool();
   const repository = new PostgresRemoteEvidenceRepository(importPool);
   return importEvidenceForTrustedOwner(
     evidence,
     resolveCurrentAuthenticatedOwner,
-    (ownerId, payload) => repository.append(ownerId, payload),
+    (ownerId, payload, generation) => repository.append(ownerId, payload, generation),
+    expectedGeneration,
   );
 }
 

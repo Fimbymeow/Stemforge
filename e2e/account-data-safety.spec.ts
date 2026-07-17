@@ -1,6 +1,6 @@
 import { expect, test } from "./fixtures/test";
 import { EVIDENCE_PROVENANCE_KEY } from "../lib/progress/evidence-provenance";
-import { QUESTION_ANSWERS, QUESTION_IDS } from "./fixtures/progress";
+import { currentAttempt, QUESTION_ANSWERS, QUESTION_IDS, STORAGE_KEY } from "./fixtures/progress";
 import { openQuestion, submitAnswer } from "./fixtures/student-actions";
 
 test("auth-disabled learning records anonymous provenance and keeps reset wording truthful", async ({ page }) => {
@@ -20,4 +20,18 @@ test("auth-disabled learning records anonymous provenance and keeps reset wordin
     await dialog.dismiss();
   });
   await page.getByTestId("reset-progress").click();
+});
+
+test("auth-disabled account page exports current browser data without account configuration", async ({ page, seriousBrowserErrors }) => {
+  await page.goto("/");
+  await page.evaluate(({ progressKey, attempt }) => {
+    localStorage.setItem(progressKey, JSON.stringify({ version: 4, data: { attempts: [attempt], supportEvents: [], achievementSnapshots: [] } }));
+  }, { progressKey: STORAGE_KEY, attempt: currentAttempt(QUESTION_IDS[0], 1, { eventId: "attempt_guest_browser_export" }) });
+  await page.goto("/account");
+  await expect(page.getByText("Accounts are not available")).toBeVisible();
+  const download = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Download this browser's data" }).click();
+  const file = await download;
+  expect(file.suggestedFilename()).toMatch(/^stem-forge-browser-data-\d{4}-\d{2}-\d{2}\.json$/);
+  expect(seriousBrowserErrors).toEqual([]);
 });

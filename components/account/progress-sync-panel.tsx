@@ -77,6 +77,7 @@ function copyForStatus(status: ReturnType<typeof useProgressSync>["status"], pen
   if (status === "offline") return "Offline - progress is still being saved on this browser.";
   if (status === "temporary_error") return "Progress could not sync just now. Your browser progress is safe.";
   if (status === "authentication_required") return "Sign in again to continue syncing. Your browser progress is safe.";
+  if (status === "cleanup_required") return "This browser has older account progress to review before synchronization can continue.";
   if (status === "paused") return "Sync is paused. Progress is still being saved on this browser.";
   if (status === "association_required") return "Confirm before this browser sends or receives account progress.";
   return "Progress is saved on this browser.";

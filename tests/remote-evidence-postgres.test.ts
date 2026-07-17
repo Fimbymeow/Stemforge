@@ -10,6 +10,8 @@ import { Pool } from "pg";
 import { runner } from "node-pg-migrate";
 import { PostgresRemoteEvidenceRepository } from "../lib/remote-evidence/postgres-repository.server";
 import { PostgresOwnerMappingRepository } from "../lib/auth/postgres-owner-repository.server";
+import { PostgresAccountDataRepository } from "../lib/account-data/postgres-account-data.server";
+import { AccountDataAccessError } from "../lib/account-data/types";
 import { runRemoteEvidenceMigrations } from "../scripts/database/migration-runner";
 import { assertSafeTestDatabaseUrl } from "../scripts/database/safety";
 import { attempt, supportEvent } from "./progress-fixtures";
@@ -19,6 +21,7 @@ let postgres: EmbeddedPostgres;
 let pool: Pool;
 let repository: PostgresRemoteEvidenceRepository;
 let ownerRepository: PostgresOwnerMappingRepository;
+let accountDataRepository: PostgresAccountDataRepository;
 let databaseUrl: string;
 let databaseDir: string;
 
@@ -45,6 +48,7 @@ before(async () => {
   pool = new Pool({ connectionString: databaseUrl, max: 4 });
   repository = new PostgresRemoteEvidenceRepository(pool);
   ownerRepository = new PostgresOwnerMappingRepository(pool);
+  accountDataRepository = new PostgresAccountDataRepository(pool);
 });
 
 after(async () => {
@@ -359,6 +363,66 @@ test("database triggers reject truncation and reads remain deterministic", async
   assert.deepEqual(first.payload.data.attempts.map((item) => item.eventId), ["attempt_order_b", "attempt_order_a"]);
 });
 
+test("account generations fence appends and reads after owner state creation", async () => {
+  const owner = await ownerId();
+  const state = await accountDataRepository.readState(owner);
+  assert.equal(state.generation, "1");
+  assert.equal((await repository.append(owner, batch([attempt({ eventId: "attempt_generation_ok" })]), "1")).accepted.length, 1);
+  await assert.rejects(
+    repository.append(owner, batch([attempt({ eventId: "attempt_generation_stale" })]), "2"),
+    (error) => error instanceof AccountDataAccessError && error.code === "account_generation_mismatch",
+  );
+  await assert.rejects(
+    repository.readPage(owner, undefined, 10, "2"),
+    (error) => error instanceof AccountDataAccessError && error.code === "account_generation_mismatch",
+  );
+});
+
+test("scheduled erasure pauses account writes and cancellation restores active generation", async () => {
+  const owner = await ownerId();
+  const request = await accountDataRepository.startRequest(owner);
+  const proof = await accountDataRepository.recordReauthentication(owner, request.requestId, "session_binding_cancel");
+  const scheduled = await accountDataRepository.confirmRequest(owner, request.requestId, proof.proof, "session_binding_cancel");
+  assert.equal(scheduled.status, "scheduled");
+  await assert.rejects(
+    repository.append(owner, batch([attempt({ eventId: "attempt_paused_for_cancel" })]), "1"),
+    (error) => error instanceof AccountDataAccessError && error.code === "erasure_in_progress",
+  );
+  const cancelled = await accountDataRepository.cancelRequest(owner, request.requestId);
+  assert.equal(cancelled.status, "cancelled");
+  assert.equal((await accountDataRepository.readState(owner)).status, "active");
+  assert.equal((await repository.append(owner, batch([attempt({ eventId: "attempt_after_cancel" })]), "1")).accepted.length, 1);
+});
+
+test("processing erasure hard-deletes retained evidence and advances generation", async () => {
+  const owner = await ownerId();
+  const accepted = attempt({ eventId: "attempt_erasure_delete", answer: "accepted" });
+  const conflict = attempt({ eventId: "attempt_erasure_delete", answer: "conflict" });
+  await repository.append(owner, batch([accepted], [supportEvent({ eventId: "support_erasure_delete" })], [snapshot({ snapshotId: "snapshot_erasure_delete" })]), "1");
+  await repository.append(owner, batch([conflict]), "1");
+
+  const request = await accountDataRepository.startRequest(owner);
+  const proof = await accountDataRepository.recordReauthentication(owner, request.requestId, "session_binding_process");
+  await accountDataRepository.confirmRequest(owner, request.requestId, proof.proof, "session_binding_process");
+  await pool.query("UPDATE stemforge_account_data.requests SET cancellation_deadline = clock_timestamp() - interval '1 second' WHERE request_id = $1", [request.requestId]);
+  const processing = await accountDataRepository.beginProcessing(owner, request.requestId);
+  assert.equal(processing.status, "processing");
+
+  await accountDataRepository.processRequest(request.requestId);
+  const completed = await accountDataRepository.latestRequest(owner);
+  const state = await accountDataRepository.readState(owner);
+  assert.equal(completed?.status, "completed");
+  assert.deepEqual(completed?.deletedCounts, { attempts: 1, supportEvents: 1, achievementSnapshots: 1, conflicts: 1 });
+  assert.equal(state.status, "active");
+  assert.equal(state.generation, "2");
+  assert.equal(await evidenceRowCountForOwner(owner), "0");
+  await assert.rejects(
+    repository.append(owner, batch([attempt({ eventId: "attempt_after_erase_stale" })]), "1"),
+    (error) => error instanceof AccountDataAccessError && error.code === "account_generation_mismatch",
+  );
+  assert.equal((await repository.append(owner, batch([attempt({ eventId: "attempt_after_erase_current" })]), "2")).accepted.length, 1);
+});
+
 async function ownerId() {
   return ownerRepository.getOrCreateOwner({ verified: true, provider: "database_test", subject: randomUUID() });
 }
@@ -411,5 +475,17 @@ async function evidenceRowCount() {
       (SELECT count(*) FROM stemforge_remote.evidence_conflicts)
     )::text AS count
   `);
+  return result.rows[0].count;
+}
+
+async function evidenceRowCountForOwner(owner: string) {
+  const result = await pool.query<{ count: string }>(`
+    SELECT (
+      (SELECT count(*) FROM stemforge_remote.question_attempts WHERE owner_id = $1) +
+      (SELECT count(*) FROM stemforge_remote.support_events WHERE owner_id = $1) +
+      (SELECT count(*) FROM stemforge_remote.achievement_snapshots WHERE owner_id = $1) +
+      (SELECT count(*) FROM stemforge_remote.evidence_conflicts WHERE owner_id = $1)
+    )::text AS count
+  `, [owner]);
   return result.rows[0].count;
 }

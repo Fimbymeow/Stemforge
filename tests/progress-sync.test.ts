@@ -26,14 +26,16 @@ import { progressSyncRetryDelay } from "../lib/progress/sync-retry";
 
 const fingerprintA = "A".repeat(43);
 const fingerprintB = "B".repeat(43);
+const generation = "1";
 const time = "2026-07-16T12:00:00.000Z";
 
 test("sync cursors are exclusive-position tokens bound to one account fingerprint", () => {
-  const cursor = encodeProgressSyncCursor(fingerprintA, "42");
-  assert.deepEqual(decodeProgressSyncCursor(cursor, fingerprintA), { ok: true, receiveCursor: "42" });
-  assert.deepEqual(decodeProgressSyncCursor(cursor, fingerprintB), { ok: false });
-  assert.deepEqual(decodeProgressSyncCursor(null, fingerprintA), { ok: true, receiveCursor: undefined });
-  assert.throws(() => encodeProgressSyncCursor("unsafe", "42"));
+  const cursor = encodeProgressSyncCursor(fingerprintA, generation, "42");
+  assert.deepEqual(decodeProgressSyncCursor(cursor, fingerprintA, generation), { ok: true, receiveCursor: "42" });
+  assert.deepEqual(decodeProgressSyncCursor(cursor, fingerprintB, generation), { ok: false });
+  assert.deepEqual(decodeProgressSyncCursor(cursor, fingerprintA, "2"), { ok: false });
+  assert.deepEqual(decodeProgressSyncCursor(null, fingerprintA, generation), { ok: true, receiveCursor: undefined });
+  assert.throws(() => encodeProgressSyncCursor("unsafe", generation, "42"));
 });
 
 test("Sprint 14 acknowledgements migrate without silently enabling synchronization", () => {
@@ -47,7 +49,7 @@ test("Sprint 14 acknowledgements migrate without silently enabling synchronizati
 });
 
 test("import acknowledgements continue to union after sync metadata already exists", () => {
-  const initial = confirmProgressSyncAssociation(createDefaultProgressSyncMetadata(), fingerprintA);
+  const initial = confirmProgressSyncAssociation(createDefaultProgressSyncMetadata(), fingerprintA, generation);
   const imported = JSON.stringify({ version: 1, accounts: {
     [fingerprintA]: { acknowledged: { "support_event:support_one": { disposition: "already_present", receiveCursor: "2", acknowledgedAt: time } }, lastImportAt: time },
   } });
@@ -59,7 +61,7 @@ test("import acknowledgements continue to union after sync metadata already exis
 test("account association is explicit and changing accounts pauses synchronization", () => {
   let metadata = createDefaultProgressSyncMetadata();
   assert.equal(progressSyncRequiresAssociation(metadata, fingerprintA), true);
-  metadata = confirmProgressSyncAssociation(metadata, fingerprintA);
+  metadata = confirmProgressSyncAssociation(metadata, fingerprintA, generation);
   assert.equal(canRunProgressSync(metadata, fingerprintA), true);
   assert.equal(progressSyncRequiresAssociation(metadata, fingerprintB), true);
   metadata = pauseProgressSync(metadata, fingerprintA, true);
@@ -68,7 +70,7 @@ test("account association is explicit and changing accounts pauses synchronizati
 
 test("pending push excludes durable and permanently rejected event references", () => {
   const source = payload();
-  let metadata = confirmProgressSyncAssociation(createDefaultProgressSyncMetadata(), fingerprintA);
+  let metadata = confirmProgressSyncAssociation(createDefaultProgressSyncMetadata(), fingerprintA, generation);
   metadata = mergeProgressSyncPushResponse(metadata, {
     protocolVersion: 1, accountFingerprint: fingerprintA, committedAt: time, batchStatus: "partly_committed",
     accepted: [{ kind: "attempt", eventId: "attempt_sync", receiveCursor: "1", receivedAt: time }],
@@ -81,7 +83,7 @@ test("pending push excludes durable and permanently rejected event references", 
 });
 
 test("same-account consent can resume and caught-up time is stored separately", () => {
-  let metadata = confirmProgressSyncAssociation(createDefaultProgressSyncMetadata(), fingerprintA);
+  let metadata = confirmProgressSyncAssociation(createDefaultProgressSyncMetadata(), fingerprintA, generation);
   metadata = pauseProgressSync(metadata, fingerprintA);
   assert.equal(canRunProgressSync(metadata, fingerprintA), false);
   metadata = resumeProgressSync(metadata, fingerprintA);
@@ -92,7 +94,7 @@ test("same-account consent can resume and caught-up time is stored separately", 
 
 test("permanent rejection becomes retryable only if the immutable record digest changes", () => {
   const source = payload();
-  let metadata = confirmProgressSyncAssociation(createDefaultProgressSyncMetadata(), fingerprintA);
+  let metadata = confirmProgressSyncAssociation(createDefaultProgressSyncMetadata(), fingerprintA, generation);
   metadata = mergeProgressSyncPushResponse(metadata, {
     protocolVersion: 1, accountFingerprint: fingerprintA, committedAt: time, batchStatus: "partly_committed",
     accepted: [], alreadyPresent: [], conflictRetained: [],
@@ -105,8 +107,8 @@ test("permanent rejection becomes retryable only if the immutable record digest 
 });
 
 test("pull acknowledgements advance only the current account cursor", () => {
-  const metadata = mergeProgressSyncPullResponse(confirmProgressSyncAssociation(createDefaultProgressSyncMetadata(), fingerprintA), pullResponse());
-  assert.equal(metadata.accounts[fingerprintA].lastPulledCursor, `v1.${fingerprintA}.3`);
+  const metadata = mergeProgressSyncPullResponse(confirmProgressSyncAssociation(createDefaultProgressSyncMetadata(), fingerprintA, generation), pullResponse());
+  assert.equal(metadata.accounts[fingerprintA].lastPulledCursor, `v2.${fingerprintA}.${generation}.3`);
   assert.equal(metadata.accounts[fingerprintA].acknowledged["attempt:attempt_sync"].disposition, "accepted");
   assert.equal(metadata.accounts[fingerprintB], undefined);
 });
@@ -141,8 +143,8 @@ function payload(): ProgressPayload {
 function pullResponse(): ProgressSyncPullResponse {
   const evidence = attempt({ eventId: "attempt_sync" });
   return {
-    protocolVersion: 1, accountFingerprint: fingerprintA,
+    protocolVersion: 1, accountFingerprint: fingerprintA, accountGeneration: generation,
     events: [{ kind: "attempt", eventId: evidence.eventId, disposition: "accepted", receiveCursor: "3", receivedAt: time, evidence }],
-    skipped: [], nextCursor: `v1.${fingerprintA}.3`, hasMore: false, caughtUpAt: time,
+    skipped: [], nextCursor: `v2.${fingerprintA}.${generation}.3`, hasMore: false, caughtUpAt: time,
   };
 }

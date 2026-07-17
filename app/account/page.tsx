@@ -8,6 +8,7 @@ import { createAccountFingerprint } from "@/lib/remote-evidence/authenticated-im
 import { ProgressSyncPanel } from "@/components/account/progress-sync-panel";
 import { SafeSignOut } from "@/components/account/safe-sign-out";
 import { AccountDataControls } from "@/components/account/account-data-controls";
+import { AccountLearningData, CurrentBrowserExportButton } from "@/components/account/account-learning-data";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +32,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           <Link href="/account/sign-in" className="inline-flex min-h-12 items-center justify-center rounded-md bg-forge px-5 text-sm font-extrabold uppercase text-white">Sign in</Link>
           <Link href="/account/sign-up" className="inline-flex min-h-12 items-center justify-center rounded-md border border-ink px-5 text-sm font-extrabold uppercase">Create account</Link>
         </div>
+        <CurrentBrowserExportButton />
       </AccountShell>
     );
   }
@@ -48,6 +50,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
       {accountFingerprint ? <GuestProgressImport accountFingerprint={accountFingerprint} /> : null}
       {accountFingerprint ? <ProgressSyncPanel accountFingerprint={accountFingerprint} /> : null}
       {accountFingerprint ? <AccountDataControls /> : null}
+      {accountFingerprint ? <AccountLearningData /> : null}
       <SafeSignOut action={signOut} />
     </AccountShell>
   );

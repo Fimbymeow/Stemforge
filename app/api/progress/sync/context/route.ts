@@ -15,7 +15,9 @@ export async function GET(request: NextRequest) {
     if (!context.authenticated) return NextResponse.json({ protocolVersion: PROGRESS_SYNC_PROTOCOL_VERSION, authenticated: false }, {
       headers: PROGRESS_SYNC_PRIVATE_HEADERS,
     });
-    return NextResponse.json({ protocolVersion: PROGRESS_SYNC_PROTOCOL_VERSION, authenticated: true, accountFingerprint: context.accountFingerprint }, {
+    return NextResponse.json({ protocolVersion: PROGRESS_SYNC_PROTOCOL_VERSION, authenticated: true,
+      accountFingerprint: context.accountFingerprint, accountGeneration: context.accountGeneration,
+      accountDataStatus: context.accountDataStatus }, {
       headers: PROGRESS_SYNC_PRIVATE_HEADERS,
     });
   } catch {

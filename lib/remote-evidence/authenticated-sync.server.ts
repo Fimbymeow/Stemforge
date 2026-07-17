@@ -9,6 +9,7 @@ import {
   pushEvidenceForTrustedOwner,
   resolveProgressSyncContext,
 } from "@/lib/remote-evidence/authenticated-sync";
+import { PostgresAccountDataRepository } from "@/lib/account-data/postgres-account-data.server";
 
 let syncPool: ReturnType<typeof createRemoteEvidencePool> | undefined;
 
@@ -18,13 +19,15 @@ function repository() {
 }
 
 export function resolveCurrentProgressSyncContext() {
-  return resolveProgressSyncContext(resolveCurrentAuthenticatedOwner);
+  return resolveProgressSyncContext(resolveCurrentAuthenticatedOwner, (ownerId) => new PostgresAccountDataRepository(syncPool ??= createRemoteEvidencePool()).readState(ownerId));
 }
 
-export function pushCurrentProgressSyncEvidence(evidence: ProgressPayload) {
-  return pushEvidenceForTrustedOwner(evidence, resolveCurrentAuthenticatedOwner, (ownerId, payload) => repository().append(ownerId, payload));
+export function pushCurrentProgressSyncEvidence(evidence: ProgressPayload, expectedGeneration?: string) {
+  return pushEvidenceForTrustedOwner(evidence, resolveCurrentAuthenticatedOwner,
+    (ownerId, payload, generation) => repository().append(ownerId, payload, generation), expectedGeneration);
 }
 
-export function pullCurrentProgressSyncEvidence(cursorToken: string | null) {
-  return pullEvidenceForTrustedOwner(cursorToken, resolveCurrentAuthenticatedOwner, (ownerId, cursor, limit) => repository().readPage(ownerId, cursor, limit));
+export function pullCurrentProgressSyncEvidence(cursorToken: string | null, expectedGeneration?: string) {
+  return pullEvidenceForTrustedOwner(cursorToken, expectedGeneration, resolveCurrentAuthenticatedOwner,
+    (ownerId, cursor, limit, generation) => repository().readPage(ownerId, cursor, limit, generation));
 }

@@ -5,6 +5,7 @@ import { MAX_PROGRESS_IMPORT_REQUEST_BYTES } from "@/lib/progress/import-protoco
 import { PROGRESS_SYNC_PRIVATE_HEADERS } from "@/lib/progress/sync-http";
 import { PROGRESS_SYNC_PROTOCOL_VERSION, type ProgressSyncErrorResponse } from "@/lib/progress/sync-protocol";
 import { pushCurrentProgressSyncEvidence } from "@/lib/remote-evidence/authenticated-sync.server";
+import { AccountDataAccessError } from "@/lib/account-data/types";
 
 export const dynamic = "force-dynamic";
 
@@ -28,12 +29,20 @@ export async function POST(request: NextRequest) {
   const parsed = parseProgressImportBody(raw);
   if (!parsed.ok) return error(parsed.status, parsed.status === 413 ? "too_large" : "invalid_request", parsed.message);
   try {
-    const pushed = await pushCurrentProgressSyncEvidence(parsed.envelope.evidence);
+    const pushed = await pushCurrentProgressSyncEvidence(parsed.envelope.evidence, parsed.envelope.expectedGeneration);
     if (!pushed.authenticated) return error(401, "sign_in_required", "Your session has expired. Sign in again to continue.");
     return NextResponse.json(pushed.response, { headers: PROGRESS_SYNC_PRIVATE_HEADERS });
-  } catch {
+  } catch (cause) {
+    if (cause instanceof AccountDataAccessError) return accountDataError(cause);
     return error(503, "temporarily_unavailable", "Progress could not be synchronized just now. Your browser copy is safe.");
   }
+}
+
+function accountDataError(cause: AccountDataAccessError) {
+  const message = cause.code === "account_generation_mismatch" || cause.code === "generation_required"
+    ? "This browser must refresh and review older progress before synchronization can continue."
+    : cause.code === "account_closed" ? "This account is closed." : "Learning-data deletion is in progress. Synchronization is paused.";
+  return error(409, cause.code, message);
 }
 
 function error(status: number, code: ProgressSyncErrorResponse["error"], message: string) {
