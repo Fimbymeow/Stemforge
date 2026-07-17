@@ -13,10 +13,12 @@ import {
   confirmProgressSyncAssociation,
   createDefaultProgressSyncAccount,
   mergeProgressSyncPushResponse,
+  markProgressSyncCaughtUp,
   pauseProgressSync,
   pendingProgressSyncEvidence,
   progressSyncRequiresAssociation,
   readProgressSyncMetadata,
+  resumeProgressSync,
   type ProgressSyncStatus,
 } from "@/lib/progress/sync-metadata";
 import {
@@ -30,7 +32,25 @@ import {
   SYNC_VISIBILITY_REFRESH_MS,
   nextProgressSyncRetryAt,
 } from "@/lib/progress/sync-retry";
-import { applyProgressSyncPullPage, updateProgressSyncMetadata } from "@/lib/progress/local-progress-transaction";
+import {
+  applyProgressSyncPullPage,
+  inspectBrowserProgressData,
+  runBrowserDataControl,
+  updateProgressSyncMetadata,
+} from "@/lib/progress/local-progress-transaction";
+import { setActiveBrowserAccountFingerprint, type EvidenceProvenanceSummary } from "@/lib/progress/evidence-provenance";
+
+export type ProgressSyncDiagnostics = {
+  lastSuccessfulPushAt: string | null;
+  lastSuccessfulPullAt: string | null;
+  lastFullyCaughtUpAt: string | null;
+  permanentlyRejectedCount: number;
+  nextRetryAt: string | null;
+  localLoadStatus: string;
+  provenanceStatus: string;
+  browserData: EvidenceProvenanceSummary;
+  coordination: "web_locks" | "indexeddb" | "unavailable";
+};
 
 type ProgressSyncContextValue = {
   status: ProgressSyncStatus;
@@ -38,10 +58,15 @@ type ProgressSyncContextValue = {
   pendingCount: number;
   lastSuccessfulSyncAt: string | null;
   differentAccount: boolean;
+  diagnostics: ProgressSyncDiagnostics;
   confirmAssociation(): Promise<void>;
   pause(): Promise<void>;
+  resume(): Promise<void>;
   syncNow(): Promise<void>;
-  pauseForSignOut(): Promise<void>;
+  removeAssociation(): Promise<void>;
+  removeCurrentAccountData(): Promise<number>;
+  clearAllBrowserProgress(): Promise<void>;
+  prepareForSignOut(removeAccountData: boolean): Promise<void>;
 };
 
 const ProgressSyncContext = createContext<ProgressSyncContextValue | null>(null);
@@ -53,8 +78,13 @@ export function ProgressSyncProvider({ accountsAvailable, children }: { accounts
   const [pendingCount, setPendingCount] = useState(0);
   const [lastSuccessfulSyncAt, setLastSuccessfulSyncAt] = useState<string | null>(null);
   const [differentAccount, setDifferentAccount] = useState(false);
+  const [diagnostics, setDiagnostics] = useState<ProgressSyncDiagnostics>(emptyDiagnostics);
   const inFlight = useRef<Promise<void> | null>(null);
   const fingerprintRef = useRef<string | null>(null);
+  const suspendedRef = useRef(false);
+  const authenticationRequiredRef = useRef(false);
+  const generationRef = useRef(0);
+  const abortRef = useRef<AbortController | null>(null);
   const lastAttemptRef = useRef(0);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const retryRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -68,6 +98,18 @@ export function ProgressSyncProvider({ accountsAvailable, children }: { accounts
     setLastSuccessfulSyncAt(latestTimestamp(account?.lastSuccessfulPushAt ?? null, account?.lastSuccessfulPullAt ?? null));
     const changedAccount = metadata.lastAssociatedAccountFingerprint !== null && metadata.lastAssociatedAccountFingerprint !== fingerprint;
     setDifferentAccount(changedAccount);
+    const browser = inspectBrowserProgressData(fingerprint);
+    setDiagnostics({
+      lastSuccessfulPushAt: account?.lastSuccessfulPushAt ?? null,
+      lastSuccessfulPullAt: account?.lastSuccessfulPullAt ?? null,
+      lastFullyCaughtUpAt: account?.lastFullyCaughtUpAt ?? null,
+      permanentlyRejectedCount: Object.keys(account?.permanentlyRejected ?? {}).length,
+      nextRetryAt: account?.retry.nextRetryAt ?? null,
+      localLoadStatus: browser.loadStatus,
+      provenanceStatus: browser.provenanceStatus,
+      browserData: browser.summary,
+      coordination: typeof navigator !== "undefined" && navigator.locks ? "web_locks" : typeof indexedDB !== "undefined" ? "indexeddb" : "unavailable",
+    });
     if (progressSyncRequiresAssociation(metadata, fingerprint)) setStatus("association_required");
     else if (!account?.syncEnabled) setStatus("paused");
     else if (pending > 0) setStatus("pending_upload");
@@ -93,7 +135,8 @@ export function ProgressSyncProvider({ accountsAvailable, children }: { accounts
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const performCycle = useCallback(async (fingerprint: string) => {
+  const performCycle = useCallback(async (fingerprint: string, generation: number, signal: AbortSignal) => {
+    assertCurrentCycle(fingerprint, generation, signal);
     if (!navigator.onLine) {
       setStatus("offline");
       return;
@@ -112,8 +155,9 @@ export function ProgressSyncProvider({ accountsAvailable, children }: { accounts
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ protocolVersion: 1, evidence }),
-        });
+        }, signal);
         if (response.status === 401) throw new SyncAuthenticationError();
+        assertCurrentCycle(fingerprint, generation, signal);
         const body: unknown = await response.json().catch(() => null);
         if (!response.ok || !isProgressImportResponse(body) || body.accountFingerprint !== fingerprint) throw new Error("push_failed");
         await updateProgressSyncMetadata((latest) => mergeProgressSyncPushResponse(latest, body, evidence));
@@ -125,37 +169,61 @@ export function ProgressSyncProvider({ accountsAvailable, children }: { accounts
       const latest = readMetadata();
       const cursor = latest.accounts[fingerprint]?.lastPulledCursor;
       const url = cursor ? `/api/progress/sync/pull?after=${encodeURIComponent(cursor)}` : "/api/progress/sync/pull";
-      const response = await fetchWithTimeout(url);
+      const response = await fetchWithTimeout(url, undefined, signal);
       if (response.status === 401) throw new SyncAuthenticationError();
+      assertCurrentCycle(fingerprint, generation, signal);
       const body: unknown = await response.json().catch(() => null);
       if (!response.ok || !isProgressSyncPullResponse(body) || body.accountFingerprint !== fingerprint) throw new Error("pull_failed");
       await applyProgressSyncPullPage(body);
+      assertCurrentCycle(fingerprint, generation, signal);
       hasMore = body.hasMore;
     }
     const final = inspect(fingerprint);
-    setStatus(final.pending > 0 || hasMore ? "pending_upload" : "caught_up");
+    if (final.pending > 0 || hasMore) setStatus("pending_upload");
+    else {
+      const caughtUpAt = new Date().toISOString();
+      await updateProgressSyncMetadata((latest) => markProgressSyncCaughtUp(latest, fingerprint, caughtUpAt));
+      inspect(fingerprint);
+      setStatus("caught_up");
+    }
   }, [inspect]);
 
+  function assertCurrentCycle(fingerprint: string, generation: number, signal: AbortSignal) {
+    if (signal.aborted || generationRef.current !== generation || fingerprintRef.current !== fingerprint || suspendedRef.current) {
+      throw new SyncCancelledError();
+    }
+  }
+
   function runForFingerprint(fingerprint: string) {
+    if (suspendedRef.current || authenticationRequiredRef.current || fingerprintRef.current !== fingerprint) return Promise.resolve();
     if (inFlight.current) return inFlight.current;
+    const generation = generationRef.current;
+    const controller = new AbortController();
+    abortRef.current = controller;
     const run = async () => {
       lastAttemptRef.current = Date.now();
       try {
         if (navigator.locks) {
           await navigator.locks.request("stemforge-progress-sync-network", { mode: "exclusive", ifAvailable: true }, async (lock) => {
-            if (lock) await performCycle(fingerprint);
+            if (lock) await performCycle(fingerprint, generation, controller.signal);
           });
         } else {
-          await performCycle(fingerprint);
+          await performCycle(fingerprint, generation, controller.signal);
         }
       } catch (error) {
+        if (error instanceof SyncCancelledError) return;
         if (error instanceof SyncAuthenticationError) {
+          authenticationRequiredRef.current = true;
+          suspendedRef.current = true;
+          setActiveBrowserAccountFingerprint(null);
+          if (retryRef.current) clearTimeout(retryRef.current);
           setStatus("authentication_required");
           return;
         }
         setStatus(navigator.onLine ? "temporary_error" : "offline");
         await scheduleRetry(fingerprint, navigator.onLine ? "temporary_error" : "offline").catch(() => undefined);
       } finally {
+        if (abortRef.current === controller) abortRef.current = null;
         inFlight.current = null;
       }
     };
@@ -168,19 +236,29 @@ export function ProgressSyncProvider({ accountsAvailable, children }: { accounts
     try {
       const response = await fetchWithTimeout("/api/progress/sync/context");
       if (response.status === 401) {
+        await suspendAndAwait();
+        authenticationRequiredRef.current = true;
+        setActiveBrowserAccountFingerprint(null);
         setStatus("authentication_required");
         return;
       }
       const body: unknown = await response.json().catch(() => null);
       if (!response.ok || !isProgressSyncContextResponse(body)) throw new Error("context_failed");
       if (!body.authenticated) {
+        await suspendAndAwait();
         fingerprintRef.current = null;
+        setActiveBrowserAccountFingerprint(null);
         setAccountFingerprint(null);
+        authenticationRequiredRef.current = true;
         setStatus("authentication_required");
         return;
       }
+      if (fingerprintRef.current && fingerprintRef.current !== body.accountFingerprint) await suspendAndAwait();
       fingerprintRef.current = body.accountFingerprint;
+      setActiveBrowserAccountFingerprint(body.accountFingerprint);
       setAccountFingerprint(body.accountFingerprint);
+      authenticationRequiredRef.current = false;
+      suspendedRef.current = false;
       const state = inspect(body.accountFingerprint);
       if (canRunProgressSync(state.metadata, body.accountFingerprint)) void runForFingerprint(body.accountFingerprint);
     } catch {
@@ -236,6 +314,8 @@ export function ProgressSyncProvider({ accountsAvailable, children }: { accounts
   async function confirmAssociation() {
     const fingerprint = fingerprintRef.current;
     if (!fingerprint) return;
+    authenticationRequiredRef.current = false;
+    suspendedRef.current = false;
     await updateProgressSyncMetadata((metadata) => confirmProgressSyncAssociation(metadata, fingerprint));
     inspect(fingerprint);
     await runForFingerprint(fingerprint);
@@ -244,8 +324,20 @@ export function ProgressSyncProvider({ accountsAvailable, children }: { accounts
   async function pause() {
     const fingerprint = fingerprintRef.current;
     if (!fingerprint) return;
+    await suspendAndAwait();
     await updateProgressSyncMetadata((metadata) => pauseProgressSync(metadata, fingerprint));
+    suspendedRef.current = false;
     setStatus("paused");
+  }
+
+  async function resume() {
+    const fingerprint = fingerprintRef.current;
+    if (!fingerprint) return;
+    authenticationRequiredRef.current = false;
+    suspendedRef.current = false;
+    await updateProgressSyncMetadata((metadata) => resumeProgressSync(metadata, fingerprint));
+    inspect(fingerprint);
+    await runForFingerprint(fingerprint);
   }
 
   async function syncNow() {
@@ -253,17 +345,58 @@ export function ProgressSyncProvider({ accountsAvailable, children }: { accounts
     if (fingerprint) await runForFingerprint(fingerprint);
   }
 
-  async function pauseForSignOut() {
+  async function removeAssociation() {
     const fingerprint = fingerprintRef.current;
     if (!fingerprint) return;
-    await updateProgressSyncMetadata((metadata) => pauseProgressSync(metadata, fingerprint, true), false);
+    await suspendAndAwait();
+    await runBrowserDataControl("remove_association", fingerprint);
+    inspect(fingerprint);
+    setStatus("association_required");
+  }
+
+  async function removeCurrentAccountData() {
+    const fingerprint = fingerprintRef.current;
+    if (!fingerprint) return 0;
+    await suspendAndAwait();
+    const result = await runBrowserDataControl("remove_account_progress", fingerprint);
+    inspect(fingerprint);
+    setStatus("association_required");
+    return result.removedEvidenceCount;
+  }
+
+  async function clearAllBrowserProgress() {
+    await suspendAndAwait();
+    await runBrowserDataControl("clear_all", null);
+    const fingerprint = fingerprintRef.current;
+    if (fingerprint) inspect(fingerprint);
+    setStatus(fingerprint ? "association_required" : "saved_locally");
+  }
+
+  async function prepareForSignOut(removeAccountData: boolean) {
+    const fingerprint = fingerprintRef.current;
+    await suspendAndAwait();
+    if (removeAccountData && fingerprint) await runBrowserDataControl("remove_account_progress", fingerprint);
+    fingerprintRef.current = null;
+    setActiveBrowserAccountFingerprint(null);
+    setAccountFingerprint(null);
+    authenticationRequiredRef.current = true;
     setStatus("authentication_required");
+  }
+
+  async function suspendAndAwait() {
+    suspendedRef.current = true;
+    generationRef.current += 1;
+    abortRef.current?.abort();
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (retryRef.current) clearTimeout(retryRef.current);
+    await inFlight.current?.catch(() => undefined);
   }
 
   return (
     <ProgressSyncContext.Provider value={{
-      status, accountFingerprint, pendingCount, lastSuccessfulSyncAt, differentAccount,
-      confirmAssociation, pause, syncNow, pauseForSignOut,
+      status, accountFingerprint, pendingCount, lastSuccessfulSyncAt, differentAccount, diagnostics,
+      confirmAssociation, pause, resume, syncNow, removeAssociation, removeCurrentAccountData,
+      clearAllBrowserProgress, prepareForSignOut,
     }}>
       {children}
     </ProgressSyncContext.Provider>
@@ -274,16 +407,42 @@ export function useProgressSync() {
   return useContext(ProgressSyncContext) ?? disabledContext;
 }
 
+const emptyBrowserData: EvidenceProvenanceSummary = {
+  total: 0,
+  anonymous: 0,
+  legacyUnknown: 0,
+  currentAccount: 0,
+  otherAccounts: 0,
+  remotePulledForCurrentAccount: 0,
+};
+
+const emptyDiagnostics: ProgressSyncDiagnostics = {
+  lastSuccessfulPushAt: null,
+  lastSuccessfulPullAt: null,
+  lastFullyCaughtUpAt: null,
+  permanentlyRejectedCount: 0,
+  nextRetryAt: null,
+  localLoadStatus: "empty",
+  provenanceStatus: "current",
+  browserData: emptyBrowserData,
+  coordination: "unavailable",
+};
+
 const disabledContext: ProgressSyncContextValue = {
   status: "saved_locally",
   accountFingerprint: null,
   pendingCount: 0,
   lastSuccessfulSyncAt: null,
   differentAccount: false,
+  diagnostics: emptyDiagnostics,
   confirmAssociation: async () => undefined,
   pause: async () => undefined,
+  resume: async () => undefined,
   syncNow: async () => undefined,
-  pauseForSignOut: async () => undefined,
+  removeAssociation: async () => undefined,
+  removeCurrentAccountData: async () => 0,
+  clearAllBrowserProgress: async () => undefined,
+  prepareForSignOut: async () => undefined,
 };
 
 function readMetadata() {
@@ -293,8 +452,10 @@ function readMetadata() {
   );
 }
 
-function fetchWithTimeout(input: RequestInfo | URL, init?: RequestInit) {
-  return fetch(input, { ...init, cache: "no-store", signal: AbortSignal.timeout(SYNC_REQUEST_TIMEOUT_MS) });
+function fetchWithTimeout(input: RequestInfo | URL, init?: RequestInit, cancellation?: AbortSignal) {
+  const timeout = AbortSignal.timeout(SYNC_REQUEST_TIMEOUT_MS);
+  const signal = cancellation ? AbortSignal.any([timeout, cancellation]) : timeout;
+  return fetch(input, { ...init, cache: "no-store", signal });
 }
 
 function latestTimestamp(left: string | null, right: string | null) {
@@ -304,3 +465,4 @@ function latestTimestamp(left: string | null, right: string | null) {
 }
 
 class SyncAuthenticationError extends Error {}
+class SyncCancelledError extends Error {}

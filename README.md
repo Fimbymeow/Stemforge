@@ -1,6 +1,6 @@
 ﻿# STEM Forge
 
-STEM Forge is a calm, structured learning platform for Scottish SQA STEM students. It is currently a private beta with one complete Higher Maths learning path, a generic multi-path content runtime, optional Supabase accounts, explicitly confirmed browser-progress import, and opt-in incremental cross-device evidence synchronization.
+STEM Forge is a calm, structured learning platform for Scottish SQA STEM students. It is currently a private beta with one complete Higher Maths learning path, a generic multi-path content runtime, optional Supabase accounts, explicitly confirmed browser-progress import, opt-in incremental cross-device evidence synchronization, and shared-device-safe account data controls.
 
 ## Current Beta Status
 
@@ -43,7 +43,9 @@ The current beta focuses on testing the learning flow, question workspace, local
 - Tailwind CSS
 - React
 - KaTeX / Markdown rendering for maths content
-- Browser localStorage for local-only progress
+- Browser localStorage as the local-first progress runtime, with optional append-only account synchronization
+
+Account and browser-data behavior is documented in `STEM_FORGE_ACCOUNT_DATA_AND_SHARED_DEVICE_SAFETY.md`. Browser removal is local only: it does not delete synchronized account evidence or data on other devices.
 
 ## Local Development
 

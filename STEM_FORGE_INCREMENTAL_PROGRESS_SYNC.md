@@ -35,6 +35,8 @@ Requests time out after 15 seconds. Temporary failure uses persisted jittered ba
 
 Sign-out pauses and de-associates synchronization but leaves browser evidence intact. A different account must be explicitly associated before any browser evidence uploads. Reset remains browser-local: already synchronized evidence is not remotely deleted and may return on a later pull. Distributed reset, deletion tombstones, account erasure, device revocation, WebSockets and shared-device isolation are not implemented in Sprint 15.
 
+Sprint 16 supersedes the shared-device UX limitation without changing the protocol or append-only server model. Same-account consent may be remembered, different-account transport is cancelled until confirmation, provenance permits conservative current-account removal, and sign-out offers keep or remove-local-data outcomes. Authentication expiry is a non-retrying auth-required state. No remote deletion was added; see `STEM_FORGE_ACCOUNT_DATA_AND_SHARED_DEVICE_SAFETY.md`.
+
 ## Verification
 
 Focused unit/service tests cover metadata migration, pending calculation, account binding, cursors, pull bounds, conflicts, retry bounds, private headers and trusted ownership. PostgreSQL tests cover owner isolation, exclusive pagination, retained conflicts and concurrent cursor ordering. The real-auth browser path uses a real Supabase test session with disposable PostgreSQL and proves two-device convergence, replay safety, concurrent local preservation, cursor failure safety, offline retention, account-change pause, mobile status, reset wording and a clean console.

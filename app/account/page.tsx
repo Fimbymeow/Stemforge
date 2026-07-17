@@ -6,7 +6,8 @@ import { signOut } from "@/app/account/actions";
 import { GuestProgressImport } from "@/components/account/guest-progress-import";
 import { createAccountFingerprint } from "@/lib/remote-evidence/authenticated-import.server";
 import { ProgressSyncPanel } from "@/components/account/progress-sync-panel";
-import { SyncSignOutForm } from "@/components/account/sync-sign-out-form";
+import { SafeSignOut } from "@/components/account/safe-sign-out";
+import { AccountDataControls } from "@/components/account/account-data-controls";
 
 export const dynamic = "force-dynamic";
 
@@ -42,11 +43,12 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
     >
       <div className="mt-6 rounded-xl border border-line bg-paper p-4">
         <strong>{ownerState === "authenticated" ? "Account ready" : "Owner setup unavailable"}</strong>
-        <p className="mb-0 mt-2 text-sm leading-relaxed text-muted">Browser progress stays local unless you explicitly choose to add it to this account.</p>
+        <p className="mb-0 mt-2 text-sm leading-relaxed text-muted">Learning remains local-first. Import and synchronization each require an explicit choice.</p>
       </div>
       {accountFingerprint ? <GuestProgressImport accountFingerprint={accountFingerprint} /> : null}
       {accountFingerprint ? <ProgressSyncPanel accountFingerprint={accountFingerprint} /> : null}
-      <SyncSignOutForm action={signOut} />
+      {accountFingerprint ? <AccountDataControls /> : null}
+      <SafeSignOut action={signOut} />
     </AccountShell>
   );
 }

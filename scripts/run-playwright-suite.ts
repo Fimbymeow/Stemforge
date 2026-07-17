@@ -13,13 +13,14 @@ const root = process.cwd();
 const enabledMode = process.argv.includes("--auth-enabled");
 const realImportMode = process.argv.includes("--real-import");
 const realSyncMode = process.argv.includes("--real-sync");
-const realAuthMode = realImportMode || realSyncMode;
+const realAccountSafetyMode = process.argv.includes("--real-account-safety");
+const realAuthMode = realImportMode || realSyncMode || realAccountSafetyMode;
 const separatorIndex = process.argv.indexOf("--");
 const forwardedArgs = separatorIndex >= 0 ? process.argv.slice(separatorIndex + 1) : [];
 if (realAuthMode) loadEnvConfig(root);
-const port = realSyncMode ? 3082 : realImportMode ? 3081 : enabledMode ? 3079 : 3070;
+const port = realAccountSafetyMode ? 3083 : realSyncMode ? 3082 : realImportMode ? 3081 : enabledMode ? 3079 : 3070;
 const baseURL = `http://127.0.0.1:${port}`;
-const configFile = realSyncMode ? "playwright.sync.config.ts" : realImportMode ? "playwright.import.config.ts" : enabledMode ? "playwright.auth-enabled.config.ts" : "playwright.config.ts";
+const configFile = realAccountSafetyMode ? "playwright.account-safety.config.ts" : realSyncMode ? "playwright.sync.config.ts" : realImportMode ? "playwright.import.config.ts" : enabledMode ? "playwright.auth-enabled.config.ts" : "playwright.config.ts";
 const nextCli = path.join(root, "node_modules", "next", "dist", "bin", "next");
 const playwrightCli = path.join(root, "node_modules", "@playwright", "test", "cli.js");
 

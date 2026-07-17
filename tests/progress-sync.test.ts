@@ -8,10 +8,12 @@ import {
   createDefaultProgressSyncMetadata,
   mergeProgressSyncPullResponse,
   mergeProgressSyncPushResponse,
+  markProgressSyncCaughtUp,
   pauseProgressSync,
   pendingProgressSyncEvidence,
   progressSyncRequiresAssociation,
   readProgressSyncMetadata,
+  resumeProgressSync,
 } from "../lib/progress/sync-metadata";
 import {
   decodeProgressSyncCursor,
@@ -72,10 +74,34 @@ test("pending push excludes durable and permanently rejected event references", 
     accepted: [{ kind: "attempt", eventId: "attempt_sync", receiveCursor: "1", receivedAt: time }],
     alreadyPresent: [], conflictRetained: [],
     rejected: [{ kind: "support_event", eventId: "support_sync", reason: "invalid" }], notProcessed: [],
-  });
+  }, source);
   const pending = pendingProgressSyncEvidence(source, metadata, fingerprintA);
   assert.equal(pending.data.attempts.length, 0);
   assert.equal(pending.data.supportEvents.length, 0);
+});
+
+test("same-account consent can resume and caught-up time is stored separately", () => {
+  let metadata = confirmProgressSyncAssociation(createDefaultProgressSyncMetadata(), fingerprintA);
+  metadata = pauseProgressSync(metadata, fingerprintA);
+  assert.equal(canRunProgressSync(metadata, fingerprintA), false);
+  metadata = resumeProgressSync(metadata, fingerprintA);
+  assert.equal(canRunProgressSync(metadata, fingerprintA), true);
+  metadata = markProgressSyncCaughtUp(metadata, fingerprintA, time);
+  assert.equal(metadata.accounts[fingerprintA].lastFullyCaughtUpAt, time);
+});
+
+test("permanent rejection becomes retryable only if the immutable record digest changes", () => {
+  const source = payload();
+  let metadata = confirmProgressSyncAssociation(createDefaultProgressSyncMetadata(), fingerprintA);
+  metadata = mergeProgressSyncPushResponse(metadata, {
+    protocolVersion: 1, accountFingerprint: fingerprintA, committedAt: time, batchStatus: "partly_committed",
+    accepted: [], alreadyPresent: [], conflictRetained: [],
+    rejected: [{ kind: "attempt", eventId: "attempt_sync", reason: "invalid" }], notProcessed: [],
+  }, source);
+  assert.equal(pendingProgressSyncEvidence(source, metadata, fingerprintA).data.attempts.length, 0);
+  const changed = structuredClone(source);
+  changed.data.attempts[0].answer = "changed";
+  assert.equal(pendingProgressSyncEvidence(changed, metadata, fingerprintA).data.attempts.length, 1);
 });
 
 test("pull acknowledgements advance only the current account cursor", () => {

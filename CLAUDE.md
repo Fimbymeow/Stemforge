@@ -1,6 +1,6 @@
 # STEM Forge — orientation for Claude Code
 
-STEM Forge is a private-beta learning platform for Scottish SQA STEM students (Next.js 15 App Router, React 19, Tailwind 3). Higher Maths → Calculus → Differentiation → Basic differentiation is the complete production slice; the content resolver and routes are multi-path capable. Guest progress is canonical V4 evidence in localStorage. Optional Supabase SSR authentication maps verified users to immutable PostgreSQL owners, and Sprint 14 adds explicit append-only guest-progress import while retaining the local copy. Continuous sync is not implemented.
+STEM Forge is a private-beta learning platform for Scottish SQA STEM students (Next.js 15 App Router, React 19, Tailwind 3). Higher Maths → Calculus → Differentiation → Basic differentiation is the complete production slice; the content resolver and routes are multi-path capable. Guest progress is canonical V4 evidence in localStorage. Optional Supabase SSR authentication maps verified users to immutable PostgreSQL owners. Sprint 14 adds confirmed append-only import, Sprint 15 adds explicit incremental sync, and Sprint 16 adds provenance-backed shared-device controls and safe sign-out.
 
 **Read `docs/frontend-work-plan.md` before starting new frontend work.** It has the current status and prioritized next steps from the last session in detail; this file is orientation, that file is the punch list.
 
@@ -54,3 +54,5 @@ Running `pnpm run build` while a `pnpm run dev` server is live against the same 
 ## Scope boundaries (still apply)
 
 Preserve the existing answer, progress, content-version, archive, guest-access and SQA-independence rules unless a sprint explicitly changes them. Never trust a client owner ID, mutate accepted remote evidence, treat historical snapshots as current readiness, import celebration acknowledgement state, or imply that confirmed import is continuous sync. Payments, AI marking and analytics remain out of scope.
+
+Read `STEM_FORGE_ACCOUNT_DATA_AND_SHARED_DEVICE_SAFETY.md` before changing sign-out, account switching, sync consent, provenance, reset wording or browser-data removal. Never attribute legacy evidence by guess, silently associate a different account, or claim local removal deletes append-only remote evidence.

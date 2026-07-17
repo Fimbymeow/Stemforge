@@ -28,18 +28,18 @@ test("two authenticated devices converge safely through incremental evidence syn
     await expect(pageA.getByTestId("progress-sync-panel")).toContainText("Confirm before");
     expect(deviceAPushes).toBe(0);
     await pageA.getByRole("button", { name: "Enable synchronization" }).click();
-    await expect(pageA.getByTestId("progress-sync-panel")).toContainText("synchronized with the account");
+    await expect(pageA.getByTestId("progress-sync-panel")).toContainText("can sync with your account");
     expect(deviceAPushes).toBeGreaterThan(0);
 
     await seed(pageB, []);
     await signIn(pageB);
     await pageB.getByRole("button", { name: "Enable synchronization" }).click();
-    await expect(pageB.getByTestId("progress-sync-panel")).toContainText("synchronized with the account");
+    await expect(pageB.getByTestId("progress-sync-panel")).toContainText("can sync with your account");
     await expectIds(pageB, [deviceAEvent.eventId]);
 
     await appendLocal(pageB, deviceBEvent);
     await pageB.getByRole("button", { name: "Sync now" }).click();
-    await expect(pageB.getByTestId("progress-sync-panel")).toContainText("synchronized with the account");
+    await expect(pageB.getByTestId("progress-sync-panel")).toContainText("can sync with your account");
 
     let heldPull = false;
     await pageA.route("**/api/progress/sync/pull*", async (route) => {
@@ -50,7 +50,7 @@ test("two authenticated devices converge safely through incremental evidence syn
       await route.continue();
     });
     await pageA.getByRole("button", { name: "Sync now" }).click();
-    await expect(pageA.getByTestId("progress-sync-panel")).toContainText("synchronized with the account");
+    await expect(pageA.getByTestId("progress-sync-panel")).toContainText("can sync with your account");
     await expectIds(pageA, [deviceAEvent.eventId, deviceBEvent.eventId, concurrentEvent.eventId]);
     await pageA.unroute("**/api/progress/sync/pull*");
 
@@ -62,7 +62,7 @@ test("two authenticated devices converge safely through incremental evidence syn
 
     await appendLocal(pageB, cursorFailureEvent);
     await pageB.getByRole("button", { name: "Sync now" }).click();
-    await expect(pageB.getByTestId("progress-sync-panel")).toContainText("synchronized with the account");
+    await expect(pageB.getByTestId("progress-sync-panel")).toContainText("can sync with your account");
     const cursorBefore = await currentCursor(pageA);
     await pageA.evaluate((metadataKey) => {
       const original = Storage.prototype.setItem;
@@ -76,11 +76,11 @@ test("two authenticated devices converge safely through incremental evidence syn
       };
     }, PROGRESS_SYNC_METADATA_KEY);
     await pageA.getByRole("button", { name: "Sync now" }).click();
-    await expect(pageA.getByTestId("progress-sync-panel")).toContainText("could not synchronize");
+    await expect(pageA.getByTestId("progress-sync-panel")).toContainText("Next automatic retry");
     expect(await currentCursor(pageA)).toBe(cursorBefore);
     await expectIds(pageA, [cursorFailureEvent.eventId]);
     await pageA.getByRole("button", { name: "Sync now" }).click();
-    await expect(pageA.getByTestId("progress-sync-panel")).toContainText("synchronized with the account");
+    await expect(pageA.getByTestId("progress-sync-panel")).toContainText("can sync with your account");
     expect(await currentCursor(pageA)).not.toBe(cursorBefore);
 
     await contextA.setOffline(true);
@@ -88,7 +88,7 @@ test("two authenticated devices converge safely through incremental evidence syn
     await expect(pageA.getByTestId("progress-sync-panel")).toContainText("Offline");
     await expectIds(pageA, [offlineEvent.eventId]);
     await contextA.setOffline(false);
-    await expect(pageA.getByTestId("progress-sync-panel")).toContainText("synchronized with the account");
+    await expect(pageA.getByTestId("progress-sync-panel")).toContainText("can sync with your account");
 
     const pushesBeforeDifferentAccount = deviceAPushes;
     await pageA.evaluate((metadataKey) => {
@@ -97,12 +97,12 @@ test("two authenticated devices converge safely through incremental evidence syn
       localStorage.setItem(metadataKey, JSON.stringify(metadata));
     }, PROGRESS_SYNC_METADATA_KEY);
     await pageA.reload();
-    await expect(pageA.getByTestId("progress-sync-panel")).toContainText("different account");
+    await expect(pageA.getByTestId("progress-sync-panel")).toContainText("associated with another account");
     expect(deviceAPushes).toBe(pushesBeforeDifferentAccount);
     await pageA.setViewportSize({ width: 390, height: 844 });
     await expect(pageA.getByTestId("progress-sync-panel")).toBeVisible();
     await pageA.goto("/subjects/higher-maths/calculus/differentiation/basic-differentiation");
-    await expect(pageA.getByText("A browser reset does not delete evidence already synchronized to an account.")).toBeVisible();
+    await expect(pageA.getByText(/progress already synced to your account is not deleted/i)).toBeVisible();
     expect(errors).toEqual([]);
   } finally {
     await contextA.close();

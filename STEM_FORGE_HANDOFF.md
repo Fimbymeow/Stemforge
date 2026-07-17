@@ -1,7 +1,7 @@
 # STEM Forge Conversation Handoff
 
 Last updated: 16 July 2026
-Current checkpoint: Sprint 15 incremental cross-device evidence synchronization
+Current checkpoint: Sprint 16 account data and shared-device safety
 
 This is the durable starting point for a new Codex conversation. Inspect the repository before editing. Preserve unfamiliar Finlay, Claude, or Codex changes and never reset a dirty tree without explicit approval.
 
@@ -136,6 +136,14 @@ The completed Sprint 14 gate verifies 174 unit/integration tests, a 33-route pro
 ## Sprint 15 incremental synchronization
 
 Sprint 15 introduces `stemforge.progressSync.v1`, explicit browser/account association, incremental durable push and owner-scoped exclusive-cursor pull. Local progress remains the active runtime and all learning writes finish before any network work. Pull uses deterministic V4 union inside a Web Lock or IndexedDB lease and advances its account-bound cursor only after local save and verification. Sign-out pauses association; account changes require new confirmation; browser reset cannot imply remote deletion.
+
+## Sprint 16 account data and shared-device safety
+
+Sprint 16 adds `stemforge.evidenceProvenance.v1` beside canonical V4 evidence. New records are conservatively classified as local anonymous, local associated, remote pull or legacy unknown without changing stable identity or storing account identity. Existing evidence becomes unknown rather than being guessed. Pull saves provenance before advancing a cursor.
+
+The account page now owns explicit sync recovery, shared-device warnings, three separate browser-data scopes and two safe sign-out outcomes. Same-account remembered consent may resume; a different fingerprint stops transport and requires confirmation. Destructive actions suspend and await in-flight sync, use the established coordinated local transaction, verify writes and broadcast. Session 401s enter an auth-required state without losing evidence or creating retry storms.
+
+Browser removal and path reset remain local only. PostgreSQL evidence is still append-only; there is no account erasure, remote deletion, tombstone or distributed reset. Read `STEM_FORGE_ACCOUNT_DATA_AND_SHARED_DEVICE_SAFETY.md` before changing these contracts.
 
 The repository adds no migration. Per-owner PostgreSQL advisory locking closes receive-allocation/commit ordering races, and bounded reads include accepted evidence plus retained conflicts. The separate genuine Supabase synchronization path uses two isolated browser contexts and disposable PostgreSQL. See `STEM_FORGE_INCREMENTAL_PROGRESS_SYNC.md` for protocol, scheduling, failure and Sprint 16 account-safety boundaries.
 

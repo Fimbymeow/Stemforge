@@ -19,7 +19,7 @@ No external service, account, database, or network connection is used while test
 
 `playwright.config.ts` owns ordinary projects, artifacts and retry policy. `scripts/run-playwright-suite.ts` owns isolated builds, server startup/readiness, disposable evidence databases and bounded Windows process-tree teardown. Tests live in `e2e/`; reusable actions and progress fixtures live in `e2e/fixtures/`.
 
-Ordinary regression forces authentication and database configuration off. `playwright.auth-enabled.config.ts` separately proves hydration-safe enabled-auth navigation with synthetic public configuration. `playwright.import.config.ts` and `playwright.sync.config.ts` are explicit real-session paths that require a permitted team test user and start their own disposable embedded PostgreSQL database; they never target the configured development database, are not part of the credential-free ordinary gate, and print no configured values.
+Ordinary regression forces authentication and database configuration off. `playwright.auth-enabled.config.ts` separately proves hydration-safe enabled-auth navigation with synthetic public configuration. `playwright.import.config.ts`, `playwright.sync.config.ts` and `playwright.account-safety.config.ts` are explicit real-session paths that require a permitted team test user and start their own disposable embedded PostgreSQL database; they never target the configured development database, are not part of the credential-free ordinary gate, and print no configured values.
 
 ## 4. Commands
 
@@ -30,6 +30,7 @@ pnpm run test:e2e:mobile
 pnpm run test:e2e:completion
 pnpm run test:e2e:import:real
 pnpm run test:e2e:sync:real
+pnpm run test:e2e:account-safety:real
 pnpm run test:e2e:ui
 pnpm run test:all
 ```
@@ -117,3 +118,7 @@ Assert student-visible contracts, not layout internals. Reuse content IDs and fi
 ## 20. When to add a regression test
 
 Add a browser test when a change affects navigation, rendered answer interaction, persistence, progression, support gating, migration, reset, responsive usability, or an accessibility-critical control. Pure calculation branches should remain unit tested unless they also alter the rendered journey.
+
+## 21. Sprint 16 account-safety coverage
+
+The credential-free suite verifies anonymous provenance, reset copy and accessible destructive confirmation. The isolated real-account-safety project uses two browser contexts and disposable PostgreSQL to prove explicit association, same-account resume, different-account pause, session-expiry recovery, preserve-versus-remove sign-out, anonymous evidence retention, remote retention, exact clear-all scope, mobile rendering, cancel focus and clean page/console behavior. Its one deliberately simulated 401 network console event is counted exactly; no other console or page error is accepted.

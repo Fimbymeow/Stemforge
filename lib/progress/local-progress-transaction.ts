@@ -1,6 +1,24 @@
 import { PROGRESS_IMPORT_METADATA_KEY } from "@/lib/progress/import-metadata";
+import { readProgressImportMetadata } from "@/lib/progress/import-metadata";
+import { CELEBRATION_STORAGE_KEY } from "@/lib/completion-tracking";
 import { mergeProgressEvidence } from "@/lib/progress/merge";
 import { createBrowserProgressStorage, PROGRESS_STORAGE_KEY } from "@/lib/progress/storage";
+import {
+  EVIDENCE_PROVENANCE_KEY,
+  assignEvidenceProvenance,
+  evidenceProvenanceSummary,
+  evidenceReferences,
+  getActiveBrowserAccountFingerprint,
+  readEvidenceProvenance,
+  reconcileEvidenceProvenance,
+} from "@/lib/progress/evidence-provenance";
+import {
+  clearAllBrowserProgressState,
+  commitVerifiedStorageChanges,
+  removeAccountAssociation,
+  removeAccountProgressFromBrowser,
+  type BrowserProgressDataState,
+} from "@/lib/progress/browser-data-controls";
 import {
   PROGRESS_SYNC_METADATA_KEY,
   mergeProgressSyncPullResponse,
@@ -8,6 +26,7 @@ import {
   type ProgressSyncMetadata,
 } from "@/lib/progress/sync-metadata";
 import { progressSyncEventsToPayload, type ProgressSyncPullResponse } from "@/lib/progress/sync-protocol";
+import type { ProgressPayload } from "@/lib/progress/types";
 
 const PROGRESS_LOCK_NAME = "stemforge-local-progress-v1";
 const LEASE_DATABASE = "stemforge-progress-coordination";
@@ -47,6 +66,9 @@ export function applyProgressSyncPullPage(response: ProgressSyncPullResponse) {
     if (loaded.status === "unsupported-version" || loaded.status === "unavailable") {
       throw new Error("Browser progress cannot be safely updated.");
     }
+    const beforeReferences = evidenceReferences(loaded.payload);
+    const provenanceRead = readEvidenceProvenance(window.localStorage.getItem(EVIDENCE_PROVENANCE_KEY), loaded.payload);
+    if (provenanceRead.status === "unsupported_future") throw new Error("Browser evidence provenance uses a newer format.");
     const pulled = progressSyncEventsToPayload(response.events);
     const merged = mergeProgressEvidence(loaded.payload, pulled);
     if (!storage.save(merged.payload)) throw new Error("Browser progress could not be saved.");
@@ -63,12 +85,104 @@ export function applyProgressSyncPullPage(response: ProgressSyncPullResponse) {
     ]);
     for (const reference of expected) if (!present.has(reference)) throw new Error("Synchronized evidence was not durably stored.");
 
+    const added = [...expected].filter((reference) => !beforeReferences.has(reference));
+    const provenance = assignEvidenceProvenance(
+      provenanceRead.metadata,
+      verified.payload,
+      added,
+      "remote_pull",
+      response.accountFingerprint,
+    );
+    writeVerified(EVIDENCE_PROVENANCE_KEY, JSON.stringify(provenance));
+
     const metadata = mergeProgressSyncPullResponse(readCurrentSyncMetadata(), response);
-    window.localStorage.setItem(PROGRESS_SYNC_METADATA_KEY, JSON.stringify(metadata));
+    writeVerified(PROGRESS_SYNC_METADATA_KEY, JSON.stringify(metadata));
     window.dispatchEvent(new CustomEvent("stemforge:local-progress-updated"));
     notifySyncMetadataUpdated();
     return { metadata, conflicts: merged.conflicts };
   }, true);
+}
+
+export function recordLocalEvidenceProvenance(before: ProgressPayload, after: ProgressPayload) {
+  const beforeReferences = evidenceReferences(before);
+  const added = [...evidenceReferences(after)].filter((reference) => !beforeReferences.has(reference));
+  if (added.length === 0) return;
+  const read = readEvidenceProvenance(window.localStorage.getItem(EVIDENCE_PROVENANCE_KEY), before);
+  if (read.status === "unsupported_future") return;
+  const activeFingerprint = getActiveBrowserAccountFingerprint();
+  const sync = readCurrentSyncMetadata();
+  const associated = activeFingerprint !== null &&
+    sync.lastAssociatedAccountFingerprint === activeFingerprint &&
+    sync.accounts[activeFingerprint]?.associationConfirmed === true;
+  const metadata = assignEvidenceProvenance(
+    read.metadata,
+    after,
+    added,
+    associated ? "local_associated" : "local_anonymous",
+    associated ? activeFingerprint : null,
+  );
+  writeVerified(EVIDENCE_PROVENANCE_KEY, JSON.stringify(metadata));
+}
+
+export function reconcileLocalEvidenceProvenance(payload: ProgressPayload) {
+  const read = readEvidenceProvenance(window.localStorage.getItem(EVIDENCE_PROVENANCE_KEY), payload);
+  if (read.status === "unsupported_future") return;
+  writeVerified(EVIDENCE_PROVENANCE_KEY, JSON.stringify(reconcileEvidenceProvenance(read.metadata, payload)));
+}
+
+export type BrowserDataControlAction = "remove_association" | "remove_account_progress" | "clear_all";
+
+export function runBrowserDataControl(action: BrowserDataControlAction, fingerprint: string | null) {
+  return withLocalProgressTransaction(() => {
+    const storage = createBrowserProgressStorage();
+    const loaded = storage.load();
+    if (loaded.status === "unsupported-version" || loaded.status === "unavailable") {
+      throw new Error("Browser progress cannot be safely changed.");
+    }
+    const provenanceRead = readEvidenceProvenance(window.localStorage.getItem(EVIDENCE_PROVENANCE_KEY), loaded.payload);
+    if (provenanceRead.status === "unsupported_future") throw new Error("Browser evidence provenance uses a newer format.");
+    const state: BrowserProgressDataState = {
+      payload: loaded.payload,
+      provenance: provenanceRead.metadata,
+      sync: readCurrentSyncMetadata(),
+      imported: readProgressImportMetadata(window.localStorage.getItem(PROGRESS_IMPORT_METADATA_KEY)),
+    };
+    if (action !== "clear_all" && !fingerprint) throw new Error("A current account is required for this browser-data action.");
+    const result = action === "clear_all"
+      ? clearAllBrowserProgressState()
+      : action === "remove_association"
+        ? removeAccountAssociation(state, fingerprint!)
+        : removeAccountProgressFromBrowser(state, fingerprint!);
+
+    const changes = action === "clear_all"
+      ? new Map<string, string | null>([
+        [PROGRESS_STORAGE_KEY, null],
+        [EVIDENCE_PROVENANCE_KEY, null],
+        [PROGRESS_SYNC_METADATA_KEY, null],
+        [PROGRESS_IMPORT_METADATA_KEY, null],
+        [CELEBRATION_STORAGE_KEY, null],
+      ])
+      : new Map<string, string | null>([
+        [PROGRESS_STORAGE_KEY, JSON.stringify(result.payload)],
+        [EVIDENCE_PROVENANCE_KEY, JSON.stringify(result.provenance)],
+        [PROGRESS_SYNC_METADATA_KEY, JSON.stringify(result.sync)],
+        [PROGRESS_IMPORT_METADATA_KEY, JSON.stringify(result.imported)],
+      ]);
+    commitVerifiedStorageChanges(window.localStorage, changes);
+    notifyBrowserDataUpdated();
+    return result;
+  }, true);
+}
+
+export function inspectBrowserProgressData(fingerprint: string | null) {
+  const storage = createBrowserProgressStorage();
+  const loaded = storage.load();
+  const provenance = readEvidenceProvenance(window.localStorage.getItem(EVIDENCE_PROVENANCE_KEY), loaded.payload);
+  return {
+    loadStatus: loaded.status,
+    provenanceStatus: provenance.status,
+    summary: evidenceProvenanceSummary(provenance.metadata, loaded.payload, fingerprint),
+  };
 }
 
 async function runCoordinated<T>(operation: () => Promise<T> | T, requireCrossTab: boolean): Promise<T> {
@@ -151,6 +265,17 @@ function readCurrentSyncMetadata() {
 
 function notifySyncMetadataUpdated() {
   window.dispatchEvent(new CustomEvent("stemforge:progress-sync-updated"));
+}
+
+function notifyBrowserDataUpdated() {
+  window.dispatchEvent(new CustomEvent("stemforge:local-progress-updated"));
+  window.dispatchEvent(new CustomEvent("stemforge:progress-import-updated"));
+  notifySyncMetadataUpdated();
+}
+
+function writeVerified(key: string, value: string) {
+  window.localStorage.setItem(key, value);
+  if (window.localStorage.getItem(key) !== value) throw new Error(`Browser storage verification failed for ${key}.`);
 }
 
 function delay(milliseconds: number) {

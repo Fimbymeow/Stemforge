@@ -14,7 +14,11 @@ import { getMathsQuestionById, mathsQuestions } from "@/data/question-registry";
 import { createEventId } from "@/lib/progress/event-identity";
 import { getSkillPathContext } from "@/lib/learning-paths";
 import type { StructuralAchievementContext } from "@/lib/progress/achievements";
-import { withLocalProgressTransaction } from "@/lib/progress/local-progress-transaction";
+import {
+  reconcileLocalEvidenceProvenance,
+  recordLocalEvidenceProvenance,
+  withLocalProgressTransaction,
+} from "@/lib/progress/local-progress-transaction";
 
 export type {
   DashboardProgressSummary,
@@ -97,7 +101,8 @@ export async function saveQuestionAttempt(input: SubmissionInput) {
   if (!isGenuineAnswer(input.answer)) return false;
   return withLocalProgressTransaction(() => {
     const repository = createRepository();
-    const evidence = repository.getEvidence();
+    const before = repository.load().payload;
+    const evidence = before.data;
     const attempt: QuestionAttempt = {
       ...input,
       sequence: nextSequence(evidence),
@@ -108,6 +113,7 @@ export async function saveQuestionAttempt(input: SubmissionInput) {
       eventId: createEventId("attempt"),
     };
     if (!repository.recordAttempt(attempt, getStructuralContext(input.skillPathId))) return false;
+    try { recordLocalEvidenceProvenance(before, repository.load().payload); } catch { /* Canonical local learning remains authoritative. */ }
     dispatchProgressUpdate();
     return true;
   });
@@ -128,7 +134,8 @@ function recordSupport(
 ) {
   return withLocalProgressTransaction(() => {
     const repository = createRepository();
-    const evidence = repository.getEvidence();
+    const before = repository.load().payload;
+    const evidence = before.data;
     const versionEvidence = getVersionEvidenceForQuestion(input.questionId);
     const afterGenuineAttempt = evidence.attempts.some(
       (attempt) => attempt.questionId === input.questionId && attempt.isGenuine && sameVersionEvidence(attempt.versionEvidence, versionEvidence),
@@ -149,7 +156,10 @@ function recordSupport(
       versionEvidence,
       eventId: createEventId("support"),
     }, getStructuralContext(input.skillPathId));
-    if (saved) dispatchProgressUpdate();
+    if (saved) {
+      try { recordLocalEvidenceProvenance(before, repository.load().payload); } catch { /* Preserve local-first learning. */ }
+      dispatchProgressUpdate();
+    }
     return saved;
   });
 }
@@ -177,8 +187,12 @@ export function getEmptyProgressEvidence() {
 
 export function resetSkillPathProgress(skillPathId: string) {
   return withLocalProgressTransaction(() => {
-    const reset = createRepository().resetPath(skillPathId);
-    if (reset) dispatchProgressUpdate();
+    const repository = createRepository();
+    const reset = repository.resetPath(skillPathId);
+    if (reset) {
+      try { reconcileLocalEvidenceProvenance(repository.load().payload); } catch { /* Reset remains valid without provenance cleanup. */ }
+      dispatchProgressUpdate();
+    }
     return reset;
   });
 }

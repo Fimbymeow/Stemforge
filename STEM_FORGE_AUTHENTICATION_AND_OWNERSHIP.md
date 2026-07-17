@@ -117,6 +117,12 @@ Sprint 14 must require explicit learner confirmation; resolve ownership only thr
 
 Sync must remain owner-scoped, append-only, incremental by trusted receive cursor and resilient to retry/offline delivery. It must not infer chronology from client clocks, overwrite accepted evidence, clear unacknowledged local evidence, distribute a destructive reset, or turn snapshots into current readiness truth.
 
+## Sprint 16 shared-device authentication contract
+
+Authentication and synchronization consent remain separate. The same verified account may resume a remembered browser association; a different fingerprint immediately stops scheduled/in-flight transport and must be explicitly confirmed. Sign-out first suspends synchronization and then either keeps browser data or removes only safely attributable current-account browser data. A 401 retains evidence and association metadata in an authentication-required state; same-account reauthentication can resume and different-account reauthentication cannot.
+
+No client identity, fingerprint, answer or evidence payload appears in user-facing diagnostics. Local removal is not remote deletion. See `STEM_FORGE_ACCOUNT_DATA_AND_SHARED_DEVICE_SAFETY.md`.
+
 ## Sprint 14 confirmed guest-progress import
 
 Sprint 14 connects trusted owner resolution to remote evidence only through `POST /api/progress/import`. The browser submits a strict protocol-versioned canonical V4 payload and never supplies an authoritative owner. The route requires JSON, a bounded raw body and the configured same origin; it resolves a verified session through `resolveCurrentAuthenticatedOwner()` and appends through the existing repository transaction.

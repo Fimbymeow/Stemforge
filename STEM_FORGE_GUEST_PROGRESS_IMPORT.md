@@ -42,3 +42,7 @@ Old anonymous evidence cannot prove who created it. Import therefore always requ
 ## Deferred boundary
 
 Sprint 15 adds opt-in incremental retry-safe push, cursor-based pull and deterministic convergence using the same event IDs, fingerprints, receive cursors and acknowledgement dispositions. Distributed reset, tombstones, remote deletion and account erasure remain absent. See `STEM_FORGE_INCREMENTAL_PROGRESS_SYNC.md`.
+
+## Sprint 16 interaction
+
+Confirmed import remains separate from continuous synchronization and never enables it implicitly. Import acknowledgement does not rewrite evidence provenance: locally created guest evidence remains `local_anonymous`, even after it becomes durable remotely. This preserves truthful local-removal behavior. Removing a current account's sync information clears that fingerprint's import acknowledgement from this browser but does not change canonical evidence or delete the remote append. See `STEM_FORGE_ACCOUNT_DATA_AND_SHARED_DEVICE_SAFETY.md`.

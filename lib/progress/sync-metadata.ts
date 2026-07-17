@@ -24,6 +24,7 @@ export type ProgressSyncAccountState = {
   lastPulledCursor: string | null;
   lastSuccessfulPushAt: string | null;
   lastSuccessfulPullAt: string | null;
+  lastFullyCaughtUpAt: string | null;
   permanentlyRejected: Record<string, { reasonCode: string; recordDigest: string; rejectedAt: string }>;
   retry: { consecutiveFailures: number; nextRetryAt: string | null; lastFailureKind: string | null };
 };
@@ -58,6 +59,7 @@ export function createDefaultProgressSyncAccount(): ProgressSyncAccountState {
     lastPulledCursor: null,
     lastSuccessfulPushAt: null,
     lastSuccessfulPullAt: null,
+    lastFullyCaughtUpAt: null,
     permanentlyRejected: {},
     retry: { consecutiveFailures: 0, nextRetryAt: null, lastFailureKind: null },
   };
@@ -95,6 +97,21 @@ export function pauseProgressSync(metadata: ProgressSyncMetadata, fingerprint: s
   return next;
 }
 
+export function resumeProgressSync(metadata: ProgressSyncMetadata, fingerprint: string) {
+  const next = structuredClone(metadata);
+  const account = next.accounts[fingerprint];
+  if (!account?.associationConfirmed || next.lastAssociatedAccountFingerprint !== fingerprint) return next;
+  account.syncEnabled = true;
+  return next;
+}
+
+export function markProgressSyncCaughtUp(metadata: ProgressSyncMetadata, fingerprint: string, caughtUpAt: string) {
+  const next = structuredClone(metadata);
+  const account = next.accounts[fingerprint];
+  if (account && isTimestamp(caughtUpAt)) account.lastFullyCaughtUpAt = caughtUpAt;
+  return next;
+}
+
 export function mergeProgressSyncPushResponse(
   metadata: ProgressSyncMetadata,
   response: ProgressImportResponse,
@@ -110,7 +127,7 @@ export function mergeProgressSyncPushResponse(
     const reference = evidenceReference(rejected.kind, rejected.eventId);
     account.permanentlyRejected[reference] = {
       reasonCode: "invalid_evidence",
-      recordDigest: submitted ? evidenceDigest(submitted, rejected.kind, rejected.eventId) ?? reference : reference,
+      recordDigest: submitted ? evidenceRecordDigest(submitted, rejected.kind, rejected.eventId) ?? reference : reference,
       rejectedAt: response.committedAt,
     };
   }
@@ -120,7 +137,7 @@ export function mergeProgressSyncPushResponse(
   return next;
 }
 
-function evidenceDigest(
+export function evidenceRecordDigest(
   payload: ProgressPayload,
   kind: "attempt" | "support_event" | "achievement_snapshot",
   eventId: string,
@@ -163,7 +180,10 @@ export function pendingProgressSyncEvidence(payload: ProgressPayload, metadata: 
   const account = metadata.accounts[fingerprint] ?? createDefaultProgressSyncAccount();
   const pending = (kind: "attempt" | "support_event" | "achievement_snapshot", eventId: string) => {
     const reference = evidenceReference(kind, eventId);
-    return !account.acknowledged[reference] && !account.permanentlyRejected[reference];
+    const rejection = account.permanentlyRejected[reference];
+    const rejectedDigest = rejection?.recordDigest;
+    const currentDigest = rejection ? evidenceRecordDigest(payload, kind, eventId) : null;
+    return !account.acknowledged[reference] && (!rejection || rejectedDigest !== currentDigest);
   };
   return {
     version: 4,
@@ -211,6 +231,7 @@ function sanitizeAccount(value: Partial<ProgressSyncAccountState>): ProgressSync
   account.lastPulledCursor = typeof value.lastPulledCursor === "string" ? value.lastPulledCursor : null;
   account.lastSuccessfulPushAt = isTimestamp(value.lastSuccessfulPushAt) ? value.lastSuccessfulPushAt : null;
   account.lastSuccessfulPullAt = isTimestamp(value.lastSuccessfulPullAt) ? value.lastSuccessfulPullAt : null;
+  account.lastFullyCaughtUpAt = isTimestamp(value.lastFullyCaughtUpAt) ? value.lastFullyCaughtUpAt : null;
   if (value.acknowledged && typeof value.acknowledged === "object") {
     for (const [reference, acknowledgement] of Object.entries(value.acknowledged)) {
       if (validReference(reference) && validAcknowledgement(acknowledgement)) account.acknowledged[reference] = acknowledgement;

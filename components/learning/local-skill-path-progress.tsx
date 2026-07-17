@@ -222,7 +222,7 @@ function formatStatus(status: string) {
 
 export function LocalProgressControls({ skillPath }: { skillPath: SkillPath }) {
   async function handleReset() {
-    const confirmed = window.confirm(`This clears current progress for ${skillPath.name} on this browser only. Progress already synchronized to an account is not deleted and may remain on other devices or return during recovery.`);
+    const confirmed = window.confirm(`This resets current attempts and support activity for ${skillPath.name} on this browser. Historical achievement records may remain. Progress already synced to your account is not deleted, other devices are unaffected, and remote evidence may return during recovery.`);
     if (!confirmed) return;
     await resetSkillPathProgress(skillPath.slug);
     clearPathCelebration(skillPath.slug);
@@ -232,7 +232,7 @@ export function LocalProgressControls({ skillPath }: { skillPath: SkillPath }) {
     <Card className="bg-paper p-4">
       <div className="flex items-center justify-between gap-4 max-md:grid">
         <p className="m-0 text-sm leading-relaxed text-muted">
-          Progress is saved locally on this browser. A browser reset does not delete evidence already synchronized to an account.
+          This resets current progress for this path on this browser. Historical achievements may remain, and progress already synced to your account is not deleted.
         </p>
         <button
           type="button"
