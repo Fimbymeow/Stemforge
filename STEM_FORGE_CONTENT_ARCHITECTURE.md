@@ -424,3 +424,6 @@ This does not version existing progress attempts. Their historical content versi
 - When and how the legacy Physics system is migrated.
 
 These decisions are not required for the current eight-question beta but should be settled before database and admin-tool design.
+## Practice-session adoption
+
+Sprint 20 practice eligibility is derived from canonical active content through `contentResolver`. New correctly registered questions become available to targeted, mixed, needs-work and retry-incorrect sessions when their path is available, their question reference is resolvable, and their answer type is supported by the existing question workspace and answer engine. Archived or unsupported questions are excluded from new sessions with explicit diagnostics.

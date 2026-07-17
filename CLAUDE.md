@@ -8,6 +8,8 @@ Sprint 18 adds the evidence-driven learner dashboard. `lib/dashboard-derivations
 
 Sprint 19 adds the interactive maths graph and nature-table foundation. `lib/maths/*` owns the safe authored-expression AST, derivative support, graph sampling, transformations and function analysis. `lib/questions/graph-answer-validation.ts` owns structured graph/nature-table answer validation. Do not add `eval`, `new Function`, arbitrary student expression parsing, freehand sketch recognition or broad content expansion. Read `STEM_FORGE_INTERACTIVE_MATHS_GRAPHS_AND_NATURE_TABLES.md` before changing graph interactions.
 
+Sprint 20 adds the generic revision and assessment engine. `lib/practice/*` owns the local session model, eligibility, deterministic selection, storage and summaries. Practice must discover questions through canonical content, reuse `QuestionWorkspace` and canonical progress attempts, keep session UI state browser-local, and avoid answer keys, duplicated question content or remote session tables. Read `STEM_FORGE_REVISION_AND_ASSESSMENT_ENGINE.md` before changing practice behavior.
+
 ## Historical frontend-session note
 
 The following paragraph originally described uncommitted parallel work. That work was subsequently reviewed, integrated and committed in Sprints 1–14; it is retained only to explain older design notes.

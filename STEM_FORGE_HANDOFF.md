@@ -1,7 +1,7 @@
 # STEM Forge Conversation Handoff
 
 Last updated: 17 July 2026
-Current checkpoint: Sprint 19 interactive maths graphs and nature tables
+Current checkpoint: Sprint 20 generic revision and assessment engine
 
 This is the durable starting point for a new Codex conversation. Inspect the repository before editing. Preserve unfamiliar Finlay, Claude, or Codex changes and never reset a dirty tree without explicit approval.
 
@@ -38,6 +38,12 @@ The dashboard remains guest-safe and local-first. It can display conservative ac
 Sprint 19 adds a reusable graph foundation without arbitrary expression execution or freehand sketch recognition. Authored graph expressions use the safe AST and utilities in `lib/maths/*`; structured graph and nature-table answers validate through `lib/questions/graph-answer-validation.ts` and the normal answer engine, so submissions remain ordinary progress attempts.
 
 `/graph-demo` is an internal proof route for linked `f(x)`/`f'(x)` graphs and a structured nature table. It does not expand the active eight-question Basic differentiation beta path. See `STEM_FORGE_INTERACTIVE_MATHS_GRAPHS_AND_NATURE_TABLES.md` before changing graph, transformation, derivative or nature-table behaviour.
+
+## Generic revision and assessment engine
+
+Sprint 20 adds `/practice` and `/practice/session/[sessionId]`. Practice sessions are local browser state in `stemforge.practiceSessions.v1`; submitted answers remain canonical V4 progress evidence through the existing `QuestionWorkspace`, answer engine and `saveQuestionAttempt` path. The engine supports targeted, mixed, needs-work, retry-incorrect and optional timed sessions over available canonical content.
+
+`lib/practice/*` owns the versioned session model, eligibility, deterministic selection, storage and summary derivation. It discovers questions through `contentResolver`, pins question version/content revision, excludes archived or unsupported questions, and never stores answer keys, duplicated content, sampled graph arrays, credentials or account identifiers. Session UI does not resume across devices in Sprint 20, but submitted progress still imports/syncs normally. See `STEM_FORGE_REVISION_AND_ASSESSMENT_ENGINE.md`.
 
 ## Current progress source of truth
 

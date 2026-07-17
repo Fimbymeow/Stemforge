@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, Check, Eye, Lightbulb, MessageSquare, X } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
@@ -24,7 +24,7 @@ import {
 import { useHasMounted } from "@/lib/use-mounted";
 import type { Question } from "@/data/types";
 
-export function QuestionWorkspace({ question }: { question: Question }) {
+export function QuestionWorkspace({ question, sessionPanel, answerLocked = false }: { question: Question; sessionPanel?: ReactNode; answerLocked?: boolean }) {
   const [answer, setAnswer] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [hintViewed, setHintViewed] = useState(false);
@@ -112,7 +112,7 @@ export function QuestionWorkspace({ question }: { question: Question }) {
   }, [hasMounted, skillPath, pathStatus, pathCompletedQuestionCount, pathTotalQuestionCount]);
 
   async function handleSubmit() {
-    if (!canSubmitAnswer(answer) || submitted) return;
+    if (!canSubmitAnswer(answer) || submitted || answerLocked) return;
     const markedCorrect = markQuestionAnswer(question, answer).isCorrect;
     const saved = await saveQuestionAttempt({
       questionId: question.id,
@@ -182,6 +182,8 @@ export function QuestionWorkspace({ question }: { question: Question }) {
             </p>
           </Card>
 
+          {sessionPanel}
+
           <Card className="p-4">
             <p className="mb-2 font-mono text-[11px] font-extrabold uppercase text-forge">
               {question.stage} / Question {currentQuestion}
@@ -201,10 +203,10 @@ export function QuestionWorkspace({ question }: { question: Question }) {
                   <div className="mt-3 flex justify-end">
                     <button
                       type="submit"
-                      disabled={!canSubmitAnswer(answer) || submitted}
+                      disabled={!canSubmitAnswer(answer) || submitted || answerLocked}
                       className="inline-flex min-h-10 items-center justify-center rounded-lg bg-forge px-5 text-sm font-extrabold text-white disabled:cursor-not-allowed disabled:opacity-45 max-sm:w-full"
                     >
-                      Submit Answer
+                      {answerLocked ? "Session ended" : "Submit Answer"}
                     </button>
                   </div>
                 </form>
@@ -368,7 +370,6 @@ function PanelProgress({ label, value, valueLabel }: { label: string; value: num
     </div>
   );
 }
-
 
 
 

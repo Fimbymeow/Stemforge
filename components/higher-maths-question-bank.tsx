@@ -216,6 +216,9 @@ function SkillPathRow({ path, stageFilter }: { path: SkillPath; stageFilter: Que
             <Link href={getSkillPathHref(path)} className="inline-flex min-h-10 items-center justify-center rounded-lg bg-forge px-4 font-extrabold text-white max-md:w-full">
               Open
             </Link>
+            <Link href="/practice" className="inline-flex min-h-10 items-center justify-center rounded-lg border border-line bg-white px-4 font-extrabold text-forge max-md:w-full">
+              Practise this path
+            </Link>
           </div>
         </div>
       </div>
@@ -277,6 +280,9 @@ function SelectedPathPanel({ progress, status }: { progress: ReturnType<typeof g
       <Link href={getSkillPathHref(skillPath)} className="flex min-h-10 w-full items-center justify-center gap-2 rounded-lg bg-forge px-4 font-extrabold text-white">
         Open {skillPath.name}
         <ArrowRight className="size-5" />
+      </Link>
+      <Link href="/practice" className="mt-2 flex min-h-10 w-full items-center justify-center gap-2 rounded-lg border border-line bg-white px-4 font-extrabold text-forge">
+        Start practice session
       </Link>
     </Card>
   );

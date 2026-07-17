@@ -311,3 +311,7 @@ pnpm build
 ## Behaviour statement
 
 No answer acceptance or rejection behaviour changed.
+
+## Practice-session boundary
+
+Sprint 20 practice sessions do not add a second answer engine. Every session question renders through QuestionWorkspace, marks through markQuestionAnswer, and saves through saveQuestionAttempt. Session state stores only references, timing and navigation metadata; canonical attempts remain the source of answer evidence.

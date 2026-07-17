@@ -269,9 +269,9 @@ export function deriveLearnerDashboardModel(input: {
     weeklyActivity: deriveWeeklyActivity(input.evidence, now),
     sync: deriveSyncSummary(sync),
     quickLinks: [
+      { title: "Practice sessions", href: "/practice", detail: "Targeted, mixed, needs-work, or retry sessions from available content." },
       { title: "Question bank", href: getQuestionBankHref(subject.subjectSlug), detail: "Filter practice by path and stage." },
       { title: "Revision notes", href: getResourceHref("revision-notes", subject.subjectSlug), detail: "Review the ideas behind your evidence." },
-      { title: "Formula cards", href: getResourceHref("formula-cards", subject.subjectSlug), detail: "Quick reminders before practice." },
     ],
   };
 }

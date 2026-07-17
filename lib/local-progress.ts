@@ -10,9 +10,9 @@ import { ProgressRepository } from "@/lib/progress/repository";
 import { createBrowserProgressStorage } from "@/lib/progress/storage";
 import type { LegacyQuestionAttempt, ProgressEvidence, QuestionAttempt } from "@/lib/progress/types";
 import { UNKNOWN_LEGACY_VERSION_EVIDENCE, type VersionEvidence } from "@/lib/progress/types";
-import { getMathsQuestionById, mathsQuestions } from "@/data/question-registry";
 import { createEventId } from "@/lib/progress/event-identity";
 import { getSkillPathContext } from "@/lib/learning-paths";
+import { contentResolver } from "@/lib/content-resolver";
 import type { StructuralAchievementContext } from "@/lib/progress/achievements";
 import {
   reconcileLocalEvidenceProvenance,
@@ -64,7 +64,7 @@ function nextSequence(evidence: ProgressEvidence) {
 }
 
 export function getVersionEvidenceForQuestion(questionId: string): VersionEvidence {
-  const question = getMathsQuestionById(questionId);
+  const question = contentResolver.getQuestion(questionId);
   return question
     ? { kind: "known", questionVersion: question.questionVersion }
     : { ...UNKNOWN_LEGACY_VERSION_EVIDENCE };
@@ -75,7 +75,7 @@ function sameVersionEvidence(left: VersionEvidence, right: VersionEvidence) {
 }
 
 const activeQuestionVersions: Readonly<Record<string, number>> = Object.fromEntries(
-  mathsQuestions.map((question) => [question.id, question.questionVersion]),
+  contentResolver.getQuestions().map((question) => [question.id, question.questionVersion]),
 );
 
 function getStructuralContext(skillPathId: string): StructuralAchievementContext | undefined {
@@ -165,7 +165,7 @@ function recordSupport(
 }
 
 export function getQuestionProgress(questionId: string, evidenceOverride?: ProgressEvidence) {
-  const version = getMathsQuestionById(questionId)?.questionVersion ?? 1;
+  const version = contentResolver.getQuestion(questionId)?.questionVersion ?? 1;
   return deriveQuestionProgress(questionId, version, evidenceOverride ?? readEvidence());
 }
 

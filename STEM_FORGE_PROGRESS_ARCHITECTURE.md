@@ -86,3 +86,6 @@ Pure merging unions all three evidence types by ID, reports conflicts, and appli
 ## Historical note
 
 V1 treated any submitted answer as completion and used the latest result as its single accuracy measure. That behavior is retained only when interpreting migrated historical completion. New V4 activity follows the approved mastery model, records exact canonical question-version evidence, and assigns stable event identity.
+## Practice-session boundary
+
+Sprint 20 practice sessions are not progress evidence. `stemforge.practiceSessions.v1` stores local session references, current index, timing and summary context only. Submitted answers, hints and worked-solution events remain canonical V4 progress evidence and continue through existing import, sync and erasure rules.

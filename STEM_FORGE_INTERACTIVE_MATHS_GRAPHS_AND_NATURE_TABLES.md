@@ -132,3 +132,6 @@ Not implemented:
 - AI graph marking;
 - broad Higher Maths content expansion;
 - Sprint 20 content-authoring pipeline.
+## Practice-session compatibility
+
+Sprint 20 practice sessions reuse the same `QuestionWorkspace` and structured-answer pipeline. Graph and nature-table questions can appear in sessions when they are canonical, active and eligible; the session model stores only question references and never sampled graph data, screenshots or pointer movement.
