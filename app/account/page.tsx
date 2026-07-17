@@ -1,10 +1,12 @@
 import Link from "next/link";
-import { AccountShell, AccountUnavailable, buttonClass } from "@/components/account/account-shell";
+import { AccountShell, AccountUnavailable } from "@/components/account/account-shell";
 import { getAuthFeatureConfiguration } from "@/lib/auth/config";
 import { resolveCurrentAuthenticatedOwner } from "@/lib/auth/current-owner.server";
 import { signOut } from "@/app/account/actions";
 import { GuestProgressImport } from "@/components/account/guest-progress-import";
 import { createAccountFingerprint } from "@/lib/remote-evidence/authenticated-import.server";
+import { ProgressSyncPanel } from "@/components/account/progress-sync-panel";
+import { SyncSignOutForm } from "@/components/account/sync-sign-out-form";
 
 export const dynamic = "force-dynamic";
 
@@ -43,7 +45,8 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
         <p className="mb-0 mt-2 text-sm leading-relaxed text-muted">Browser progress stays local unless you explicitly choose to add it to this account.</p>
       </div>
       {accountFingerprint ? <GuestProgressImport accountFingerprint={accountFingerprint} /> : null}
-      <form action={signOut}><button type="submit" className={buttonClass}>Sign out</button></form>
+      {accountFingerprint ? <ProgressSyncPanel accountFingerprint={accountFingerprint} /> : null}
+      <SyncSignOutForm action={signOut} />
     </AccountShell>
   );
 }

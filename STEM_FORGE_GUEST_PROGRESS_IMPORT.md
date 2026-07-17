@@ -7,7 +7,7 @@ Status: Sprint 14 implementation
 
 An authenticated learner can explicitly add canonical V4 evidence saved in the current browser to their trusted application owner. Import includes attempts, support events, stage achievement snapshots and path achievement snapshots. Nothing uploads on sign-in or before confirmation. Canonical local evidence remains untouched after success, partial result or failure.
 
-This is a one-time or explicitly repeated import boundary. It is not continuous cross-device synchronization.
+This remains a one-time or explicitly repeated recovery boundary. Sprint 15 adds separate `/api/progress/sync/*` endpoints and shares the trusted append service; it does not turn this route or confirmation flow into background synchronization.
 
 ## Browser boundary
 
@@ -41,4 +41,4 @@ Old anonymous evidence cannot prove who created it. Import therefore always requ
 
 ## Deferred boundary
 
-Sprint 15 may add incremental retry-safe push, cursor-based pull and deterministic convergence using the same event IDs, fingerprints, receive cursors and acknowledgement dispositions. Background upload, automatic remote merge, distributed reset, tombstones, deletion, account erasure and continuous sync remain absent in Sprint 14.
+Sprint 15 adds opt-in incremental retry-safe push, cursor-based pull and deterministic convergence using the same event IDs, fingerprints, receive cursors and acknowledgement dispositions. Distributed reset, tombstones, remote deletion and account erasure remain absent. See `STEM_FORGE_INCREMENTAL_PROGRESS_SYNC.md`.

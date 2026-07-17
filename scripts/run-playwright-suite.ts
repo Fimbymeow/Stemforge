@@ -12,12 +12,14 @@ import { assertSafeTestDatabaseUrl } from "@/scripts/database/safety";
 const root = process.cwd();
 const enabledMode = process.argv.includes("--auth-enabled");
 const realImportMode = process.argv.includes("--real-import");
+const realSyncMode = process.argv.includes("--real-sync");
+const realAuthMode = realImportMode || realSyncMode;
 const separatorIndex = process.argv.indexOf("--");
 const forwardedArgs = separatorIndex >= 0 ? process.argv.slice(separatorIndex + 1) : [];
-if (realImportMode) loadEnvConfig(root);
-const port = realImportMode ? 3081 : enabledMode ? 3079 : 3070;
+if (realAuthMode) loadEnvConfig(root);
+const port = realSyncMode ? 3082 : realImportMode ? 3081 : enabledMode ? 3079 : 3070;
 const baseURL = `http://127.0.0.1:${port}`;
-const configFile = realImportMode ? "playwright.import.config.ts" : enabledMode ? "playwright.auth-enabled.config.ts" : "playwright.config.ts";
+const configFile = realSyncMode ? "playwright.sync.config.ts" : realImportMode ? "playwright.import.config.ts" : enabledMode ? "playwright.auth-enabled.config.ts" : "playwright.config.ts";
 const nextCli = path.join(root, "node_modules", "next", "dist", "bin", "next");
 const playwrightCli = path.join(root, "node_modules", "@playwright", "test", "cli.js");
 
@@ -33,7 +35,7 @@ let isolatedEnvironment: NodeJS.ProcessEnv = {
   STEMFORGE_AUTH_TEST_PASSWORD: "",
 };
 
-if (realImportMode) {
+if (realAuthMode) {
   const required = [
     "NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
     "STEMFORGE_AUTH_TEST_EMAIL", "STEMFORGE_AUTH_TEST_PASSWORD",
@@ -121,7 +123,7 @@ async function exitsWithin(child: ChildProcess, milliseconds: number) {
 }
 
 async function main() {
-  const realDatabase = realImportMode ? await startDisposableImportDatabase() : null;
+  const realDatabase = realAuthMode ? await startDisposableEvidenceDatabase() : null;
   try {
     if (realDatabase) {
       isolatedEnvironment = { ...isolatedEnvironment, STEMFORGE_DATABASE_URL: realDatabase.databaseUrl };
@@ -152,10 +154,10 @@ async function main() {
   }
 }
 
-async function startDisposableImportDatabase() {
-  const databaseDir = path.join(os.tmpdir(), `stemforge-import-postgres-${randomUUID()}`);
-  const database = `stemforge_import_test_${randomUUID().replaceAll("-", "")}`;
-  const user = "stemforge_import_test";
+async function startDisposableEvidenceDatabase() {
+  const databaseDir = path.join(os.tmpdir(), `stemforge-evidence-postgres-${randomUUID()}`);
+  const database = `stemforge_evidence_test_${randomUUID().replaceAll("-", "")}`;
+  const user = "stemforge_evidence_test";
   const password = `test_${randomUUID()}`;
   const databasePort = await availablePort();
   const postgres = new EmbeddedPostgres({
@@ -165,7 +167,7 @@ async function startDisposableImportDatabase() {
     password,
     persistent: true,
     onLog: () => undefined,
-    onError: () => console.error("The disposable PostgreSQL import test process reported an error."),
+    onError: () => console.error("The disposable PostgreSQL evidence test process reported an error."),
   });
   await postgres.initialise();
   await postgres.start();
@@ -190,7 +192,7 @@ async function availablePort() {
     server.on("error", reject);
     server.listen(0, "127.0.0.1", () => {
       const address = server.address();
-      if (!address || typeof address === "string") return reject(new Error("Could not reserve a PostgreSQL import-test port."));
+      if (!address || typeof address === "string") return reject(new Error("Could not reserve a PostgreSQL evidence-test port."));
       server.close(() => resolve(address.port));
     });
   });

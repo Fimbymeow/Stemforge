@@ -7,6 +7,7 @@ import type {
   AppendRemoteEvidenceResult,
   RemoteEvidenceConflict,
   RemoteEvidenceKind,
+  RemoteEvidencePage,
   RemoteEvidenceRead,
 } from "@/lib/remote-evidence/types";
 import { validateOwnerId, validateRemoteEvidenceBatch } from "@/lib/remote-evidence/validation";
@@ -37,6 +38,7 @@ export class PostgresRemoteEvidenceRepository {
     const client = await this.pool.connect();
     try {
       await client.query("BEGIN");
+      await client.query("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))", [`stemforge_remote_append:${ownerId}`]);
       for (const item of validated.payload.data.attempts) await this.appendOne(client, ownerId, "attempt", item, result);
       for (const item of validated.payload.data.supportEvents) await this.appendOne(client, ownerId, "support_event", item, result);
       for (const item of validated.payload.data.achievementSnapshots) await this.appendOne(client, ownerId, "achievement_snapshot", item, result);
@@ -78,6 +80,41 @@ export class PostgresRemoteEvidenceRepository {
       records.push({ kind: row.evidence_kind, eventId: row.event_id, receiveCursor: row.receive_order, receivedAt: row.received_at.toISOString() });
     }
     return { payload, records, nextCursor: records.at(-1)?.receiveCursor ?? afterCursor ?? null };
+  }
+
+  async readPage(ownerId: unknown, afterCursor: string | undefined, limit: number): Promise<RemoteEvidencePage> {
+    if (!validateOwnerId(ownerId)) throw new Error("A valid opaque owner ID is required.");
+    if (afterCursor !== undefined && !/^\d+$/.test(afterCursor)) throw new Error("Receive cursor must be an unsigned integer string.");
+    if (!Number.isInteger(limit) || limit < 1 || limit > 501) throw new Error("Remote evidence page limit is invalid.");
+    const query = await this.pool.query<StoredPageRow>(`
+      SELECT evidence_kind, event_id, payload, disposition, receive_order::text, received_at
+      FROM (
+        SELECT 'attempt'::text AS evidence_kind, event_id, payload, 'accepted'::text AS disposition, receive_order, received_at
+          FROM stemforge_remote.question_attempts WHERE owner_id = $1
+        UNION ALL
+        SELECT 'support_event'::text, event_id, payload, 'accepted'::text, receive_order, received_at
+          FROM stemforge_remote.support_events WHERE owner_id = $1
+        UNION ALL
+        SELECT 'achievement_snapshot'::text, event_id, payload, 'accepted'::text, receive_order, received_at
+          FROM stemforge_remote.achievement_snapshots WHERE owner_id = $1
+        UNION ALL
+        SELECT evidence_kind, event_id, incoming_payload, 'conflict_retained'::text, receive_order, received_at
+          FROM stemforge_remote.evidence_conflicts WHERE owner_id = $1
+      ) evidence
+      WHERE ($2::bigint IS NULL OR receive_order > $2::bigint)
+      ORDER BY receive_order, evidence_kind, event_id
+      LIMIT $3
+    `, [ownerId, afterCursor ?? null, limit]);
+    return {
+      records: query.rows.map((row) => ({
+        kind: row.evidence_kind,
+        eventId: row.event_id,
+        disposition: row.disposition,
+        receiveCursor: row.receive_order,
+        receivedAt: row.received_at.toISOString(),
+        evidence: row.payload,
+      })),
+    };
   }
 
   private async appendOne(
@@ -142,6 +179,7 @@ type StoredReadRow = {
   receive_order: string;
   received_at: Date;
 };
+type StoredPageRow = StoredReadRow & { disposition: "accepted" | "conflict_retained" };
 type ConflictRow = {
   conflict_id: string;
   accepted_payload_hash: string;

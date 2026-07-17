@@ -1,7 +1,7 @@
 # STEM Forge Conversation Handoff
 
-Last updated: 14 July 2026
-Current checkpoint: Sprint 14 confirmed guest progress import and append-only account merge
+Last updated: 16 July 2026
+Current checkpoint: Sprint 15 incremental cross-device evidence synchronization
 
 This is the durable starting point for a new Codex conversation. Inspect the repository before editing. Preserve unfamiliar Finlay, Claude, or Codex changes and never reset a dirty tree without explicit approval.
 
@@ -23,7 +23,7 @@ The approved visual baseline uses warm off-white backgrounds, white cards, subtl
 
 ## Private-beta position
 
-The product is browser-local and needs no account or network after the application is loaded. Progress is saved on the current browser only. The private-beta package is in `docs/private-beta-checklist.md`, the reusable feedback questions are in `docs/private-beta-feedback-template.md`, and readiness evidence is in `STEM_FORGE_PRIVATE_BETA_READINESS.md`.
+Learning remains browser-local and needs no account or network after the application is loaded. Authenticated learners may explicitly associate a browser for incremental append-only synchronization; guest use remains unchanged. The private-beta package is in `docs/private-beta-checklist.md`, the reusable feedback questions are in `docs/private-beta-feedback-template.md`, and readiness evidence is in `STEM_FORGE_PRIVATE_BETA_READINESS.md`.
 
 Historical Sprint 10 boundary: no authentication or database was added in that sprint. Sprints 12–14 subsequently added remote persistence, optional accounts, trusted ownership and explicitly confirmed import through separately approved work.
 
@@ -71,7 +71,7 @@ Read `STEM_FORGE_REMOTE_EVIDENCE_FOUNDATION.md` before authentication or remote 
 
 Sprint 13 adds feature-controlled Supabase email/password account routes using cookie-based SSR and PKCE callback exchange. The server verifies current users with Supabase `getUser()` and maps the immutable provider subject to a database-generated opaque owner through `stemforge_identity`. Transaction advisory locking makes concurrent first mapping stable without orphan owners. Identity rows are immutable and contain no email/profile.
 
-The canonical production boundary is `resolveCurrentAuthenticatedOwner()`. Browser owner IDs are never inputs. Sprint 14 connects that boundary to remote append only through the confirmed `/api/progress/import` route; remote read and continuous sync remain disconnected from the learner runtime. Accounts are hidden unless `STEMFORGE_AUTH_ENABLED=true` and configuration is complete. The real development migration and Auth health check succeeded. A permitted auto-confirmed test user completed genuine application signin, refresh persistence, stable owner mapping and signout; its mapped owner had zero remote evidence rows and 1/8 browser-local progress survived unchanged. Sprint 14 subsequently verified real confirmed import against disposable PostgreSQL. The recovery boundary returned its generic response, although mailbox delivery and an email-confirmation link were not inspected. Read `STEM_FORGE_AUTHENTICATION_AND_OWNERSHIP.md` before sync work.
+The canonical production boundary is `resolveCurrentAuthenticatedOwner()`. Browser owner IDs are never inputs. Sprint 14 connects that boundary to confirmed `/api/progress/import`; Sprint 15 adds separate opt-in `/api/progress/sync/*` push, pull and context routes while reusing the trusted append service. Accounts are hidden unless `STEMFORGE_AUTH_ENABLED=true` and configuration is complete. Real Supabase verification covers signin, stable owner mapping, session persistence, confirmed import and two-device synchronization against disposable PostgreSQL without printing credentials. Read `STEM_FORGE_AUTHENTICATION_AND_OWNERSHIP.md` and `STEM_FORGE_INCREMENTAL_PROGRESS_SYNC.md` before changing this boundary.
 
 The server `RootLayout` resolves account availability and serializes one stable boolean through a client context; client navigation never reads the server-only flag. The ordinary Playwright regression server forces auth off and blanks optional auth/database test variables, so `.env.local` cannot change the deterministic guest-learning suite. A separate synthetic enabled-rendering test proves the Account entry hydrates without console or page errors. Genuine Supabase checks remain a separate, explicitly configured verification path. A repository runner owns the direct Next child and bounded cleanup because Playwright 1.61's shell-based Windows `webServer` teardown could wait indefinitely after report generation.
 
@@ -133,6 +133,12 @@ Canonical local evidence remains unchanged. Separate `stemforge.progressImport.v
 
 The completed Sprint 14 gate verifies 174 unit/integration tests, a 33-route production build, 43 ordinary desktop tests, 4 ordinary mobile tests, 1 isolated synthetic auth-enabled hydration test, and 19 embedded PostgreSQL migration/repository tests. The separate genuine Supabase import path passes 4/4 across desktop and mobile while using a newly created disposable local PostgreSQL database. Browser fixtures report no console or page errors. `test:all`, `test:database`, the explicit real-import command and `git diff --check` all return cleanly.
 
+## Sprint 15 incremental synchronization
+
+Sprint 15 introduces `stemforge.progressSync.v1`, explicit browser/account association, incremental durable push and owner-scoped exclusive-cursor pull. Local progress remains the active runtime and all learning writes finish before any network work. Pull uses deterministic V4 union inside a Web Lock or IndexedDB lease and advances its account-bound cursor only after local save and verification. Sign-out pauses association; account changes require new confirmation; browser reset cannot imply remote deletion.
+
+The repository adds no migration. Per-owner PostgreSQL advisory locking closes receive-allocation/commit ordering races, and bounded reads include accepted evidence plus retained conflicts. The separate genuine Supabase synchronization path uses two isolated browser contexts and disposable PostgreSQL. See `STEM_FORGE_INCREMENTAL_PROGRESS_SYNC.md` for protocol, scheduling, failure and Sprint 16 account-safety boundaries.
+
 ## Important routes
 
 - `/`
@@ -162,13 +168,13 @@ Future paths should be added through canonical data plus a single registry impor
 
 ## Intentional limitations
 
-- Optional account code, trusted owner mapping and confirmed import now exist; the feature remains disabled by default. There is still no continuous remote sync, distributed reset, analytics, payments, AI marking, CMS, or admin workflow.
-- Active progress and completion acknowledgement remain local to one browser/device; confirmed import appends a retained copy of learning evidence to an account.
+- Optional account code, trusted owner mapping, confirmed import and opt-in incremental synchronization now exist; the feature remains disabled by default. There is still no distributed reset, analytics, payments, AI marking, CMS, or admin workflow.
+- Active progress and completion acknowledgement remain browser-local; associated authenticated browsers converge by immutable evidence union while retaining their local copies.
 - No live feedback form/service; the facilitator supplies the Markdown feedback template.
 - Chromium desktop/mobile are automated; Safari, Firefox, screen-reader, and public deployment audits remain owner/future checks.
 - No production multi-path bank or wider content bank has been added; the second-path proof is test-only.
 - Client clocks remain untrusted event chronology; the remote repository records separate database-controlled receive time and order.
-- The remote repository is reachable only through the authenticated confirmed-import route; remote reads are still unused by learner pages.
+- The remote repository is reachable only through authenticated import/sync routes; owner-scoped cursor reads feed deterministic local evidence union.
 
 ## Verification commands
 
@@ -185,6 +191,7 @@ pnpm run test:e2e:desktop
 pnpm run test:e2e:mobile
 pnpm run test:e2e
 pnpm run test:e2e:import:real
+pnpm run test:e2e:sync:real
 pnpm run test:all
 ```
 

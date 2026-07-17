@@ -1,6 +1,6 @@
 ﻿# STEM Forge
 
-STEM Forge is a calm, structured learning platform for Scottish SQA STEM students. It is currently a private beta with one complete Higher Maths learning path, a generic multi-path content runtime, optional Supabase accounts, and explicitly confirmed browser-progress import.
+STEM Forge is a calm, structured learning platform for Scottish SQA STEM students. It is currently a private beta with one complete Higher Maths learning path, a generic multi-path content runtime, optional Supabase accounts, explicitly confirmed browser-progress import, and opt-in incremental cross-device evidence synchronization.
 
 ## Current Beta Status
 
@@ -120,6 +120,10 @@ Focused and interactive commands:
 pnpm run test:e2e:desktop
 pnpm run test:e2e:mobile
 pnpm run test:e2e:completion
+pnpm run test:sync
+pnpm run test:database
+pnpm run test:e2e:import:real
+pnpm run test:e2e:sync:real
 pnpm run test:e2e:ui
 pnpm run test:all
 ```
@@ -197,8 +201,6 @@ Deployment hygiene:
 
 Do not add these until separately authorized:
 
-- Continuous background progress sync
-- Remote cursor pulling and automatic merge
 - Distributed reset, deletion or account erasure
 - Payments / Stripe
 - AI tutor
@@ -215,4 +217,4 @@ Do not add these until separately authorized:
 - Use original SQA-style and exam-style questions.
 - Keep the stage label: `Past Paper-style Questions`.
 - Avoid Easy / Medium / Hard in the active learning journey.
-- Keep progress copy honest: learning is saved on this browser and needs no account; only an explicit confirmed import adds evidence to an account, and continuous sync is not active.
+- Keep progress copy honest: learning is saved on this browser and needs no account; confirmed import and opt-in synchronization are separate account features, and browser reset does not erase remote evidence.

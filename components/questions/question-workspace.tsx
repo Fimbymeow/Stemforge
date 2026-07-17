@@ -111,10 +111,10 @@ export function QuestionWorkspace({ question }: { question: Question }) {
     }
   }, [hasMounted, skillPath, pathStatus, pathCompletedQuestionCount, pathTotalQuestionCount]);
 
-  function handleSubmit() {
+  async function handleSubmit() {
     if (!canSubmitAnswer(answer) || submitted) return;
     const markedCorrect = markQuestionAnswer(question, answer).isCorrect;
-    saveQuestionAttempt({
+    const saved = await saveQuestionAttempt({
       questionId: question.id,
       skillPathId: question.skillPathId ?? skillPath?.slug ?? "unknown",
       stageId: question.stageId ?? stage?.id ?? question.stage,
@@ -123,7 +123,7 @@ export function QuestionWorkspace({ question }: { question: Question }) {
       attemptedAt: new Date().toISOString(),
       hintViewedBeforeSubmission: hintViewed,
     });
-    setSubmitted(true);
+    if (saved) setSubmitted(true);
   }
 
   function supportEventInput() {
@@ -135,13 +135,13 @@ export function QuestionWorkspace({ question }: { question: Question }) {
     };
   }
 
-  function handleHintViewed() {
-    if (!hintViewed) recordHintViewed(supportEventInput());
+  async function handleHintViewed() {
+    if (!hintViewed) await recordHintViewed(supportEventInput());
     setHintViewed(true);
   }
 
-  function handleSolutionViewed() {
-    recordWorkedSolutionViewed(supportEventInput());
+  async function handleSolutionViewed() {
+    await recordWorkedSolutionViewed(supportEventInput());
   }
 
   function handleRetry() {
@@ -368,7 +368,6 @@ function PanelProgress({ label, value, valueLabel }: { label: string; value: num
     </div>
   );
 }
-
 
 
 

@@ -290,6 +290,50 @@ test("trusted receive timestamps and global cursors support deterministic increm
   assert.ok(BigInt(incremental.nextCursor!) > BigInt(cursor));
 });
 
+test("paged reads are owner-scoped, cursor-exclusive and include retained conflicts", async () => {
+  const owner = await ownerId();
+  const otherOwner = await ownerId();
+  await repository.append(otherOwner, batch([attempt({ eventId: "attempt_page_other" })]));
+  await repository.append(owner, batch([
+    attempt({ eventId: "attempt_page_1", answer: "accepted" }),
+    attempt({ eventId: "attempt_page_2" }),
+  ]));
+  await repository.append(owner, batch([attempt({ eventId: "attempt_page_1", answer: "retained conflict" })]));
+
+  const first = await repository.readPage(owner, undefined, 2);
+  assert.equal(first.records.length, 2);
+  const second = await repository.readPage(owner, first.records.at(-1)!.receiveCursor, 2);
+  assert.equal(second.records.length, 1);
+  assert.equal(second.records[0].disposition, "conflict_retained");
+  assert.equal(second.records[0].eventId, "attempt_page_1");
+  assert.equal((second.records[0].evidence as ReturnType<typeof attempt>).answer, "retained conflict");
+  assert.equal([...first.records, ...second.records].some((item) => item.eventId === "attempt_page_other"), false);
+  assert.deepEqual(await repository.readPage(owner, second.records[0].receiveCursor, 2), { records: [] });
+});
+
+test("concurrent owner appends commit in receive-cursor order without pagination gaps", async () => {
+  const owner = await ownerId();
+  const results = await Promise.all(Array.from({ length: 12 }, (_, index) =>
+    repository.append(owner, batch([attempt({ eventId: `attempt_concurrent_cursor_${index}` })])),
+  ));
+  const acknowledged = results.flatMap((result) => result.accepted);
+  assert.equal(acknowledged.length, 12);
+  assert.equal(new Set(acknowledged.map((item) => item.receiveCursor)).size, 12);
+
+  const seen: string[] = [];
+  let cursor: string | undefined;
+  while (true) {
+    const page = await repository.readPage(owner, cursor, 3);
+    if (page.records.length === 0) break;
+    seen.push(...page.records.map((item) => item.eventId));
+    const next = page.records.at(-1)!.receiveCursor;
+    if (cursor) assert.ok(BigInt(next) > BigInt(cursor));
+    cursor = next;
+  }
+  assert.equal(seen.length, 12);
+  assert.equal(new Set(seen).size, 12);
+});
+
 test("database triggers reject update of accepted evidence", async () => {
   const owner = await ownerId();
   await repository.append(owner, batch([attempt({ eventId: "attempt_no_update" })]));

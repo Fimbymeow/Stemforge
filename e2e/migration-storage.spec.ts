@@ -126,6 +126,6 @@ test("unsupported future payload remains untouched", async ({ page }) => {
   await page.goto("/dashboard");
   await expect(page.getByTestId("dashboard-progress-summary")).toContainText("0 / 8 completed");
   await openQuestion(page, QUESTION_IDS[0]);
-  await submitAnswer(page, QUESTION_ANSWERS[QUESTION_IDS[0]]);
+  await submitAnswer(page, QUESTION_ANSWERS[QUESTION_IDS[0]], false);
   expect(await readStoredProgress(page)).toEqual(future);
 });

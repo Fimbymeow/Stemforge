@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { AuthFeatureProvider } from "@/components/auth-feature-provider";
 import { isAuthFeatureAvailable } from "@/lib/auth/config";
+import { ProgressSyncProvider } from "@/components/progress-sync-provider";
 import "katex/dist/katex.min.css";
 import "./globals.css";
 
@@ -57,7 +58,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <AuthFeatureProvider accountsAvailable={accountsAvailable}>{children}</AuthFeatureProvider>
+        <AuthFeatureProvider accountsAvailable={accountsAvailable}>
+          <ProgressSyncProvider accountsAvailable={accountsAvailable}>{children}</ProgressSyncProvider>
+        </AuthFeatureProvider>
       </body>
     </html>
   );

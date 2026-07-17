@@ -5,11 +5,12 @@ export async function openQuestion(page: Page, questionId: string) {
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 }
 
-export async function submitAnswer(page: Page, answer: string) {
+export async function submitAnswer(page: Page, answer: string, expectPersisted = true) {
   const field = page.getByLabel("Your answer");
   await expect(field).toBeVisible();
   await field.fill(answer);
   await page.getByRole("button", { name: "Submit Answer" }).click();
+  if (expectPersisted) await expect(page.getByTestId("question-status")).toBeVisible();
 }
 
 export async function retryAnswer(page: Page, answer: string) {

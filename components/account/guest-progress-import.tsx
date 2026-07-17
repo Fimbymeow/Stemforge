@@ -89,6 +89,7 @@ export function GuestProgressImport({ accountFingerprint }: { accountFingerprint
       const latest = readProgressImportMetadata(window.localStorage.getItem(PROGRESS_IMPORT_METADATA_KEY));
       const merged = mergeImportResponse(latest, response);
       window.localStorage.setItem(PROGRESS_IMPORT_METADATA_KEY, JSON.stringify(merged));
+      window.dispatchEvent(new CustomEvent("stemforge:progress-import-updated"));
       return merged;
     };
     if (navigator.locks) {

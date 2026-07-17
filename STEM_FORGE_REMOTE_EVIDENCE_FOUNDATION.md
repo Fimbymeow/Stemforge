@@ -98,13 +98,17 @@ Historical Sprint 12 note: at that checkpoint the application had no verified le
 
 Sprint 13 adds optional Supabase Auth SSR sessions and the separate `stemforge_identity` PostgreSQL schema. A verified Supabase user subject maps race-safely to one opaque application owner through a canonical server-only method. Emails are not ownership IDs or stored in the application schema. No public progress route exists, and neither account routes nor owner creation call this evidence repository. See `STEM_FORGE_AUTHENTICATION_AND_OWNERSHIP.md`.
 
-## 19. Later guest merge and sync rules
+## 19. Incremental synchronization rules
 
-Later adoption must union evidence by stable owner-scoped event identity and recalculate projections. It must never apply local-wins, remote-wins or replace-all semantics; overwrite accepted evidence; discard distinct timestamp-similar events; invent legacy versions/snapshots; or clear a local backup before confirmed durable acknowledgement. Same-ID conflicts must remain visible to server diagnostics.
+Sprint 15 unions evidence by stable owner-scoped event identity and recalculates projections locally. It never applies local-wins, remote-wins or replace-all semantics; overwrites accepted evidence; discards distinct timestamp-similar events; invents legacy versions/snapshots; or clears local evidence after acknowledgement. Same-ID conflicts remain append-only and are included in cursor-based pulls.
 
 ## 20. Known limitations and deferred decisions
 
-Authenticated owner provisioning and confirmed import now exist. There is still no continuous push/pull sync, remote reset/deletion/tombstone model, retention job, conflict administration UI, projection cache or operational monitoring. Runtime-role grants are deployment responsibilities because managed PostgreSQL role names differ. Receive order is a persistence cursor, not event chronology. Global erase and distributed reset require a separately designed privacy/deletion event model.
+Authenticated owner provisioning, confirmed import and opt-in incremental push/pull now exist. There is still no remote reset/deletion/tombstone model, retention job, conflict administration UI, projection cache or operational monitoring. Runtime-role grants are deployment responsibilities because managed PostgreSQL role names differ. Receive order is a persistence cursor, not event chronology. Global erase and distributed reset require a separately designed privacy/deletion event model.
+
+## 22. Sprint 15 cursor reads
+
+`PostgresRemoteEvidenceRepository.readPage()` performs bounded, owner-filtered, exclusive-cursor reads across accepted evidence and retained conflicts. A per-owner transaction advisory lock serializes append allocation so increasing receive cursors cannot become visible out of commit order. This required no migration and did not weaken immutable triggers or privileges. See `STEM_FORGE_INCREMENTAL_PROGRESS_SYNC.md`.
 
 ## 21. Sprint 14 owner integrity and import boundary
 

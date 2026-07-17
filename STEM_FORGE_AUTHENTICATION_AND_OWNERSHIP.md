@@ -123,7 +123,7 @@ Sprint 14 connects trusted owner resolution to remote evidence only through `POS
 
 Nothing uploads on sign-in. The authenticated account page reads browser-local evidence only after hydration, shows a neutral summary and requires explicit confirmation. Accepted, identical and conflict-retained records receive per-event durable acknowledgement. Canonical local evidence remains untouched and completion-celebration acknowledgement is never included. A domain-separated owner hash is exposed only as a non-authenticating local account-switch marker; owner ID, email and provider subject remain server-only.
 
-This is confirmed import, not continuous synchronization. Cursor pulling, background upload, distributed reset, deletion and account erasure remain future work.
+Sprint 14 remains confirmed import. Sprint 15 adds a separate, opt-in synchronization provider and `/api/progress/sync/*` routes. Those routes still resolve only the verified server session and expose only a domain-separated fingerprint; push/pull never accept an owner ID. Distributed reset, deletion and account erasure remain future work. See `STEM_FORGE_INCREMENTAL_PROGRESS_SYNC.md`.
 
 ## Official references used
 

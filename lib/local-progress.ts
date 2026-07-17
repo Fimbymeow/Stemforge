@@ -14,6 +14,7 @@ import { getMathsQuestionById, mathsQuestions } from "@/data/question-registry";
 import { createEventId } from "@/lib/progress/event-identity";
 import { getSkillPathContext } from "@/lib/learning-paths";
 import type { StructuralAchievementContext } from "@/lib/progress/achievements";
+import { withLocalProgressTransaction } from "@/lib/progress/local-progress-transaction";
 
 export type {
   DashboardProgressSummary,
@@ -92,35 +93,31 @@ export function getAttemptsForSkillPath(skillPathId: string) {
   return readEvidence().attempts.filter((attempt) => attempt.skillPathId === skillPathId);
 }
 
-export function saveQuestionAttempt(input: SubmissionInput) {
+export async function saveQuestionAttempt(input: SubmissionInput) {
   if (!isGenuineAnswer(input.answer)) return false;
-  const repository = createRepository();
-  const evidence = repository.getEvidence();
-  const attempt: QuestionAttempt = {
-    ...input,
-    sequence: nextSequence(evidence),
-    isGenuine: true,
-    hintViewedBeforeSubmission: input.hintViewedBeforeSubmission ?? false,
-    supportKnowledge: "known",
-    versionEvidence: getVersionEvidenceForQuestion(input.questionId),
-    eventId: createEventId("attempt"),
-  };
-  if (!repository.recordAttempt(attempt, getStructuralContext(input.skillPathId))) return false;
-  dispatchProgressUpdate();
-  return true;
+  return withLocalProgressTransaction(() => {
+    const repository = createRepository();
+    const evidence = repository.getEvidence();
+    const attempt: QuestionAttempt = {
+      ...input,
+      sequence: nextSequence(evidence),
+      isGenuine: true,
+      hintViewedBeforeSubmission: input.hintViewedBeforeSubmission ?? false,
+      supportKnowledge: "known",
+      versionEvidence: getVersionEvidenceForQuestion(input.questionId),
+      eventId: createEventId("attempt"),
+    };
+    if (!repository.recordAttempt(attempt, getStructuralContext(input.skillPathId))) return false;
+    dispatchProgressUpdate();
+    return true;
+  });
 }
 
-export function recordHintViewed(input: Omit<LegacyQuestionAttempt, "isCorrect" | "answer">) {
+export async function recordHintViewed(input: Omit<LegacyQuestionAttempt, "isCorrect" | "answer">) {
   return recordSupport("hint_viewed", input);
 }
 
-export function recordWorkedSolutionViewed(input: Omit<LegacyQuestionAttempt, "isCorrect" | "answer">) {
-  const evidence = readEvidence();
-  const versionEvidence = getVersionEvidenceForQuestion(input.questionId);
-  const afterGenuineAttempt = evidence.attempts.some(
-    (attempt) => attempt.questionId === input.questionId && attempt.isGenuine && sameVersionEvidence(attempt.versionEvidence, versionEvidence),
-  );
-  if (!afterGenuineAttempt) return false;
+export async function recordWorkedSolutionViewed(input: Omit<LegacyQuestionAttempt, "isCorrect" | "answer">) {
   return recordSupport("solution_viewed", input, true);
 }
 
@@ -129,27 +126,32 @@ function recordSupport(
   input: Omit<LegacyQuestionAttempt, "isCorrect" | "answer">,
   knownAfterAttempt?: boolean,
 ) {
-  const repository = createRepository();
-  const evidence = repository.getEvidence();
-  const versionEvidence = getVersionEvidenceForQuestion(input.questionId);
-  const alreadyRecorded = evidence.supportEvents.some(
-    (event) => event.questionId === input.questionId && event.type === type && sameVersionEvidence(event.versionEvidence, versionEvidence),
-  );
-  if (alreadyRecorded) return true;
-  const saved = repository.recordSupportEvent({
-    ...input,
-    type,
-    occurredAt: input.attemptedAt,
-    sequence: nextSequence(evidence),
-    afterGenuineAttempt:
-      knownAfterAttempt ?? evidence.attempts.some(
+  return withLocalProgressTransaction(() => {
+    const repository = createRepository();
+    const evidence = repository.getEvidence();
+    const versionEvidence = getVersionEvidenceForQuestion(input.questionId);
+    const afterGenuineAttempt = evidence.attempts.some(
+      (attempt) => attempt.questionId === input.questionId && attempt.isGenuine && sameVersionEvidence(attempt.versionEvidence, versionEvidence),
+    );
+    if (knownAfterAttempt && !afterGenuineAttempt) return false;
+    const alreadyRecorded = evidence.supportEvents.some(
+      (event) => event.questionId === input.questionId && event.type === type && sameVersionEvidence(event.versionEvidence, versionEvidence),
+    );
+    if (alreadyRecorded) return true;
+    const saved = repository.recordSupportEvent({
+      ...input,
+      type,
+      occurredAt: input.attemptedAt,
+      sequence: nextSequence(evidence),
+      afterGenuineAttempt: knownAfterAttempt ?? evidence.attempts.some(
         (attempt) => attempt.questionId === input.questionId && attempt.isGenuine && sameVersionEvidence(attempt.versionEvidence, versionEvidence),
       ),
-    versionEvidence,
-    eventId: createEventId("support"),
-  }, getStructuralContext(input.skillPathId));
-  if (saved) dispatchProgressUpdate();
-  return saved;
+      versionEvidence,
+      eventId: createEventId("support"),
+    }, getStructuralContext(input.skillPathId));
+    if (saved) dispatchProgressUpdate();
+    return saved;
+  });
 }
 
 export function getQuestionProgress(questionId: string, evidenceOverride?: ProgressEvidence) {
@@ -174,5 +176,9 @@ export function getEmptyProgressEvidence() {
 }
 
 export function resetSkillPathProgress(skillPathId: string) {
-  if (createRepository().resetPath(skillPathId)) dispatchProgressUpdate();
+  return withLocalProgressTransaction(() => {
+    const reset = createRepository().resetPath(skillPathId);
+    if (reset) dispatchProgressUpdate();
+    return reset;
+  });
 }

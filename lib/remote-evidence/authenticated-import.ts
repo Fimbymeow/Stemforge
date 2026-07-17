@@ -10,6 +10,14 @@ export async function importEvidenceForTrustedOwner(
   resolveOwner: () => Promise<TrustedOwnerContext>,
   append: (ownerId: string, evidence: ProgressPayload) => Promise<AppendRemoteEvidenceResult>,
 ) {
+  return appendEvidenceForTrustedOwner(evidence, resolveOwner, append);
+}
+
+export async function appendEvidenceForTrustedOwner(
+  evidence: ProgressPayload,
+  resolveOwner: () => Promise<TrustedOwnerContext>,
+  append: (ownerId: string, evidence: ProgressPayload) => Promise<AppendRemoteEvidenceResult>,
+) {
   const owner = await resolveOwner();
   if (!owner.authenticated) return { authenticated: false as const };
   const result = await append(owner.ownerId, evidence);
