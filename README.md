@@ -1,6 +1,6 @@
 ﻿# STEM Forge
 
-STEM Forge is a calm, structured learning platform for Scottish SQA STEM students. It is currently a private beta with one complete Higher Maths learning path, a generic multi-path content runtime, optional Supabase accounts, explicitly confirmed browser-progress import, opt-in incremental cross-device evidence synchronization, and shared-device-safe account data controls.
+STEM Forge is a calm, structured learning platform for Scottish SQA STEM students. It is currently a private beta with one complete Higher Maths learning path, a generic multi-path content runtime, optional Supabase accounts, explicitly confirmed browser-progress import, opt-in incremental cross-device evidence synchronization, shared-device-safe account data controls, and an evidence-driven learner dashboard.
 
 ## Current Beta Status
 
@@ -18,7 +18,7 @@ STEM Forge is not intended to be a random question bank. The product guides stud
 
 Learn -> Practise -> Exam Questions -> Master
 
-The current beta focuses on testing the learning flow, question workspace, local progress, resource pages and mobile usability. Content comes later.
+The current beta focuses on testing the learning flow, question workspace, evidence-driven dashboard, local progress, resource pages and mobile usability. Content comes later.
 
 ## Main Routes
 
@@ -46,6 +46,8 @@ The current beta focuses on testing the learning flow, question workspace, local
 - Browser localStorage as the local-first progress runtime, with optional append-only account synchronization
 
 Account and browser-data behavior is documented in `STEM_FORGE_ACCOUNT_DATA_AND_SHARED_DEVICE_SAFETY.md`. Browser removal is local only: it does not delete synchronized account evidence or data on other devices.
+
+Dashboard recommendations and learner-home summaries are documented in `STEM_FORGE_EVIDENCE_DRIVEN_DASHBOARD.md`. Dashboard UI should consume the derivation layer rather than reimplementing progress, mastery, activity or sync meaning in React components.
 
 ## Local Development
 

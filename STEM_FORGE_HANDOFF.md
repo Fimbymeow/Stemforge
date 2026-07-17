@@ -1,7 +1,7 @@
 # STEM Forge Conversation Handoff
 
-Last updated: 16 July 2026
-Current checkpoint: Sprint 16 account data and shared-device safety
+Last updated: 17 July 2026
+Current checkpoint: Sprint 18 evidence-driven dashboard and learner home
 
 This is the durable starting point for a new Codex conversation. Inspect the repository before editing. Preserve unfamiliar Finlay, Claude, or Codex changes and never reset a dirty tree without explicit approval.
 
@@ -26,6 +26,12 @@ The approved visual baseline uses warm off-white backgrounds, white cards, subtl
 Learning remains browser-local and needs no account or network after the application is loaded. Authenticated learners may explicitly associate a browser for incremental append-only synchronization; guest use remains unchanged. The private-beta package is in `docs/private-beta-checklist.md`, the reusable feedback questions are in `docs/private-beta-feedback-template.md`, and readiness evidence is in `STEM_FORGE_PRIVATE_BETA_READINESS.md`.
 
 Historical Sprint 10 boundary: no authentication or database was added in that sprint. Sprints 12–14 subsequently added remote persistence, optional accounts, trusted ownership and explicitly confirmed import through separately approved work.
+
+## Evidence-driven dashboard
+
+Sprint 18 makes `/dashboard` the learner home rather than a single Basic differentiation progress card. The canonical dashboard source of truth is `lib/dashboard-derivations.ts`; React components should pass local evidence and sync state into that layer instead of re-deriving next action, needs-work, recent activity, secure/mastered state, weekly activity or sync copy in JSX.
+
+The dashboard remains guest-safe and local-first. It can display conservative account sync status when auth is enabled, but it must not require credentials or expose server-only auth flags. See `STEM_FORGE_EVIDENCE_DRIVEN_DASHBOARD.md` before changing dashboard behavior.
 
 ## Current progress source of truth
 

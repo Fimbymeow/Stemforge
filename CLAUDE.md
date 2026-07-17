@@ -4,6 +4,8 @@ STEM Forge is a private-beta learning platform for Scottish SQA STEM students (N
 
 **Read `docs/frontend-work-plan.md` before starting new frontend work.** It has the current status and prioritized next steps from the last session in detail; this file is orientation, that file is the punch list.
 
+Sprint 18 adds the evidence-driven learner dashboard. `lib/dashboard-derivations.ts` is the canonical dashboard meaning layer; Dashboard React components should pass browser evidence and sync state into this derivation layer rather than re-implementing continue recommendations, recent activity, needs-work, secure/mastered state, weekly activity or sync copy in JSX. Read `STEM_FORGE_EVIDENCE_DRIVEN_DASHBOARD.md` before changing `/dashboard`.
+
 ## Historical frontend-session note
 
 The following paragraph originally described uncommitted parallel work. That work was subsequently reviewed, integrated and committed in Sprints 1–14; it is retained only to explain older design notes.
