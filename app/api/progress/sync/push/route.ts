@@ -3,7 +3,7 @@ import { getAuthFeatureConfiguration } from "@/lib/auth/config";
 import { isProgressImportJson, isProgressImportSameOrigin, parseProgressImportBody } from "@/lib/progress/import-http";
 import { MAX_PROGRESS_IMPORT_REQUEST_BYTES } from "@/lib/progress/import-protocol";
 import { PROGRESS_SYNC_PRIVATE_HEADERS } from "@/lib/progress/sync-http";
-import { PROGRESS_SYNC_PROTOCOL_VERSION, type ProgressSyncErrorResponse } from "@/lib/progress/sync-protocol";
+import { PROGRESS_SYNC_PROTOCOL_VERSION, type ProgressSyncErrorResponse, type ProgressSyncExpectedStateResponse } from "@/lib/progress/sync-protocol";
 import { pushCurrentProgressSyncEvidence } from "@/lib/remote-evidence/authenticated-sync.server";
 import { AccountDataAccessError } from "@/lib/account-data/types";
 
@@ -42,12 +42,19 @@ function accountDataError(cause: AccountDataAccessError) {
   const message = cause.code === "account_generation_mismatch" || cause.code === "generation_required"
     ? "This browser must refresh and review older progress before synchronization can continue."
     : cause.code === "account_closed" ? "This account is closed." : "Learning-data deletion is in progress. Synchronization is paused.";
-  return error(409, cause.code, message);
+  return expectedState(cause.code, message);
 }
 
 function error(status: number, code: ProgressSyncErrorResponse["error"], message: string) {
   return NextResponse.json<ProgressSyncErrorResponse>(
     { protocolVersion: PROGRESS_SYNC_PROTOCOL_VERSION, error: code, message },
     { status, headers: PROGRESS_SYNC_PRIVATE_HEADERS },
+  );
+}
+
+function expectedState(state: ProgressSyncExpectedStateResponse["state"], message: string) {
+  return NextResponse.json<ProgressSyncExpectedStateResponse>(
+    { protocolVersion: PROGRESS_SYNC_PROTOCOL_VERSION, state, message },
+    { headers: PROGRESS_SYNC_PRIVATE_HEADERS },
   );
 }

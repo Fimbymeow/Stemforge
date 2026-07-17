@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { MathContent } from "@/components/questions/math-content";
 import { MathKeypad } from "@/components/questions/math-keypad";
+import { GraphAnswerInput } from "@/components/questions/graph-answer-input";
 import type { Question, QuestionOption } from "@/data/types";
 
 type InputProps = {
@@ -13,6 +14,7 @@ type InputProps = {
 };
 
 export function QuestionAnswerInput(props: InputProps) {
+  if (props.question.answerType === "graph_structured" || props.question.answerType === "nature_table") return <GraphAnswerInput {...props} />;
   if (props.question.answerType === "multiple_choice") return <MultipleChoiceInput {...props} options={props.question.options ?? []} />;
   if (props.question.answerType === "written") return <WrittenAnswerInput {...props} />;
   if (props.question.answerType === "multi_step") return <MultiStepInput {...props} />;
@@ -99,4 +101,3 @@ export function HintPanel() {
 export function CommonMistakePanel() {
   return null;
 }
-

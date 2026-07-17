@@ -54,6 +54,17 @@ type MarkingResult = {
 
 The `correctAnswer` field is not consulted at runtime. The accepted-answer array controls automatic marking. Sprint 2 validation warns if the canonical answer is not included in that array.
 
+## Structured graph and nature-table answers
+
+Sprint 19 adds automatic structured answer types:
+
+- `graph_structured`
+- `nature_table`
+
+These still flow through `markQuestionAnswer` and return the same `MarkingResult` shape. The submitted answer string is a stable JSON representation of mathematical answer state, such as interval signs, key points, candidate choices, transformation sequences or nature-table cells. It is not a screenshot, sampled curve, drag path or raw pointer coordinate log.
+
+Validation lives in `lib/questions/graph-answer-validation.ts`; graphable expression support lives in `lib/maths/*`. See `STEM_FORGE_INTERACTIVE_MATHS_GRAPHS_AND_NATURE_TABLES.md`.
+
 ## Legacy Higher Physics flow
 
 Legacy Physics currently has no student answer engine.

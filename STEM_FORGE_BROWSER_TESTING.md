@@ -78,6 +78,7 @@ Uncaught page errors and console errors fail every test. The only ignored browse
 - full mobile interaction and overflow;
 - bounded private-beta homepage promise, locked Higher Physics recovery, and keyboard answer submission;
 - canonical strand/question context, path-scoped navigation, pure question-bank states, planned-path recovery, and 390 x 844 taxonomy overflow coverage.
+- Sprint 19 graph interactions: SVG graph rendering, linked original/derivative graph state, keyboard-native nature-table controls, structured attempt persistence, mobile stacking, no sampled graph arrays in evidence, and console/page-error checks.
 
 ## 13. Covered journeys
 

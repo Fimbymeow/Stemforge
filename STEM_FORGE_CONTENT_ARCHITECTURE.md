@@ -60,6 +60,14 @@ SkillPath
 
 `data/types.ts` remains the authoritative model file. This sprint did not duplicate or replace the content types.
 
+Sprint 19 extends `Question` with optional graph and nature-table metadata:
+
+- `graphConfig`
+- `natureTableConfig`
+- `structuredAnswer`
+
+These fields are build-time validated in `lib/content-validation.ts`. They are authored content only; the first graph foundation does not accept arbitrary student-entered executable expressions. See `STEM_FORGE_INTERACTIVE_MATHS_GRAPHS_AND_NATURE_TABLES.md`.
+
 ### Subject
 
 A subject owns:

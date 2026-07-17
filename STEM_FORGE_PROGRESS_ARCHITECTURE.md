@@ -14,6 +14,8 @@ Question submission/support action
 -> UI update event
 ```
 
+Sprint 19 graph and nature-table interactions use this same path. Structured mathematical answers are serialized into the existing attempt `answer` field only at submission time. Pointer movement, hover state, sampled graph arrays, SVG paths and screenshots are not progress evidence.
+
 The current payload is:
 
 ```ts

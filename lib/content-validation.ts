@@ -12,6 +12,7 @@ import type {
   Subject,
   WorkedExample,
 } from "@/data/types";
+import { validateMathExpression } from "@/lib/maths/expression-core";
 
 export type ContentValidationIssue = {
   severity: "error" | "warning";
@@ -77,7 +78,7 @@ type StageContext = SkillPathContext & {
 
 const ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const RESERVED_IDS = new Set(["admin", "new", "null", "root", "undefined", "unknown"]);
-const AUTO_MARKED_TYPES = new Set<Question["answerType"]>(["algebraic", "multiple_choice", "numerical"]);
+const AUTO_MARKED_TYPES = new Set<Question["answerType"]>(["algebraic", "multiple_choice", "numerical", "graph_structured", "nature_table"]);
 
 export function validateContent(input: ContentValidationInput): ContentValidationReport {
   const issues: ContentValidationIssue[] = [];
@@ -371,6 +372,45 @@ function validateQuestion(question: Question, location: string, issue: IssueWrit
     if (!question.options?.length) issue("error", "missing-options", `Multiple-choice question "${question.id}" has no options.`, location);
     else if (!question.options.some((option) => question.acceptedAnswers.includes(option.value))) {
       issue("error", "unanswerable-multiple-choice", `Multiple-choice question "${question.id}" has no option value in acceptedAnswers.`, location);
+    }
+  }
+  validateGraphQuestion(question, location, issue);
+}
+
+function validateGraphQuestion(question: Question, location: string, issue: IssueWriter) {
+  if ((question.answerType === "graph_structured" || question.answerType === "nature_table") && !question.structuredAnswer) {
+    issue("error", "missing-structured-answer", `Structured graph question "${question.id}" must declare structuredAnswer.`, location);
+  }
+  if (question.answerType === "nature_table" && !question.natureTableConfig) {
+    issue("error", "missing-nature-table", `Nature-table question "${question.id}" must declare natureTableConfig.`, location);
+  }
+  if (question.graphConfig) {
+    const graphLocation = `${location}/graphConfig`;
+    if (question.graphConfig.version !== 1) issue("error", "unsupported-graph-config-version", `Question "${question.id}" graphConfig version must be 1.`, graphLocation);
+    const viewport = question.graphConfig.viewport;
+    if (!Number.isFinite(viewport.xMin) || !Number.isFinite(viewport.xMax) || !Number.isFinite(viewport.yMin) || !Number.isFinite(viewport.yMax) || viewport.xMin >= viewport.xMax || viewport.yMin >= viewport.yMax) {
+      issue("error", "invalid-graph-viewport", `Question "${question.id}" has an invalid graph viewport.`, graphLocation);
+    }
+    const ids = new Set<string>();
+    for (const graphFunction of question.graphConfig.functions) {
+      if (!graphFunction.id || ids.has(graphFunction.id)) issue("error", "invalid-graph-function-id", `Question "${question.id}" has a missing or duplicate graph function ID.`, graphLocation);
+      ids.add(graphFunction.id);
+      const expression = validateMathExpression(graphFunction.expression);
+      if (expression.status !== "valid") issue("error", "invalid-graph-expression", `Question "${question.id}" graph function "${graphFunction.id}" has unsupported expression: ${expression.reasonCode}.`, graphLocation);
+    }
+    if (question.graphConfig.linkedDerivative) {
+      const linked = question.graphConfig.linkedDerivative;
+      if (!ids.has(linked.originalFunctionId) || !ids.has(linked.derivativeFunctionId)) {
+        issue("error", "invalid-linked-derivative-reference", `Question "${question.id}" linked derivative references missing graph functions.`, graphLocation);
+      }
+    }
+  }
+  if (question.natureTableConfig) {
+    for (const row of question.natureTableConfig.rows) {
+      if (!row.id || !row.label) issue("error", "invalid-nature-table-row", `Question "${question.id}" has an invalid nature-table row.`, location);
+    }
+    if (Object.keys(question.natureTableConfig.expectedAnswers).length === 0) {
+      issue("error", "empty-nature-table-answers", `Question "${question.id}" nature table has no expected answers.`, location);
     }
   }
 }

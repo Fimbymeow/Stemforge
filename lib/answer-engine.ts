@@ -1,5 +1,7 @@
 import type { StemForgeQuestion } from "@/data/questions";
 import type { AnswerType, Question } from "@/data/types";
+import type { StructuredGraphAnswer } from "@/lib/maths/expression-types";
+import { validateStructuredGraphAnswer } from "@/lib/questions/graph-answer-validation";
 
 export type MarkingResult = {
   isCorrect: boolean | null;
@@ -49,6 +51,9 @@ export function compareAcceptedAnswers(studentAnswer: string, acceptedAnswers: r
 }
 
 export function markQuestionAnswer(question: Pick<Question, "acceptedAnswers" | "answerType">, studentAnswer: string): MarkingResult {
+  if (question.answerType === "graph_structured" || question.answerType === "nature_table") {
+    return markStructuredQuestionAnswer(question as Question, studentAnswer);
+  }
   if (GUIDED_ANSWER_TYPES.has(question.answerType)) {
     return {
       isCorrect: null,
@@ -58,6 +63,33 @@ export function markQuestionAnswer(question: Pick<Question, "acceptedAnswers" | 
   }
 
   return compareAcceptedAnswers(studentAnswer, question.acceptedAnswers);
+}
+
+function markStructuredQuestionAnswer(question: Question, studentAnswer: string): MarkingResult {
+  let parsed: StructuredGraphAnswer;
+  try {
+    parsed = JSON.parse(studentAnswer) as StructuredGraphAnswer;
+  } catch {
+    return {
+      isCorrect: false,
+      normalizedStudentAnswer: "",
+      mode: "automatic",
+    };
+  }
+  if (!question.structuredAnswer) {
+    return {
+      isCorrect: false,
+      normalizedStudentAnswer: JSON.stringify(parsed),
+      mode: "automatic",
+    };
+  }
+  const marked = validateStructuredGraphAnswer(question.structuredAnswer, parsed, question.natureTableConfig);
+  return {
+    isCorrect: marked.isCorrect,
+    normalizedStudentAnswer: marked.normalizedAnswer,
+    matchedAcceptedAnswer: marked.isCorrect ? "structured-answer" : undefined,
+    mode: "automatic",
+  };
 }
 
 // Legacy Physics is a visual demo: its input is read-only and no student answer is evaluated.

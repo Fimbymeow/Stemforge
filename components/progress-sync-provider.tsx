@@ -24,6 +24,7 @@ import {
 } from "@/lib/progress/sync-metadata";
 import {
   isProgressSyncContextResponse,
+  isProgressSyncExpectedStateResponse,
   isProgressSyncPullResponse,
 } from "@/lib/progress/sync-protocol";
 import {
@@ -183,6 +184,7 @@ export function ProgressSyncProvider({ accountsAvailable, children }: { accounts
         if (response.status === 409) throw new SyncGenerationError();
         assertCurrentCycle(fingerprint, generation, signal);
         const body: unknown = await response.json().catch(() => null);
+        if (isProgressSyncExpectedStateResponse(body)) throw new SyncGenerationError();
         if (!response.ok || !isProgressImportResponse(body) || body.accountFingerprint !== fingerprint) throw new Error("push_failed");
         await updateProgressSyncMetadata((latest) => mergeProgressSyncPushResponse(latest, body, evidence));
         await recordRemoteEvidenceAcknowledgements(fingerprint, accountGeneration, [
@@ -202,6 +204,7 @@ export function ProgressSyncProvider({ accountsAvailable, children }: { accounts
       if (response.status === 409) throw new SyncGenerationError();
       assertCurrentCycle(fingerprint, generation, signal);
       const body: unknown = await response.json().catch(() => null);
+      if (isProgressSyncExpectedStateResponse(body)) throw new SyncGenerationError();
       if (!response.ok || !isProgressSyncPullResponse(body) || body.accountFingerprint !== fingerprint) throw new Error("pull_failed");
       await applyProgressSyncPullPage(body);
       assertCurrentCycle(fingerprint, generation, signal);
@@ -325,10 +328,20 @@ export function ProgressSyncProvider({ accountsAvailable, children }: { accounts
       const fingerprint = fingerprintRef.current;
       if (!fingerprint) return;
       inspect(fingerprint);
+      if (!navigator.onLine) {
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+        setStatus("offline");
+        return;
+      }
       if (debounceRef.current) clearTimeout(debounceRef.current);
       debounceRef.current = setTimeout(() => void runForFingerprint(fingerprint), SYNC_LOCAL_CHANGE_DEBOUNCE_MS);
     };
     const online = () => { const fingerprint = fingerprintRef.current; if (fingerprint) void runForFingerprint(fingerprint); };
+    const offline = () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      abortRef.current?.abort();
+      setStatus("offline");
+    };
     const visible = () => {
       if (document.visibilityState !== "visible" || Date.now() - lastAttemptRef.current < SYNC_VISIBILITY_REFRESH_MS) return;
       const fingerprint = fingerprintRef.current;
@@ -338,6 +351,7 @@ export function ProgressSyncProvider({ accountsAvailable, children }: { accounts
     window.addEventListener("stemforge:progress-import-updated", schedule);
     window.addEventListener("storage", schedule);
     window.addEventListener("online", online);
+    window.addEventListener("offline", offline);
     document.addEventListener("visibilitychange", visible);
     const interval = setInterval(() => {
       if (document.visibilityState !== "visible" || !navigator.onLine) return;
@@ -349,6 +363,7 @@ export function ProgressSyncProvider({ accountsAvailable, children }: { accounts
       window.removeEventListener("stemforge:progress-import-updated", schedule);
       window.removeEventListener("storage", schedule);
       window.removeEventListener("online", online);
+      window.removeEventListener("offline", offline);
       document.removeEventListener("visibilitychange", visible);
       clearInterval(interval);
       if (debounceRef.current) clearTimeout(debounceRef.current);

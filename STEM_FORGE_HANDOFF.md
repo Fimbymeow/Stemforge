@@ -1,7 +1,7 @@
 # STEM Forge Conversation Handoff
 
 Last updated: 17 July 2026
-Current checkpoint: Sprint 18 evidence-driven dashboard and learner home
+Current checkpoint: Sprint 19 interactive maths graphs and nature tables
 
 This is the durable starting point for a new Codex conversation. Inspect the repository before editing. Preserve unfamiliar Finlay, Claude, or Codex changes and never reset a dirty tree without explicit approval.
 
@@ -32,6 +32,12 @@ Historical Sprint 10 boundary: no authentication or database was added in that s
 Sprint 18 makes `/dashboard` the learner home rather than a single Basic differentiation progress card. The canonical dashboard source of truth is `lib/dashboard-derivations.ts`; React components should pass local evidence and sync state into that layer instead of re-deriving next action, needs-work, recent activity, secure/mastered state, weekly activity or sync copy in JSX.
 
 The dashboard remains guest-safe and local-first. It can display conservative account sync status when auth is enabled, but it must not require credentials or expose server-only auth flags. See `STEM_FORGE_EVIDENCE_DRIVEN_DASHBOARD.md` before changing dashboard behavior.
+
+## Interactive maths graphs and nature tables
+
+Sprint 19 adds a reusable graph foundation without arbitrary expression execution or freehand sketch recognition. Authored graph expressions use the safe AST and utilities in `lib/maths/*`; structured graph and nature-table answers validate through `lib/questions/graph-answer-validation.ts` and the normal answer engine, so submissions remain ordinary progress attempts.
+
+`/graph-demo` is an internal proof route for linked `f(x)`/`f'(x)` graphs and a structured nature table. It does not expand the active eight-question Basic differentiation beta path. See `STEM_FORGE_INTERACTIVE_MATHS_GRAPHS_AND_NATURE_TABLES.md` before changing graph, transformation, derivative or nature-table behaviour.
 
 ## Current progress source of truth
 

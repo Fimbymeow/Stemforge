@@ -1,6 +1,6 @@
 ﻿# STEM Forge
 
-STEM Forge is a calm, structured learning platform for Scottish SQA STEM students. It is currently a private beta with one complete Higher Maths learning path, a generic multi-path content runtime, optional Supabase accounts, explicitly confirmed browser-progress import, opt-in incremental cross-device evidence synchronization, shared-device-safe account data controls, and an evidence-driven learner dashboard.
+STEM Forge is a calm, structured learning platform for Scottish SQA STEM students. It is currently a private beta with one complete Higher Maths learning path, a generic multi-path content runtime, optional Supabase accounts, explicitly confirmed browser-progress import, opt-in incremental cross-device evidence synchronization, shared-device-safe account data controls, an evidence-driven learner dashboard, and an early reusable foundation for interactive maths graphs and nature tables.
 
 ## Current Beta Status
 
@@ -24,6 +24,7 @@ The current beta focuses on testing the learning flow, question workspace, evide
 
 - `/`
 - `/dashboard`
+- `/graph-demo`
 - `/subjects`
 - `/subjects/higher-maths`
 - `/subjects/higher-maths/calculus/differentiation/basic-differentiation`
@@ -48,6 +49,8 @@ The current beta focuses on testing the learning flow, question workspace, evide
 Account and browser-data behavior is documented in `STEM_FORGE_ACCOUNT_DATA_AND_SHARED_DEVICE_SAFETY.md`. Browser removal is local only: it does not delete synchronized account evidence or data on other devices.
 
 Dashboard recommendations and learner-home summaries are documented in `STEM_FORGE_EVIDENCE_DRIVEN_DASHBOARD.md`. Dashboard UI should consume the derivation layer rather than reimplementing progress, mastery, activity or sync meaning in React components.
+
+Interactive graph and nature-table infrastructure is documented in `STEM_FORGE_INTERACTIVE_MATHS_GRAPHS_AND_NATURE_TABLES.md`. It uses authored, validated expression ASTs and structured mathematical answers, not arbitrary expression execution or freehand sketch recognition.
 
 ## Local Development
 

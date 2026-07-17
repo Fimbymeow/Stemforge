@@ -18,6 +18,7 @@ import {
 import {
   decodeProgressSyncCursor,
   encodeProgressSyncCursor,
+  isProgressSyncExpectedStateResponse,
   isProgressSyncPullResponse,
   progressSyncEventsToPayload,
   type ProgressSyncPullResponse,
@@ -119,6 +120,24 @@ test("pull response validation accepts retained conflicts and rejects mismatched
   assert.equal(isProgressSyncPullResponse({ ...response, events: [{ ...response.events[0], eventId: "other" }] }), false);
   const payload = progressSyncEventsToPayload(response.events);
   assert.equal(payload.data.attempts.length, 1);
+});
+
+test("expected sync state responses are typed application states for console-clean generation conflicts", () => {
+  assert.equal(isProgressSyncExpectedStateResponse({
+    protocolVersion: 1,
+    state: "account_generation_mismatch",
+    message: "Review browser data before syncing.",
+  }), true);
+  assert.equal(isProgressSyncExpectedStateResponse({
+    protocolVersion: 1,
+    error: "account_generation_mismatch",
+    message: "Old HTTP-error shape remains distinct.",
+  }), false);
+  assert.equal(isProgressSyncExpectedStateResponse({
+    protocolVersion: 1,
+    state: "invalid_request",
+    message: "Real request errors must stay as errors.",
+  }), false);
 });
 
 test("retry delays are bounded and jittered without exceeding the fifteen-minute cap", () => {

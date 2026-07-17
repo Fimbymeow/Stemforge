@@ -6,6 +6,8 @@ STEM Forge is a private-beta learning platform for Scottish SQA STEM students (N
 
 Sprint 18 adds the evidence-driven learner dashboard. `lib/dashboard-derivations.ts` is the canonical dashboard meaning layer; Dashboard React components should pass browser evidence and sync state into this derivation layer rather than re-implementing continue recommendations, recent activity, needs-work, secure/mastered state, weekly activity or sync copy in JSX. Read `STEM_FORGE_EVIDENCE_DRIVEN_DASHBOARD.md` before changing `/dashboard`.
 
+Sprint 19 adds the interactive maths graph and nature-table foundation. `lib/maths/*` owns the safe authored-expression AST, derivative support, graph sampling, transformations and function analysis. `lib/questions/graph-answer-validation.ts` owns structured graph/nature-table answer validation. Do not add `eval`, `new Function`, arbitrary student expression parsing, freehand sketch recognition or broad content expansion. Read `STEM_FORGE_INTERACTIVE_MATHS_GRAPHS_AND_NATURE_TABLES.md` before changing graph interactions.
+
 ## Historical frontend-session note
 
 The following paragraph originally described uncommitted parallel work. That work was subsequently reviewed, integrated and committed in Sprints 1–14; it is retained only to explain older design notes.

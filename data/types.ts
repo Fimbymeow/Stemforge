@@ -179,7 +179,15 @@ export type Subject = {
   learningStages: LearningStage[];
 };
 
-export type AnswerType = "multiple_choice" | "numerical" | "algebraic" | "written" | "multi_step";
+import type {
+  GraphFunctionDefinition,
+  GraphPoint,
+  GraphTransformation,
+  GraphViewport,
+  NatureTableConfig,
+} from "@/lib/maths/expression-types";
+
+export type AnswerType = "multiple_choice" | "numerical" | "algebraic" | "written" | "multi_step" | "graph_structured" | "nature_table";
 
 export type QuestionOption = {
   label: string;
@@ -207,6 +215,9 @@ export type Question = {
   correctAnswer: string;
   acceptedAnswers: string[];
   options?: QuestionOption[];
+  graphConfig?: GraphQuestionConfig;
+  natureTableConfig?: NatureTableConfig;
+  structuredAnswer?: StructuredQuestionAnswerConfig;
   unit?: string;
   workedSolution: string;
   finalAnswer: string;
@@ -218,6 +229,45 @@ export type Question = {
   progressStatus?: ProgressStatus;
   displayOrder: number;
 };
+
+export type GraphQuestionConfig = {
+  version: 1;
+  title: string;
+  description: string;
+  viewport: GraphViewport;
+  functions: GraphFunctionDefinition[];
+  derivativeOf?: string;
+  linkedDerivative?: {
+    originalFunctionId: string;
+    derivativeFunctionId: string;
+    initialX: number;
+    showTangent: boolean;
+  };
+  keyPoints?: GraphPoint[];
+  transformations?: GraphTransformation[];
+};
+
+export type StructuredQuestionAnswerConfig =
+  | {
+      type: "point-placement";
+      expectedPoints: Array<{ id: string; x: number; y: number; tolerance?: number }>;
+    }
+  | {
+      type: "interval-signs";
+      expectedSigns: Record<string, "positive" | "zero" | "negative">;
+    }
+  | {
+      type: "candidate-match";
+      expectedId: string;
+    }
+  | {
+      type: "transformation-sequence";
+      expectedTransformations: GraphTransformation[];
+    }
+  | {
+      type: "nature-table";
+      tableId: string;
+    };
 
 export type QuestionProgress = {
   questionId: string;

@@ -26,6 +26,12 @@ export type ProgressSyncErrorResponse = {
   message: string;
 };
 
+export type ProgressSyncExpectedStateResponse = {
+  protocolVersion: typeof PROGRESS_SYNC_PROTOCOL_VERSION;
+  state: "generation_required" | "account_generation_mismatch" | "erasure_in_progress" | "account_closed";
+  message: string;
+};
+
 export type ProgressSyncPushEnvelope = {
   protocolVersion: typeof PROGRESS_SYNC_PROTOCOL_VERSION;
   expectedGeneration: string;
@@ -88,6 +94,14 @@ export function isProgressSyncPullResponse(value: unknown): value is ProgressSyn
     typeof candidate.hasMore === "boolean" && isIsoTimestamp(candidate.caughtUpAt) &&
     Array.isArray(candidate.events) && candidate.events.every(isPulledEvent) &&
     Array.isArray(candidate.skipped) && candidate.skipped.every(isSkippedEvent);
+}
+
+export function isProgressSyncExpectedStateResponse(value: unknown): value is ProgressSyncExpectedStateResponse {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as Partial<ProgressSyncExpectedStateResponse>;
+  return candidate.protocolVersion === PROGRESS_SYNC_PROTOCOL_VERSION &&
+    ["generation_required", "account_generation_mismatch", "erasure_in_progress", "account_closed"].includes(candidate.state ?? "") &&
+    typeof candidate.message === "string";
 }
 
 export function progressSyncEventsToPayload(events: readonly ProgressSyncPulledEvent[]): ProgressPayload {
