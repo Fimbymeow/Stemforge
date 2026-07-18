@@ -9,6 +9,7 @@ import { ProgressSyncPanel } from "@/components/account/progress-sync-panel";
 import { SafeSignOut } from "@/components/account/safe-sign-out";
 import { AccountDataControls } from "@/components/account/account-data-controls";
 import { AccountLearningData, CurrentBrowserExportButton } from "@/components/account/account-learning-data";
+import { BetaReportReceipts } from "@/components/beta-reports/report-receipts";
 
 export const dynamic = "force-dynamic";
 
@@ -51,6 +52,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
       {accountFingerprint ? <ProgressSyncPanel accountFingerprint={accountFingerprint} /> : null}
       {accountFingerprint ? <AccountDataControls /> : null}
       {accountFingerprint ? <AccountLearningData /> : null}
+      <BetaReportReceipts />
       <SafeSignOut action={signOut} />
     </AccountShell>
   );

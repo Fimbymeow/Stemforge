@@ -11,6 +11,8 @@ import { runner } from "node-pg-migrate";
 import { PostgresRemoteEvidenceRepository } from "../lib/remote-evidence/postgres-repository.server";
 import { PostgresOwnerMappingRepository } from "../lib/auth/postgres-owner-repository.server";
 import { PostgresAccountDataRepository } from "../lib/account-data/postgres-account-data.server";
+import { PostgresBetaReportRepository, BetaReportRateLimitError } from "../lib/beta-reports/report-repository.server";
+import { BETA_REPORT_SCHEMA_VERSION, type ReportDiagnosticContext } from "../lib/beta-reports/report-types";
 import { AccountDataAccessError } from "../lib/account-data/types";
 import { runRemoteEvidenceMigrations } from "../scripts/database/migration-runner";
 import { assertSafeTestDatabaseUrl } from "../scripts/database/safety";
@@ -22,6 +24,7 @@ let pool: Pool;
 let repository: PostgresRemoteEvidenceRepository;
 let ownerRepository: PostgresOwnerMappingRepository;
 let accountDataRepository: PostgresAccountDataRepository;
+let betaReportRepository: PostgresBetaReportRepository;
 let databaseUrl: string;
 let databaseDir: string;
 
@@ -49,6 +52,7 @@ before(async () => {
   repository = new PostgresRemoteEvidenceRepository(pool);
   ownerRepository = new PostgresOwnerMappingRepository(pool);
   accountDataRepository = new PostgresAccountDataRepository(pool);
+  betaReportRepository = new PostgresBetaReportRepository(pool);
 });
 
 after(async () => {
@@ -75,6 +79,66 @@ test("clean migrations create the immutable owner schema", async () => {
     WHERE table_schema = 'stemforge_identity' ORDER BY table_name
   `);
   assert.deepEqual(result.rows.map((row) => row.table_name), ["application_owners", "external_auth_identities"]);
+});
+
+test("clean migrations create the private beta operations schema", async () => {
+  const result = await pool.query<{ table_name: string }>(`
+    SELECT table_name FROM information_schema.tables
+    WHERE table_schema = 'stemforge_operations' ORDER BY table_name
+  `);
+  assert.deepEqual(result.rows.map((row) => row.table_name), ["beta_reports"]);
+});
+
+test("beta report repository stores guest and authenticated reports without evidence side effects", async () => {
+  const owner = await ownerId();
+  const before = await evidenceRowCount();
+  const guestReport = await betaReportRepository.createReport({
+    ownerId: null,
+    request: betaReportRequest({ guestSessionId: `guest_${randomUUID().replaceAll("-", "")}` }),
+    diagnosticContext: betaDiagnostic(),
+  });
+  const ownerReport = await betaReportRepository.createReport({
+    ownerId: owner,
+    request: betaReportRequest({ kind: "account_issue", guestSessionId: null }),
+    diagnosticContext: betaDiagnostic({ authState: "authenticated", pageArea: "account" }),
+  });
+  assert.match(guestReport, /^SF-[A-Z0-9]{10}$/);
+  assert.match(ownerReport, /^SF-[A-Z0-9]{10}$/);
+  assert.equal(await evidenceRowCount(), before);
+  const stored = await betaReportRepository.getReport(ownerReport);
+  assert.equal(stored?.ownerId, owner);
+  assert.equal(stored?.userMessage, "Beta tester report body.");
+});
+
+test("beta report repository rate limits repeated guest reports", async () => {
+  const guestSessionId = `guest_${randomUUID().replaceAll("-", "")}`;
+  for (let index = 0; index < 5; index += 1) {
+    await betaReportRepository.createReport({
+      ownerId: null,
+      request: betaReportRequest({ guestSessionId, userMessage: `Beta tester report ${index}.` }),
+      diagnosticContext: betaDiagnostic(),
+    });
+  }
+  await assert.rejects(
+    betaReportRepository.createReport({ ownerId: null, request: betaReportRequest({ guestSessionId }), diagnosticContext: betaDiagnostic() }),
+    (error) => error instanceof BetaReportRateLimitError,
+  );
+});
+
+test("beta report repository enforces status workflow", async () => {
+  const reportId = await betaReportRepository.createReport({
+    ownerId: null,
+    request: betaReportRequest({ guestSessionId: `guest_${randomUUID().replaceAll("-", "")}` }),
+    diagnosticContext: betaDiagnostic(),
+  });
+  const triaged = await betaReportRepository.updateStatus(reportId, "triaged");
+  assert.equal(triaged?.status, "triaged");
+  await assert.rejects(betaReportRepository.updateStatus(reportId, "resolved"), /Invalid beta report status transition/);
+  const inProgress = await betaReportRepository.updateStatus(reportId, "in_progress");
+  assert.equal(inProgress?.status, "in_progress");
+  const resolved = await betaReportRepository.updateStatus(reportId, "resolved", "Fixed in a private beta patch.");
+  assert.equal(resolved?.status, "resolved");
+  assert.equal(resolved?.resolutionSummary, "Fixed in a private beta patch.");
 });
 
 test("all four remote owner foreign keys are present, not yet validated and enforce new rows", async () => {
@@ -449,6 +513,46 @@ function snapshot(overrides: Partial<AchievementSnapshot> = {}): AchievementSnap
     completionCount: 8,
     totalRequiredCount: 8,
     source: "derived_current",
+    ...overrides,
+  };
+}
+
+function betaReportRequest(overrides: Partial<Parameters<PostgresBetaReportRepository["createReport"]>[0]["request"]> = {}) {
+  return {
+    schemaVersion: BETA_REPORT_SCHEMA_VERSION,
+    kind: "bug" as const,
+    userMessage: "Beta tester report body.",
+    contactEmail: null,
+    guestSessionId: `guest_${randomUUID().replaceAll("-", "")}`,
+    pagePath: "/dashboard",
+    pageArea: "dashboard",
+    diagnosticContext: betaDiagnostic(),
+    honeypot: "",
+    ...overrides,
+  };
+}
+
+function betaDiagnostic(overrides: Partial<ReportDiagnosticContext> = {}): ReportDiagnosticContext {
+  return {
+    appVersion: "private-beta",
+    buildCommit: null,
+    environmentLabel: "development",
+    route: "/dashboard",
+    pageArea: "dashboard",
+    viewportCategory: "desktop",
+    online: true,
+    authState: "guest",
+    syncState: null,
+    accountGenerationState: null,
+    browserName: "Chrome",
+    browserVersion: null,
+    operatingSystem: "Windows",
+    locale: "en-GB",
+    timezone: "Europe/London",
+    contentReference: null,
+    errorCode: null,
+    practiceSessionMode: null,
+    component: null,
     ...overrides,
   };
 }
