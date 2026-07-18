@@ -5,8 +5,10 @@ import type { Pool } from "pg";
 import {
   BETA_REPORT_SCHEMA_VERSION,
   type BetaReportKind,
+  type BetaReportSeverity,
   type BetaReportStatus,
   type ReportDiagnosticContext,
+  type ReproductionStatus,
   type StoredBetaReport,
   type SubmitBetaReportRequest,
 } from "@/lib/beta-reports/report-types";
@@ -106,7 +108,9 @@ export class PostgresBetaReportRepository {
       SET status = $2,
           resolution_summary = $3,
           resolved_at = CASE WHEN $2 IN ('resolved', 'closed') THEN COALESCE(resolved_at, clock_timestamp()) ELSE NULL END,
-          updated_at = clock_timestamp()
+          updated_at = clock_timestamp(),
+          state_version = state_version + 1,
+          last_reviewed_at = clock_timestamp()
       WHERE report_id = $1
       RETURNING *
     `, [reportId, status, summary]);
@@ -157,6 +161,12 @@ type ReportRow = {
   updated_at: Date;
   resolved_at: Date | null;
   resolution_summary: string | null;
+  severity: BetaReportSeverity;
+  reproduction_status: ReproductionStatus;
+  duplicate_of: string | null;
+  state_version: number;
+  triaged_at: Date | null;
+  last_reviewed_at: Date | null;
 };
 
 function mapReportRow(row: ReportRow): StoredBetaReport {
@@ -178,5 +188,11 @@ function mapReportRow(row: ReportRow): StoredBetaReport {
     updatedAt: row.updated_at.toISOString(),
     resolvedAt: row.resolved_at?.toISOString() ?? null,
     resolutionSummary: row.resolution_summary,
+    severity: row.severity,
+    reproductionStatus: row.reproduction_status,
+    duplicateOf: row.duplicate_of,
+    stateVersion: row.state_version,
+    triagedAt: row.triaged_at?.toISOString() ?? null,
+    lastReviewedAt: row.last_reviewed_at?.toISOString() ?? null,
   };
 }

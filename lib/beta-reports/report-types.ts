@@ -7,6 +7,8 @@ export const MAX_REPORT_RECEIPTS = 20;
 
 export type BetaReportKind = "bug" | "feedback" | "support_request" | "content_issue" | "account_issue";
 export type BetaReportStatus = "new" | "triaged" | "in_progress" | "resolved" | "closed";
+export type BetaReportSeverity = "low" | "normal" | "high" | "critical";
+export type ReproductionStatus = "not_checked" | "unable_to_reproduce" | "reproduced" | "needs_more_information";
 
 export type ReportViewportCategory = "mobile" | "tablet" | "desktop";
 export type ReportAuthState = "guest" | "authenticated" | "expired" | "disabled";
@@ -87,4 +89,14 @@ export type StoredBetaReport = {
   updatedAt: string;
   resolvedAt: string | null;
   resolutionSummary: string | null;
+  severity: BetaReportSeverity;
+  reproductionStatus: ReproductionStatus;
+  duplicateOf: string | null;
+  stateVersion: number;
+  triagedAt: string | null;
+  lastReviewedAt: string | null;
 };
+
+export type LearnerBetaReportStatus = Pick<StoredBetaReport,
+  "reportId" | "kind" | "status" | "createdAt" | "updatedAt" | "resolvedAt"
+> & { resolutionSummary: string | null; closedAsDuplicate: boolean };

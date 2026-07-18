@@ -10,6 +10,7 @@ import { SafeSignOut } from "@/components/account/safe-sign-out";
 import { AccountDataControls } from "@/components/account/account-data-controls";
 import { AccountLearningData, CurrentBrowserExportButton } from "@/components/account/account-learning-data";
 import { BetaReportReceipts } from "@/components/beta-reports/report-receipts";
+import { AuthenticatedBetaReportStatus } from "@/components/beta-reports/authenticated-report-status";
 
 export const dynamic = "force-dynamic";
 
@@ -18,10 +19,12 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const { result } = await searchParams;
   let ownerState: "authenticated" | "unauthenticated" | "owner-unavailable" = "unauthenticated";
   let accountFingerprint: string | null = null;
+  let applicationOwnerId: string | null = null;
   try {
     const context = await resolveCurrentAuthenticatedOwner();
     ownerState = context.authenticated ? "authenticated" : "unauthenticated";
     accountFingerprint = context.authenticated ? createAccountFingerprint(context.ownerId) : null;
+    applicationOwnerId = context.authenticated ? context.ownerId : null;
   } catch {
     ownerState = "owner-unavailable";
   }
@@ -53,6 +56,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
       {accountFingerprint ? <AccountDataControls /> : null}
       {accountFingerprint ? <AccountLearningData /> : null}
       <BetaReportReceipts />
+      {applicationOwnerId ? <AuthenticatedBetaReportStatus ownerId={applicationOwnerId} /> : null}
       <SafeSignOut action={signOut} />
     </AccountShell>
   );

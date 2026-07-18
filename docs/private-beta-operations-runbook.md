@@ -42,8 +42,9 @@ Excluded from diagnostics:
 Internal report review fails closed by default.
 
 - `STEMFORGE_INTERNAL_REPORTS_ENABLED=true` must be set before review APIs respond.
-- In production, `STEMFORGE_INTERNAL_REPORT_OWNER_IDS` must include the authenticated application owner ID.
-- Without both production settings, ordinary learners and unauthenticated requests receive a sanitized 403.
+- `STEMFORGE_INTERNAL_REPORT_OWNER_IDS` must include the verified authenticated application owner ID in every environment.
+- Missing, empty or malformed configuration fails closed. Ordinary learners and unauthenticated requests receive a sanitized denial.
+- Internal pages are not linked from learner navigation and are protected server-side on every request.
 
 ## Status workflow
 
@@ -55,7 +56,9 @@ Supported status values:
 - resolved
 - closed
 
-Allowed transitions are intentionally conservative: new reports can be triaged or closed, triaged reports can move in progress or closed, in-progress reports can be resolved or closed, resolved reports can be closed or reopened in progress, and closed reports are final.
+Allowed transitions are intentionally conservative: new reports can be triaged or closed; triaged reports can move in progress, resolved or closed; in-progress reports can return to triage or resolve; resolved reports can close or reopen in progress; and closed reports can reopen to triage. Resolution requires a summary. Closure requires an explanation or a valid duplicate.
+
+Severity (`low`, `normal`, `high`, `critical`) and reproduction state are internal-only. Duplicate targets must exist and cannot form self-links or cycles. Every update uses an expected state version so concurrent changes fail rather than overwrite silently.
 
 ## Health checks
 
@@ -63,6 +66,8 @@ Allowed transitions are intentionally conservative: new reports can be triaged o
 - `/api/health/ready` returns sanitized readiness for app, auth configuration and database availability.
 
 Readiness responses never include environment values or credentials.
+
+The protected dashboard also shows sanitized reporting-table, triage-migration and internal-review configuration states. It refreshes manually and is not an infrastructure monitoring system.
 
 ## Triage guidance
 
@@ -72,7 +77,11 @@ Readiness responses never include environment values or credentials.
 4. Move the report through the status workflow with a short resolution summary.
 5. If follow-up is needed, use the optional contact email only for that report.
 
+The list is cursor-paginated and server-filtered. It never selects raw owner IDs, contact email or full diagnostics. The detail view renders message text without HTML/Markdown execution and labels every allowed diagnostic field.
+
 Sprint 21 does not send email notifications and does not create a support-thread or messaging system. Report references and the internal status workflow are the complete operational boundary for this stage.
+
+See `STEM_FORGE_INTERNAL_BETA_OPERATIONS_AND_TRIAGE.md` for Sprint 22 authorization, workflow, duplicate, concurrency, learner-visibility and testing rules.
 
 ## Rate limits
 

@@ -124,3 +124,7 @@ Add a browser test when a change affects navigation, rendered answer interaction
 ## 21. Sprint 16 account-safety coverage
 
 The credential-free suite verifies anonymous provenance, reset copy and accessible destructive confirmation. The isolated real-account-safety project uses two browser contexts and disposable PostgreSQL to prove explicit association, same-account resume, different-account pause, session-expiry recovery, preserve-versus-remove sign-out, anonymous evidence retention, remote retention, exact clear-all scope, mobile rendering, cancel focus and clean page/console behavior. Its one deliberately simulated 401 network console event is counted exactly; no other console or page error is accepted.
+
+## 22. Sprint 22 internal-operations coverage
+
+The ordinary suite proves internal pages and APIs fail closed. `pnpm run test:e2e:internal:real` verifies an allowlisted dedicated test operator against synthetic reports in a disposable PostgreSQL database, including filters, pagination, safe detail rendering, workflow, resolution, duplicate handling, stale conflicts, CSRF denial, learner-safe outcomes, keyboard use and mobile overflow. Rotate or replace the dedicated test credential before use. The internal configuration disables screenshots, traces and video so filled sign-in fields are not retained in failure artifacts.

@@ -205,6 +205,7 @@ Deployment hygiene:
 - `.vercel` is ignored.
 - Guest learning does not require a backend service. Account import requires configured Supabase Auth and restricted PostgreSQL runtime access.
 - No localhost-only runtime URLs are required.
+- Internal beta triage is an optional fail-closed server workspace documented in `STEM_FORGE_INTERNAL_BETA_OPERATIONS_AND_TRIAGE.md`; it is never part of learner navigation.
 
 ## Explicitly Deferred
 

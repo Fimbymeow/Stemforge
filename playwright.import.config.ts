@@ -11,12 +11,12 @@ export default defineConfig({
   retries: 0,
   timeout: 60_000,
   expect: { timeout: 8_000 },
-  reporter: [["list"], ["html", { outputFolder: "playwright-import-real-report", open: "never" }]],
+  reporter: [["list"]],
   use: {
     baseURL,
-    trace: "retain-on-failure",
-    screenshot: "only-on-failure",
-    video: "retain-on-failure",
+    trace: "off",
+    screenshot: "off",
+    video: "off",
   },
   projects: [
     { name: "import-desktop-chromium", use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } } },

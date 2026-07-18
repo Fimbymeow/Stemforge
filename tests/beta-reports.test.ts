@@ -78,9 +78,11 @@ test("beta report parser rejects bots, oversized messages and cross-origin reque
 
 test("beta report status transitions are deterministic and conservative", () => {
   assert.equal(isValidReportTransition("new", "triaged"), true);
-  assert.equal(isValidReportTransition("triaged", "resolved"), false);
+  assert.equal(isValidReportTransition("triaged", "resolved"), true);
   assert.equal(isValidReportTransition("resolved", "in_progress"), true);
-  assert.equal(isValidReportTransition("closed", "triaged"), false);
+  assert.equal(isValidReportTransition("closed", "triaged"), true);
+  assert.equal(isValidReportTransition("new", "in_progress"), false);
+  assert.equal(isValidReportTransition("closed", "resolved"), false);
 });
 
 function diagnostic(overrides: Partial<ReportDiagnosticContext> = {}): ReportDiagnosticContext {

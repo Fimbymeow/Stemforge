@@ -38,7 +38,7 @@ test("two authenticated devices converge safely through incremental evidence syn
     await expectIds(pageB, [deviceAEvent.eventId]);
 
     await appendLocal(pageB, deviceBEvent);
-    await pageB.getByRole("button", { name: "Sync now" }).click();
+    await startSync(pageB);
     await expect(pageB.getByTestId("progress-sync-panel")).toContainText("can sync with your account");
 
     let heldPull = false;
@@ -49,19 +49,19 @@ test("two authenticated devices converge safely through incremental evidence syn
       }
       await route.continue();
     });
-    await pageA.getByRole("button", { name: "Sync now" }).click();
+    await startSync(pageA);
     await expect(pageA.getByTestId("progress-sync-panel")).toContainText("can sync with your account");
     await expectIds(pageA, [deviceAEvent.eventId, deviceBEvent.eventId, concurrentEvent.eventId]);
     await pageA.unroute("**/api/progress/sync/pull*");
 
-    await pageB.getByRole("button", { name: "Sync now" }).click();
+    await startSync(pageB);
     await expectIds(pageB, [deviceAEvent.eventId, deviceBEvent.eventId, concurrentEvent.eventId]);
     const beforeReplay = await ids(pageB);
-    await pageB.getByRole("button", { name: "Sync now" }).click();
+    await startSync(pageB);
     expect(await ids(pageB)).toEqual(beforeReplay);
 
     await appendLocal(pageB, cursorFailureEvent);
-    await pageB.getByRole("button", { name: "Sync now" }).click();
+    await startSync(pageB);
     await expect(pageB.getByTestId("progress-sync-panel")).toContainText("can sync with your account");
     const cursorBefore = await currentCursor(pageA);
     await pageA.evaluate((metadataKey) => {
@@ -75,11 +75,11 @@ test("two authenticated devices converge safely through incremental evidence syn
         return original.call(this, key, value);
       };
     }, PROGRESS_SYNC_METADATA_KEY);
-    await pageA.getByRole("button", { name: "Sync now" }).click();
+    await startSync(pageA);
     await expect(pageA.getByTestId("progress-sync-panel")).toContainText("Next automatic retry");
     expect(await currentCursor(pageA)).toBe(cursorBefore);
     await expectIds(pageA, [cursorFailureEvent.eventId]);
-    await pageA.getByRole("button", { name: "Sync now" }).click();
+    await startSync(pageA);
     await expect(pageA.getByTestId("progress-sync-panel")).toContainText("can sync with your account");
     expect(await currentCursor(pageA)).not.toBe(cursorBefore);
 
@@ -118,8 +118,15 @@ async function signIn(page: import("@playwright/test").Page) {
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill(password);
   await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page).toHaveURL(/\/account(?:\?|$)/);
+  await page.waitForURL((url) => url.pathname === "/account" || (url.pathname === "/account/sign-in" && url.searchParams.has("result")), { timeout: 30_000 });
+  expect(new URL(page.url()).pathname).toBe("/account");
   await expect(page.getByText("Account ready")).toBeVisible();
+}
+
+async function startSync(page: import("@playwright/test").Page) {
+  const contextResponse = page.waitForResponse((response) => response.url().endsWith("/api/progress/sync/context"));
+  await page.getByRole("button", { name: "Sync now" }).click();
+  expect((await contextResponse).status()).toBe(200);
 }
 
 async function seed(page: import("@playwright/test").Page, attempts: unknown[]) {

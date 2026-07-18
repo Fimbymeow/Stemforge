@@ -23,7 +23,9 @@ export async function openHint(page: Page) {
 }
 
 export async function openWorkedSolution(page: Page) {
-  await page.getByTestId("worked-solution-control").click();
+  const control = page.getByTestId("worked-solution-control");
+  await control.click();
+  await expect(control).toBeHidden();
 }
 
 export async function expectNoHorizontalOverflow(page: Page) {

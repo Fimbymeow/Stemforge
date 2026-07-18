@@ -12,6 +12,13 @@ import { PostgresRemoteEvidenceRepository } from "../lib/remote-evidence/postgre
 import { PostgresOwnerMappingRepository } from "../lib/auth/postgres-owner-repository.server";
 import { PostgresAccountDataRepository } from "../lib/account-data/postgres-account-data.server";
 import { PostgresBetaReportRepository, BetaReportRateLimitError } from "../lib/beta-reports/report-repository.server";
+import {
+  InternalReportConflictError,
+  InternalReportWorkflowError,
+  PostgresInternalBetaReportRepository,
+} from "../lib/beta-reports/internal-report-repository.server";
+import { parseInternalReportFilters } from "../lib/beta-reports/internal-query-types";
+import { getInternalHealthSnapshot } from "../lib/operations/internal-health.server";
 import { BETA_REPORT_SCHEMA_VERSION, type ReportDiagnosticContext } from "../lib/beta-reports/report-types";
 import { AccountDataAccessError } from "../lib/account-data/types";
 import { runRemoteEvidenceMigrations } from "../scripts/database/migration-runner";
@@ -25,6 +32,7 @@ let repository: PostgresRemoteEvidenceRepository;
 let ownerRepository: PostgresOwnerMappingRepository;
 let accountDataRepository: PostgresAccountDataRepository;
 let betaReportRepository: PostgresBetaReportRepository;
+let internalReportRepository: PostgresInternalBetaReportRepository;
 let databaseUrl: string;
 let databaseDir: string;
 
@@ -53,6 +61,7 @@ before(async () => {
   ownerRepository = new PostgresOwnerMappingRepository(pool);
   accountDataRepository = new PostgresAccountDataRepository(pool);
   betaReportRepository = new PostgresBetaReportRepository(pool);
+  internalReportRepository = new PostgresInternalBetaReportRepository(pool);
 });
 
 after(async () => {
@@ -86,7 +95,7 @@ test("clean migrations create the private beta operations schema", async () => {
     SELECT table_name FROM information_schema.tables
     WHERE table_schema = 'stemforge_operations' ORDER BY table_name
   `);
-  assert.deepEqual(result.rows.map((row) => row.table_name), ["beta_reports"]);
+  assert.deepEqual(result.rows.map((row) => row.table_name), ["beta_report_audit", "beta_reports"]);
 });
 
 test("beta report repository stores guest and authenticated reports without evidence side effects", async () => {
@@ -133,12 +142,108 @@ test("beta report repository enforces status workflow", async () => {
   });
   const triaged = await betaReportRepository.updateStatus(reportId, "triaged");
   assert.equal(triaged?.status, "triaged");
-  await assert.rejects(betaReportRepository.updateStatus(reportId, "resolved"), /Invalid beta report status transition/);
+  await assert.rejects(betaReportRepository.updateStatus(reportId, "new"), /Invalid beta report status transition/);
   const inProgress = await betaReportRepository.updateStatus(reportId, "in_progress");
   assert.equal(inProgress?.status, "in_progress");
   const resolved = await betaReportRepository.updateStatus(reportId, "resolved", "Fixed in a private beta patch.");
   assert.equal(resolved?.status, "resolved");
   assert.equal(resolved?.resolutionSummary, "Fixed in a private beta patch.");
+});
+
+test("triage migration backfills safe defaults, indexes workflow fields and restricts public access", async () => {
+  const columns = await pool.query<{ column_name: string; column_default: string | null }>(`
+    SELECT column_name, column_default FROM information_schema.columns
+    WHERE table_schema = 'stemforge_operations' AND table_name = 'beta_reports'
+      AND column_name IN ('severity', 'reproduction_status', 'duplicate_of', 'state_version', 'triaged_at', 'last_reviewed_at')
+  `);
+  assert.equal(columns.rows.length, 6);
+  const indexes = await pool.query<{ indexname: string }>(`
+    SELECT indexname FROM pg_indexes WHERE schemaname = 'stemforge_operations'
+      AND tablename = 'beta_reports' AND indexname LIKE 'beta_reports_%'
+  `);
+  for (const name of ["beta_reports_severity_status_created", "beta_reports_updated", "beta_reports_reproduction_created", "beta_reports_duplicate_of"]) {
+    assert.equal(indexes.rows.some((row) => row.indexname === name), true);
+  }
+  const privileges = await pool.query<{ can_select: boolean; can_insert: boolean; can_update: boolean; can_delete: boolean }>(`
+    SELECT has_table_privilege('public', 'stemforge_operations.beta_reports', 'SELECT') AS can_select,
+      has_table_privilege('public', 'stemforge_operations.beta_reports', 'INSERT') AS can_insert,
+      has_table_privilege('public', 'stemforge_operations.beta_reports', 'UPDATE') AS can_update,
+      has_table_privilege('public', 'stemforge_operations.beta_reports', 'DELETE') AS can_delete
+  `);
+  assert.deepEqual(privileges.rows[0], { can_select: false, can_insert: false, can_update: false, can_delete: false });
+});
+
+test("internal report queries filter, sort and paginate stable list projections", async () => {
+  const ids: string[] = [];
+  for (let index = 0; index < 4; index += 1) {
+    ids.push(await betaReportRepository.createReport({
+      ownerId: null,
+      request: betaReportRequest({ kind: index % 2 ? "feedback" : "bug", guestSessionId: `guest_query_${randomUUID().replaceAll("-", "")}`, userMessage: `Internal query marker ${index}.` }),
+      diagnosticContext: betaDiagnostic({ pageArea: "internal_query_test" }),
+    }));
+  }
+  const parsed = parseInternalReportFilters({ status: "new", pageArea: "internal_query_test", sort: "newest", pageSize: "2" });
+  assert.equal(parsed.ok, true);
+  if (!parsed.ok) return;
+  const first = await internalReportRepository.listBetaReports(parsed.filters);
+  assert.equal(first.reports.length, 2);
+  assert.ok(first.nextCursor);
+  assert.equal(first.reports.every((report) => !("ownerId" in report) && !("diagnosticContext" in report) && !("contactEmail" in report)), true);
+  const second = await internalReportRepository.listBetaReports({ ...parsed.filters, cursor: first.nextCursor });
+  assert.equal(second.reports.length, 2);
+  assert.equal(new Set([...first.reports, ...second.reports].map((report) => report.reportId)).size, 4);
+  const exact = parseInternalReportFilters({ status: "all", search: ids[0] });
+  assert.equal(exact.ok, true);
+  if (exact.ok) assert.deepEqual((await internalReportRepository.listBetaReports(exact.filters)).reports.map((report) => report.reportId), [ids[0]]);
+});
+
+test("workflow updates enforce concurrency, audit safe state and immutable learner submission", async () => {
+  const actor = await ownerId();
+  const reportId = await betaReportRepository.createReport({
+    ownerId: actor,
+    request: betaReportRequest({ kind: "account_issue", guestSessionId: null, userMessage: "Immutable learner report marker." }),
+    diagnosticContext: betaDiagnostic({ authState: "authenticated", pageArea: "account" }),
+  });
+  const triaged = await internalReportRepository.updateWorkflow(reportId, actor, { expectedVersion: 1, status: "triaged", severity: "high", reproductionStatus: "reproduced" });
+  assert.equal(triaged.stateVersion, 2);
+  assert.equal(triaged.severity, "high");
+  await assert.rejects(internalReportRepository.updateWorkflow(reportId, actor, { expectedVersion: 1, severity: "critical" }), (error) => error instanceof InternalReportConflictError);
+  await assert.rejects(internalReportRepository.updateWorkflow(reportId, actor, { expectedVersion: 2, status: "resolved" }), (error) => error instanceof InternalReportWorkflowError && /summary/i.test(error.message));
+  const resolved = await internalReportRepository.updateWorkflow(reportId, actor, { expectedVersion: 2, status: "resolved", resolutionSummary: "Verified and corrected through the safe workflow." });
+  assert.equal(resolved.stateVersion, 3);
+  assert.ok(resolved.resolvedAt);
+  const audit = await internalReportRepository.listAuditEvents(reportId);
+  assert.equal(audit.length, 2);
+  assert.deepEqual(Object.keys(audit[0].nextState).sort(), ["duplicateOf", "hasResolutionSummary", "reproductionStatus", "severity", "stateVersion", "status"].sort());
+  await assert.rejects(pool.query("UPDATE stemforge_operations.beta_reports SET user_message = 'changed' WHERE report_id = $1", [reportId]), /immutable/i);
+});
+
+test("duplicate workflow rejects self, missing targets and cycles while allowing removal", async () => {
+  const actor = await ownerId();
+  const create = () => betaReportRepository.createReport({ ownerId: null, request: betaReportRequest({ guestSessionId: `guest_dup_${randomUUID().replaceAll("-", "")}` }), diagnosticContext: betaDiagnostic() });
+  const [first, second, third] = await Promise.all([create(), create(), create()]);
+  await assert.rejects(internalReportRepository.updateWorkflow(first, actor, { expectedVersion: 1, duplicateOf: first }), /cannot duplicate itself/i);
+  await assert.rejects(internalReportRepository.updateWorkflow(first, actor, { expectedVersion: 1, duplicateOf: "SF-MISSING000" }), /does not exist/i);
+  const firstUpdated = await internalReportRepository.updateWorkflow(first, actor, { expectedVersion: 1, duplicateOf: second });
+  await internalReportRepository.updateWorkflow(second, actor, { expectedVersion: 1, duplicateOf: third });
+  await assert.rejects(internalReportRepository.updateWorkflow(third, actor, { expectedVersion: 1, duplicateOf: first }), /cycle/i);
+  const removed = await internalReportRepository.updateWorkflow(first, actor, { expectedVersion: firstUpdated.stateVersion, duplicateOf: null });
+  assert.equal(removed.duplicateOf, null);
+});
+
+test("learner report status is owner-scoped and health summary is sanitized", async () => {
+  const ownerA = await ownerId();
+  const ownerB = await ownerId();
+  const reportA = await betaReportRepository.createReport({ ownerId: ownerA, request: betaReportRequest({ guestSessionId: null }), diagnosticContext: betaDiagnostic({ authState: "authenticated" }) });
+  await betaReportRepository.createReport({ ownerId: ownerB, request: betaReportRequest({ guestSessionId: null }), diagnosticContext: betaDiagnostic({ authState: "authenticated" }) });
+  const reports = await internalReportRepository.listLearnerReports(ownerA);
+  assert.equal(reports.some((report) => report.reportId === reportA), true);
+  assert.equal(reports.every((report) => !("severity" in report) && !("reproductionStatus" in report) && !("ownerId" in report)), true);
+  const health = await getInternalHealthSnapshot(pool);
+  assert.equal(health.database, "healthy");
+  assert.equal(health.reportingRepository, "healthy");
+  assert.equal(health.migration, "healthy");
+  assert.equal(JSON.stringify(health).includes("postgresql://"), false);
 });
 
 test("all four remote owner foreign keys are present, not yet validated and enforce new rows", async () => {

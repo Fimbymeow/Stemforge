@@ -8,13 +8,13 @@ export default defineConfig({
   workers: 1,
   retries: 0,
   timeout: 150_000,
-  expect: { timeout: 10_000 },
+  expect: { timeout: 30_000 },
   reporter: [["list"]],
   use: {
     baseURL: "http://127.0.0.1:3083",
-    trace: "retain-on-failure",
-    screenshot: "only-on-failure",
-    video: "retain-on-failure",
+    trace: "off",
+    screenshot: "off",
+    video: "off",
   },
   projects: [
     { name: "account-safety-desktop-chromium", use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } } },

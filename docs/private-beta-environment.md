@@ -18,6 +18,10 @@ Optional for account-aware ownership:
 Optional for internal report review:
 
 - `STEMFORGE_INTERNAL_REPORTS_ENABLED=true`
-- `STEMFORGE_INTERNAL_REPORT_OWNER_IDS` in production
+- `STEMFORGE_INTERNAL_REPORT_OWNER_IDS` containing one or more canonical opaque application-owner IDs
+
+Both settings are required in every environment; development has no bypass. Missing or malformed configuration fails closed. The allowlist is server-only and must never be printed, committed or sent to the browser.
+
+Sprint 22 requires migration `1753266400000_beta_report_triage` before the internal dashboard is enabled. The internal real-auth browser test may run only after the dedicated test credential has been rotated or replaced following the Sprint 21 artefact precaution.
 
 Do not expose or commit `.env.local`. Health and readiness endpoints return only status labels and never echo configured values.

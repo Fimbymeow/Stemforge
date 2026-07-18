@@ -3,20 +3,24 @@ import {
   MAX_REPORT_DIAGNOSTICS_BYTES,
   MAX_REPORT_MESSAGE_LENGTH,
   type BetaReportKind,
+  type BetaReportSeverity,
   type BetaReportStatus,
   type ReportDiagnosticContext,
   type SafeContentReference,
   type SubmitBetaReportRequest,
+  type ReproductionStatus,
 } from "@/lib/beta-reports/report-types";
 
 const kinds: BetaReportKind[] = ["bug", "feedback", "support_request", "content_issue", "account_issue"];
 const statuses: BetaReportStatus[] = ["new", "triaged", "in_progress", "resolved", "closed"];
+const severities: BetaReportSeverity[] = ["low", "normal", "high", "critical"];
+const reproductionStatuses: ReproductionStatus[] = ["not_checked", "unable_to_reproduce", "reproduced", "needs_more_information"];
 const transitions: Record<BetaReportStatus, BetaReportStatus[]> = {
   new: ["triaged", "closed"],
-  triaged: ["in_progress", "closed"],
-  in_progress: ["resolved", "closed"],
+  triaged: ["in_progress", "resolved", "closed"],
+  in_progress: ["triaged", "resolved"],
   resolved: ["closed", "in_progress"],
-  closed: [],
+  closed: ["triaged"],
 };
 
 export type ReportValidationResult =
@@ -85,6 +89,14 @@ export function isReportStatus(value: unknown): value is BetaReportStatus {
   return typeof value === "string" && statuses.includes(value as BetaReportStatus);
 }
 
+export function isReportSeverity(value: unknown): value is BetaReportSeverity {
+  return typeof value === "string" && severities.includes(value as BetaReportSeverity);
+}
+
+export function isReproductionStatus(value: unknown): value is ReproductionStatus {
+  return typeof value === "string" && reproductionStatuses.includes(value as ReproductionStatus);
+}
+
 export function isValidReportTransition(from: BetaReportStatus, to: BetaReportStatus) {
   return from === to || transitions[from].includes(to);
 }
@@ -92,7 +104,7 @@ export function isValidReportTransition(from: BetaReportStatus, to: BetaReportSt
 export function sanitizeResolutionSummary(value: unknown) {
   if (typeof value !== "string") return null;
   const trimmed = value.trim();
-  return trimmed ? bound(trimmed, 1000) : null;
+  return trimmed ? bound(trimmed, 2000) : null;
 }
 
 function sanitizeContentReference(value: unknown): SafeContentReference | null {

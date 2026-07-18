@@ -218,10 +218,13 @@ pnpm run test:e2e:mobile
 pnpm run test:e2e
 pnpm run test:e2e:import:real
 pnpm run test:e2e:sync:real
+pnpm run test:e2e:internal:real
 pnpm run test:all
 ```
 
 Do not weaken tests, add retries, or ignore application console errors to obtain a pass.
+
+Sprint 22 internal operations are documented in `STEM_FORGE_INTERNAL_BETA_OPERATIONS_AND_TRIAGE.md`. Apply migration `1753266400000_beta_report_triage`, keep the owner allowlist server-only, and rotate or replace the dedicated test credential before real-internal verification. Never use real learner reports for destructive workflow tests.
 
 ## Historical Sprint 10 decision gate after private beta
 
