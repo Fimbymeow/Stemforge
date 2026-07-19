@@ -57,7 +57,7 @@ test("allowlisted operator triages synthetic reports through the protected dashb
   await page.getByLabel("Status").selectOption("closed");
   await page.getByLabel("Duplicate of").fill(primaryReport);
   await page.getByRole("button", { name: "Save workflow" }).click();
-  await expect(page.getByText("closed", { exact: true }).first()).toBeVisible();
+  await expect(page.getByLabel("Status")).toHaveValue("closed");
 
   await page.goto("/account");
   await expect(page.getByText(primaryReport)).toBeVisible();

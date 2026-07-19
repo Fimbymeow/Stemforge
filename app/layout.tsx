@@ -58,8 +58,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
+        <a href="#main-content" className="skip-link">Skip to main content</a>
         <AuthFeatureProvider accountsAvailable={accountsAvailable}>
-          <ProgressSyncProvider accountsAvailable={accountsAvailable}>{children}</ProgressSyncProvider>
+          <ProgressSyncProvider accountsAvailable={accountsAvailable}><div id="main-content" tabIndex={-1}>{children}</div></ProgressSyncProvider>
         </AuthFeatureProvider>
       </body>
     </html>

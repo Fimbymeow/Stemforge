@@ -197,6 +197,30 @@ test("internal report queries filter, sort and paginate stable list projections"
   if (exact.ok) assert.deepEqual((await internalReportRepository.listBetaReports(exact.filters)).reports.map((report) => report.reportId), [ids[0]]);
 });
 
+test("internal report queue remains bounded across 10,000 synthetic rows", async () => {
+  const diagnostic = JSON.stringify(betaDiagnostic({ pageArea: "scale_queue" }));
+  await pool.query(`
+    INSERT INTO stemforge_operations.beta_reports (
+      report_id, schema_version, kind, status, severity, guest_session_id, user_message,
+      page_path, page_area, app_version, content_context, diagnostic_context, created_at, updated_at
+    )
+    SELECT 'SF-L' || lpad(series::text, 9, '0'), 1, CASE WHEN series % 2 = 0 THEN 'bug' ELSE 'feedback' END,
+      'new', 'normal', 'guest_load_' || lpad(series::text, 9, '0'), 'Synthetic load report.',
+      '/dashboard', 'scale_queue', 'private-beta', 'null'::jsonb, $1::jsonb,
+      clock_timestamp() - (series * interval '1 second'), clock_timestamp() - (series * interval '1 second')
+    FROM generate_series(1, 10000) AS series
+  `, [diagnostic]);
+  const parsed = parseInternalReportFilters({ pageArea: "scale_queue", status: "new", sort: "newest", pageSize: "50" });
+  assert.equal(parsed.ok, true);
+  if (!parsed.ok) return;
+  const started = performance.now();
+  const page = await internalReportRepository.listBetaReports(parsed.filters);
+  const elapsed = performance.now() - started;
+  assert.equal(page.reports.length, 50);
+  assert.ok(page.nextCursor);
+  assert.ok(elapsed < 2_000, `bounded 10,000-row queue query exceeded broad regression budget: ${elapsed.toFixed(1)}ms`);
+});
+
 test("workflow updates enforce concurrency, audit safe state and immutable learner submission", async () => {
   const actor = await ownerId();
   const reportId = await betaReportRepository.createReport({

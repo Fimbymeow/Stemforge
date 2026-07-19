@@ -17,13 +17,14 @@ const realImportMode = process.argv.includes("--real-import");
 const realSyncMode = process.argv.includes("--real-sync");
 const realAccountSafetyMode = process.argv.includes("--real-account-safety");
 const realInternalMode = process.argv.includes("--real-internal");
+const hardeningMode = process.argv.includes("--hardening");
 const realAuthMode = realImportMode || realSyncMode || realAccountSafetyMode || realInternalMode;
 const separatorIndex = process.argv.indexOf("--");
 const forwardedArgs = separatorIndex >= 0 ? process.argv.slice(separatorIndex + 1) : [];
 if (realAuthMode) loadEnvConfig(root);
-const port = realInternalMode ? 3084 : realAccountSafetyMode ? 3083 : realSyncMode ? 3082 : realImportMode ? 3081 : enabledMode ? 3079 : 3070;
+const port = hardeningMode ? 3085 : realInternalMode ? 3084 : realAccountSafetyMode ? 3083 : realSyncMode ? 3082 : realImportMode ? 3081 : enabledMode ? 3079 : 3070;
 const baseURL = `http://127.0.0.1:${port}`;
-const configFile = realInternalMode ? "playwright.internal.config.ts" : realAccountSafetyMode ? "playwright.account-safety.config.ts" : realSyncMode ? "playwright.sync.config.ts" : realImportMode ? "playwright.import.config.ts" : enabledMode ? "playwright.auth-enabled.config.ts" : "playwright.config.ts";
+const configFile = hardeningMode ? "playwright.hardening.config.ts" : realInternalMode ? "playwright.internal.config.ts" : realAccountSafetyMode ? "playwright.account-safety.config.ts" : realSyncMode ? "playwright.sync.config.ts" : realImportMode ? "playwright.import.config.ts" : enabledMode ? "playwright.auth-enabled.config.ts" : "playwright.config.ts";
 const nextCli = path.join(root, "node_modules", "next", "dist", "bin", "next");
 const playwrightCli = path.join(root, "node_modules", "@playwright", "test", "cli.js");
 
@@ -256,10 +257,30 @@ async function startDisposableEvidenceDatabase() {
   return {
     databaseUrl,
     cleanup: async () => {
-      await postgres.stop();
+      await stopEmbeddedPostgres(postgres);
       if (databaseDir.startsWith(os.tmpdir())) await rm(databaseDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
     },
   };
+}
+
+async function stopEmbeddedPostgres(postgres: EmbeddedPostgres) {
+  if (process.platform !== "win32") {
+    await postgres.stop();
+    return;
+  }
+  // embedded-postgres waits forever when its fire-and-forget taskkill child fails
+  // to emit the expected server exit. Own the bounded Windows teardown here.
+  const managed = postgres as unknown as { process?: ChildProcess };
+  const databaseProcess = managed.process;
+  if (!databaseProcess?.pid || databaseProcess.exitCode !== null || databaseProcess.signalCode !== null) {
+    managed.process = undefined;
+    return;
+  }
+  const killer = spawn("taskkill", ["/pid", String(databaseProcess.pid), "/T", "/F"], { stdio: "ignore", shell: false });
+  await exitsWithin(killer, 15_000);
+  if (!(await exitsWithin(databaseProcess, 15_000))) databaseProcess.kill();
+  if (!(await exitsWithin(databaseProcess, 5_000))) throw new Error("Could not stop the disposable PostgreSQL test process.");
+  managed.process = undefined;
 }
 
 async function availablePort() {

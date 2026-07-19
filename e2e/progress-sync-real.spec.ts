@@ -81,7 +81,7 @@ test("two authenticated devices converge safely through incremental evidence syn
     await expectIds(pageA, [cursorFailureEvent.eventId]);
     await startSync(pageA);
     await expect(pageA.getByTestId("progress-sync-panel")).toContainText("can sync with your account");
-    expect(await currentCursor(pageA)).not.toBe(cursorBefore);
+    await expect.poll(() => currentCursor(pageA)).not.toBe(cursorBefore);
 
     await contextA.setOffline(true);
     await appendLocal(pageA, offlineEvent);

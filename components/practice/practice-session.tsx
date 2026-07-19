@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, CheckCircle2, Timer } from "lucide-react";
 import { Card } from "@/components/ui";
 import { QuestionWorkspace } from "@/components/questions/question-workspace";
@@ -13,10 +12,8 @@ import { getPracticeSession, updatePracticeSession } from "@/lib/practice/practi
 import type { PracticeSession as PracticeSessionModel } from "@/lib/practice/practice-types";
 
 export function PracticeSession({ sessionId }: { sessionId: string }) {
-  const router = useRouter();
   const [session, setSession] = useState<PracticeSessionModel | null>(null);
   const [evidenceVersion, setEvidenceVersion] = useState(0);
-  const [nowTick, setNowTick] = useState(() => Date.now());
 
   useEffect(() => {
     setSession(getPracticeSession(sessionId));
@@ -36,27 +33,6 @@ export function PracticeSession({ sessionId }: { sessionId: string }) {
       window.removeEventListener("storage", update);
     };
   }, [sessionId]);
-
-  useEffect(() => {
-    if (!session || session.status !== "active" || session.timing.type !== "timed") return;
-    const interval = setInterval(() => setNowTick(Date.now()), 1000);
-    return () => clearInterval(interval);
-  }, [session]);
-
-  useEffect(() => {
-    if (!session || session.status !== "active" || session.timing.type !== "timed") return;
-    const elapsedSeconds = Math.max(session.timing.elapsedSeconds, Math.floor((nowTick - Date.parse(session.updatedAt)) / 1000) + session.timing.elapsedSeconds);
-    if (elapsedSeconds >= session.timing.timeLimitSeconds) {
-      const updated = updatePracticeSession(session.sessionId, (current) => ({
-        ...current,
-        status: "completed",
-        completedAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        timing: current.timing.type === "timed" ? { ...current.timing, elapsedSeconds: current.timing.timeLimitSeconds } : current.timing,
-      }));
-      setSession(updated);
-    }
-  }, [nowTick, session]);
 
   void evidenceVersion;
   if (!session) {
@@ -86,6 +62,17 @@ export function PracticeSession({ sessionId }: { sessionId: string }) {
     if (updated) setSession(updated);
   }
 
+  function expire() {
+    const updated = updatePracticeSession(session!.sessionId, (current) => ({
+      ...current,
+      status: "completed",
+      completedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      timing: current.timing.type === "timed" ? { ...current.timing, elapsedSeconds: current.timing.timeLimitSeconds } : current.timing,
+    }));
+    if (updated) setSession(updated);
+  }
+
   if (session.status === "completed") {
     return <PracticeSummaryCard session={session} summary={summary} />;
   }
@@ -107,7 +94,7 @@ export function PracticeSession({ sessionId }: { sessionId: string }) {
               <p className="mt-1 text-sm text-muted">{session.selectionMetadata.shortageReason ?? "Using available canonical questions."}</p>
             </div>
             <div className="flex flex-wrap gap-2">
-              {session.timing.type === "timed" ? <span role="timer" aria-label="Practice timer" className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-white px-3 font-bold"><Timer className="size-4" />{formatTime(Math.max(0, session.timing.timeLimitSeconds - elapsedSeconds(session)))}</span> : null}
+              {session.timing.type === "timed" ? <PracticeTimer session={session} onExpire={expire} /> : null}
               <button type="button" onClick={() => updateIndex(session.currentQuestionIndex - 1)} disabled={session.currentQuestionIndex === 0} className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-line bg-white px-3 font-bold disabled:opacity-40"><ArrowLeft className="size-4" />Previous</button>
               <button type="button" onClick={() => updateIndex(session.currentQuestionIndex + 1)} disabled={session.currentQuestionIndex >= session.questionReferences.length - 1} className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-line bg-white px-3 font-bold disabled:opacity-40">Next<ArrowRight className="size-4" /></button>
               <button type="button" onClick={finish} className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-forge px-3 font-bold text-white"><CheckCircle2 className="size-4" />Finish session</button>
@@ -117,6 +104,18 @@ export function PracticeSession({ sessionId }: { sessionId: string }) {
       )}
     />
   );
+}
+
+function PracticeTimer({ session, onExpire }: { session: PracticeSessionModel; onExpire: () => void }) {
+  const [remaining, setRemaining] = useState(() => Math.max(0, session.timing.type === "timed" ? session.timing.timeLimitSeconds - elapsedSeconds(session) : 0));
+  useEffect(() => {
+    const update = () => setRemaining(Math.max(0, session.timing.type === "timed" ? session.timing.timeLimitSeconds - elapsedSeconds(session) : 0));
+    update();
+    const interval = window.setInterval(update, 1000);
+    return () => window.clearInterval(interval);
+  }, [session]);
+  useEffect(() => { if (remaining === 0) onExpire(); }, [remaining, onExpire]);
+  return <span role="timer" aria-label="Practice timer" aria-live="off" className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-white px-3 font-bold"><Timer className="size-4" />{formatTime(remaining)}</span>;
 }
 
 function PracticeSummaryCard({ session, summary }: { session: PracticeSessionModel; summary: ReturnType<typeof derivePracticeSessionSummary> }) {

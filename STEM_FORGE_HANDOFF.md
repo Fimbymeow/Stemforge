@@ -1,7 +1,7 @@
 # STEM Forge Conversation Handoff
 
-Last updated: 17 July 2026
-Current checkpoint: Sprint 20 generic revision and assessment engine
+Last updated: 18 July 2026
+Current checkpoint: Sprint 23 platform hardening (see `STEM_FORGE_PERFORMANCE_ACCESSIBILITY_SECURITY_RELIABILITY.md`)
 
 This is the durable starting point for a new Codex conversation. Inspect the repository before editing. Preserve unfamiliar Finlay, Claude, or Codex changes and never reset a dirty tree without explicit approval.
 

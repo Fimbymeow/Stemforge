@@ -1,6 +1,6 @@
 import type { AnswerType, Question } from "@/data/types";
 import { canonicalContent, type CanonicalContentSource } from "@/data/canonical-content";
-import { createContentResolver } from "@/lib/content-resolver";
+import { contentResolver, createContentResolver } from "@/lib/content-resolver";
 import type { EligiblePracticeQuestion, PracticeEligibility, PracticeQuestionReference } from "@/lib/practice/practice-types";
 
 const supportedAnswerTypes: ReadonlySet<AnswerType> = new Set([
@@ -14,7 +14,7 @@ const supportedAnswerTypes: ReadonlySet<AnswerType> = new Set([
 ]);
 
 export function createPracticeQuestionReference(question: Question): PracticeQuestionReference | null {
-  const context = createContentResolver(canonicalContent).getQuestionContext(question.id);
+  const context = contentResolver.getQuestionContext(question.id);
   if (!context) return null;
   return {
     subjectId: context.subject.subjectSlug,
@@ -80,7 +80,7 @@ export function discoverEligiblePracticeQuestions(source: CanonicalContentSource
 }
 
 export function resolvePracticeReference(reference: PracticeQuestionReference, source: CanonicalContentSource = canonicalContent) {
-  const resolver = createContentResolver(source);
+  const resolver = source === canonicalContent ? contentResolver : createContentResolver(source);
   const context = resolver.getQuestionContext(reference.questionId);
   if (!context) return { status: "unresolvable" as const };
   if (

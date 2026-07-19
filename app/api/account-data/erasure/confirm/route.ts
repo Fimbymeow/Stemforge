@@ -3,11 +3,13 @@ import { withCurrentAccountData } from "@/lib/account-data/current-account-data.
 import { ACCOUNT_DATA_PRIVATE_HEADERS, isTrustedAccountDataMutation, validRequestId } from "@/lib/account-data/request-http.server";
 import { currentSessionBinding } from "@/lib/auth/reauthentication.server";
 import { ERASURE_CONFIRMATION_TEXT } from "@/lib/account-data/types";
+import { MAX_ACCOUNT_DATA_REQUEST_BYTES, parseBoundedJsonRequest } from "@/lib/security/request-boundary";
 
 export async function POST(request: NextRequest) {
   if (!isTrustedAccountDataMutation(request)) return failure(403, "forbidden", "The confirmation could not be verified.");
-  let body: { requestId?: unknown; confirmation?: unknown };
-  try { body = await request.json(); } catch { return failure(400, "invalid_request", "The confirmation is invalid."); }
+  const parsed = await parseBoundedJsonRequest(request, MAX_ACCOUNT_DATA_REQUEST_BYTES);
+  if (!parsed.ok) return failure(parsed.status, parsed.reason === "too_large" ? "too_large" : "invalid_request", "The confirmation is invalid.");
+  const body = parsed.value;
   if (!validRequestId(body.requestId) || body.confirmation !== ERASURE_CONFIRMATION_TEXT) return failure(400, "confirmation_required", `Type ${ERASURE_CONFIRMATION_TEXT} to confirm.`);
   const requestId = body.requestId;
   const proof = request.cookies.get(`stemforge-erasure-proof-${requestId}`)?.value;

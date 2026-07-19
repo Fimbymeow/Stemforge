@@ -6,6 +6,7 @@ import { isProgressImportSameOrigin } from "@/lib/progress/import-http";
 import { createRemoteEvidencePool } from "@/lib/remote-evidence/database.server";
 import { exportRemoteLearningData } from "@/lib/account-data/remote-export.server";
 import { AccountExportBoundsError, safeAccountExportFilename } from "@/lib/account-data/export";
+import { MAX_ACCOUNT_DATA_REQUEST_BYTES, parseBoundedJsonRequest } from "@/lib/security/request-boundary";
 
 export const dynamic = "force-dynamic";
 const privateHeaders = { "Cache-Control": "private, no-store, max-age=0", Pragma: "no-cache", "X-Content-Type-Options": "nosniff" };
@@ -15,8 +16,9 @@ export async function POST(request: NextRequest) {
   if (config.status !== "enabled") return failure(401, "sign_in_required", "Sign in is required.");
   if (!isProgressImportSameOrigin(request.headers.get("origin"), request.nextUrl.origin, config.siteUrl)) return failure(403, "forbidden", "The export request could not be verified.");
   if (request.headers.get("content-type")?.split(";", 1)[0] !== "application/json") return failure(415, "invalid_request", "Export requires application/json.");
-  let password: unknown;
-  try { password = (await request.json() as { password?: unknown }).password; } catch { return failure(400, "invalid_request", "The export request is invalid."); }
+  const parsed = await parseBoundedJsonRequest(request, MAX_ACCOUNT_DATA_REQUEST_BYTES);
+  if (!parsed.ok) return failure(parsed.status, parsed.reason === "too_large" ? "too_large" : "invalid_request", "The export request is invalid.");
+  const password = parsed.value.password;
   const owner = await resolveCurrentAuthenticatedOwner();
   if (!owner.authenticated) return failure(401, "sign_in_required", "Your session has expired.");
   const reauthenticated = await reauthenticateCurrentPasswordUser(password);

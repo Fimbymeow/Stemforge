@@ -19,7 +19,10 @@ export function createEmptyPracticeSessionStore(): PracticeSessionStore {
 
 export function loadPracticeSessionStore(storage: Storage | null = safeStorage()): PracticeSessionLoadResult {
   if (!storage) return { store: createEmptyPracticeSessionStore(), status: "unavailable" };
-  const raw = storage.getItem(PRACTICE_SESSIONS_STORAGE_KEY);
+  let raw: string | null;
+  try { raw = storage.getItem(PRACTICE_SESSIONS_STORAGE_KEY); } catch {
+    return { store: createEmptyPracticeSessionStore(), status: "unavailable" };
+  }
   if (!raw) return { store: createEmptyPracticeSessionStore(), status: "empty" };
   try {
     const parsed: unknown = JSON.parse(raw);
@@ -32,9 +35,11 @@ export function loadPracticeSessionStore(storage: Storage | null = safeStorage()
 
 export function savePracticeSessionStore(store: PracticeSessionStore, storage: Storage | null = safeStorage()) {
   if (!storage) return false;
-  storage.setItem(PRACTICE_SESSIONS_STORAGE_KEY, JSON.stringify(trimHistory(store)));
-  if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("stemforge:practice-session-updated"));
-  return true;
+  try {
+    storage.setItem(PRACTICE_SESSIONS_STORAGE_KEY, JSON.stringify(trimHistory(store)));
+    if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("stemforge:practice-session-updated"));
+    return true;
+  } catch { return false; }
 }
 
 export function upsertPracticeSession(session: PracticeSession, storage: Storage | null = safeStorage()) {

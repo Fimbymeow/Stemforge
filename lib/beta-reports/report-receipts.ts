@@ -9,11 +9,11 @@ import {
 
 export function getOrCreateGuestReportSessionId(storage: Storage | null = safeStorage()) {
   if (!storage) return null;
-  const existing = storage.getItem(BETA_REPORT_GUEST_ID_KEY);
+  let existing: string | null;
+  try { existing = storage.getItem(BETA_REPORT_GUEST_ID_KEY); } catch { return null; }
   if (existing && /^[A-Za-z0-9_-]{8,80}$/.test(existing)) return existing;
-  const created = `guest_${crypto.randomUUID().replaceAll("-", "")}`;
-  storage.setItem(BETA_REPORT_GUEST_ID_KEY, created);
-  return created;
+  const created = `guest_${browserRandomId()}`;
+  try { storage.setItem(BETA_REPORT_GUEST_ID_KEY, created); return created; } catch { return null; }
 }
 
 export function readBetaReportReceipts(storage: Storage | null = safeStorage()): BetaReportReceipt[] {
@@ -30,9 +30,11 @@ export function readBetaReportReceipts(storage: Storage | null = safeStorage()):
 export function recordBetaReportReceipt(receipt: BetaReportReceipt, storage: Storage | null = safeStorage()) {
   if (!storage) return false;
   const next = [receipt, ...readBetaReportReceipts(storage).filter((item) => item.reportId !== receipt.reportId)].slice(0, MAX_REPORT_RECEIPTS);
-  storage.setItem(BETA_REPORT_RECEIPTS_KEY, JSON.stringify(next));
-  window.dispatchEvent(new CustomEvent("stemforge:beta-report-receipts-updated"));
-  return true;
+  try {
+    storage.setItem(BETA_REPORT_RECEIPTS_KEY, JSON.stringify(next));
+    if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("stemforge:beta-report-receipts-updated"));
+    return true;
+  } catch { return false; }
 }
 
 function isReceipt(value: unknown): value is BetaReportReceipt {
@@ -49,4 +51,12 @@ function isReceipt(value: unknown): value is BetaReportReceipt {
 function safeStorage() {
   if (typeof window === "undefined") return null;
   try { return window.localStorage; } catch { return null; }
+}
+
+function browserRandomId() {
+  if (typeof globalThis.crypto?.randomUUID === "function") return globalThis.crypto.randomUUID().replaceAll("-", "");
+  const bytes = new Uint8Array(16);
+  globalThis.crypto?.getRandomValues(bytes);
+  if (bytes.some((value) => value !== 0)) return [...bytes].map((value) => value.toString(16).padStart(2, "0")).join("");
+  return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 18)}`;
 }

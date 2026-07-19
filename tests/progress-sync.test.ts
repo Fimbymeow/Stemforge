@@ -23,7 +23,7 @@ import {
   progressSyncEventsToPayload,
   type ProgressSyncPullResponse,
 } from "../lib/progress/sync-protocol";
-import { progressSyncRetryDelay } from "../lib/progress/sync-retry";
+import { nextProgressSyncRetryAt, progressSyncRetryDelay, retryAfterDelay } from "../lib/progress/sync-retry";
 
 const fingerprintA = "A".repeat(43);
 const fingerprintB = "B".repeat(43);
@@ -144,6 +144,12 @@ test("retry delays are bounded and jittered without exceeding the fifteen-minute
   assert.equal(progressSyncRetryDelay(1, 0), 4_000);
   assert.equal(progressSyncRetryDelay(1, 1), 6_000);
   assert.equal(progressSyncRetryDelay(99, 0.5), 15 * 60_000);
+  const now = Date.parse("2026-07-18T12:00:00.000Z");
+  assert.equal(retryAfterDelay("30", now), 30_000);
+  assert.equal(retryAfterDelay("Sat, 18 Jul 2026 12:02:00 GMT", now), 120_000);
+  assert.equal(retryAfterDelay("invalid", now), null);
+  assert.equal(retryAfterDelay("999999", now), 15 * 60_000);
+  assert.equal(nextProgressSyncRetryAt(1, now, 0, 30_000), "2026-07-18T12:00:30.000Z");
 });
 
 test("malformed and future sync metadata fail closed", () => {

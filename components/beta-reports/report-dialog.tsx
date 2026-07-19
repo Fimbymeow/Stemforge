@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { AlertCircle, CheckCircle2, MessageSquare, X } from "lucide-react";
 import { useAuthFeatureAvailable } from "@/components/auth-feature-provider";
 import { createReportDiagnosticContext } from "@/lib/beta-reports/report-diagnostics";
@@ -44,6 +44,11 @@ export function ReportDialog({
   const [reportId, setReportId] = useState<string | null>(null);
   const accountsAvailable = useAuthFeatureAvailable();
   const descriptionId = useId();
+  const titleId = useId();
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
   const diagnostics = open ? createReportDiagnosticContext({
     pageArea,
     contentReference,
@@ -51,6 +56,28 @@ export function ReportDialog({
     component,
     authState: accountsAvailable ? "guest" : "disabled",
   }) : null;
+
+  useEffect(() => {
+    if (!open) return;
+    previousFocusRef.current = triggerRef.current ?? (document.activeElement instanceof HTMLElement ? document.activeElement : null);
+    closeRef.current?.focus();
+    const dialog = dialogRef.current;
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { event.preventDefault(); setOpen(false); return; }
+      if (event.key !== "Tab" || !dialog) return;
+      const focusable = [...dialog.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]):not([tabindex="-1"]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])')];
+      const first = focusable[0];
+      const last = focusable.at(-1);
+      if (!first || !last) return;
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("keydown", handleKey);
+      previousFocusRef.current?.focus();
+    };
+  }, [open]);
 
   async function submitReport(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -109,6 +136,7 @@ export function ReportDialog({
   return (
     <>
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => {
           setOpen(true);
@@ -124,16 +152,16 @@ export function ReportDialog({
       </button>
       {open ? (
         <div className="fixed inset-0 z-50 grid place-items-center bg-ink/35 p-4" role="presentation">
-          <section role="dialog" aria-modal="true" aria-describedby={descriptionId} className="max-h-[92vh] w-full max-w-xl overflow-auto rounded-2xl border border-line bg-white p-5 shadow-2xl">
+          <section ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={descriptionId} className="max-h-[92vh] w-full max-w-xl overflow-auto rounded-2xl border border-line bg-white p-5 shadow-2xl">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="font-mono text-xs font-extrabold uppercase text-forge">Private beta report</p>
-                <h2 className="mt-1 text-2xl font-extrabold">Tell us what happened</h2>
+                <h2 id={titleId} className="mt-1 text-2xl font-extrabold">Tell us what happened</h2>
                 <p id={descriptionId} className="mt-2 text-sm leading-relaxed text-muted">
                   We only attach safe diagnostics like page, device category and content IDs. We do not send your answers, local progress history, passwords, cookies or browser storage.
                 </p>
               </div>
-              <button type="button" onClick={() => setOpen(false)} aria-label="Close report form" className="rounded-full border border-line p-2 text-muted hover:text-ink">
+              <button ref={closeRef} type="button" onClick={() => setOpen(false)} aria-label="Close report form" className="rounded-full border border-line p-2 text-muted hover:text-ink">
                 <X className="size-4" />
               </button>
             </div>
@@ -165,7 +193,7 @@ export function ReportDialog({
                 </div>
               ) : null}
               {resultMessage ? (
-                <div role="status" className={`flex items-start gap-2 rounded-xl border p-3 text-sm ${state === "failed" ? "border-danger/30 bg-danger-soft text-danger" : "border-success/30 bg-success-soft text-ink"}`}>
+                <div role={state === "failed" ? "alert" : "status"} className={`flex items-start gap-2 rounded-xl border p-3 text-sm ${state === "failed" ? "border-danger/30 bg-danger-soft text-danger" : "border-success/30 bg-success-soft text-ink"}`}>
                   {state === "failed" ? <AlertCircle className="mt-0.5 size-4 shrink-0" /> : <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success" />}
                   <span>{resultMessage}</span>
                 </div>

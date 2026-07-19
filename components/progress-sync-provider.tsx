@@ -33,6 +33,7 @@ import {
   SYNC_VISIBLE_INTERVAL_MS,
   SYNC_VISIBILITY_REFRESH_MS,
   nextProgressSyncRetryAt,
+  retryAfterDelay,
 } from "@/lib/progress/sync-retry";
 import {
   applyProgressSyncPullPage,
@@ -123,12 +124,12 @@ export function ProgressSyncProvider({ accountsAvailable, children }: { accounts
     return { metadata, local, pending };
   }, []);
 
-  const scheduleRetry = useCallback(async (fingerprint: string, kind: string) => {
+  const scheduleRetry = useCallback(async (fingerprint: string, kind: string, serverDelayMs: number | null = null) => {
     const metadata = await updateProgressSyncMetadata((latest) => {
       const next = structuredClone(latest);
       const account = next.accounts[fingerprint] ?? createDefaultProgressSyncAccount();
       account.retry.consecutiveFailures += 1;
-      account.retry.nextRetryAt = nextProgressSyncRetryAt(account.retry.consecutiveFailures);
+      account.retry.nextRetryAt = nextProgressSyncRetryAt(account.retry.consecutiveFailures, Date.now(), Math.random(), serverDelayMs);
       account.retry.lastFailureKind = kind;
       next.accounts[fingerprint] = account;
       return next;
@@ -182,6 +183,7 @@ export function ProgressSyncProvider({ accountsAvailable, children }: { accounts
         }, signal);
         if (response.status === 401) throw new SyncAuthenticationError();
         if (response.status === 409) throw new SyncGenerationError();
+        if (response.status === 429) throw new SyncTemporaryError("rate_limited", retryAfterDelay(response.headers.get("Retry-After")));
         assertCurrentCycle(fingerprint, generation, signal);
         const body: unknown = await response.json().catch(() => null);
         if (isProgressSyncExpectedStateResponse(body)) throw new SyncGenerationError();
@@ -202,6 +204,7 @@ export function ProgressSyncProvider({ accountsAvailable, children }: { accounts
       const response = await fetchWithTimeout(url, undefined, signal);
       if (response.status === 401) throw new SyncAuthenticationError();
       if (response.status === 409) throw new SyncGenerationError();
+      if (response.status === 429) throw new SyncTemporaryError("rate_limited", retryAfterDelay(response.headers.get("Retry-After")));
       assertCurrentCycle(fingerprint, generation, signal);
       const body: unknown = await response.json().catch(() => null);
       if (isProgressSyncExpectedStateResponse(body)) throw new SyncGenerationError();
@@ -259,7 +262,12 @@ export function ProgressSyncProvider({ accountsAvailable, children }: { accounts
           return;
         }
         setStatus(navigator.onLine ? "temporary_error" : "offline");
-        await scheduleRetry(fingerprint, navigator.onLine ? "temporary_error" : "offline").catch(() => undefined);
+        const temporary = error instanceof SyncTemporaryError ? error : null;
+        await scheduleRetry(
+          fingerprint,
+          navigator.onLine ? temporary?.kind ?? "temporary_error" : "offline",
+          temporary?.retryAfterMs ?? null,
+        ).catch(() => undefined);
       } finally {
         if (abortRef.current === controller) abortRef.current = null;
         inFlight.current = null;
@@ -542,3 +550,8 @@ function latestTimestamp(left: string | null, right: string | null) {
 class SyncAuthenticationError extends Error {}
 class SyncGenerationError extends Error {}
 class SyncCancelledError extends Error {}
+class SyncTemporaryError extends Error {
+  constructor(readonly kind: string, readonly retryAfterMs: number | null) {
+    super(kind);
+  }
+}
