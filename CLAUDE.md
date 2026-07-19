@@ -64,3 +64,5 @@ Preserve the existing answer, progress, content-version, archive, guest-access a
 Read `STEM_FORGE_ACCOUNT_DATA_AND_SHARED_DEVICE_SAFETY.md` before changing sign-out, account switching, sync consent, provenance, reset wording or browser-data removal. Never attribute legacy evidence by guess, silently associate a different account, or claim local removal deletes append-only remote evidence.
 
 Read `STEM_FORGE_INTERNAL_BETA_OPERATIONS_AND_TRIAGE.md` before changing internal report routes, authorization, filters, workflow, audit, health or learner-visible report status. Internal access always requires the server-only enable flag, a valid opaque-owner allowlist and a verified matching session; development has no bypass.
+
+Read `STEM_FORGE_PRODUCTION_DEPLOYMENT_AND_RELEASE_VERIFICATION.md` before deployment, environment, canonical-origin, health/readiness, migration-status or production-smoke work. Vercel project `stemforge-6an8` on `main` is the release target; never treat `stemforge.app`, preview URLs, or the duplicate `stemforge`/`tuition` projects as canonical.

@@ -18,7 +18,7 @@ test("complete safe configuration enables the account surface", () => {
     STEMFORGE_AUTH_ENABLED: "true",
     NEXT_PUBLIC_SUPABASE_URL: "https://project.supabase.co/path",
     NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_test",
-    STEMFORGE_AUTH_SITE_URL: "http://localhost:3000/account",
+    STEMFORGE_AUTH_SITE_URL: "http://localhost:3000",
   });
   assert.deepEqual(config, {
     status: "enabled",
@@ -26,6 +26,16 @@ test("complete safe configuration enables the account surface", () => {
     publishableKey: "sb_publishable_test",
     siteUrl: "http://localhost:3000",
   });
+});
+
+test("authentication rejects non-origin site URLs", () => {
+  const config = getAuthFeatureConfiguration({
+    STEMFORGE_AUTH_ENABLED: "true",
+    NEXT_PUBLIC_SUPABASE_URL: "https://project.supabase.co",
+    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_test",
+    STEMFORGE_AUTH_SITE_URL: "https://stemforge.example/account?next=unsafe",
+  });
+  assert.equal(config.status, "misconfigured");
 });
 
 test("insecure provider URLs fail closed", () => {

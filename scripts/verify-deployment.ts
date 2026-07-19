@@ -4,8 +4,9 @@ import { deploymentIsReady, evaluateDeploymentReadiness } from "@/lib/operations
 async function main() {
   loadEnvConfig(process.cwd());
   const production = process.argv.includes("--production");
-  const checks = evaluateDeploymentReadiness(process.env, production);
-  console.log(`STEM Forge deployment readiness (${production ? "production" : "local dry run"})`);
+  const requireMigration = process.argv.includes("--migration");
+  const checks = evaluateDeploymentReadiness(process.env, { production, requireMigration });
+  console.log(`STEM Forge deployment readiness (${production ? "production" : "local dry run"}${requireMigration ? ", migration access required" : ""})`);
   for (const check of checks) console.log(`${check.status.toUpperCase()} [${check.code}] ${check.message}`);
   if (!deploymentIsReady(checks)) throw new Error("Deployment readiness failed. No environment values were printed.");
   console.log("Deployment readiness checks passed. No environment values were printed.");

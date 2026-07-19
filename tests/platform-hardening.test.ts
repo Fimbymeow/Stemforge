@@ -41,9 +41,11 @@ test("deployment checks fail closed without leaking configured values", () => {
   assert.equal(JSON.stringify(forbidden).includes(secret), false);
   const ready = evaluateDeploymentReadiness({
     NEXT_PUBLIC_SITE_URL: "https://stemforge.example",
-    STEMFORGE_DATABASE_URL: "server-database",
-    STEMFORGE_DATABASE_MIGRATION_URL: "migration-database",
-    STEMFORGE_AUTH_ENABLED: "false",
+    STEMFORGE_DATABASE_URL: "postgresql://db.example/stemforge",
+    STEMFORGE_AUTH_ENABLED: "true",
+    NEXT_PUBLIC_SUPABASE_URL: "https://project.supabase.co",
+    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_test",
+    STEMFORGE_AUTH_SITE_URL: "https://stemforge.example",
   }, true);
   assert.equal(deploymentIsReady(ready), true);
 });

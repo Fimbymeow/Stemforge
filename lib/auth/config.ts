@@ -19,8 +19,11 @@ export function getAuthFeatureConfiguration(env: Environment = process.env): Aut
   try {
     const siteUrl = new URL(required.STEMFORGE_AUTH_SITE_URL!);
     const supabaseUrl = new URL(required.NEXT_PUBLIC_SUPABASE_URL!);
-    if (!/^https?:$/.test(siteUrl.protocol) || !/^https:$/.test(supabaseUrl.protocol)) {
-      return { status: "misconfigured", missing: ["valid HTTPS Supabase URL and HTTP(S) site URL"] };
+    const loopbackSite = siteUrl.protocol === "http:" && ["localhost", "127.0.0.1", "[::1]"].includes(siteUrl.hostname);
+    if ((siteUrl.protocol !== "https:" && !loopbackSite) || supabaseUrl.protocol !== "https:"
+      || siteUrl.username || siteUrl.password || siteUrl.pathname !== "/" || siteUrl.search || siteUrl.hash
+      || supabaseUrl.username || supabaseUrl.password) {
+      return { status: "misconfigured", missing: ["valid HTTPS Supabase URL and HTTPS or loopback site origin"] };
     }
     return {
       status: "enabled",

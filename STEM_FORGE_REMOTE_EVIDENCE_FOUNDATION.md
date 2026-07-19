@@ -1,5 +1,7 @@
 # STEM Forge Remote Evidence Foundation
 
+Production migration verification is non-mutating: run `pnpm run db:migrate:status` with the migration-only SSL connection before and after `pnpm run db:migrate`. Confirm the production/private-beta Supabase project first; never infer it from a development `.env.local`. See `STEM_FORGE_PRODUCTION_DEPLOYMENT_AND_RELEASE_VERIFICATION.md` for the release boundary.
+
 Updated: 14 July 2026
 Status: Sprint 12 PostgreSQL foundation preserved; Sprint 13 trusted owner mapping added; Sprint 14 confirmed import connects them through an authenticated server route
 

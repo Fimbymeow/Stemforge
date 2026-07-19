@@ -30,6 +30,11 @@ const playwrightCli = path.join(root, "node_modules", "@playwright", "test", "cl
 
 let isolatedEnvironment: NodeJS.ProcessEnv = {
   ...process.env,
+  ...(hardeningMode ? {
+    MOZ_HEADLESS_WIDTH: "1280",
+    MOZ_HEADLESS_HEIGHT: "720",
+    MOZ_WEBRENDER: "0",
+  } : {}),
   STEMFORGE_AUTH_ENABLED: enabledMode ? "true" : "false",
   NEXT_PUBLIC_SUPABASE_URL: enabledMode ? "https://test-project.supabase.co" : "",
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: enabledMode ? "test-publishable-key" : "",
@@ -158,6 +163,13 @@ async function main() {
     });
     try {
       await waitForServer(server);
+      if (hardeningMode && forwardedArgs.length === 0) {
+        for (const project of ["firefox", "chromium", "webkit"]) {
+          const code = await run(process.execPath, [playwrightCli, "test", `--config=${configFile}`, `--project=${project}`]);
+          if (code !== 0) return code;
+        }
+        return 0;
+      }
       return await run(process.execPath, [playwrightCli, "test", `--config=${configFile}`, ...forwardedArgs]);
     } finally {
       await stopServer(server);

@@ -17,8 +17,16 @@ export default defineConfig({
     video: "off",
   },
   projects: [
+    // Firefox starts first because Windows SWGL can fail to acquire its headless
+    // framebuffer after the graph-heavy Chromium journey releases graphics state.
+    {
+      name: "firefox",
+      use: {
+        ...devices["Desktop Firefox"],
+        launchOptions: { firefoxUserPrefs: { "gfx.webrender.force-disabled": true } },
+      },
+    },
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },
-    { name: "firefox", use: { ...devices["Desktop Firefox"] } },
     { name: "webkit", use: { ...devices["Desktop Safari"] } },
   ],
 });

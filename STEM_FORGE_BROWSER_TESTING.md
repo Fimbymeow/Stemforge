@@ -1,6 +1,8 @@
 # STEM Forge Browser Testing
 
-Updated: 14 July 2026
+`pnpm run test:production:smoke` uses `STEMFORGE_PRODUCTION_BASE_URL` and runs one non-destructive critical journey in Chromium, Firefox and WebKit. It never submits answers or reports. Set `STEMFORGE_PRODUCTION_EXPECT_READY=false` only when deliberately proving a documented 503 manual configuration block; release acceptance requires the default ready expectation.
+
+Updated: 19 July 2026
 
 ## 1. Framework
 
@@ -35,7 +37,7 @@ pnpm run test:e2e:ui
 pnpm run test:all
 ```
 
-`pnpm test` remains the fast unit/integration suite. `test:all` adds typechecking, linting, and browser tests.
+`pnpm test` remains the fast unit/integration suite. `test:all` runs the isolated Firefox-first hardening matrix before the resource-heavy build, then typechecking, linting, content/unit/build verification and the ordinary/auth-rendering browser suites. Every project still runs exactly once with zero retries.
 
 ## 5. Test server
 
@@ -43,8 +45,10 @@ Playwright runs `pnpm run build` and starts the production server on `127.0.0.1:
 
 ## 6. Projects and viewports
 
-- `desktop-chromium`: 1440 x 900, all non-mobile specs.
+- `desktop-chromium`: 1440 x 900, all non-mobile ordinary specs.
 - `mobile-chromium`: 390 x 844, the focused mobile interaction spec.
+- hardening: one console-clean critical journey in isolated Firefox, Chromium and WebKit processes.
+- production smoke: one non-mutating release journey in Chromium, Firefox and WebKit.
 
 Workers are limited to one and retries are zero. Deterministic failures are therefore visible rather than hidden by retries.
 
@@ -89,7 +93,7 @@ Completion-specific storage, reset, accessibility and future-version rules are d
 
 ## 14. Known gaps
 
-The suite does not cover legacy Physics interaction because Physics is intentionally read-only. It does not cover multiple-choice or multi-field UI because active Higher Maths content has none. Cross-browser Safari/Firefox behavior, visual pixel diffs, performance budgets, and assistive-technology audits are deferred.
+The suite does not cover legacy Physics interaction because Physics is intentionally read-only. It does not cover multiple-choice or multi-field UI because active Higher Maths content has none. Branded Safari/Firefox, visual pixel diffs and assistive-technology audits remain outside automated coverage; the critical journey is covered by Playwright's Firefox and WebKit engines.
 
 ## 15. Debugging
 

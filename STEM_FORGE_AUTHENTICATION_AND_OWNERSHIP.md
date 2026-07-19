@@ -1,5 +1,7 @@
 # STEM Forge Authentication and Trusted Ownership
 
+Production authentication must use the exact canonical path-free HTTPS origin for both `NEXT_PUBLIC_SITE_URL` and `STEMFORGE_AUTH_SITE_URL`. Configure only the bounded `/auth/callback` account/reset destinations documented in `STEM_FORGE_PRODUCTION_DEPLOYMENT_AND_RELEASE_VERIFICATION.md`; wildcard preview redirects are not part of the production contract.
+
 Updated: 14 July 2026  
 Status: Sprint 13 authentication verified; Sprint 14 confirmed import boundary connected
 

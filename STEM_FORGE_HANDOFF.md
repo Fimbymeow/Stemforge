@@ -1,7 +1,7 @@
 # STEM Forge Conversation Handoff
 
-Last updated: 18 July 2026
-Current checkpoint: Sprint 23 platform hardening (see `STEM_FORGE_PERFORMANCE_ACCESSIBILITY_SECURITY_RELIABILITY.md`)
+Last updated: 19 July 2026
+Current checkpoint: Sprint 24 production release readiness (see `STEM_FORGE_PRODUCTION_DEPLOYMENT_AND_RELEASE_VERIFICATION.md`)
 
 This is the durable starting point for a new Codex conversation. Inspect the repository before editing. Preserve unfamiliar Finlay, Claude, or Codex changes and never reset a dirty tree without explicit approval.
 
@@ -235,3 +235,5 @@ Do not begin Sprint 11 without tester evidence.
 - Choose focused learner-experience correction if product purpose, navigation, input, status language, mobile, or accessibility is confusing or blocking.
 
 The owner must first verify the public deployment is accessible without login/protection, record the tested build/commit, provide the feedback template to testers, and review the collected feedback against `STEM_FORGE_PRIVATE_BETA_READINESS.md`.
+
+Sprint 24 confirms the existing Vercel `stemforge-6an8` project and stable `https://stemforge-6an8.vercel.app` alias. The public Sprint 23 commit is reachable, but sanitized readiness shows authentication disabled and database not configured. Vercel dashboard access was unavailable to the Codex session, so production environment/Supabase configuration, confirmed production migration status, authenticated smoke and final ready state remain manual blocks. Do not claim an authenticated production release until the Sprint 24 runbook is green.
