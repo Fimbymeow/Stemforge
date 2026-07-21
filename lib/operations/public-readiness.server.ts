@@ -29,15 +29,17 @@ export async function getPublicReadinessSnapshot(environment: NodeJS.ProcessEnv 
     let pool: ReturnType<typeof createRemoteEvidencePool> | undefined;
     try {
       pool = createRemoteEvidencePool(environment.STEMFORGE_DATABASE_URL, environment);
-      const result = await pool.query<{ migration_table_ready: boolean; reporting_ready: boolean; ssl_ready: boolean }>(`
+      const result = await pool.query<{ migration_table_ready: boolean; reporting_ready: boolean }>(`
         SELECT
           to_regclass('stemforge_remote_migrations.pgmigrations') IS NOT NULL AS migration_table_ready,
           to_regclass('stemforge_operations.beta_reports') IS NOT NULL
-            AND to_regclass('stemforge_operations.beta_report_audit') IS NOT NULL AS reporting_ready,
-          EXISTS(SELECT 1 FROM pg_stat_ssl WHERE pid = pg_backend_pid() AND ssl) AS ssl_ready
+            AND to_regclass('stemforge_operations.beta_report_audit') IS NOT NULL AS reporting_ready
       `);
       const row = result.rows[0];
-      checks.database = production && !row.ssl_ready ? "misconfigured" : "ok";
+      // With a transaction pooler, pg_stat_ssl describes the pooler's upstream
+      // database session rather than this client's TLS socket. Reaching this
+      // query means the verified client configuration connected successfully.
+      checks.database = "ok";
       const migrationReady = row.migration_table_ready && (await pool.query<{ ready: boolean }>(`
         SELECT EXISTS(
           SELECT 1 FROM stemforge_remote_migrations.pgmigrations
