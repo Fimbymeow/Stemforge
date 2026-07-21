@@ -11,7 +11,7 @@ export default function NotFound() {
         <Card className="p-8 max-md:p-5">
           <h1 className="m-0 text-[clamp(38px,6vw,68px)] font-extrabold leading-none">This page could not be found.</h1>
           <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted">
-            The page may have moved, or the route may not exist yet. You can return to the current Higher Maths proof-of-concept path or browse subjects.
+            The page may have moved, or the route may not exist yet. You can return to Basic differentiation or browse subjects.
           </p>
           <div className="mt-8 flex flex-wrap gap-4">
             <Link href={getActiveSkillPathHref()} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-forge px-5 font-extrabold text-white">

@@ -94,7 +94,7 @@ export function PracticeSession({ sessionId }: { sessionId: string }) {
             <div>
               <p className="font-mono text-xs font-extrabold uppercase text-forge">{session.mode.replace("_", " ")} practice</p>
               <h2 className="m-0 mt-1 text-xl font-extrabold">Question {session.currentQuestionIndex + 1} of {session.questionReferences.length}</h2>
-              <p className="mt-1 text-sm text-muted">{session.selectionMetadata.shortageReason ?? "Using available canonical questions."}</p>
+              <p className="mt-1 text-sm text-muted">{session.selectionMetadata.shortageReason ?? "Using available questions."}</p>
             </div>
             <div className="flex flex-wrap gap-2">
               {session.timing.type === "timed" ? <PracticeTimer session={session} onExpire={expire} /> : null}

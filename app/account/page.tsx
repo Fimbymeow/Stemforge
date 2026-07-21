@@ -45,12 +45,12 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   return (
     <AccountShell
       title="Your account"
-      introduction={ownerState === "authenticated" ? "You are signed in and linked to a stable STEM Forge owner." : "Your provider session is present, but the application owner database is unavailable."}
+      introduction={ownerState === "authenticated" ? "You're signed in to your STEM Forge account." : "You're signed in, but we can't load your account details right now."}
       result={result}
     >
       <div className="mt-6 rounded-xl border border-line bg-paper p-4">
-        <strong>{ownerState === "authenticated" ? "Account ready" : "Owner setup unavailable"}</strong>
-        <p className="mb-0 mt-2 text-sm leading-relaxed text-muted">Learning remains local-first. Import and synchronization each require an explicit choice.</p>
+        <strong>{ownerState === "authenticated" ? "Account ready" : "Account setup unavailable"}</strong>
+        <p className="mb-0 mt-2 text-sm leading-relaxed text-muted">Learning always works without an account. Adding this browser&apos;s progress to your account, and keeping future progress updated automatically, are separate choices you make below.</p>
       </div>
       <AccountLearningReturn />
       {accountFingerprint ? <GuestProgressImport accountFingerprint={accountFingerprint} /> : null}

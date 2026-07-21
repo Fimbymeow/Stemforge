@@ -224,8 +224,8 @@ export function deriveCourseDashboardSummary(
     stageCompletionPercentage: percentage(completedStages, totalStages),
     reviewRecommendedCount: paths.reduce((total, path) => total + path.reviewRecommendedCount, 0),
     notice: plannedPathCount > 0
-      ? `${subject.subjectName} is in private beta: ${available.length} path${available.length === 1 ? "" : "s"} available now, ${plannedPathCount} planned.`
-      : `${subject.subjectName} course content is available for this beta build.`,
+      ? `${available.length} ${subject.subjectName} path${available.length === 1 ? "" : "s"} ready to start, with more on the way.`
+      : `${subject.subjectName} course content is available.`,
     paths,
   };
 }
@@ -259,7 +259,7 @@ export function deriveLearnerDashboardModel(input: {
     quickLinks: [
       { title: "Practice sessions", href: "/practice", detail: "Targeted, mixed, needs-work, or retry sessions from available content." },
       { title: "Question bank", href: getQuestionBankHref(subject.subjectSlug), detail: "Filter practice by path and stage." },
-      { title: "Revision notes", href: getResourceHref("revision-notes", subject.subjectSlug), detail: "Review the ideas behind your evidence." },
+      { title: "Revision notes", href: getResourceHref("revision-notes", subject.subjectSlug), detail: "Review the ideas behind your progress." },
     ],
   };
 }
@@ -316,7 +316,7 @@ function deriveNeedsWork(paths: DashboardPathSummary[]): DashboardFocusItem[] {
       pathId: path.skillPathId,
       title: path.name,
       detail: path.reviewRecommendedCount > 0
-        ? `${path.reviewRecommendedCount} review prompt${path.reviewRecommendedCount === 1 ? "" : "s"} recommended`
+        ? `${path.reviewRecommendedCount} question${path.reviewRecommendedCount === 1 ? "" : "s"} to review`
         : `${path.completionPercentage}% complete · not secure yet`,
       href: path.nextHref,
       status: path.status,
@@ -380,7 +380,7 @@ function deriveSyncSummary(sync: DashboardSyncInput): DashboardSyncSummary {
   if (sync.differentAccount) {
     return {
       label: "Review account connection",
-      detail: "This browser has progress associated with another account. Confirm before syncing.",
+      detail: "This browser has progress from a different account. Confirm before syncing.",
       tone: "attention",
       accountLinked: sync.accountFingerprint !== null,
     };
@@ -399,16 +399,16 @@ function deriveSyncSummary(sync: DashboardSyncInput): DashboardSyncSummary {
   if (sync.status === "pending_upload") {
     return {
       label: "Waiting to sync",
-      detail: `${sync.pendingCount} local evidence item${sync.pendingCount === 1 ? "" : "s"} waiting for account sync.`,
+      detail: `${sync.pendingCount} local change${sync.pendingCount === 1 ? "" : "s"} waiting for account sync.`,
       tone: "syncing",
       accountLinked: sync.accountFingerprint !== null,
     };
   }
   if (sync.status === "offline" || sync.status === "temporary_error") {
-    return { label: "Saved here", detail: "Sync is unavailable right now, so new evidence stays safely on this browser.", tone: "attention", accountLinked: sync.accountFingerprint !== null };
+    return { label: "Saved here", detail: "Sync is unavailable right now, so new progress stays safely on this browser.", tone: "attention", accountLinked: sync.accountFingerprint !== null };
   }
   if (sync.status === "authentication_required") {
-    return { label: "Sign in to sync", detail: "Local progress still works. Sign in again to update account evidence.", tone: "attention", accountLinked: false };
+    return { label: "Sign in to sync", detail: "Local progress still works. Sign in again to update your account.", tone: "attention", accountLinked: false };
   }
   if (sync.status === "association_required" || sync.status === "cleanup_required" || sync.status === "paused") {
     return { label: "Sync needs confirmation", detail: "Review account data controls before this browser syncs progress.", tone: "attention", accountLinked: sync.accountFingerprint !== null };
@@ -452,7 +452,8 @@ function getPathName(pathId: string) {
 }
 
 function achievementTitle(kind: AchievementSnapshot["kind"]) {
-  return kind.split("_").map((part) => part[0]?.toUpperCase() + part.slice(1)).join(" ");
+  const [scope, status] = kind.split("_");
+  return `${scope[0]?.toUpperCase()}${scope.slice(1)} ${status}`;
 }
 
 function compareActivity(left: DashboardActivityItem, right: DashboardActivityItem) {

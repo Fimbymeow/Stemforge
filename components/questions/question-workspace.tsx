@@ -243,7 +243,7 @@ export function QuestionWorkspace({ question, sessionPanel, answerLocked = false
     ? "Use the worked solution to compare your method. Written and multi-step responses are not automatically marked."
     : isCorrect
       ? hintViewed
-        ? "Correct. Using support is a normal part of learning; independent answers provide stronger readiness evidence."
+        ? "Correct. Using support is a normal part of learning — answering on your own next time is even stronger practice for the exam."
         : "Your answer matches an accepted result. You can compare it with the worked solution."
       : completedWithCurrentSolution
         ? "You used the solution to complete this question. It remains recommended for review."
@@ -290,7 +290,7 @@ export function QuestionWorkspace({ question, sessionPanel, answerLocked = false
                   <dt>Source</dt><dd className="font-bold text-ink">{question.source}</dd>
                   <dt>Path</dt><dd className="font-bold text-ink">Question {currentQuestion} of {totalQuestions}</dd>
                 </dl>
-                <p className="mt-2 max-w-xl text-xs">Original SQA-style practice; not copied from SQA materials.</p>
+                <p className="mt-2 max-w-xl text-xs">Original Qualifications Scotland-style practice; not copied from Qualifications Scotland materials.</p>
               </details>
             </div>
 
@@ -379,7 +379,7 @@ export function QuestionWorkspace({ question, sessionPanel, answerLocked = false
                 <span className="grid size-9 shrink-0 place-items-center rounded-full bg-forge-soft text-forge"><Lightbulb className="size-5" /></span>
                 <div>
                   <h2 className="m-0 text-lg font-extrabold">Need a hand?</h2>
-                  {!hintViewed ? <p className="mt-1 text-sm text-muted">Use a hint when you need one. Independent answers provide stronger readiness evidence.</p> : null}
+                  {!hintViewed ? <p className="mt-1 text-sm text-muted">Use a hint when you need one. Answering on your own shows you&apos;re ready to move on.</p> : null}
                 </div>
               </div>
               {!hintViewed ? (

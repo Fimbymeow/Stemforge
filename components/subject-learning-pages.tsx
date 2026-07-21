@@ -298,7 +298,7 @@ function LockedSubjectPage({ subject }: { subject: Subject }) {
         </header>
         <LockedCard
           title="Learning paths are being prepared"
-          description="Structured SQA Higher Physics learning paths are being prepared. Higher Maths Basic differentiation is the active STEM Forge proof of concept for now."
+          description="Structured Qualifications Scotland Higher Physics learning paths are being prepared. Higher Maths Basic differentiation is available now."
           badge="Coming Soon"
         />
         <Card className="p-4">
@@ -409,7 +409,7 @@ function SkillPathHero({ subject, courseArea, specificationStrand, skillPath }: 
       </div>
       <h1 className="m-0 text-[30px] font-extrabold leading-none">{skillPath.name}</h1>
       <p className="mt-3 max-w-3xl text-base leading-relaxed text-muted">{skillPath.description}</p>
-      <p className="mt-3 text-sm font-bold text-muted">Original SQA-style practice - Progress saved on this browser</p>
+      <p className="mt-3 text-sm font-bold text-muted">Original Qualifications Scotland-style practice - Progress saved on this browser</p>
       <LocalSkillPathHeroProgress skillPath={skillPath} />
     </Card>
   );

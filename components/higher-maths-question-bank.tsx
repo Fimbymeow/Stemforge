@@ -12,6 +12,7 @@ import { getEmptyProgressEvidence, getProgressEvidence, getSkillPathProgress } f
 import { queryQuestionBank, type QuestionBankProgressFilter, type QuestionBankSort, type QuestionBankStageFilter } from "@/lib/question-bank-query";
 import { useHasMounted } from "@/lib/use-mounted";
 import type { SkillPath } from "@/data/types";
+import { formatProgressStatusLabel } from "@/components/learning/mastery-badge";
 import { useLearnerNextAction } from "@/components/learning/use-learner-next-action";
 import type { LearnerNextAction } from "@/lib/learning/next-action";
 
@@ -67,7 +68,7 @@ export function HigherMathsQuestionBank() {
               <span className="font-bold text-forge">Question Bank</span>
             </nav>
             <h1 className="m-0 text-[32px] font-extrabold leading-none">Higher Maths Question Bank</h1>
-            <p className="mt-2 max-w-3xl text-base leading-relaxed text-muted">Browse original SQA-style questions by topic.</p>
+            <p className="mt-2 max-w-3xl text-base leading-relaxed text-muted">Browse original Qualifications Scotland-style questions by topic.</p>
           </header>
 
           <div className="grid gap-4">
@@ -294,7 +295,7 @@ function SelectedPathPanel({ progress, status, nextAction }: { progress: ReturnT
 
 function getStatus(status: "not_started" | "in_progress" | "completed" | "secure" | "mastered") {
   const id = status.replace("_", "-");
-  const label = status.split("_").map((part) => part[0]?.toUpperCase() + part.slice(1)).join(" ");
+  const label = formatProgressStatusLabel(status);
   const isStrong = status === "secure" || status === "mastered";
   return {
     id,

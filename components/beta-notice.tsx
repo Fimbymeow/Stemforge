@@ -25,7 +25,7 @@ export function BetaNotice() {
         </span>
         <div className="min-w-0">
           <p className="font-extrabold">Private beta</p>
-          <p className="mt-1 text-sm leading-relaxed text-muted">STEM Forge is in active beta. If anything feels off, send a report with safe diagnostics so we can trace it.</p>
+          <p className="mt-1 text-sm leading-relaxed text-muted">STEM Forge is in private beta. If something looks wrong, send a quick report and we&apos;ll look into it.</p>
         </div>
         <button
           type="button"

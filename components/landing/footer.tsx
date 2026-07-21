@@ -11,7 +11,7 @@ export function Footer() {
         <Link href={getActiveSkillPathHref()}>Basic differentiation</Link>
       </nav>
       <p className="m-0 max-w-3xl text-xs leading-relaxed">
-        STEM Forge creates original SQA-style practice materials and is not affiliated with or endorsed by SQA.
+        STEM Forge creates original Qualifications Scotland-style practice materials and is not affiliated with or endorsed by Qualifications Scotland.
       </p>
       <p className="m-0 max-w-3xl text-xs leading-relaxed">
         Private-beta testers should use the feedback instructions supplied with their test invitation.

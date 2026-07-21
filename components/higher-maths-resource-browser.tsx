@@ -18,7 +18,7 @@ const config = {
     title: "Higher Maths Revision Notes",
     crumb: "Revision Notes",
     icon: FileText,
-    description: "Concise explanations for SQA Higher Maths skills.",
+    description: "Concise explanations for Qualifications Scotland Higher Maths skills.",
   },
   "formula-cards": {
     title: "Higher Maths Formula Cards",

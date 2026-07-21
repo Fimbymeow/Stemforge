@@ -11,7 +11,7 @@ export function Hero() {
             Forge Your Potential<span className="text-forge">.</span>
           </h1>
           <p className="mt-6 max-w-[520px] text-[clamp(18px,2vw,23px)] leading-[1.42] text-muted">
-            A structured Scottish SQA STEM learning platform. The private beta starts with Higher
+            A structured Qualifications Scotland STEM learning platform. Start with Higher
             Maths Basic differentiation, including guided practice and worked solutions.
           </p>
           <div className="mt-9 flex flex-wrap gap-4 max-lg:justify-center">

@@ -69,7 +69,7 @@ export function DashboardLocalProgressSection() {
   const hasLearningActivity = model.course.startedPathCount > 0;
 
   return (
-    <section className="grid gap-4" aria-label="Evidence-driven learner dashboard">
+    <section className="grid gap-4" aria-label="Your learning dashboard">
       <Card data-testid="dashboard-progress-summary" className="border-forge/30 bg-gradient-to-br from-forge/10 via-white to-white p-5 md:p-6">
         <div className="grid grid-cols-[64px_minmax(0,1fr)_auto] items-center gap-4 max-md:grid-cols-1">
           <div className="grid size-16 place-items-center rounded-xl border border-forge-soft bg-forge-soft text-forge max-md:h-16 max-md:w-full">
@@ -92,7 +92,7 @@ export function DashboardLocalProgressSection() {
         <Card className="p-5">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="m-0 text-xl font-extrabold">Course evidence</h2>
+              <h2 className="m-0 text-xl font-extrabold">Course progress</h2>
               <p className="mt-1 text-sm text-muted">{model.course.notice}</p>
             </div>
             <span className="rounded-lg border border-line bg-white px-3 py-1.5 text-sm font-bold text-muted">
@@ -111,7 +111,7 @@ export function DashboardLocalProgressSection() {
           </Card>
 
           <Card className="p-5">
-            <h2 className="m-0 flex items-center gap-2 text-xl font-extrabold"><Flame className="size-5 text-forge" /> Weekly evidence</h2>
+            <h2 className="m-0 flex items-center gap-2 text-xl font-extrabold"><Flame className="size-5 text-forge" /> Weekly activity</h2>
             <p className="mt-2 text-sm text-muted">{model.weeklyActivity.label}</p>
             {hasWeeklyActivity(model.weeklyActivity) ? (
               <div className={`mt-4 grid gap-2 text-center ${model.weeklyActivity.achievements > 0 ? "grid-cols-3" : "grid-cols-2"}`}>
@@ -127,14 +127,14 @@ export function DashboardLocalProgressSection() {
       <div className="grid grid-cols-2 gap-4 max-lg:grid-cols-1">
         <Card className="p-5">
           <h2 className="m-0 flex items-center gap-2 text-xl font-extrabold"><TrendingUp className="size-5 text-forge" /> Needs work</h2>
-          <FocusList items={model.needsWork} empty="No weak spots yet. Start a path to build evidence." />
+          <FocusList items={model.needsWork} empty="No weak spots yet. Start a path to see recommendations here." />
         </Card>
 
         <Card className="p-5">
           <h2 className="m-0 flex items-center gap-2 text-xl font-extrabold"><ShieldCheck className="size-5 text-forge" /> Secure and mastered</h2>
           {model.secureAndMastered.length === 0 ? (
             <p className="mt-4 rounded-xl border border-dashed border-line bg-white p-4 text-sm font-semibold text-muted">
-              Nothing secure yet. Complete questions independently to unlock stronger evidence.
+              Nothing secure yet. Complete questions on your own to reach Secure status.
             </p>
           ) : (
             <div className="mt-4 grid gap-2">
@@ -154,7 +154,7 @@ export function DashboardLocalProgressSection() {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h2 className="m-0 text-xl font-extrabold">Quick links</h2>
-            <p className="mt-1 text-sm text-muted">Jump to practice and resources without changing your evidence.</p>
+            <p className="mt-1 text-sm text-muted">Jump to practice and resources without affecting your progress.</p>
           </div>
           <div className="grid grow grid-cols-3 gap-2 max-md:grid-cols-1 md:max-w-3xl">
             {model.quickLinks.map((link) => (
@@ -203,7 +203,7 @@ function PathEvidenceRow({ path }: { path: DashboardPathSummary }) {
 
 function ActivityList({ items }: { items: DashboardActivityItem[] }) {
   if (items.length === 0) {
-    return <p className="mt-4 rounded-xl border border-dashed border-line bg-white p-4 text-sm font-semibold text-muted">No recent activity yet. Your first genuine attempt will appear here.</p>;
+    return <p className="mt-4 rounded-xl border border-dashed border-line bg-white p-4 text-sm font-semibold text-muted">No recent activity yet. Your first answered question will appear here.</p>;
   }
   return (
     <div className="mt-4 grid gap-2">

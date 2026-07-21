@@ -54,7 +54,7 @@ export function HigherMathsHub() {
             </span>
             <div>
               <h1 className="m-0 text-[32px] font-extrabold leading-none">Higher Maths</h1>
-              <p className="mt-2 max-w-3xl text-base leading-relaxed text-muted">Structured SQA learning for Scottish students.</p>
+              <p className="mt-2 max-w-3xl text-base leading-relaxed text-muted">Structured Qualifications Scotland learning for Scottish students.</p>
               <p className="mt-2 text-sm font-bold text-muted">{skillPath.name} is available now. More Higher Maths paths are coming soon.</p>
             </div>
           </div>

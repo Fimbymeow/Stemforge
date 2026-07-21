@@ -1,6 +1,7 @@
 "use client";
 
 import { useProgressSync } from "@/components/progress-sync-provider";
+import { syncStatusLabel } from "@/components/progress-sync-status";
 
 export function ProgressSyncPanel({ accountFingerprint }: { accountFingerprint: string }) {
   const sync = useProgressSync();
@@ -13,22 +14,22 @@ export function ProgressSyncPanel({ accountFingerprint }: { accountFingerprint: 
     <section data-testid="progress-sync-panel" className="mt-5 rounded-xl border border-line bg-paper p-4" aria-live="polite">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="m-0 text-lg font-extrabold">Synchronization</h2>
+          <h2 className="m-0 text-lg font-extrabold">Sync across devices</h2>
           <p className="mb-0 mt-2 text-sm leading-relaxed text-muted">
-            {!ready ? "Checking synchronization availability..." : copyForStatus(sync.status, sync.pendingCount)}
+            {!ready ? "Checking sync status..." : copyForStatus(sync.status, sync.pendingCount)}
           </p>
         </div>
-        {ready ? <span className="rounded-full border border-line bg-white px-3 py-1 text-xs font-bold text-muted">{statusLabel(sync.status)}</span> : null}
+        {ready ? <span className="rounded-full border border-line bg-white px-3 py-1 text-xs font-bold text-muted">{syncStatusLabel(sync.status)}</span> : null}
       </div>
 
       {sync.differentAccount ? (
         <p className="mb-0 mt-3 rounded-lg border border-warning/30 bg-warning-soft p-3 text-sm leading-relaxed text-ink">
-          This browser contains progress associated with another account. Review the browser data before enabling sync.
+          This browser has progress from a different account. Review your browser data below before turning on sync.
         </p>
       ) : null}
       {associationRequired && ready ? (
         <p className="mb-0 mt-3 text-sm leading-relaxed text-muted">
-          Enabling sync adds browser evidence to this account and stores account evidence on this browser. Anyone using this browser may be able to see progress stored here.
+          Turning on sync adds this browser&apos;s progress to your account, and brings your account&apos;s progress to this browser. Anyone using this browser may be able to see progress stored here.
         </p>
       ) : null}
 
@@ -39,13 +40,13 @@ export function ProgressSyncPanel({ accountFingerprint }: { accountFingerprint: 
           <Metric label="Last upload" value={formatTimestamp(details.lastSuccessfulPushAt)} />
           <Metric label="Last download" value={formatTimestamp(details.lastSuccessfulPullAt)} />
           <Metric label="Last fully caught up" value={formatTimestamp(details.lastFullyCaughtUpAt)} />
-          <Metric label="Browser coordination" value={details.coordination === "web_locks" ? "Available" : details.coordination === "indexeddb" ? "Compatibility mode" : "Unavailable"} />
+          <Metric label="Multiple tabs" value={details.coordination === "web_locks" ? "Fully supported" : details.coordination === "indexeddb" ? "Partially supported" : "Not supported"} />
         </dl>
       ) : null}
 
       {details.permanentlyRejectedCount > 0 ? (
         <p className="mb-0 mt-3 text-xs leading-relaxed text-muted">
-          {details.permanentlyRejectedCount} saved record{details.permanentlyRejectedCount === 1 ? " needs" : "s need"} attention and will not retry unless its content changes. Nothing has been deleted.
+          {details.permanentlyRejectedCount} saved item{details.permanentlyRejectedCount === 1 ? " needs" : "s need"} attention and won&apos;t retry automatically unless something changes. Nothing has been deleted.
         </p>
       ) : null}
       {details.nextRetryAt ? <p className="mb-0 mt-2 text-xs text-muted">Next automatic retry {formatTimestamp(details.nextRetryAt)}.</p> : null}
@@ -53,7 +54,7 @@ export function ProgressSyncPanel({ accountFingerprint }: { accountFingerprint: 
       {ready ? (
         <div className="mt-4 grid gap-2 sm:grid-cols-2">
           {associationRequired ? (
-            <button className={primaryButton} onClick={() => void sync.confirmAssociation()}>Enable synchronization</button>
+            <button className={primaryButton} onClick={() => void sync.confirmAssociation()}>Turn on sync</button>
           ) : paused ? (
             <button className={primaryButton} onClick={() => void sync.resume()}>Resume sync</button>
           ) : (
@@ -71,20 +72,16 @@ function Metric({ label, value }: { label: string; value: string }) {
 }
 
 function copyForStatus(status: ReturnType<typeof useProgressSync>["status"], pending: number) {
-  if (status === "syncing") return "Synchronizing progress... Learning remains available.";
-  if (status === "caught_up") return "Progress on this browser can sync with your account.";
-  if (status === "pending_upload") return `${pending} saved evidence record${pending === 1 ? " is" : "s are"} waiting to sync.`;
+  if (status === "syncing") return "Syncing your progress... You can keep learning while this happens.";
+  if (status === "caught_up") return "This browser's progress can sync with your account.";
+  if (status === "pending_upload") return `${pending} change${pending === 1 ? "" : "s"} waiting to sync.`;
   if (status === "offline") return "Offline - progress is still being saved on this browser.";
   if (status === "temporary_error") return "Progress could not sync just now. Your browser progress is safe.";
   if (status === "authentication_required") return "Sign in again to continue syncing. Your browser progress is safe.";
-  if (status === "cleanup_required") return "This browser has older account progress to review before synchronization can continue.";
+  if (status === "cleanup_required") return "This browser has older account progress to review before sync can continue.";
   if (status === "paused") return "Sync is paused. Progress is still being saved on this browser.";
   if (status === "association_required") return "Confirm before this browser sends or receives account progress.";
   return "Progress is saved on this browser.";
-}
-
-function statusLabel(status: ReturnType<typeof useProgressSync>["status"]) {
-  return status.replaceAll("_", " ").replace(/^./, (value) => value.toUpperCase());
 }
 
 function formatTimestamp(value: string | null) {

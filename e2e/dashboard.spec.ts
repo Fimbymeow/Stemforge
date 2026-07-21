@@ -9,7 +9,7 @@ test("guest learner dashboard hydrates without errors and shows deterministic ev
   await expect(page.getByTestId("dashboard-progress-summary").getByRole("link", { name: "Start learning" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
   await expect(page.getByTestId("dashboard-progress-summary")).toContainText("0 / 8 completed");
   await expect(page.getByText("Saved on this browser")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Course evidence" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Course progress" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Recent activity" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Needs work" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Secure and mastered" })).toHaveCount(0);

@@ -117,7 +117,7 @@ export function GuestProgressImport({ accountFingerprint }: { accountFingerprint
     return <Panel title="Sign in again" body="Your session has expired. Sign in again to continue; browser progress is still safe." />;
   }
   if (state === "failure") {
-    return <Panel title="Import not completed" body="Progress could not be added just now. Nothing was deleted—please try again." action={<button className={secondaryButton} onClick={() => setState("confirming")}>Try again</button>} />;
+    return <Panel title="Progress not added" body="Progress could not be added just now. Nothing was deleted—please try again." action={<button className={secondaryButton} onClick={() => setState("confirming")}>Try again</button>} />;
   }
   if (state === "partial") {
     return <Panel title="Some progress was added" body="Some progress was added. A few records could not be processed and remain safely stored here." action={<button className={secondaryButton} onClick={() => setState("confirming")}>Review remaining progress</button>} />;
@@ -144,7 +144,7 @@ export function GuestProgressImport({ accountFingerprint }: { accountFingerprint
   if (state === "confirming") {
     return (
       <Panel
-        title="Confirm browser progress import"
+        title="Add progress to your account"
         body="Add this browser’s progress to your account? Existing account progress will be kept and matching records will not be duplicated."
         detail={countCopy}
         action={<div className="grid gap-2 sm:grid-cols-2"><button className={primaryButton} onClick={importProgress}>Add progress</button><button className={secondaryButton} onClick={() => setState("ready")}>Not now</button></div>}
@@ -155,7 +155,7 @@ export function GuestProgressImport({ accountFingerprint }: { accountFingerprint
     <Panel
       title="Progress from this browser is ready to add to your account."
       body={countCopy}
-      detail={`${"warning" in inspection && inspection.warning ? `${inspection.warning} ` : ""}This is a confirmed import, not continuous sync. Resetting progress on this browser does not remove progress already added to an account.`}
+      detail={`${"warning" in inspection && inspection.warning ? `${inspection.warning} ` : ""}This adds your progress once. It doesn't turn on automatic updates across devices, and resetting progress on this browser won't remove progress already added to your account.`}
       action={<button className={primaryButton} onClick={() => setState("confirming")}>Review and add progress</button>}
     />
   );

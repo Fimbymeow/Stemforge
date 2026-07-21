@@ -22,7 +22,7 @@ export const courseCatalog = [
     level: higherPhysics.level,
     subject: higherPhysics.subject,
     status: "Coming Soon",
-    description: "Structured SQA Higher Physics learning paths are being prepared.",
+    description: "Structured Qualifications Scotland Higher Physics learning paths are being prepared.",
     longDescription: higherPhysics.longDescription,
     href: higherPhysics.href,
     available: false,

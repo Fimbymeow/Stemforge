@@ -16,7 +16,7 @@ test("the question and answer dominate first arrival with accurate stage context
   await expect(page.getByTestId("stage-question-position")).toHaveText("Question 1 of 3 in Foundations");
   await expect(page.getByRole("heading", { level: 1, name: "Differentiate a power" })).toBeVisible();
   await expect(page.getByLabel("Your answer")).toBeVisible();
-  await expect(page.getByText("Original SQA-style practice; not copied from SQA materials.")).toBeHidden();
+  await expect(page.getByText("Original Qualifications Scotland-style practice; not copied from Qualifications Scotland materials.")).toBeHidden();
   const interaction = await page.getByTestId("question-interaction").boundingBox();
   expect(interaction).not.toBeNull();
   expect(interaction!.y).toBeLessThan(430);

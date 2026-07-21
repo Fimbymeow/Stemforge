@@ -4,7 +4,7 @@ import { SectionShell } from "./section-shell";
 const steps = [
   ["Learn", "Build understanding through focused topic practice."],
   ["Practise", "Build fluency with guided questions and useful support."],
-  ["Exam Questions", "Apply your knowledge to original SQA-style practice."],
+  ["Exam Questions", "Apply your knowledge to original Qualifications Scotland-style practice."],
   ["Master", "Track progress, learn from mistakes and reach mastery."],
 ] as const;
 

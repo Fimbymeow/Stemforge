@@ -30,6 +30,17 @@ export function MasteryBadge({ status, className = "" }: { status: CompletedTier
   );
 }
 
+/**
+ * Single source for progress-status display labels. Completed/Secure/Mastered read from the
+ * same TIER_LABEL map as MasteryBadge; every other status (not_started, in_progress, ...) falls
+ * back to the same split-and-capitalize rule, so the three previously independent formatters
+ * (here, local-skill-path-progress.tsx, higher-maths-question-bank.tsx) can't drift apart.
+ */
+export function formatProgressStatusLabel(status: string): string {
+  if (status in TIER_LABEL) return TIER_LABEL[status as CompletedTierStatus];
+  return status.split("_").map((part) => part[0]?.toUpperCase() + part.slice(1)).join(" ");
+}
+
 /** The one reserved-but-unused semantic token (`warning`) in the design system, used for exactly its intended meaning. */
 export function ReviewBadge({ count, className = "" }: { count: number; className?: string }) {
   if (count <= 0) return null;

@@ -7,7 +7,7 @@ export type StemForgeQuestion = {
   courseArea: "Our dynamic Universe";
   specArea: "Motion - equations and graphs";
   stage: QuestionStage;
-  difficulty: "Core" | "Secure" | "Challenge";
+  difficulty: "Core" | "Standard" | "Challenge";
   marks: number;
   timeEstimate: string;
   question: string;
@@ -123,7 +123,7 @@ export const questions: StemForgeQuestion[] = [
     courseArea: "Our dynamic Universe",
     specArea: "Motion - equations and graphs",
     stage: "Applications",
-    difficulty: "Secure",
+    difficulty: "Standard",
     marks: 3,
     timeEstimate: "~3 min",
     question: "A train accelerates from 5.0 m s^-1 to 25 m s^-1 in 10 s. Calculate the distance travelled during this time.",
@@ -142,7 +142,7 @@ export const questions: StemForgeQuestion[] = [
     courseArea: "Our dynamic Universe",
     specArea: "Motion - equations and graphs",
     stage: "Applications",
-    difficulty: "Secure",
+    difficulty: "Standard",
     marks: 3,
     timeEstimate: "~3 min",
     question: "A vehicle starts from rest and accelerates at 2.5 m s^-2 for 6.0 s. Calculate the distance travelled.",
@@ -161,7 +161,7 @@ export const questions: StemForgeQuestion[] = [
     courseArea: "Our dynamic Universe",
     specArea: "Motion - equations and graphs",
     stage: "Applications",
-    difficulty: "Secure",
+    difficulty: "Standard",
     marks: 3,
     timeEstimate: "~3 min",
     question: "A ball is thrown upwards at 18 m s^-1. Taking acceleration as -9.8 m s^-2, calculate the time to reach maximum height.",
@@ -180,7 +180,7 @@ export const questions: StemForgeQuestion[] = [
     courseArea: "Our dynamic Universe",
     specArea: "Motion - equations and graphs",
     stage: "Applications",
-    difficulty: "Secure",
+    difficulty: "Standard",
     marks: 3,
     timeEstimate: "~3 min",
     question: "A car brakes uniformly from 20 m s^-1 to rest in 4.0 s. Calculate the braking distance.",
@@ -199,7 +199,7 @@ export const questions: StemForgeQuestion[] = [
     courseArea: "Our dynamic Universe",
     specArea: "Motion - equations and graphs",
     stage: "Applications",
-    difficulty: "Secure",
+    difficulty: "Standard",
     marks: 3,
     timeEstimate: "~3 min",
     question: "A cyclist travels 60 m while accelerating uniformly from 2.0 m s^-1 to 10 m s^-1. Calculate the time taken.",

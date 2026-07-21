@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { RotateCcw, Target, TrendingUp } from "lucide-react";
 import { Card, ProgressBar } from "@/components/ui";
-import { isCompletedTierStatus, MasteryBadge, ReviewBadge, type CompletedTierStatus } from "@/components/learning/mastery-badge";
+import { formatProgressStatusLabel, isCompletedTierStatus, MasteryBadge, ReviewBadge, type CompletedTierStatus } from "@/components/learning/mastery-badge";
 import { getPathCompletionSupportingSentence } from "@/components/learning/path-completion-panel";
 import { acknowledgeStatus, clearPathCelebration, getPathCelebration, isAcknowledgedStatusUpgrade } from "@/lib/completion-tracking";
 import { getSkillPathHref, getSubjectForSkillPath } from "@/lib/learning-paths";
@@ -83,7 +83,7 @@ function MasteryUpgradeBanner({ skillPathId, status }: { skillPathId: string; st
       data-testid="mastery-upgrade-banner"
       className="animate-fade-rise flex items-center justify-between gap-3 rounded-lg border border-forge/25 bg-forge-soft px-4 py-2.5 text-sm font-bold text-forge"
     >
-      <span>This path is now {formatStatus(status)}.</span>
+      <span>This path is now {formatProgressStatusLabel(status)}.</span>
       <button
         type="button"
         aria-label="Dismiss"
@@ -163,7 +163,7 @@ export function LocalSkillPathProgressOverview({ skillPath }: { skillPath: Skill
                 <ReviewBadge count={progress.reviewQuestionIds.length} className="normal-case" />
               </>
             ) : (
-              <span>· {formatStatus(progress.status)}</span>
+              <span>· {formatProgressStatusLabel(progress.status)}</span>
             )}
           </p>
           <div className="grid gap-4">
@@ -205,10 +205,6 @@ function VersionProgressNotice({ progress }: { progress: SkillPathProgress }) {
     return <p data-testid="version-progress-notice" className="mb-4 text-sm font-bold text-forge">New practice available.</p>;
   }
   return null;
-}
-
-function formatStatus(status: string) {
-  return status.split("_").map((part) => part[0]?.toUpperCase() + part.slice(1)).join(" ");
 }
 
 export function LocalProgressControls({ skillPath }: { skillPath: SkillPath }) {
@@ -254,7 +250,7 @@ export function LocalSkillPathHeroProgress({ skillPath }: { skillPath: SkillPath
           {isCompletedTierStatus(progress.status) ? (
             <MasteryBadge status={progress.status} className="text-sm" />
           ) : (
-            <strong className="block text-xl">{formatStatus(progress.status)}</strong>
+            <strong className="block text-xl">{formatProgressStatusLabel(progress.status)}</strong>
           )}
           <span className="mt-1 block text-sm text-muted">Mastery</span>
         </div>

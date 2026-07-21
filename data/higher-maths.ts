@@ -25,7 +25,7 @@ export const higherMaths: Subject = {
   level: "Higher",
   status: "available",
   isAvailable: true,
-  description: "A focused proof-of-concept pathway for SQA Higher Maths.",
+  description: "A focused Higher Maths learning pathway.",
   longDescription:
     "Master Higher Maths through structured practice, clean worked solutions and exam-focused progression.",
   href: "/subjects/higher-maths",

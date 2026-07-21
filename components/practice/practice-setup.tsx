@@ -18,8 +18,8 @@ import type { PracticeMode, PracticeTiming } from "@/lib/practice/practice-types
 const modeCopy: Record<PracticeMode, { title: string; detail: string }> = {
   targeted: { title: "Targeted practice", detail: "Focus on one available path." },
   mixed: { title: "Mixed practice from available content", detail: "Balance questions across selected available paths." },
-  needs_work: { title: "Needs-work practice", detail: "Uses existing review and completion evidence. No diagnosis from zero evidence." },
-  retry_incorrect: { title: "Retry incorrect", detail: "Uses your latest current-version genuine attempts." },
+  needs_work: { title: "Needs-work practice", detail: "Uses your review recommendations and unfinished questions. Nothing appears until you've answered some questions." },
+  retry_incorrect: { title: "Retry incorrect", detail: "Practises only the questions you most recently got wrong." },
 };
 
 export function PracticeSetup() {
@@ -85,7 +85,7 @@ export function PracticeSetup() {
           <div>
             <p className="font-mono text-xs font-extrabold uppercase text-forge">Revision and assessment</p>
             <h1 className="m-0 mt-2 text-[34px] font-extrabold leading-none">Practice sessions</h1>
-            <p className="mt-3 max-w-3xl text-muted">Build a short session from currently available canonical questions. More content appears automatically as it is registered.</p>
+            <p className="mt-3 max-w-3xl text-muted">Build a short session from currently available questions. More content will appear here as it&apos;s added.</p>
           </div>
           <AppTopbar demo={false} />
         </header>
@@ -152,13 +152,13 @@ export function PracticeSetup() {
                 <h2 className="m-0 text-lg font-extrabold">Session preview</h2>
               </div>
               <p className="text-sm text-muted">{preview.shortageReason ?? `${preview.session?.questionReferences.length ?? 0} questions selected from available content.`}</p>
-              <p className="mt-3 text-sm font-bold">{preview.eligibleQuestions.length} eligible question{preview.eligibleQuestions.length === 1 ? "" : "s"} found.</p>
+              <p className="mt-3 text-sm font-bold">{preview.eligibleQuestions.length} question{preview.eligibleQuestions.length === 1 ? "" : "s"} available.</p>
               <button type="button" onClick={startSession} disabled={!preview.session} className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-forge px-4 font-extrabold text-white disabled:opacity-45">
                 Start session <ArrowRight className="size-5" />
               </button>
             </Card>
             <Card className="p-4 text-sm text-muted">
-              Session state stays on this browser. Submitted answers remain normal progress evidence and can sync when account sync is enabled.
+              Session progress stays on this browser. Submitted answers count as normal progress and sync if you&apos;ve turned that on.
             </Card>
             <Link href="/dashboard" className="text-sm font-bold text-forge">Back to dashboard</Link>
           </aside>

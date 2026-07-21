@@ -47,11 +47,11 @@ export function AlgebraicInput(props: InputProps) {
 }
 
 export function WrittenAnswerInput(props: InputProps) {
-  return <TextAreaInput {...props} placeholder="Write your answer. Guided marking will be added later." />;
+  return <TextAreaInput {...props} placeholder="Write your answer, then compare it with the worked solution." />;
 }
 
 export function MultiStepInput(props: InputProps) {
-  return <TextAreaInput {...props} placeholder="Show your working. Structured multi-step marking will be added later." />;
+  return <TextAreaInput {...props} placeholder="Show your working, then compare it with the worked solution." />;
 }
 
 function TextInput({ value, submitted, onChange, placeholder, helper, showKeypad = false, inputId = "question-answer", describedBy, invalid }: InputProps & { placeholder: string; helper?: string; showKeypad?: boolean }) {

@@ -24,8 +24,8 @@ export function SafeSignOut({ action }: { action: (formData: FormData) => void |
     } catch {
       setBusy(false);
       setError(removeAccountData
-        ? "Account data could not be removed and verified. You are still signed in; retry removal or choose to keep progress on this browser."
-        : "Synchronization could not be stopped safely. Please try signing out again.");
+        ? "Account data couldn't be removed and confirmed. You're still signed in — try again, or choose to keep progress on this browser."
+        : "Sync couldn't be stopped safely. Please try signing out again.");
     }
   }
 
@@ -41,7 +41,7 @@ export function SafeSignOut({ action }: { action: (formData: FormData) => void |
       {confirmRemove ? (
         <div role="alertdialog" aria-modal="true" aria-labelledby="sign-out-removal-title" className="mt-4 rounded-lg border border-danger/30 bg-danger-soft p-4">
           <h3 id="sign-out-removal-title" className="m-0 text-base font-extrabold">Remove account data and sign out?</h3>
-          <p className="mb-0 mt-2 text-sm leading-relaxed">This removes locally stored progress safely associated with this account from this browser. Anonymous and unknown-origin evidence is preserved. It does not delete progress stored in your account or on other devices.</p>
+          <p className="mb-0 mt-2 text-sm leading-relaxed">This removes progress on this browser that belongs to this account. Progress that might belong to someone else, or whose origin isn&apos;t known, is left alone. It does not delete progress stored in your account or on other devices.</p>
           <div className="mt-4 grid gap-2 sm:grid-cols-2">
             <button type="button" disabled={busy} className={dangerSolidButton} onClick={() => void submit(true)}>Remove and sign out</button>
             <button ref={cancelRef} type="button" disabled={busy} className={secondaryButton} onClick={() => setConfirmRemove(false)}>Cancel</button>

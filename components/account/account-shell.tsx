@@ -31,7 +31,7 @@ export function AccountShell({
         </Card>
         <p className="mt-6 text-center text-sm leading-relaxed text-muted">
           Accounts are optional and learning works without one. Signing in never uploads browser progress automatically.
-          Confirmed import and cross-device synchronization remain separate, explicit choices.
+          Adding this browser&apos;s progress to your account, and keeping progress updated across devices, are separate choices you make yourself.
         </p>
       </div>
     </main>
@@ -40,7 +40,7 @@ export function AccountShell({
 
 export function AccountUnavailable() {
   return (
-    <AccountShell title="Accounts are not available" introduction="The optional account preview is disabled or has not been configured for this environment.">
+    <AccountShell title="Accounts are not available" introduction="Accounts aren't available right now.">
       <Link href="/dashboard" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-md bg-forge px-6 text-sm font-extrabold uppercase text-white">
         Continue as a guest
       </Link>

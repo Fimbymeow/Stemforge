@@ -30,7 +30,7 @@ test("resources, topbar controls and app landmarks are functionally honest", asy
 test("fresh dashboard and single-path practice omit meaningless zero-value choices", async ({ page }) => {
   await page.goto("/dashboard");
   await expect(page.getByText("No activity in the last 7 days")).toHaveCount(0);
-  await expect(page.getByRole("heading", { name: "Course evidence" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Course progress" })).toHaveCount(0);
   await expect(page.getByText("Milestones", { exact: true })).toHaveCount(0);
   await expect(page.getByText("Days", { exact: true })).toHaveCount(0);
   await expect(page.getByText("Attempts", { exact: true })).toHaveCount(0);

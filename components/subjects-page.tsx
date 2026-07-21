@@ -33,7 +33,7 @@ export function SubjectsPage({ mode }: { mode: SubjectsMode }) {
             </span>
             <div>
               <h1 className="m-0 text-[32px] font-extrabold leading-none">Subjects</h1>
-              <p className="mt-2 max-w-3xl text-base leading-relaxed text-muted">Structured SQA learning for Scottish students. Choose a subject to get started.</p>
+              <p className="mt-2 max-w-3xl text-base leading-relaxed text-muted">Structured Qualifications Scotland learning for Scottish students. Choose a subject to get started.</p>
             </div>
           </div>
         </header>

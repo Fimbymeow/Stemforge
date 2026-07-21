@@ -7,7 +7,7 @@ test("guest targeted practice starts, uses the canonical question workspace, per
   watchErrors(page, errors);
   await page.goto("/practice");
   await expect(page.getByRole("heading", { name: "Practice sessions" })).toBeVisible();
-  await expect(page.getByText(/eligible question/i)).toBeVisible();
+  await expect(page.getByText(/\d+ questions? available\./i)).toBeVisible();
   await page.getByRole("button", { name: /Start session/i }).click();
   await expect(page).toHaveURL(/\/practice\/session\//);
   await expect(page.getByTestId("practice-session-panel")).toContainText(/Question 1 of/);
@@ -74,14 +74,14 @@ test("retry-incorrect appears after an incorrect attempt and later correct remov
   await page.goto("/practice");
   const initiallyUnavailable = page.getByRole("button", { name: /Retry incorrect/i });
   await expect(initiallyUnavailable).toBeDisabled();
-  await expect(initiallyUnavailable).toContainText(/There are no current-version incorrect attempts/i);
+  await expect(initiallyUnavailable).toContainText(/There are no recent incorrect answers/i);
   await page.goto("/question/hm-calc-diff-basic-f-001");
   await page.getByLabel("Your answer").fill("x^4");
   await page.getByRole("button", { name: "Submit Answer" }).click();
   await expect(page.getByTestId("question-status")).toContainText("Not quite");
   await page.goto("/practice");
   await page.getByRole("button", { name: /Retry incorrect/i }).click();
-  await expect(page.getByText(/1 eligible question/i)).toBeVisible();
+  await expect(page.getByText(/1 question available/i)).toBeVisible();
   await page.goto("/question/hm-calc-diff-basic-f-001");
   await page.getByLabel("Your answer").fill("5x^4");
   await page.getByRole("button", { name: "Submit Answer" }).click();
@@ -89,7 +89,7 @@ test("retry-incorrect appears after an incorrect attempt and later correct remov
   await page.goto("/practice");
   const noLongerAvailable = page.getByRole("button", { name: /Retry incorrect/i });
   await expect(noLongerAvailable).toBeDisabled();
-  await expect(noLongerAvailable).toContainText(/There are no current-version incorrect attempts/i);
+  await expect(noLongerAvailable).toContainText(/There are no recent incorrect answers/i);
 });
 
 test("timed practice expires without submitting blank answers and mobile layout has no overflow", async ({ page }) => {

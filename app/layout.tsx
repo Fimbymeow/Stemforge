@@ -11,8 +11,8 @@ const inter = Inter({
   display: "swap",
 });
 
-const title = "STEM Forge - Structured SQA STEM Learning";
-const description = "A calm, guided learning platform for Scottish SQA STEM students. Start with Higher Maths Basic differentiation.";
+const title = "STEM Forge - Structured Qualifications Scotland STEM Learning";
+const description = "A calm, guided learning platform for Qualifications Scotland STEM students. Start with Higher Maths Basic differentiation.";
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
   ?? (process.env.VERCEL_ENV === "production" ? "https://stemforge-6an8.vercel.app" : "http://localhost:3000");
 

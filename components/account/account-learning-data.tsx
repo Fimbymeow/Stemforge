@@ -77,8 +77,8 @@ export function AccountLearningData() {
     setBusy(true); setMessage(null);
     try {
       const removed = await sync.reconcileRemoteErasure(request.generationBefore, request.generationAfter);
-      setBrowserClean(true); setMessage(`${removed} older account-attributable browser record${removed === 1 ? " was" : "s were"} removed. Anonymous progress never acknowledged remotely was preserved.`);
-    } catch { setMessage("Remote learning progress was deleted, but this browser could not be verified as clean. Export its data, retry, or clear all browser progress."); }
+      setBrowserClean(true); setMessage(`${removed} older item${removed === 1 ? " belonging" : "s belonging"} to this account ${removed === 1 ? "was" : "were"} removed from this browser. Progress never added to your account was left alone.`);
+    } catch { setMessage("Your account's learning progress was deleted, but this browser couldn't be confirmed clean. Export its data, retry, or clear all browser progress."); }
     finally { setBusy(false); }
   }
 
@@ -96,26 +96,26 @@ export function AccountLearningData() {
           <button className={secondaryButton} type="button" disabled={busy || !password} onClick={() => void exportRemote()}>Download remote account learning data</button>
           <p className="mb-0 mt-4 text-sm">Download progress and account-related information stored on this browser.</p>
           <button className={secondaryButton} type="button" onClick={() => downloadCurrentBrowserExport(window.localStorage)}>Download this browser&apos;s data</button>
-          <p className="mb-0 mt-2 text-xs text-muted">The account export covers remotely stored learning evidence. The browser export contains only this browser&apos;s local data and works in guest mode.</p>
+          <p className="mb-0 mt-2 text-xs text-muted">The account export covers the learning progress stored in your account. The browser export contains only this browser&apos;s local data and works without an account.</p>
         </div>
 
         <div className="rounded-lg border border-danger/30 bg-danger-soft p-4">
           <h3 className="m-0 text-base font-extrabold">Delete learning progress stored in your STEM Forge account.</h3>
           <p className="mb-0 mt-2 text-sm">This deletes remotely stored attempts, support activity, achievement records and retained progress conflicts. Your login account will remain active.</p>
           <p className="mb-0 mt-2 text-sm">Progress created without an account may remain on this browser unless you clear it separately. Offline browsers may need reconciliation.</p>
-          <p className="mb-0 mt-2 text-xs">Deleted data may remain in restricted backups until those backups expire. The provisional target is a 30-day rolling retention and depends on deployment configuration.</p>
+          <p className="mb-0 mt-2 text-xs">Deleted data may remain in secure backups for up to 30 days before those backups expire. This is a provisional target and may change.</p>
           {!request || request.status === "cancelled" ? <button className={dangerButton} type="button" disabled={busy} onClick={() => void mutate("/api/account-data/erasure", {})}>Start deletion</button> : null}
           {request?.status === "awaiting_reauthentication" ? <div><p className="text-sm font-bold">Confirm your identity again before continuing.</p><button className={dangerButton} disabled={busy || !password} onClick={() => void mutate("/api/account-data/erasure/reauthenticate", { requestId: request.requestId, password })}>Confirm password</button></div> : null}
           {request?.status === "awaiting_confirmation" ? <div><p className="text-sm">Review: remote learning progress is deleted; the login remains active; offline browsers may need reconciliation; anonymous local progress may remain; processing is irreversible.</p><label className="block text-sm font-bold">Type DELETE MY LEARNING DATA to confirm.<input className={inputClass} value={confirmation} onChange={(event) => setConfirmation(event.target.value)} /></label><button className={dangerButton} disabled={busy || confirmation !== ERASURE_CONFIRMATION_TEXT} onClick={() => void mutate("/api/account-data/erasure/confirm", { requestId: request.requestId, confirmation })}>Schedule deletion</button></div> : null}
           {request?.status === "scheduled" ? <div role="status"><p className="text-sm font-bold">Deletion will begin in 10 minutes. You can cancel until processing starts.</p><p className="text-sm">Approximately {scheduledSeconds} seconds remain. After processing begins, this cannot be undone.</p><button className={secondaryButton} disabled={busy || scheduledSeconds === 0} onClick={() => void mutate("/api/account-data/erasure/cancel", { requestId: request.requestId })}>Cancel deletion</button></div> : null}
-          {request?.status === "processing" ? <p role="status" className="text-sm font-bold">Deletion is being processed. Synchronization is paused on every device.</p> : null}
-          {request?.status === "failed_retryable" ? <p role="alert" className="text-sm font-bold">Deletion could not finish safely. Synchronization remains paused; retry status processing or contact support.</p> : null}
+          {request?.status === "processing" ? <p role="status" className="text-sm font-bold">Deletion is being processed. Sync is paused on every device.</p> : null}
+          {request?.status === "failed_retryable" ? <p role="alert" className="text-sm font-bold">Deletion couldn&apos;t finish safely. Sync remains paused — retry, or contact support.</p> : null}
           {request?.status === "cancelled" ? <p role="status" className="text-sm font-bold">Deletion was cancelled before processing began.</p> : null}
           {request?.status === "completed" ? <div><p role="status" className="text-sm font-bold">Remote learning progress was deleted.</p>{!browserClean ? <><p className="text-sm">This browser still contains older local copies. Review and clean them before syncing again.</p><button className={dangerButton} disabled={busy} onClick={() => void reconcile()}>Reconcile this browser</button></> : <p className="text-sm font-bold">Remote deletion and this browser&apos;s cleanup are complete.</p>}</div> : null}
         </div>
       </div>
       {message ? <p role="status" className="mt-4 rounded-lg border border-line bg-paper p-3 text-sm">{message}</p> : null}
-      {generation ? <p className="mb-0 mt-3 text-xs text-muted">Account data generation {generation}. Old browser generations cannot synchronize until reviewed.</p> : null}
+      {generation ? <p className="mb-0 mt-3 text-xs text-muted">Account data version {generation}. Browsers with an older copy can&apos;t sync until they&apos;re reviewed.</p> : null}
     </section>
   );
 }

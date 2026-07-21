@@ -17,6 +17,10 @@ type ReportDialogProps = {
   className?: string;
 };
 
+function formatPageArea(value: string | null | undefined) {
+  return value ? value.replaceAll("_", " ") : value;
+}
+
 const kindLabels: Record<BetaReportKind, string> = {
   bug: "Something is broken",
   feedback: "General feedback",
@@ -126,7 +130,7 @@ export function ReportDialog({
       });
       setMessage("");
       setContactEmail("");
-      setResultMessage(`Report ${body.reportId} saved. Thanks — that gives us a clean breadcrumb without sending your answers.`);
+      setResultMessage(`Report ${body.reportId} saved. Thanks — that gives us enough to look into it without sending your answers.`);
     } catch {
       setState("failed");
       setResultMessage("Feedback could not be sent just now. Please try again in a moment.");
@@ -187,9 +191,9 @@ export function ReportDialog({
               </label>
               {diagnostics ? (
                 <div className="rounded-xl border border-line bg-paper p-3 text-xs text-muted">
-                  <p className="font-bold text-ink">Attached safe context</p>
-                  <p className="mt-1">Page: {diagnostics.route} · Area: {diagnostics.pageArea ?? "general"} · Device: {diagnostics.viewportCategory} · Online: {diagnostics.online ? "yes" : "no"}</p>
-                  {diagnostics.contentReference?.questionId ? <p>Content: {diagnostics.contentReference.questionId} v{diagnostics.contentReference.questionVersion ?? "?"}</p> : null}
+                  <p className="font-bold text-ink">What we&apos;ll attach</p>
+                  <p className="mt-1">Page: {diagnostics.route} · Area: {formatPageArea(diagnostics.pageArea) ?? "general"} · Device: {diagnostics.viewportCategory} · Online: {diagnostics.online ? "yes" : "no"}</p>
+                  {diagnostics.contentReference?.questionId ? <p>Question: {diagnostics.contentReference.questionId} (version {diagnostics.contentReference.questionVersion ?? "unknown"})</p> : null}
                 </div>
               ) : null}
               {resultMessage ? (

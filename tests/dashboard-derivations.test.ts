@@ -78,7 +78,7 @@ test("sync states are conservative and do not require public credentials", () =>
   });
 
   assert.equal(model.sync.label, "Waiting to sync");
-  assert.match(model.sync.detail, /3 local evidence items/);
+  assert.match(model.sync.detail, /3 local changes/);
 });
 
 function now() {

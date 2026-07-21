@@ -27,13 +27,13 @@ test("two authenticated devices converge safely through incremental evidence syn
     expect(syncContext.status(), "trusted sync context should resolve for the signed-in test user").toBe(200);
     await expect(pageA.getByTestId("progress-sync-panel")).toContainText("Confirm before");
     expect(deviceAPushes).toBe(0);
-    await pageA.getByRole("button", { name: "Enable synchronization" }).click();
+    await pageA.getByRole("button", { name: "Turn on sync" }).click();
     await expect(pageA.getByTestId("progress-sync-panel")).toContainText("can sync with your account");
     expect(deviceAPushes).toBeGreaterThan(0);
 
     await seed(pageB, []);
     await signIn(pageB);
-    await pageB.getByRole("button", { name: "Enable synchronization" }).click();
+    await pageB.getByRole("button", { name: "Turn on sync" }).click();
     await expect(pageB.getByTestId("progress-sync-panel")).toContainText("can sync with your account");
     await expectIds(pageB, [deviceAEvent.eventId]);
 

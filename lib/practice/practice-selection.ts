@@ -195,8 +195,8 @@ function clampQuestionCount(count: number) {
 
 function emptyReason(mode: PracticeMode) {
   if (mode === "needs_work") return "Complete a few questions first so STEM Forge can identify useful areas to revisit.";
-  if (mode === "retry_incorrect") return "There are no current-version incorrect attempts to retry right now.";
-  return "No eligible questions are available for this practice setup yet.";
+  if (mode === "retry_incorrect") return "There are no recent incorrect answers to retry right now.";
+  return "No questions are available for this practice setup yet.";
 }
 
 function createSessionId(mode: PracticeMode, seed: string, now: Date) {

@@ -23,17 +23,17 @@ export function AccountDataControls() {
     try {
       if (action === "association") {
         await sync.removeAssociation();
-        setMessage("This browser is no longer associated for synchronization. Browser progress remains here.");
+        setMessage("This browser is no longer linked for sync. Your progress on this browser is unchanged.");
       } else if (action === "account_progress") {
         const removed = await sync.removeCurrentAccountData();
-        setMessage(`${removed} safely attributable record${removed === 1 ? " was" : "s were"} removed from this browser. Remote account progress and conservative unknown-origin records were not deleted.`);
+        setMessage(`${removed} item${removed === 1 ? " was" : "s were"} removed from this browser. Progress that might belong to another account, or whose origin isn't known, was left alone to avoid deleting anything by mistake.`);
       } else {
         await sync.clearAllBrowserProgress();
-        setMessage("All STEM Forge progress and account-sync information was cleared from this browser. Synced account progress was not deleted.");
+        setMessage("All STEM Forge progress and account information was cleared from this browser. Your account's progress, already kept in sync, was not deleted.");
       }
       setConfirmation(null);
     } catch {
-      setMessage("The browser data change could not be verified, so completion was not claimed. Please try again or keep the data on this browser.");
+      setMessage("This browser change couldn't be confirmed, so we're not claiming it worked. Please try again, or leave the data on this browser for now.");
     } finally {
       setBusy(false);
     }
@@ -48,10 +48,10 @@ export function AccountDataControls() {
         <Metric label="Anonymous progress" value={data.anonymous} />
         <Metric label="Current account" value={data.currentAccount} />
         <Metric label="Other accounts" value={data.otherAccounts} />
-        <Metric label="Unknown origin" value={data.legacyUnknown} />
+        <Metric label="Not linked to an account" value={data.legacyUnknown} />
       </dl>
       {sync.diagnostics.provenanceStatus === "unsupported_future" ? (
-        <p className="mb-0 mt-3 rounded-lg border border-warning/30 bg-warning-soft p-3 text-sm">Browser data uses a newer safety format. Destructive controls are disabled to avoid losing progress.</p>
+        <p className="mb-0 mt-3 rounded-lg border border-warning/30 bg-warning-soft p-3 text-sm">This browser&apos;s data is in a newer format than this version supports. Removal buttons are turned off to avoid losing progress.</p>
       ) : null}
 
       <div className="mt-4 grid gap-2">
@@ -82,9 +82,9 @@ function Metric({ label, value }: { label: string; value: number }) {
 }
 
 function confirmationCopy(action: Exclude<Confirmation, null>) {
-  if (action === "association") return "This removes this account's local sync cursor and acknowledgements. Learning progress remains on this browser and remote account progress is not deleted.";
-  if (action === "account_progress") return "This removes locally stored progress safely attributable to this account from this browser. Anonymous, other-account and unknown-origin evidence is preserved. It does not delete progress stored in your account or on other devices.";
-  return "This clears STEM Forge progress, sync/import information, provenance and completion acknowledgements from this browser. Synced account progress is not deleted.";
+  if (action === "association") return "This turns off sync for this account on this browser. Your progress stays on this browser, and nothing is deleted from your account.";
+  if (action === "account_progress") return "This removes progress on this browser that belongs to this account. Progress that might belong to someone else, or whose origin isn't known, is left alone. It does not delete progress stored in your account or on other devices.";
+  return "This clears all STEM Forge progress and account information from this browser, including anything already added to or kept in sync with your account. Your account's own progress is not deleted.";
 }
 
 const secondaryButton = "min-h-11 w-full rounded-md border border-ink bg-white px-4 text-sm font-extrabold text-ink";
