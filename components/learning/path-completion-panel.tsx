@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { Check } from "lucide-react";
 import { Card } from "@/components/ui";
-import { getQuestionHref, getSkillPathHref, getSubjectForSkillPath } from "@/lib/learning-paths";
+import { getSkillPathHref, getSubjectForSkillPath } from "@/lib/learning-paths";
 import { MasteryBadge, ReviewBadge, type CompletedTierStatus } from "@/components/learning/mastery-badge";
 import type { SkillPath } from "@/data/types";
 import type { SkillPathProgress } from "@/lib/local-progress";
+import type { LearnerNextAction } from "@/lib/learning/next-action";
 
 export function getPathCompletionSupportingSentence(status: CompletedTierStatus, reviewCount: number) {
   if (reviewCount > 0) {
@@ -19,7 +20,7 @@ export function getPathCompletionSupportingSentence(status: CompletedTierStatus,
  * The one-time completion moment. Renders in place of the Previous/Next row in
  * QuestionWorkspace, only on the submission where the path crosses incomplete -> complete.
  */
-export function PathCompletionPanel({ skillPath, progress }: { skillPath: SkillPath; progress: SkillPathProgress }) {
+export function PathCompletionPanel({ skillPath, progress, nextAction }: { skillPath: SkillPath; progress: SkillPathProgress; nextAction: LearnerNextAction }) {
   const status = progress.status as CompletedTierStatus;
   const reviewCount = progress.reviewQuestionIds.length;
   const heading = `${skillPath.name} ${status === "completed" ? "complete" : status}`;
@@ -27,11 +28,7 @@ export function PathCompletionPanel({ skillPath, progress }: { skillPath: SkillP
   const subject = getSubjectForSkillPath(skillPath);
   const subjectAction = { href: subject?.href ?? "/subjects", label: `Return to ${subject?.subjectName ?? "subject"}` };
 
-  const reviewHref = reviewCount > 0 ? getQuestionHref(progress.reviewQuestionIds[0]) : undefined;
-  const primary = reviewHref
-    ? { href: reviewHref, label: "Review recommended questions" }
-    : subjectAction;
-  const secondary = reviewHref
+  const secondary = nextAction.kind === "review_question"
     ? subjectAction
     : { href: getSkillPathHref(skillPath), label: "Review a stage" };
 
@@ -45,7 +42,7 @@ export function PathCompletionPanel({ skillPath, progress }: { skillPath: SkillP
             <ReviewBadge count={reviewCount} />
           </div>
           <h2 className="m-0 text-lg font-extrabold">{heading}</h2>
-          <p className="mt-2 text-ink">{supporting}</p>
+          <p id="completion-next-action-reason" className="mt-2 text-ink">{supporting} {nextAction.reason}</p>
           <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm font-bold text-muted">
             <span>{progress.completedQuestionIds.length} / {progress.totalQuestions} completed</span>
             <span>
@@ -55,13 +52,14 @@ export function PathCompletionPanel({ skillPath, progress }: { skillPath: SkillP
             </span>
           </div>
           <div className="mt-4 flex flex-wrap gap-3">
-            <Link
-              href={primary.href}
+            {nextAction.href ? <Link
+              href={nextAction.href}
               data-testid="path-completion-primary-action"
+              aria-describedby="completion-next-action-reason"
               className="inline-flex min-h-10 items-center justify-center rounded-lg bg-forge px-5 text-sm font-extrabold text-white max-md:w-full"
             >
-              {primary.label}
-            </Link>
+              {nextAction.label}
+            </Link> : null}
             <Link
               href={secondary.href}
               className="inline-flex min-h-10 items-center justify-center rounded-lg border border-line bg-white px-5 text-sm font-extrabold max-md:w-full"

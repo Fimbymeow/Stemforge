@@ -9,15 +9,18 @@ import { Card, ProgressBar } from "@/components/ui";
 import { SubjectRoadmapNavigator } from "@/components/learning/subject-roadmap-navigator";
 import { isCompletedTierStatus, MasteryBadge, ReviewBadge, type CompletedTierStatus } from "@/components/learning/mastery-badge";
 import { getPathCompletionSupportingSentence } from "@/components/learning/path-completion-panel";
-import { getActiveSkillPath, getActiveSubject, getQuestionBankHref, getQuestionHref, getSkillPathHref } from "@/lib/learning-paths";
-import { getEmptyProgressEvidence, getNextQuestionId, getSkillPathProgress } from "@/lib/local-progress";
+import { getActiveSkillPath, getActiveSubject, getQuestionBankHref } from "@/lib/learning-paths";
+import { getEmptyProgressEvidence, getSkillPathProgress } from "@/lib/local-progress";
 import { useHasMounted } from "@/lib/use-mounted";
+import { useLearnerNextAction } from "@/components/learning/use-learner-next-action";
+import type { LearnerNextAction } from "@/lib/learning/next-action";
 
 export function HigherMathsHub() {
   const subject = getActiveSubject();
   const skillPath = getActiveSkillPath();
   const [version, setVersion] = useState(0);
   const hasMounted = useHasMounted();
+  const nextAction = useLearnerNextAction();
 
   useEffect(() => {
     const update = () => setVersion((current) => current + 1);
@@ -32,8 +35,6 @@ export function HigherMathsHub() {
   void version;
   const evidenceOverride = hasMounted ? undefined : getEmptyProgressEvidence();
   const progress = getSkillPathProgress(skillPath, evidenceOverride);
-  const nextQuestionId = getNextQuestionId(skillPath, evidenceOverride);
-  const continueHref = nextQuestionId ? getQuestionHref(nextQuestionId) : getSkillPathHref(skillPath);
 
   return (
     <AppShell demo active="Subjects">
@@ -61,7 +62,7 @@ export function HigherMathsHub() {
 
         <section>
           <h2 className="mb-2 text-lg font-extrabold">Start here</h2>
-          <GuidedPathCard progress={progress} continueHref={continueHref} skillPathName={skillPath.name} />
+          <GuidedPathCard progress={progress} nextAction={nextAction} skillPathName={skillPath.name} />
         </section>
 
         <SubjectRoadmapNavigator subject={subject} />
@@ -72,16 +73,16 @@ export function HigherMathsHub() {
 
 function GuidedPathCard({
   progress,
-  continueHref,
+  nextAction,
   skillPathName,
 }: {
   progress: ReturnType<typeof getSkillPathProgress>;
-  continueHref: string;
+  nextAction: LearnerNextAction;
   skillPathName: string;
 }) {
   const isComplete = progress.totalQuestions > 0 && progress.completedQuestionIds.length >= progress.totalQuestions;
   if (isComplete && isCompletedTierStatus(progress.status)) {
-    return <CompletedGuidedPathCard progress={progress} status={progress.status} skillPathName={skillPathName} />;
+    return <CompletedGuidedPathCard progress={progress} status={progress.status} skillPathName={skillPathName} nextAction={nextAction} />;
   }
 
   return (
@@ -93,7 +94,7 @@ function GuidedPathCard({
         <div>
           <p className="mb-1 text-xs font-extrabold uppercase text-forge">Recommended</p>
           <h3 className="m-0 text-xl font-extrabold">Guided Learning Path</h3>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">Follow a structured route through Higher Maths skills, starting with {skillPathName}.</p>
+          <p id="hub-next-action-reason" className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">{nextAction.reason}</p>
           <div className="mt-3 grid max-w-lg gap-2">
             <div className="flex flex-wrap justify-between gap-2 text-xs font-bold text-muted">
               <span>{progress.completedQuestionIds.length} / {progress.totalQuestions} completed</span>
@@ -103,11 +104,11 @@ function GuidedPathCard({
           </div>
         </div>
       </div>
-      <div className="mt-4 flex flex-wrap gap-3 border-t border-forge/20 pt-4">
-        <Link href={continueHref} className="inline-flex min-h-10 flex-1 items-center justify-center rounded-lg bg-forge px-5 text-sm font-extrabold text-white max-md:w-full">
-          Continue
-        </Link>
-        <Link href={getQuestionBankHref()} className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-lg border border-line bg-white px-5 text-sm font-extrabold transition hover:border-forge hover:text-forge max-md:w-full">
+      <div className="mt-4 flex flex-wrap items-center gap-4 border-t border-forge/20 pt-4">
+        {nextAction.href ? <Link href={nextAction.href} aria-describedby="hub-next-action-reason" className="inline-flex min-h-11 items-center justify-center rounded-lg bg-forge px-5 text-sm font-extrabold text-white max-md:w-full">
+          {nextAction.label}
+        </Link> : null}
+        <Link href={getQuestionBankHref()} className="inline-flex min-h-10 items-center justify-center gap-2 px-2 text-sm font-extrabold text-muted transition hover:text-forge max-md:w-full">
           <ClipboardList className="size-4" />
           Question bank
         </Link>
@@ -120,16 +121,15 @@ function CompletedGuidedPathCard({
   progress,
   status,
   skillPathName,
+  nextAction,
 }: {
   progress: ReturnType<typeof getSkillPathProgress>;
   status: CompletedTierStatus;
   skillPathName: string;
+  nextAction: LearnerNextAction;
 }) {
   const reviewCount = progress.reviewQuestionIds.length;
   const supporting = getPathCompletionSupportingSentence(status, reviewCount);
-  const primary = reviewCount > 0
-    ? { href: getQuestionHref(progress.reviewQuestionIds[0]), label: "Review recommended questions" }
-    : { href: getSkillPathHref(getActiveSkillPath()), label: "Review a stage" };
 
   return (
     <Card className="border-forge/30 bg-gradient-to-br from-forge/10 to-white p-4">
@@ -143,7 +143,7 @@ function CompletedGuidedPathCard({
             <ReviewBadge count={reviewCount} />
           </div>
           <h3 className="m-0 text-xl font-extrabold">{skillPathName}</h3>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">Path complete. {supporting}</p>
+          <p id="hub-next-action-reason" className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">Path complete. {supporting} {nextAction.reason}</p>
           <div className="mt-3 grid max-w-lg gap-2">
             <div className="flex flex-wrap justify-between gap-2 text-xs font-bold text-muted">
               <span>{progress.completedQuestionIds.length} / {progress.totalQuestions} completed</span>
@@ -153,11 +153,11 @@ function CompletedGuidedPathCard({
           </div>
         </div>
       </div>
-      <div className="mt-4 flex flex-wrap gap-3 border-t border-forge/20 pt-4">
-        <Link href={primary.href} className="inline-flex min-h-10 flex-1 items-center justify-center rounded-lg bg-forge px-5 text-sm font-extrabold text-white max-md:w-full">
-          {primary.label}
-        </Link>
-        <Link href={getQuestionBankHref()} className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-lg border border-line bg-white px-5 text-sm font-extrabold transition hover:border-forge hover:text-forge max-md:w-full">
+      <div className="mt-4 flex flex-wrap items-center gap-4 border-t border-forge/20 pt-4">
+        {nextAction.href ? <Link href={nextAction.href} aria-describedby="hub-next-action-reason" className="inline-flex min-h-11 items-center justify-center rounded-lg bg-forge px-5 text-sm font-extrabold text-white max-md:w-full">
+          {nextAction.label}
+        </Link> : null}
+        <Link href={getQuestionBankHref()} className="inline-flex min-h-10 items-center justify-center gap-2 px-2 text-sm font-extrabold text-muted transition hover:text-forge max-md:w-full">
           <ClipboardList className="size-4" />
           Question bank
         </Link>

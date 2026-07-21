@@ -5,8 +5,9 @@ import { expectNoHorizontalOverflow, openQuestion, openWorkedSolution, submitAns
 test("mobile student can navigate, answer, use support and continue without overflow", async ({ page }) => {
   await page.goto("/dashboard");
   await expect(page.getByTestId("dashboard-progress-summary")).toContainText("0 / 8 completed");
-  await expect(page.getByRole("heading", { name: "Course evidence" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Recent activity" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Start learning" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Course evidence" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Recent activity" })).toHaveCount(0);
   await expectNoHorizontalOverflow(page);
   await expect(page.getByRole("link", { name: "Subjects" })).toBeVisible();
 

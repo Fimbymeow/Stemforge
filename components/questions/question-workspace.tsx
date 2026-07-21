@@ -15,7 +15,6 @@ import { recordPathCelebrated } from "@/lib/completion-tracking";
 import { getQuestionContext, getQuestionHref } from "@/lib/learning-paths";
 import {
   getEmptyProgressEvidence,
-  getNextQuestionId,
   getQuestionProgress,
   getSkillPathProgress,
   recordHintViewed,
@@ -24,6 +23,7 @@ import {
 } from "@/lib/local-progress";
 import { useHasMounted } from "@/lib/use-mounted";
 import type { Question } from "@/data/types";
+import { useLearnerNextAction } from "@/components/learning/use-learner-next-action";
 
 export function QuestionWorkspace({ question, sessionPanel, answerLocked = false }: { question: Question; sessionPanel?: ReactNode; answerLocked?: boolean }) {
   const [answer, setAnswer] = useState("");
@@ -33,9 +33,9 @@ export function QuestionWorkspace({ question, sessionPanel, answerLocked = false
   const [showCompletionPanel, setShowCompletionPanel] = useState(false);
   const wasPathCompleteRef = useRef<boolean | null>(null);
   const hasMounted = useHasMounted();
+  const nextAction = useLearnerNextAction();
   const context = useMemo(() => getQuestionContext(question.id), [question.id]);
   const skillPath = context?.skillPath;
-  const skillPathQuestions = context?.pathQuestions ?? [question];
   const position = {
     index: context?.questionIndexInPath ?? -1,
     current: context ? context.questionIndexInPath + 1 : 0,
@@ -59,10 +59,6 @@ export function QuestionWorkspace({ question, sessionPanel, answerLocked = false
   const questionProgress = getQuestionProgress(question.id, evidenceOverride);
   const solutionViewed = questionProgress.solutionViewed;
   const isPositiveFeedback = isCorrect || solutionViewed;
-  const nextQuestionId = questionProgress.navigationEligible && skillPath ? getNextQuestionId(skillPath) : null;
-  const nextQuestion = nextQuestionId ? skillPathQuestions.find((item) => item.id === nextQuestionId) : undefined;
-  const nextActionHref = nextQuestionId ? getQuestionHref(nextQuestionId) : fallbackPathHref;
-  const nextActionLabel = nextQuestion ? (nextQuestion.stage === question.stage ? `Continue ${nextQuestion.stage}` : `Move to ${nextQuestion.stage}`) : `Review ${skillPath?.name ?? "path"}`;
 
   useEffect(() => {
     setAnswer("");
@@ -283,9 +279,9 @@ export function QuestionWorkspace({ question, sessionPanel, answerLocked = false
             </>
           )}
 
-          {showCompletionPanel && skillPath && localProgress ? (
-            <PathCompletionPanel skillPath={skillPath} progress={localProgress} />
-          ) : (
+          {showCompletionPanel && !sessionPanel && skillPath && localProgress ? (
+            <PathCompletionPanel skillPath={skillPath} progress={localProgress} nextAction={nextAction} />
+          ) : sessionPanel ? null : (
           <div className="grid grid-cols-2 gap-4 max-md:grid-cols-1">
             <Link
               href={position.previous ? getQuestionHref(position.previous.id) : fallbackPathHref}
@@ -294,9 +290,9 @@ export function QuestionWorkspace({ question, sessionPanel, answerLocked = false
               <ArrowLeft className="size-5" />
               Previous
             </Link>
-            {questionProgress.navigationEligible ? (
-              <Link data-testid="next-question-action" href={nextActionHref} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-forge text-sm font-bold text-white">
-                {nextActionLabel}<ArrowRight className="size-5" />
+            {questionProgress.navigationEligible && nextAction.href ? (
+              <Link data-testid="next-question-action" href={nextAction.href} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-forge text-sm font-bold text-white">
+                {nextAction.label}<ArrowRight className="size-5" />
               </Link>
             ) : (
               <span data-testid="next-question-locked" className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-line px-4 text-center text-sm font-bold text-muted">
@@ -387,7 +383,6 @@ function PanelProgress({ label, value, valueLabel }: { label: string; value: num
     </div>
   );
 }
-
 
 
 

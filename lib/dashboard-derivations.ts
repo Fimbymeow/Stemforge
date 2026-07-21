@@ -19,6 +19,7 @@ import type {
   QuestionAttempt,
   SkillPathProgress,
 } from "@/lib/progress/types";
+import { deriveLearnerNextAction, type LearnerNextAction } from "@/lib/learning/next-action";
 
 export type DashboardSyncInput = {
   status:
@@ -98,19 +99,6 @@ export type DashboardCourseSummary = {
   paths: DashboardPathSummary[];
 };
 
-export type DashboardContinueRecommendation = {
-  kind: "start" | "resume" | "strengthen" | "review";
-  eyebrow: string;
-  title: string;
-  copy: string;
-  href: string;
-  cta: string;
-  pathId: string | null;
-  questionId: string | null;
-  progressPercentage: number;
-  supportingStat: string;
-};
-
 export type DashboardActivityItem = {
   id: string;
   type: "attempts" | "achievement" | "support";
@@ -154,7 +142,7 @@ export type DashboardQuickLink = {
 export type LearnerDashboardModel = {
   generatedAt: string;
   course: DashboardCourseSummary;
-  continueRecommendation: DashboardContinueRecommendation;
+  nextAction: LearnerNextAction;
   paths: DashboardPathSummary[];
   recentActivity: DashboardActivityItem[];
   needsWork: DashboardFocusItem[];
@@ -261,7 +249,7 @@ export function deriveLearnerDashboardModel(input: {
   return {
     generatedAt: now.toISOString(),
     course,
-    continueRecommendation: deriveContinueRecommendation(paths),
+    nextAction: deriveLearnerNextAction({ evidence: input.evidence }),
     paths,
     recentActivity: deriveRecentActivity(input.evidence, 6),
     needsWork: deriveNeedsWork(paths),
@@ -273,57 +261,6 @@ export function deriveLearnerDashboardModel(input: {
       { title: "Question bank", href: getQuestionBankHref(subject.subjectSlug), detail: "Filter practice by path and stage." },
       { title: "Revision notes", href: getResourceHref("revision-notes", subject.subjectSlug), detail: "Review the ideas behind your evidence." },
     ],
-  };
-}
-
-function deriveContinueRecommendation(paths: DashboardPathSummary[]): DashboardContinueRecommendation {
-  const recentIncomplete = [...paths]
-    .filter((path) => path.started && path.status !== "mastered" && path.status !== "secure")
-    .sort(comparePathRecency)[0];
-  if (recentIncomplete) {
-    const strengthen = recentIncomplete.reviewRecommendedCount > 0 || recentIncomplete.status === "completed";
-    return {
-      kind: strengthen ? "strengthen" : "resume",
-      eyebrow: strengthen ? "Needs reinforcement" : "Continue learning",
-      title: strengthen ? `Strengthen ${recentIncomplete.name}` : `Continue ${recentIncomplete.name}`,
-      copy: strengthen
-        ? "Your evidence shows progress, but this path is not secure yet. Review recommended questions before moving on."
-        : `Pick up in ${recentIncomplete.currentStageName ?? "your current stage"} from the next incomplete question.`,
-      href: recentIncomplete.nextHref,
-      cta: strengthen ? "Strengthen now" : "Continue",
-      pathId: recentIncomplete.skillPathId,
-      questionId: recentIncomplete.nextQuestionId,
-      progressPercentage: recentIncomplete.completionPercentage,
-      supportingStat: `${recentIncomplete.completedQuestions} of ${recentIncomplete.totalQuestions} questions complete`,
-    };
-  }
-  const firstIncomplete = paths.find((path) => path.status !== "mastered" && path.status !== "secure" && path.status !== "completed");
-  if (firstIncomplete) {
-    return {
-      kind: "start",
-      eyebrow: "Recommended start",
-      title: `Start ${firstIncomplete.name}`,
-      copy: "Begin the next available Higher Maths path and build evidence question by question.",
-      href: firstIncomplete.nextHref,
-      cta: "Start path",
-      pathId: firstIncomplete.skillPathId,
-      questionId: firstIncomplete.nextQuestionId,
-      progressPercentage: firstIncomplete.completionPercentage,
-      supportingStat: `${firstIncomplete.totalQuestions} questions available`,
-    };
-  }
-  const reviewPath = paths[0] ?? null;
-  return {
-    kind: "review",
-    eyebrow: "Keep it warm",
-    title: reviewPath ? `Review ${reviewPath.name}` : "Review Higher Maths",
-    copy: "Your current evidence is complete for the available beta content. Use the question bank to keep skills fresh.",
-    href: reviewPath?.href ?? getQuestionBankHref(),
-    cta: "Review",
-    pathId: reviewPath?.skillPathId ?? null,
-    questionId: null,
-    progressPercentage: reviewPath?.completionPercentage ?? 0,
-    supportingStat: reviewPath ? `${reviewPath.masteryScore}% mastery evidence` : "No available paths",
   };
 }
 
@@ -516,12 +453,6 @@ function getPathName(pathId: string) {
 
 function achievementTitle(kind: AchievementSnapshot["kind"]) {
   return kind.split("_").map((part) => part[0]?.toUpperCase() + part.slice(1)).join(" ");
-}
-
-function comparePathRecency(left: DashboardPathSummary, right: DashboardPathSummary) {
-  return compareNullableDates(right.latestEvidenceAt, left.latestEvidenceAt)
-    || right.completionPercentage - left.completionPercentage
-    || left.name.localeCompare(right.name);
 }
 
 function compareActivity(left: DashboardActivityItem, right: DashboardActivityItem) {

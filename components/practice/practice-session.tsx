@@ -12,6 +12,7 @@ import { derivePracticeSessionSummary } from "@/lib/practice/practice-summary";
 import { createCompletedSessionRetry } from "@/lib/practice/practice-selection";
 import { getPracticeSession, updatePracticeSession, upsertPracticeSession } from "@/lib/practice/practice-storage";
 import type { PracticeSession as PracticeSessionModel } from "@/lib/practice/practice-types";
+import { derivePracticeSummaryNextAction } from "@/lib/learning/next-action";
 
 export function PracticeSession({ sessionId }: { sessionId: string }) {
   const [session, setSession] = useState<PracticeSessionModel | null>(null);
@@ -122,6 +123,11 @@ function PracticeTimer({ session, onExpire }: { session: PracticeSessionModel; o
 
 function PracticeSummaryCard({ session, summary }: { session: PracticeSessionModel; summary: ReturnType<typeof derivePracticeSessionSummary> }) {
   const router = useRouter();
+  const nextAction = derivePracticeSummaryNextAction({
+    evidence: getProgressEvidence(),
+    completedSession: session,
+    incorrectQuestionIds: summary.incorrectQuestionIds,
+  });
 
   function retryIncorrect() {
     const retrySession = createCompletedSessionRetry(session, summary.incorrectQuestionIds);
@@ -143,10 +149,14 @@ function PracticeSummaryCard({ session, summary }: { session: PracticeSessionMod
           <SummaryStat label="Unanswered" value={summary.unansweredCount} />
           <SummaryStat label="Support used" value={summary.supportUsedCount} />
         </div>
+        <p id="practice-summary-next-reason" className="mt-4 text-sm text-muted">{nextAction.reason}</p>
         {session.timing.type === "timed" ? <p className="mt-4 text-sm text-muted">Elapsed time: {formatTime(session.timing.elapsedSeconds)}. No blank answers were submitted automatically.</p> : null}
         <div className="mt-5 flex flex-wrap gap-3">
-          <Link href="/practice" className="inline-flex min-h-10 items-center rounded-lg bg-forge px-4 font-extrabold text-white">Start another session</Link>
-          {summary.incorrectCount > 0 ? <button type="button" onClick={retryIncorrect} className="inline-flex min-h-10 items-center rounded-lg border border-line bg-white px-4 font-extrabold">Retry incorrect</button> : null}
+          {nextAction.kind === "retry_session" ? (
+            <button type="button" onClick={retryIncorrect} aria-describedby="practice-summary-next-reason" className="inline-flex min-h-11 items-center rounded-lg bg-forge px-4 font-extrabold text-white">{nextAction.label}</button>
+          ) : nextAction.href ? (
+            <Link href={nextAction.href} aria-describedby="practice-summary-next-reason" className="inline-flex min-h-11 items-center rounded-lg bg-forge px-4 font-extrabold text-white">{nextAction.label}</Link>
+          ) : null}
           <Link href="/dashboard" className="inline-flex min-h-10 items-center rounded-lg border border-line bg-white px-4 font-extrabold">Dashboard</Link>
         </div>
       </Card>

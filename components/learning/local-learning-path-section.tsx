@@ -7,6 +7,8 @@ import { Card, ProgressBar } from "@/components/ui";
 import { getEmptyProgressEvidence, getStageProgress } from "@/lib/local-progress";
 import { useHasMounted } from "@/lib/use-mounted";
 import type { LearningStage, LearningStageName, SkillPath } from "@/data/types";
+import { useLearnerNextAction } from "@/components/learning/use-learner-next-action";
+import type { LearnerNextAction } from "@/lib/learning/next-action";
 
 const stageIcons = {
   Foundations: BookOpen,
@@ -23,6 +25,7 @@ const statusClasses = {
 export function LocalLearningPathSection({ skillPath }: { skillPath: SkillPath }) {
   const [version, setVersion] = useState(0);
   const stages = skillPath.learningStages ?? [];
+  const nextAction = useLearnerNextAction();
 
   useEffect(() => {
     const update = () => setVersion((current) => current + 1);
@@ -46,14 +49,14 @@ export function LocalLearningPathSection({ skillPath }: { skillPath: SkillPath }
       </div>
       <div className="grid gap-4">
         {stages.map((stage, index) => (
-          <LocalLearningStageCard key={stage.id} skillPath={skillPath} stage={stage} index={index} />
+          <LocalLearningStageCard key={stage.id} skillPath={skillPath} stage={stage} index={index} nextAction={nextAction} />
         ))}
       </div>
     </section>
   );
 }
 
-function LocalLearningStageCard({ skillPath, stage, index }: { skillPath: SkillPath; stage: LearningStage; index: number }) {
+function LocalLearningStageCard({ skillPath, stage, index, nextAction }: { skillPath: SkillPath; stage: LearningStage; index: number; nextAction: LearnerNextAction }) {
   const Icon = stageIcons[stage.name as LearningStageName] ?? BookOpen;
   const hasMounted = useHasMounted();
   const progress = getStageProgress(skillPath, stage, hasMounted ? undefined : getEmptyProgressEvidence());
@@ -63,7 +66,8 @@ function LocalLearningStageCard({ skillPath, stage, index }: { skillPath: SkillP
   const href = targetQuestionId ? `/question/${targetQuestionId}` : skillPath.href;
   const isComplete = progress.completedQuestionIds.length >= stage.questionIds.length && stage.questionIds.length > 0;
   const isStarted = progress.attemptedCount > 0;
-  const buttonLabel = isComplete ? "Review stage" : isStarted ? `Continue ${stage.name}` : stage.button;
+  const isRecommended = nextAction.pathId === skillPath.slug && nextAction.stageId === stage.id;
+  const buttonLabel = isComplete ? `Review ${stage.name}` : isRecommended ? `View ${stage.name}` : `Explore ${stage.name}`;
   const status = isComplete ? "complete" : isStarted ? "in-progress" : "not-started";
   const statusLabel = formatStatus(progress.status);
   const accent = statusClasses[status];
@@ -76,7 +80,7 @@ function LocalLearningStageCard({ skillPath, stage, index }: { skillPath: SkillP
           {index + 1}
         </span>
       </div>
-      <Card className="p-4 transition">
+      <Card data-recommended={isRecommended ? "true" : undefined} className={`p-4 transition ${isRecommended ? "border-forge/40 bg-forge-soft/30" : ""}`}>
         <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4 max-md:grid-cols-1">
           <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-forge-soft text-forge">
             <Icon className="size-6" />
@@ -85,6 +89,7 @@ function LocalLearningStageCard({ skillPath, stage, index }: { skillPath: SkillP
             <div className="mb-2 flex flex-wrap items-center gap-3">
               <h3 className="m-0 text-xl font-extrabold">{stage.name}</h3>
               <span className={`rounded-full px-3 py-1 text-xs font-extrabold ${accent.soft} ${accent.text}`}>{statusLabel}</span>
+              {isRecommended ? <span className="rounded-full bg-forge px-3 py-1 text-xs font-extrabold text-white">Recommended next</span> : null}
             </div>
             <p className="mt-1 text-sm text-muted">{stage.description}</p>
             <div className="mt-3 grid gap-2">
@@ -96,7 +101,7 @@ function LocalLearningStageCard({ skillPath, stage, index }: { skillPath: SkillP
               <ProgressBar value={progress.completionPercentage} />
             </div>
           </div>
-          <Link href={href} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-forge px-4 text-sm font-extrabold text-white max-md:w-full">
+          <Link href={href} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-line bg-white px-4 text-sm font-extrabold text-ink max-md:w-full">
             {buttonLabel}
             <ArrowRight className="size-5" />
           </Link>

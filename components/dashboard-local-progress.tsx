@@ -4,13 +4,10 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import {
   Award,
-  BarChart3,
   BookOpen,
-  CheckCircle2,
   ClipboardList,
   Clock3,
   Flame,
-  RefreshCw,
   ShieldCheck,
   Target,
   TrendingUp,
@@ -24,15 +21,17 @@ import {
   type DashboardPathSummary,
 } from "@/lib/dashboard-derivations";
 import { getEmptyProgressEvidence, getProgressEvidence } from "@/lib/local-progress";
-import { useHasMounted } from "@/lib/use-mounted";
+import { useLearnerNextAction } from "@/components/learning/use-learner-next-action";
+import type { ProgressEvidence } from "@/lib/progress/types";
 
 export function DashboardLocalProgressSection() {
-  const [version, setVersion] = useState(0);
-  const hasMounted = useHasMounted();
+  const [evidence, setEvidence] = useState<ProgressEvidence>(() => getEmptyProgressEvidence());
   const sync = useProgressSync();
+  const recommendation = useLearnerNextAction();
 
   useEffect(() => {
-    const update = () => setVersion((current) => current + 1);
+    const update = () => setEvidence(getProgressEvidence());
+    update();
     window.addEventListener("stemforge:local-progress-updated", update);
     window.addEventListener("stemforge:progress-sync-updated", update);
     window.addEventListener("storage", update);
@@ -44,9 +43,8 @@ export function DashboardLocalProgressSection() {
   }, []);
 
   const model = useMemo(() => {
-    void version;
     return deriveLearnerDashboardModel({
-      evidence: hasMounted ? getProgressEvidence() : getEmptyProgressEvidence(),
+      evidence,
       sync: {
         status: sync.status,
         pendingCount: sync.pendingCount,
@@ -56,8 +54,7 @@ export function DashboardLocalProgressSection() {
       },
     });
   }, [
-    hasMounted,
-    version,
+    evidence,
     sync.status,
     sync.pendingCount,
     sync.lastSuccessfulSyncAt,
@@ -65,7 +62,11 @@ export function DashboardLocalProgressSection() {
     sync.accountFingerprint,
   ]);
 
-  const recommendation = model.continueRecommendation;
+  const recommendedPath = model.paths.find((path) => path.skillPathId === recommendation.pathId);
+  const supportingStat = recommendedPath
+    ? `${recommendedPath.completedQuestions} / ${recommendedPath.totalQuestions} completed`
+    : recommendation.reason;
+  const hasLearningActivity = model.course.startedPathCount > 0;
 
   return (
     <section className="grid gap-4" aria-label="Evidence-driven learner dashboard">
@@ -75,24 +76,19 @@ export function DashboardLocalProgressSection() {
             <Target className="size-7" />
           </div>
           <div>
-            <span className="mb-2 inline-flex rounded-full bg-forge-soft px-3 py-1 text-xs font-extrabold uppercase text-forge">{recommendation.eyebrow}</span>
+            <span className="mb-2 inline-flex rounded-full bg-forge-soft px-3 py-1 text-xs font-extrabold uppercase text-forge">Best next step</span>
             <h2 className="m-0 text-2xl font-extrabold md:text-3xl">{recommendation.title}</h2>
-            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">{recommendation.copy}</p>
+            <p id="dashboard-next-action-reason" className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">{recommendation.reason}</p>
           </div>
-          <DashboardAction href={recommendation.href}>{recommendation.cta}</DashboardAction>
+          {recommendation.href ? <DashboardAction href={recommendation.href}>{recommendation.label}</DashboardAction> : null}
         </div>
-        <div className="mt-5 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 max-sm:grid-cols-1">
-          <ProgressBar value={recommendation.progressPercentage} />
-          <strong className="text-sm text-muted">{recommendation.supportingStat}</strong>
-        </div>
-        <div className="mt-4 grid gap-3 md:grid-cols-3">
-          <EvidenceStat icon={<BarChart3 className="size-5" />} label="Available progress" value={`${model.course.completionPercentage}%`} detail={`${model.course.completedQuestions} / ${model.course.totalQuestions} completed questions`} />
-          <EvidenceStat icon={<CheckCircle2 className="size-5" />} label="Stage coverage" value={`${model.course.stageCompletionPercentage}%`} detail={`${model.course.completedStages} / ${model.course.totalStages} stages complete`} />
-          <EvidenceStat icon={<RefreshCw className="size-5" />} label={model.sync.label} value={model.sync.tone === "synced" ? "Account" : "Local-first"} detail={model.sync.detail} />
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-forge/20 pt-4 text-sm font-bold text-muted">
+          <span>{supportingStat}</span>
+          <span>{model.sync.label}</span>
         </div>
       </Card>
 
-      <div className="grid grid-cols-[minmax(0,1fr)_340px] gap-4 max-xl:grid-cols-1">
+      {hasLearningActivity ? <><div className="grid grid-cols-[minmax(0,1fr)_340px] gap-4 max-xl:grid-cols-1">
         <Card className="p-5">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -152,6 +148,7 @@ export function DashboardLocalProgressSection() {
           )}
         </Card>
       </div>
+      </> : null}
 
       <Card className="p-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
@@ -185,7 +182,7 @@ function PathEvidenceRow({ path }: { path: DashboardPathSummary }) {
           <h3 className="m-0 text-base font-extrabold">{path.name}</h3>
           <p className="mt-1 text-sm text-muted">{path.currentStageName ? `Current stage: ${path.currentStageName}` : path.description}</p>
         </div>
-        <Link href={path.nextHref} className="rounded-lg bg-ink px-3 py-2 text-sm font-extrabold text-white">{path.started ? "Resume" : "Start"}</Link>
+        <Link href={path.href} className="rounded-lg border border-line bg-white px-3 py-2 text-sm font-extrabold text-ink">View path</Link>
       </div>
       <div className="mt-4 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 max-sm:grid-cols-1">
         <ProgressBar value={path.completionPercentage} />
@@ -234,16 +231,6 @@ function FocusList({ items, empty }: { items: DashboardFocusItem[]; empty: strin
   );
 }
 
-function EvidenceStat({ icon, label, value, detail }: { icon: ReactNode; label: string; value: string; detail: string }) {
-  return (
-    <div className="rounded-2xl border border-line bg-white/80 p-4">
-      <div className="flex items-center gap-2 text-sm font-extrabold text-muted">{icon}{label}</div>
-      <div className="mt-2 text-2xl font-black text-ink">{value}</div>
-      <p className="mt-1 text-xs font-semibold text-muted">{detail}</p>
-    </div>
-  );
-}
-
 function MiniStat({ label, value }: { label: string; value: number }) {
   return (
     <div className="rounded-xl border border-line bg-white p-3">
@@ -255,7 +242,7 @@ function MiniStat({ label, value }: { label: string; value: number }) {
 
 function DashboardAction({ children, href }: { children: ReactNode; href: string }) {
   return (
-    <Link href={href} className="inline-flex min-h-10 items-center justify-center rounded-lg bg-forge px-5 text-sm font-extrabold text-white max-md:w-full">
+    <Link href={href} aria-describedby="dashboard-next-action-reason" className="inline-flex min-h-11 items-center justify-center rounded-lg bg-forge px-5 text-sm font-extrabold text-white max-md:w-full">
       {children}
     </Link>
   );

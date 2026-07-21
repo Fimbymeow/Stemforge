@@ -7,10 +7,12 @@ import { Card, ProgressBar } from "@/components/ui";
 import { isCompletedTierStatus, MasteryBadge, ReviewBadge, type CompletedTierStatus } from "@/components/learning/mastery-badge";
 import { getPathCompletionSupportingSentence } from "@/components/learning/path-completion-panel";
 import { acknowledgeStatus, clearPathCelebration, getPathCelebration, isAcknowledgedStatusUpgrade } from "@/lib/completion-tracking";
-import { getQuestionHref, getSkillPathHref, getSubjectForSkillPath } from "@/lib/learning-paths";
-import { getEmptyProgressEvidence, getNextQuestionId, getSkillPathProgress, resetSkillPathProgress, type SkillPathProgress } from "@/lib/local-progress";
+import { getSkillPathHref, getSubjectForSkillPath } from "@/lib/learning-paths";
+import { getEmptyProgressEvidence, getSkillPathProgress, resetSkillPathProgress, type SkillPathProgress } from "@/lib/local-progress";
 import { useHasMounted } from "@/lib/use-mounted";
 import type { SkillPath } from "@/data/types";
+import { useLearnerNextAction } from "@/components/learning/use-learner-next-action";
+import type { LearnerNextAction } from "@/lib/learning/next-action";
 
 function useLocalSkillPathProgress(skillPath: SkillPath) {
   const [version, setVersion] = useState(0);
@@ -30,22 +32,19 @@ function useLocalSkillPathProgress(skillPath: SkillPath) {
   const evidenceOverride = hasMounted ? undefined : getEmptyProgressEvidence();
   return {
     progress: getSkillPathProgress(skillPath, evidenceOverride),
-    nextQuestionId: getNextQuestionId(skillPath, evidenceOverride),
   };
 }
 
 export function LocalRecommendedNextAction({ skillPath }: { skillPath: SkillPath }) {
-  const { progress, nextQuestionId } = useLocalSkillPathProgress(skillPath);
-  const nextStage = skillPath.learningStages?.find((stage) => stage.questionIds.some((questionId) => questionId === nextQuestionId));
-  const href = nextQuestionId ? `/question/${nextQuestionId}` : skillPath.href;
+  const { progress } = useLocalSkillPathProgress(skillPath);
+  const nextAction = useLearnerNextAction();
   const isComplete = progress.totalQuestions > 0 && progress.completedQuestionIds.length >= progress.totalQuestions;
-  const isStarted = progress.attemptedCount > 0;
 
   if (isComplete && isCompletedTierStatus(progress.status)) {
     return (
       <div className="grid gap-3">
         <MasteryUpgradeBanner skillPathId={skillPath.slug} status={progress.status} />
-        <CompletedPathCard skillPath={skillPath} progress={progress} status={progress.status} />
+        <CompletedPathCard skillPath={skillPath} progress={progress} status={progress.status} nextAction={nextAction} />
       </div>
     );
   }
@@ -53,15 +52,11 @@ export function LocalRecommendedNextAction({ skillPath }: { skillPath: SkillPath
   return (
     <Card className="border-forge/30 bg-gradient-to-br from-forge/10 to-white p-4">
       <p className="mb-1 text-xs font-extrabold uppercase text-forge">Recommended next</p>
-      <h2 className="m-0 text-xl font-extrabold">{nextStage?.name ?? "Foundations"}</h2>
-      <p className="mt-2 text-sm leading-relaxed text-muted">
-        {progress.attemptedCount === 0
-          ? "Start with the first Foundations question. Progress is saved on this browser."
-          : "Continue with the next unanswered question. No account needed."}
-      </p>
-      <Link href={href} className="mt-4 inline-flex min-h-10 w-full items-center justify-center rounded-lg bg-forge px-5 text-sm font-extrabold text-white">
-        {nextStage ? `${isStarted ? "Continue" : "Start"} ${nextStage.name}` : "Start Foundations"}
-      </Link>
+      <h2 className="m-0 text-xl font-extrabold">{nextAction.title}</h2>
+      <p id="path-next-action-reason" className="mt-2 text-sm leading-relaxed text-muted">{nextAction.reason}</p>
+      {nextAction.href ? <Link href={nextAction.href} aria-describedby="path-next-action-reason" className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-forge px-5 text-sm font-extrabold text-white">
+        {nextAction.label}
+      </Link> : null}
     </Card>
   );
 }
@@ -102,17 +97,13 @@ function MasteryUpgradeBanner({ skillPathId, status }: { skillPathId: string; st
 }
 
 /** Permanent state for a completed/secure/mastered path. Not a relabelled "Continue" button. */
-function CompletedPathCard({ skillPath, progress, status }: { skillPath: SkillPath; progress: SkillPathProgress; status: CompletedTierStatus }) {
+function CompletedPathCard({ skillPath, progress, status, nextAction }: { skillPath: SkillPath; progress: SkillPathProgress; status: CompletedTierStatus; nextAction: LearnerNextAction }) {
   const reviewCount = progress.reviewQuestionIds.length;
   const heading = `${skillPath.name} ${status === "completed" ? "complete" : status}`;
   const supporting = getPathCompletionSupportingSentence(status, reviewCount);
   const subject = getSubjectForSkillPath(skillPath);
   const subjectAction = { href: subject?.href ?? "/subjects", label: `Return to ${subject?.subjectName ?? "subject"}` };
-  const reviewHref = reviewCount > 0 ? getQuestionHref(progress.reviewQuestionIds[0]) : undefined;
-  const primary = reviewHref
-    ? { href: reviewHref, label: "Review recommended questions" }
-    : subjectAction;
-  const secondary = reviewHref
+  const secondary = nextAction.kind === "review_question"
     ? subjectAction
     : { href: getSkillPathHref(skillPath), label: "Review a stage" };
 
@@ -123,16 +114,16 @@ function CompletedPathCard({ skillPath, progress, status }: { skillPath: SkillPa
         <ReviewBadge count={reviewCount} />
       </div>
       <h2 className="m-0 text-xl font-extrabold">{heading}</h2>
-      <p className="mt-2 text-sm leading-relaxed text-muted">{supporting}</p>
+      <p id="completed-path-next-action-reason" className="mt-2 text-sm leading-relaxed text-muted">{supporting} {nextAction.reason}</p>
       <p className="mt-3 text-sm font-bold text-muted">
         {progress.completedQuestionIds.length} / {progress.totalQuestions} questions
         {progress.firstAttemptAccuracyPercentage !== null ? ` · ${progress.firstAttemptAccuracyPercentage}% first-attempt accuracy` : ""}
       </p>
       <VersionProgressNotice progress={progress} />
       <div className="mt-4 grid gap-2">
-        <Link href={primary.href} className="inline-flex min-h-10 w-full items-center justify-center rounded-lg bg-forge px-5 text-sm font-extrabold text-white">
-          {primary.label}
-        </Link>
+        {nextAction.href ? <Link href={nextAction.href} aria-describedby="completed-path-next-action-reason" className="inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-forge px-5 text-sm font-extrabold text-white">
+          {nextAction.label}
+        </Link> : null}
         <Link href={secondary.href} className="inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-line bg-white px-5 text-sm font-extrabold text-ink">
           {secondary.label}
         </Link>

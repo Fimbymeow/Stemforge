@@ -13,8 +13,8 @@ assert.ok(questionIds.length > 0);
 test("empty learner dashboard recommends a deterministic guest start without fake activity", () => {
   const model = deriveLearnerDashboardModel({ evidence: evidence(), now: now() });
 
-  assert.equal(model.continueRecommendation.kind, "start");
-  assert.equal(model.continueRecommendation.pathId, "basic-differentiation");
+  assert.equal(model.nextAction.kind, "start_learning");
+  assert.equal(model.nextAction.pathId, "basic-differentiation");
   assert.equal(model.course.completionPercentage, 0);
   assert.equal(model.course.availablePathCount, 1);
   assert.equal(model.weeklyActivity.activeDays, 0);
@@ -46,7 +46,7 @@ test("incomplete and review-recommended evidence drives the needs-work lane", ()
     now: now(),
   });
 
-  assert.equal(model.continueRecommendation.kind, "strengthen");
+  assert.equal(model.nextAction.kind, "resume_question");
   assert.equal(model.needsWork[0]?.pathId, "basic-differentiation");
   assert.match(model.needsWork[0]?.detail ?? "", /review/i);
 });
@@ -60,7 +60,7 @@ test("current mastered evidence appears in the secure and mastered lane", () => 
   const model = deriveLearnerDashboardModel({ evidence: evidence(attempts), now: now() });
 
   assert.equal(model.course.masteredPathCount, 1);
-  assert.equal(model.continueRecommendation.kind, "review");
+  assert.equal(model.nextAction.kind, "practice_again");
   assert.match(model.secureAndMastered[0]?.title ?? "", /mastered/i);
 });
 

@@ -27,7 +27,7 @@ function DashboardHeader() {
         </span>
         <div>
           <h1 className="m-0 text-[32px] font-extrabold leading-none">STEM Forge</h1>
-          <p className="mt-2 max-w-3xl text-base leading-relaxed text-muted">Higher Maths is the active proof-of-concept. Continue Basic differentiation, check local progress, or jump into resources.</p>
+          <p className="mt-2 max-w-3xl text-base leading-relaxed text-muted">Your next Higher Maths step is ready below.</p>
         </div>
       </div>
       <AppTopbar demo={false} />

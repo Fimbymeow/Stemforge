@@ -1,10 +1,13 @@
-import { getActiveSkillPathHref } from "@/lib/learning-paths";
+"use client";
+
 import Link from "next/link";
 import { ArrowRight, GraduationCap, Lock, Orbit, Sigma } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { AppTopbar } from "@/components/layout/app-topbar";
 import { Card } from "@/components/ui";
 import { subjectCatalog } from "@/data/subjects";
+import { useLearnerNextAction } from "@/components/learning/use-learner-next-action";
+import type { LearnerNextAction } from "@/lib/learning/next-action";
 
 type SubjectsMode = "empty" | "demo";
 
@@ -15,6 +18,7 @@ const subjectIcons = {
 
 export function SubjectsPage({ mode }: { mode: SubjectsMode }) {
   const demo = mode === "demo";
+  const nextAction = useLearnerNextAction();
 
   return (
     <AppShell demo={demo} active="Subjects">
@@ -39,7 +43,7 @@ export function SubjectsPage({ mode }: { mode: SubjectsMode }) {
             <h2 className="mb-2 text-lg font-extrabold">Choose a subject</h2>
             <div className="grid grid-cols-4 gap-4 max-lg:grid-cols-2 max-md:grid-cols-1">
               {subjectCatalog.map((subject) => (
-                <SubjectCard key={subject.name} subject={subject} />
+                <SubjectCard key={subject.name} subject={subject} nextAction={nextAction} />
               ))}
               <EmptySubjectCard />
               <EmptySubjectCard />
@@ -55,8 +59,9 @@ export function SubjectsPage({ mode }: { mode: SubjectsMode }) {
   );
 }
 
-function SubjectCard({ subject }: { subject: (typeof subjectCatalog)[number] }) {
+function SubjectCard({ subject, nextAction }: { subject: (typeof subjectCatalog)[number]; nextAction: LearnerNextAction }) {
   const Icon = subject.name in subjectIcons ? subjectIcons[subject.name as keyof typeof subjectIcons] : GraduationCap;
+  const recommended = subject.name === "Higher Maths" && nextAction.href && nextAction.subjectId === "higher-maths";
 
   return (
     <Card className="p-4">
@@ -67,8 +72,8 @@ function SubjectCard({ subject }: { subject: (typeof subjectCatalog)[number] }) 
       <p className="mt-2 min-h-[54px] text-sm text-muted">{subject.description}</p>
       <p className={`mt-3 text-xs font-bold ${subject.available ? "text-forge" : "text-muted"}`}>{subject.status}</p>
       {subject.available ? (
-        <Link href={subject.href} className="mt-4 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg bg-forge text-sm font-extrabold text-white">
-          Open
+        <Link href={recommended ? nextAction.href! : subject.href} className="mt-4 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg bg-forge text-sm font-extrabold text-white">
+          {recommended ? nextAction.label : "Open subject"}
           <ArrowRight className="size-4" />
         </Link>
       ) : (

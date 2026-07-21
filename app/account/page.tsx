@@ -11,6 +11,7 @@ import { AccountDataControls } from "@/components/account/account-data-controls"
 import { AccountLearningData, CurrentBrowserExportButton } from "@/components/account/account-learning-data";
 import { BetaReportReceipts } from "@/components/beta-reports/report-receipts";
 import { AuthenticatedBetaReportStatus } from "@/components/beta-reports/authenticated-report-status";
+import { AccountLearningReturn } from "@/components/account/account-learning-return";
 
 export const dynamic = "force-dynamic";
 
@@ -51,6 +52,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
         <strong>{ownerState === "authenticated" ? "Account ready" : "Owner setup unavailable"}</strong>
         <p className="mb-0 mt-2 text-sm leading-relaxed text-muted">Learning remains local-first. Import and synchronization each require an explicit choice.</p>
       </div>
+      <AccountLearningReturn />
       {accountFingerprint ? <GuestProgressImport accountFingerprint={accountFingerprint} /> : null}
       {accountFingerprint ? <ProgressSyncPanel accountFingerprint={accountFingerprint} /> : null}
       {accountFingerprint ? <AccountDataControls /> : null}

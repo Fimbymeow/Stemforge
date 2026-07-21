@@ -6,14 +6,14 @@ test("guest learner dashboard hydrates without errors and shows deterministic ev
   await page.goto("/dashboard");
 
   await expect(page.getByTestId("dashboard-progress-summary")).toContainText("Start Basic differentiation");
+  await expect(page.getByTestId("dashboard-progress-summary").getByRole("link", { name: "Start learning" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
   await expect(page.getByTestId("dashboard-progress-summary")).toContainText("0 / 8 completed");
   await expect(page.getByText("Saved on this browser")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Course evidence" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Recent activity" })).toBeVisible();
-  await expect(page.getByText("No recent activity yet. Your first genuine attempt will appear here.")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Needs work" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Secure and mastered" })).toBeVisible();
-  await expect(page.getByRole("progressbar").first()).toHaveAttribute("aria-valuenow", "0");
+  await expect(page.getByRole("heading", { name: "Course evidence" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Recent activity" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Needs work" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Secure and mastered" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Quick links" })).toBeVisible();
   await expectNoHorizontalOverflow(page);
   expect(seriousBrowserErrors).toEqual([]);
 });
@@ -26,7 +26,8 @@ test("dashboard updates from stored evidence with grouped recent activity and a 
 
   await page.goto("/dashboard");
 
-  await expect(page.getByTestId("dashboard-progress-summary")).toContainText("Continue Basic differentiation");
+  await expect(page.getByTestId("dashboard-progress-summary")).toContainText("Resume Foundations");
+  await expect(page.getByTestId("dashboard-progress-summary").getByRole("link", { name: "Resume question" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
   await expect(page.getByTestId("dashboard-progress-summary")).toContainText("1 / 8");
   await expect(page.getByText("2 questions attempted")).toBeVisible();
   await expect(page.getByText("Basic differentiation · 1 correct")).toBeVisible();

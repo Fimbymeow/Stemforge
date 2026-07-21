@@ -12,6 +12,8 @@ import { getEmptyProgressEvidence, getProgressEvidence, getSkillPathProgress } f
 import { queryQuestionBank, type QuestionBankProgressFilter, type QuestionBankSort, type QuestionBankStageFilter } from "@/lib/question-bank-query";
 import { useHasMounted } from "@/lib/use-mounted";
 import type { SkillPath } from "@/data/types";
+import { useLearnerNextAction } from "@/components/learning/use-learner-next-action";
+import type { LearnerNextAction } from "@/lib/learning/next-action";
 
 const filters: { id: QuestionBankProgressFilter; label: string }[] = [
   { id: "all", label: "All" },
@@ -31,6 +33,7 @@ export function HigherMathsQuestionBank() {
   const [sort, setSort] = useState<QuestionBankSort>("default");
   const [version, setVersion] = useState(0);
   const hasMounted = useHasMounted();
+  const nextAction = useLearnerNextAction();
 
   useEffect(() => {
     const update = () => setVersion((current) => current + 1);
@@ -149,7 +152,7 @@ export function HigherMathsQuestionBank() {
         </section>
 
         <aside className="grid content-start gap-4">
-          <SelectedPathPanel progress={progress} status={status} />
+          <SelectedPathPanel progress={progress} status={status} nextAction={nextAction} />
         </aside>
       </div>
     </AppShell>
@@ -213,11 +216,11 @@ function SkillPathRow({ path, stageFilter }: { path: SkillPath; stageFilter: Que
           </div>
           <div className="grid content-start justify-items-end gap-3 max-md:justify-items-start">
             <span className="grid size-10 place-items-center rounded-full border border-forge-soft bg-white font-extrabold text-forge">{getQuestionCountForSkillPath(path)}</span>
-            <Link href={getSkillPathHref(path)} className="inline-flex min-h-10 items-center justify-center rounded-lg bg-forge px-4 font-extrabold text-white max-md:w-full">
-              Open
+            <Link href={getSkillPathHref(path)} className="inline-flex min-h-10 items-center justify-center rounded-lg border border-line bg-white px-4 font-extrabold text-ink max-md:w-full">
+              View path
             </Link>
-            <Link href="/practice" className="inline-flex min-h-10 items-center justify-center rounded-lg border border-line bg-white px-4 font-extrabold text-forge max-md:w-full">
-              Practise this path
+            <Link href="/practice" className="inline-flex min-h-10 items-center justify-center px-2 font-extrabold text-muted max-md:w-full">
+              Practice options
             </Link>
           </div>
         </div>
@@ -241,7 +244,7 @@ function SkillPathRow({ path, stageFilter }: { path: SkillPath; stageFilter: Que
   );
 }
 
-function SelectedPathPanel({ progress, status }: { progress: ReturnType<typeof getSkillPathProgress>; status: ReturnType<typeof getStatus> }) {
+function SelectedPathPanel({ progress, status, nextAction }: { progress: ReturnType<typeof getSkillPathProgress>; status: ReturnType<typeof getStatus>; nextAction: LearnerNextAction }) {
   const skillPath = getActiveSkillPath();
   return (
     <Card className="p-4">
@@ -277,12 +280,13 @@ function SelectedPathPanel({ progress, status }: { progress: ReturnType<typeof g
         <h4 className="mb-3 flex items-center gap-2 font-extrabold"><BookOpen className="size-5" /> About this topic</h4>
         <p className="text-sm leading-relaxed text-muted">Covers the power rule for algebraic expressions, constants and simple polynomials.</p>
       </div>
-      <Link href={getSkillPathHref(skillPath)} className="flex min-h-10 w-full items-center justify-center gap-2 rounded-lg bg-forge px-4 font-extrabold text-white">
-        Open {skillPath.name}
+      {nextAction.href ? <Link href={nextAction.href} aria-describedby="question-bank-next-reason" className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-forge px-4 font-extrabold text-white">
+        {nextAction.label}
         <ArrowRight className="size-5" />
-      </Link>
-      <Link href="/practice" className="mt-2 flex min-h-10 w-full items-center justify-center gap-2 rounded-lg border border-line bg-white px-4 font-extrabold text-forge">
-        Start practice session
+      </Link> : null}
+      <p id="question-bank-next-reason" className="mt-2 text-sm leading-relaxed text-muted">{nextAction.reason}</p>
+      <Link href={getSkillPathHref(skillPath)} className="mt-2 flex min-h-10 w-full items-center justify-center gap-2 rounded-lg border border-line bg-white px-4 font-extrabold text-ink">
+        View path details
       </Link>
     </Card>
   );
