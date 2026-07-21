@@ -106,6 +106,8 @@ Credentialed production verification must use a dedicated team identity. Verify 
 
 `/api/health` is minimal liveness and exposes only release name and truncated commit. `/api/health/ready` is no-store and reports bounded configuration, authentication, database/SSL, migration and reporting categories. In Vercel production it returns 503 until every required production category is `ok`; guest local learning can remain usable during a configuration block.
 
+When the runtime uses the Supabase Transaction Pooler (Supavisor), `pg_stat_ssl` is not a reliable signal for the client connection: a query through the pooler observes Supavisor's borrowed upstream PostgreSQL session, not the Vercel-to-Supavisor TLS socket. Production readiness therefore validates the server-only CA configuration and performs an actual query using the verified node-postgres TLS client; successful connectivity under that enforced configuration marks the database category `ok`.
+
 Production CSP excludes `unsafe-eval`; inline scripts/styles remain the documented Next.js compromise. Verify deployed console output after every release. Middleware imports no Node database code; database health runs in a Node server route. Internal routes remain no-store and conceal allowlists.
 
 ## Rollback runbook
