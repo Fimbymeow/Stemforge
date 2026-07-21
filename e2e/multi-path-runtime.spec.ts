@@ -4,10 +4,11 @@ test("question context and navigation derive from canonical ownership", async ({
   await page.goto("/question/hm-calc-diff-basic-f-001");
   const breadcrumb = page.getByRole("navigation", { name: "Breadcrumb" });
   await expect(breadcrumb.getByRole("link", { name: "Higher Maths" })).toHaveAttribute("href", "/subjects/higher-maths");
+  await breadcrumb.getByText("More context").click();
   await expect(breadcrumb.getByRole("link", { name: "Calculus" })).toHaveAttribute("href", "/subjects/higher-maths/calculus");
   await expect(breadcrumb.getByRole("link", { name: "Differentiating functions" })).toHaveAttribute("href", "/subjects/higher-maths/calculus/differentiation");
   await expect(breadcrumb).toContainText("Basic differentiation");
-  await expect(page.getByText("Question 1 of 8", { exact: true })).toBeVisible();
+  await expect(page.getByTestId("stage-question-position")).toHaveText("Question 1 of 3 in Foundations");
   await expect(page.getByRole("link", { name: "Previous" })).toHaveAttribute("href", "/subjects/higher-maths/calculus/differentiation/basic-differentiation");
 
   await page.getByLabel("Your answer").fill("5x^4");

@@ -11,6 +11,9 @@ type InputProps = {
   value: string;
   submitted: boolean;
   onChange: (value: string) => void;
+  inputId?: string;
+  describedBy?: string;
+  invalid?: boolean;
 };
 
 export function QuestionAnswerInput(props: InputProps) {
@@ -22,9 +25,9 @@ export function QuestionAnswerInput(props: InputProps) {
   return <AlgebraicInput {...props} />;
 }
 
-export function MultipleChoiceInput({ value, submitted, onChange, options }: InputProps & { options: QuestionOption[] }) {
+export function MultipleChoiceInput({ value, submitted, onChange, options, describedBy, invalid }: InputProps & { options: QuestionOption[] }) {
   return (
-    <div className="grid gap-3">
+    <div className="grid gap-3" role="radiogroup" aria-labelledby="answer-label" aria-describedby={describedBy} aria-invalid={invalid || undefined}>
       {options.map((option) => (
         <label key={option.value} className="flex min-h-12 cursor-pointer items-start gap-3 rounded-lg border border-line bg-white px-4 py-3 font-semibold">
           <input type="radio" name="answer" value={option.value} checked={value === option.value} disabled={submitted} onChange={() => onChange(option.value)} />
@@ -51,20 +54,23 @@ export function MultiStepInput(props: InputProps) {
   return <TextAreaInput {...props} placeholder="Show your working. Structured multi-step marking will be added later." />;
 }
 
-function TextInput({ value, submitted, onChange, placeholder, helper, showKeypad = false }: InputProps & { placeholder: string; helper?: string; showKeypad?: boolean }) {
+function TextInput({ value, submitted, onChange, placeholder, helper, showKeypad = false, inputId = "question-answer", describedBy, invalid }: InputProps & { placeholder: string; helper?: string; showKeypad?: boolean }) {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   return (
     <div>
       <input
         ref={inputRef}
+        id={inputId}
         aria-label="Your answer"
         value={value}
         onChange={(event) => onChange(event.target.value)}
         disabled={submitted}
         placeholder={placeholder}
-        aria-describedby={submitted ? "answer-feedback" : undefined}
-        className="min-h-11 w-full rounded-lg border border-line bg-white px-3.5 text-base outline-none transition focus:border-forge disabled:bg-line/40"
+        aria-describedby={describedBy}
+        aria-invalid={invalid || undefined}
+        maxLength={4096}
+        className="min-h-12 w-full rounded-lg border border-line bg-white px-4 text-lg outline-none transition focus:border-forge focus:ring-2 focus:ring-forge/15 disabled:bg-line/40"
       />
       {helper ? <p className="mt-2 text-sm leading-relaxed text-muted">{helper}</p> : null}
       {showKeypad ? <MathKeypad value={value} onChange={onChange} inputRef={inputRef} disabled={submitted} /> : null}
@@ -72,16 +78,20 @@ function TextInput({ value, submitted, onChange, placeholder, helper, showKeypad
   );
 }
 
-function TextAreaInput({ value, submitted, onChange, placeholder }: InputProps & { placeholder: string }) {
+function TextAreaInput({ value, submitted, onChange, placeholder, inputId = "question-answer", describedBy, invalid }: InputProps & { placeholder: string }) {
   return (
     <textarea
       aria-label="Your answer"
+      id={inputId}
       value={value}
       onChange={(event) => onChange(event.target.value)}
       disabled={submitted}
       placeholder={placeholder}
       rows={4}
-      className="min-h-28 w-full rounded-lg border border-line bg-white p-3.5 text-base outline-none transition focus:border-forge disabled:bg-line/40"
+      aria-describedby={describedBy}
+      aria-invalid={invalid || undefined}
+      maxLength={4096}
+      className="min-h-28 w-full rounded-lg border border-line bg-white p-3.5 text-base outline-none transition focus:border-forge focus:ring-2 focus:ring-forge/15 disabled:bg-line/40"
     />
   );
 }

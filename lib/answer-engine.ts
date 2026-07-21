@@ -8,6 +8,14 @@ export type MarkingResult = {
   normalizedStudentAnswer: string;
   matchedAcceptedAnswer?: string;
   mode: "automatic" | "guided";
+  reason:
+    | "accepted_match"
+    | "accepted_mismatch"
+    | "guided"
+    | "structured_parse_failure"
+    | "structured_contract_missing"
+    | "structured_match"
+    | "structured_mismatch";
 };
 
 export type LegacyPhysicsDemoAnswerState = {
@@ -47,6 +55,7 @@ export function compareAcceptedAnswers(studentAnswer: string, acceptedAnswers: r
     normalizedStudentAnswer,
     matchedAcceptedAnswer,
     mode: "automatic",
+    reason: matchedAcceptedAnswer === undefined ? "accepted_mismatch" : "accepted_match",
   };
 }
 
@@ -59,6 +68,7 @@ export function markQuestionAnswer(question: Pick<Question, "acceptedAnswers" | 
       isCorrect: null,
       normalizedStudentAnswer: normaliseAnswer(studentAnswer),
       mode: "guided",
+      reason: "guided",
     };
   }
 
@@ -74,6 +84,7 @@ function markStructuredQuestionAnswer(question: Question, studentAnswer: string)
       isCorrect: false,
       normalizedStudentAnswer: "",
       mode: "automatic",
+      reason: "structured_parse_failure",
     };
   }
   if (!question.structuredAnswer) {
@@ -81,6 +92,7 @@ function markStructuredQuestionAnswer(question: Question, studentAnswer: string)
       isCorrect: false,
       normalizedStudentAnswer: JSON.stringify(parsed),
       mode: "automatic",
+      reason: "structured_contract_missing",
     };
   }
   const marked = validateStructuredGraphAnswer(question.structuredAnswer, parsed, question.natureTableConfig);
@@ -89,6 +101,7 @@ function markStructuredQuestionAnswer(question: Question, studentAnswer: string)
     normalizedStudentAnswer: marked.normalizedAnswer,
     matchedAcceptedAnswer: marked.isCorrect ? "structured-answer" : undefined,
     mode: "automatic",
+    reason: marked.isCorrect ? "structured_match" : "structured_mismatch",
   };
 }
 

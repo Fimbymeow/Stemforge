@@ -74,6 +74,32 @@ test("mobile taxonomy and question context remain readable without page overflow
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
 });
 
+test("mobile question interaction reaches the task early and keeps feedback and support in view", async ({ page }) => {
+  await openQuestion(page, QUESTION_IDS[0]);
+  const answer = page.getByLabel("Your answer");
+  const answerBox = await answer.boundingBox();
+  expect(answerBox).not.toBeNull();
+  expect(answerBox!.y).toBeLessThan(700);
+  const hintBox = await page.getByTestId("hint-control").boundingBox();
+  const blockedBox = await page.getByTestId("next-question-locked").boundingBox();
+  expect(hintBox).not.toBeNull();
+  expect(blockedBox).not.toBeNull();
+  expect(hintBox!.y).toBeLessThan(blockedBox!.y);
+
+  await answer.focus();
+  await page.getByRole("button", { name: "insert x squared" }).click();
+  await expect(answer).toHaveValue("x^2");
+  await answer.fill("4x^5");
+  await page.getByRole("button", { name: "Submit Answer" }).click();
+  const feedback = page.getByTestId("question-status");
+  await expect(feedback).toBeVisible();
+  const feedbackBox = await feedback.boundingBox();
+  expect(feedbackBox).not.toBeNull();
+  expect(feedbackBox!.y - await page.evaluate(() => scrollY)).toBeLessThan(844);
+  await expect(page.getByTestId("submitted-answer")).toContainText("4x^5");
+  await expectNoHorizontalOverflow(page);
+});
+
 test("mobile disabled account state remains readable and offers guest continuation", async ({ page }) => {
   await page.goto("/account");
   await expect(page.getByRole("heading", { name: "Accounts are not available" })).toBeVisible();

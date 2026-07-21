@@ -15,9 +15,11 @@ if (!skillPath) throw new Error("Basic differentiation test path is missing");
 test("empty and whitespace-only input cannot create progress or reveal a solution", async ({ page }) => {
   await openQuestion(page, QUESTION_IDS[0]);
   const submit = page.getByRole("button", { name: "Submit Answer" });
-  await expect(submit).toBeDisabled();
+  await submit.click();
+  await expect(page.getByTestId("question-status")).toContainText("Enter an answer");
   await page.getByLabel("Your answer").fill("   ");
-  await expect(submit).toBeDisabled();
+  await submit.click();
+  await expect(page.getByTestId("question-status")).toContainText("Enter an answer");
   await expect(page.getByTestId("worked-solution-control")).toHaveCount(0);
   await expect(page.getByTestId("next-question-locked")).toBeVisible();
   expect(await readStoredProgress(page)).toBeNull();
