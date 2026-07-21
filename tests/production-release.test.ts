@@ -4,6 +4,7 @@ import { safeAuthRedirect } from "../lib/auth/redirects";
 import { authOriginMatchesCanonical, canonicalProductionOrigin, parseCanonicalOrigin } from "../lib/operations/canonical-origin";
 import { deploymentIsReady, evaluateDeploymentReadiness } from "../lib/operations/deployment-readiness";
 import { compareMigrationStatus } from "../lib/operations/migration-status";
+import { createPostgresClientConfig } from "../lib/remote-evidence/postgres-config";
 
 const productionEnvironment = {
   NEXT_PUBLIC_SITE_URL: "https://stemforge.example",
@@ -72,4 +73,19 @@ test("migration status fails closed for pending or unexpected schema history", (
     unexpected: ["002_future"],
     current: false,
   });
+});
+
+test("remote PostgreSQL uses verified TLS without modifying the plain pooler URI", () => {
+  const connectionString = "postgresql://pooler.example:6543/stemforge";
+  assert.deepEqual(createPostgresClientConfig(connectionString), {
+    connectionString,
+    ssl: { rejectUnauthorized: true },
+  });
+});
+
+test("loopback PostgreSQL keeps disposable and local connections non-TLS", () => {
+  for (const host of ["localhost", "127.0.0.1", "[::1]"]) {
+    const connectionString = `postgresql://stemforge@${host}:5432/stemforge_test`;
+    assert.deepEqual(createPostgresClientConfig(connectionString), { connectionString });
+  }
 });

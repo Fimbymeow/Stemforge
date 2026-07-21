@@ -2,6 +2,7 @@ import { readdir } from "node:fs/promises";
 import path from "node:path";
 import { Pool } from "pg";
 import { compareMigrationStatus } from "@/lib/operations/migration-status";
+import { createPostgresClientConfig } from "@/lib/remote-evidence/postgres-config";
 
 export async function readConfiguredMigrationStatus(environment: NodeJS.ProcessEnv = process.env) {
   const connectionString = environment.STEMFORGE_DATABASE_MIGRATION_URL;
@@ -10,7 +11,11 @@ export async function readConfiguredMigrationStatus(environment: NodeJS.ProcessE
     .filter((name) => /^\d+_[a-z0-9-]+\.js$/.test(name))
     .map((name) => name.slice(0, -3))
     .sort();
-  const pool = new Pool({ connectionString, max: 1, connectionTimeoutMillis: 10_000 });
+  const pool = new Pool({
+    ...createPostgresClientConfig(connectionString),
+    max: 1,
+    connectionTimeoutMillis: 10_000,
+  });
   try {
     const table = await pool.query<{ exists: boolean }>("SELECT to_regclass('stemforge_remote_migrations.pgmigrations') IS NOT NULL AS exists");
     const applied = table.rows[0]?.exists
