@@ -1,14 +1,22 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { rootCertificates } from "node:tls";
+import { Client } from "pg";
 import { safeAuthRedirect } from "../lib/auth/redirects";
 import { authOriginMatchesCanonical, canonicalProductionOrigin, parseCanonicalOrigin } from "../lib/operations/canonical-origin";
 import { deploymentIsReady, evaluateDeploymentReadiness } from "../lib/operations/deployment-readiness";
 import { compareMigrationStatus } from "../lib/operations/migration-status";
-import { createPostgresClientConfig } from "../lib/remote-evidence/postgres-config";
+import {
+  createPostgresClientConfig,
+  normalizeDatabaseCaCertificate,
+} from "../lib/remote-evidence/postgres-config";
+
+const TEST_CA_CERTIFICATE = rootCertificates[0];
 
 const productionEnvironment = {
   NEXT_PUBLIC_SITE_URL: "https://stemforge.example",
   STEMFORGE_DATABASE_URL: "postgresql://db.example/stemforge",
+  STEMFORGE_DATABASE_CA_CERT: TEST_CA_CERTIFICATE,
   STEMFORGE_AUTH_ENABLED: "true",
   NEXT_PUBLIC_SUPABASE_URL: "https://project.supabase.co",
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_test",
@@ -75,17 +83,55 @@ test("migration status fails closed for pending or unexpected schema history", (
   });
 });
 
-test("remote PostgreSQL uses verified TLS without modifying the plain pooler URI", () => {
-  const connectionString = "postgresql://pooler.example:6543/stemforge";
-  assert.deepEqual(createPostgresClientConfig(connectionString), {
-    connectionString,
-    ssl: { rejectUnauthorized: true },
-  });
+test("database CA normalization accepts multiline and escaped-newline PEM", () => {
+  assert.equal(normalizeDatabaseCaCertificate(TEST_CA_CERTIFICATE), TEST_CA_CERTIFICATE.trim());
+  assert.equal(
+    normalizeDatabaseCaCertificate(TEST_CA_CERTIFICATE.replaceAll("\n", "\\n")),
+    TEST_CA_CERTIFICATE.trim(),
+  );
 });
 
-test("loopback PostgreSQL keeps disposable and local connections non-TLS", () => {
+test("production remote PostgreSQL preserves the plain URI and parsed verified TLS object", () => {
+  const connectionString = "postgresql://pooler.example:6543/stemforge";
+  const config = createPostgresClientConfig(connectionString, {
+    VERCEL_ENV: "production",
+    STEMFORGE_DATABASE_CA_CERT: TEST_CA_CERTIFICATE.replaceAll("\n", "\\n"),
+  });
+  assert.deepEqual(config, {
+    connectionString,
+    ssl: { ca: TEST_CA_CERTIFICATE.trim(), rejectUnauthorized: true },
+  });
+  const client = new Client(config) as Client & { connectionParameters: { ssl: unknown } };
+  assert.deepEqual(client.connectionParameters.ssl, { ca: TEST_CA_CERTIFICATE.trim(), rejectUnauthorized: true });
+});
+
+test("local development and loopback PostgreSQL work without a CA", () => {
+  const developmentRemote = "postgresql://development.example:5432/stemforge";
+  assert.deepEqual(createPostgresClientConfig(developmentRemote, {}), { connectionString: developmentRemote });
+  assert.deepEqual(createPostgresClientConfig(developmentRemote, {
+    STEMFORGE_DATABASE_CA_CERT: TEST_CA_CERTIFICATE,
+  }), { connectionString: developmentRemote });
   for (const host of ["localhost", "127.0.0.1", "[::1]"]) {
     const connectionString = `postgresql://stemforge@${host}:5432/stemforge_test`;
-    assert.deepEqual(createPostgresClientConfig(connectionString), { connectionString });
+    assert.deepEqual(createPostgresClientConfig(connectionString, {
+      VERCEL_ENV: "production",
+      STEMFORGE_DATABASE_CA_CERT: TEST_CA_CERTIFICATE,
+    }), { connectionString });
   }
+});
+
+test("production CA failures are explicit and never leak certificate input", () => {
+  const marker = "private-certificate-marker";
+  const missing = evaluateDeploymentReadiness({ ...productionEnvironment, STEMFORGE_DATABASE_CA_CERT: undefined }, { production: true });
+  assert.equal(deploymentIsReady(missing), false);
+  assert.deepEqual(missing.find((check) => check.code === "database_tls")?.status, "fail");
+
+  const malformedEnvironment = { ...productionEnvironment, STEMFORGE_DATABASE_CA_CERT: marker };
+  const malformed = evaluateDeploymentReadiness(malformedEnvironment, { production: true });
+  assert.equal(deploymentIsReady(malformed), false);
+  assert.equal(JSON.stringify(malformed).includes(marker), false);
+  assert.throws(
+    () => createPostgresClientConfig(malformedEnvironment.STEMFORGE_DATABASE_URL, malformedEnvironment),
+    (error: unknown) => error instanceof Error && !error.message.includes(marker),
+  );
 });

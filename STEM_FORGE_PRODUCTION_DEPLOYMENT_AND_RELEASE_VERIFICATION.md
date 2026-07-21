@@ -29,6 +29,7 @@ Browser-safe production values:
 Server-only production runtime values:
 
 - `STEMFORGE_DATABASE_URL`: restricted pooled/serverless application connection with SSL.
+- `STEMFORGE_DATABASE_CA_CERT`: official Supabase CA certificate, stored server-only; multiline PEM and escaped newlines are supported.
 - `STEMFORGE_AUTH_ENABLED=true`.
 - `STEMFORGE_AUTH_SITE_URL`: exactly equals `NEXT_PUBLIC_SITE_URL`.
 - `STEMFORGE_INTERNAL_REPORTS_ENABLED`: normally `false` until deliberately enabled.

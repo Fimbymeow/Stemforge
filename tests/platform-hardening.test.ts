@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { rootCertificates } from "node:tls";
 import { createSecurityHeaders } from "../lib/security/headers";
 import { parseBoundedJsonRequest } from "../lib/security/request-boundary";
 import { deploymentIsReady, evaluateDeploymentReadiness } from "../lib/operations/deployment-readiness";
@@ -42,6 +43,7 @@ test("deployment checks fail closed without leaking configured values", () => {
   const ready = evaluateDeploymentReadiness({
     NEXT_PUBLIC_SITE_URL: "https://stemforge.example",
     STEMFORGE_DATABASE_URL: "postgresql://db.example/stemforge",
+    STEMFORGE_DATABASE_CA_CERT: rootCertificates[0],
     STEMFORGE_AUTH_ENABLED: "true",
     NEXT_PUBLIC_SUPABASE_URL: "https://project.supabase.co",
     NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_test",

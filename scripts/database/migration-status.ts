@@ -12,7 +12,7 @@ export async function readConfiguredMigrationStatus(environment: NodeJS.ProcessE
     .map((name) => name.slice(0, -3))
     .sort();
   const pool = new Pool({
-    ...createPostgresClientConfig(connectionString),
+    ...createPostgresClientConfig(connectionString, environment),
     max: 1,
     connectionTimeoutMillis: 10_000,
   });

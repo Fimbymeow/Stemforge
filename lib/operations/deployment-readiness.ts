@@ -1,6 +1,7 @@
 import { getAuthFeatureConfiguration } from "@/lib/auth/config";
 import { getInternalOperationsConfigurationStatus } from "@/lib/beta-reports/internal-authorization";
 import { authOriginMatchesCanonical, canonicalProductionOrigin } from "@/lib/operations/canonical-origin";
+import { databaseCaCertificateStatus } from "@/lib/remote-evidence/postgres-config";
 
 export const LATEST_DATABASE_MIGRATION = "1753266400000";
 
@@ -19,6 +20,12 @@ export function evaluateDeploymentReadiness(environment: Environment, input: boo
 
   const databaseReady = validPostgresUrl(environment.STEMFORGE_DATABASE_URL);
   checks.push(databaseReady ? pass("database_configuration", "The server-only runtime database connection is valid.") : production ? fail("database_configuration", "A valid server-only PostgreSQL runtime connection is required.") : warning("database_configuration", "Database configuration is optional for a credential-free local dry run."));
+  if (production) {
+    const caStatus = databaseCaCertificateStatus(environment.STEMFORGE_DATABASE_CA_CERT);
+    checks.push(caStatus === "valid"
+      ? pass("database_tls", "The server-only database CA certificate is valid for verified TLS.")
+      : fail("database_tls", caStatus === "missing" ? "A server-only database CA certificate is required for production." : "The server-only database CA certificate is malformed."));
+  }
   if (requireMigration) checks.push(validPostgresUrl(environment.STEMFORGE_DATABASE_MIGRATION_URL)
     ? pass("migration_configuration", "The migration-only database connection is named.")
     : fail("migration_configuration", "A valid migration-only PostgreSQL connection is required for migration verification."));

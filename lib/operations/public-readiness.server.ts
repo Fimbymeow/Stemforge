@@ -26,8 +26,9 @@ export async function getPublicReadinessSnapshot(environment: NodeJS.ProcessEnv 
   };
 
   if (environment.STEMFORGE_DATABASE_URL) {
-    const pool = createRemoteEvidencePool(environment.STEMFORGE_DATABASE_URL);
+    let pool: ReturnType<typeof createRemoteEvidencePool> | undefined;
     try {
+      pool = createRemoteEvidencePool(environment.STEMFORGE_DATABASE_URL, environment);
       const result = await pool.query<{ migration_table_ready: boolean; reporting_ready: boolean; ssl_ready: boolean }>(`
         SELECT
           to_regclass('stemforge_remote_migrations.pgmigrations') IS NOT NULL AS migration_table_ready,
@@ -46,11 +47,11 @@ export async function getPublicReadinessSnapshot(environment: NodeJS.ProcessEnv 
       checks.migration = migrationReady ? "ok" : "not_current";
       checks.reporting = row.reporting_ready ? "ok" : "not_current";
     } catch {
-      checks.database = "unavailable";
+      checks.database = production && checks.configuration === "misconfigured" ? "misconfigured" : "unavailable";
       checks.migration = "unavailable";
       checks.reporting = "unavailable";
     } finally {
-      await pool.end();
+      await pool?.end();
     }
   }
 
