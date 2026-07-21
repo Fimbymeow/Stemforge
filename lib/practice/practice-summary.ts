@@ -10,6 +10,7 @@ export type PracticeSessionSummary = {
   attemptedCount: number;
   correctCount: number;
   incorrectCount: number;
+  incorrectQuestionIds: string[];
   unansweredCount: number;
   supportUsedCount: number;
   elapsedSeconds: number | null;
@@ -25,6 +26,7 @@ export function derivePracticeSessionSummary(
   const questionIds = session.questionReferences.map((reference) => reference.questionId);
   const relevantAttempts = evidence.attempts.filter((attempt) =>
     questionIds.includes(attempt.questionId) &&
+    isWithinSession(attempt.attemptedAt, session) &&
     attempt.isGenuine &&
     attempt.versionEvidence.kind === "known" &&
     session.questionReferences.some((reference) =>
@@ -39,7 +41,9 @@ export function derivePracticeSessionSummary(
     }
   }
   const supportUsedCount = evidence.supportEvents.filter((event) =>
-    questionIds.includes(event.questionId) && event.afterGenuineAttempt,
+    questionIds.includes(event.questionId) &&
+    isWithinSession(event.occurredAt, session) &&
+    event.afterGenuineAttempt,
   ).length;
   const pathIds = [...new Set(session.questionReferences.map((reference) => {
     const resolved = resolvePracticeReference(reference, source);
@@ -48,6 +52,9 @@ export function derivePracticeSessionSummary(
   const attemptedCount = latestByQuestion.size;
   const correctCount = [...latestByQuestion.values()].filter((attempt) => attempt.isCorrect === true).length;
   const incorrectCount = [...latestByQuestion.values()].filter((attempt) => attempt.isCorrect === false).length;
+  const incorrectQuestionIds = session.questionReferences
+    .filter((reference) => latestByQuestion.get(reference.questionId)?.isCorrect === false)
+    .map((reference) => reference.questionId);
   return {
     sessionId: session.sessionId,
     mode: session.mode,
@@ -55,10 +62,18 @@ export function derivePracticeSessionSummary(
     attemptedCount,
     correctCount,
     incorrectCount,
+    incorrectQuestionIds,
     unansweredCount: session.questionReferences.length - attemptedCount,
     supportUsedCount,
     elapsedSeconds: session.timing.type === "timed" ? session.timing.elapsedSeconds : null,
     pathIds,
     suggestedNextAction: incorrectCount > 0 ? "retry_incorrect" : pathIds.length ? "continue_path" : "dashboard",
   };
+}
+
+function isWithinSession(occurredAt: string, session: PracticeSession) {
+  const occurred = Date.parse(occurredAt);
+  const started = Date.parse(session.startedAt);
+  const completed = session.completedAt ? Date.parse(session.completedAt) : null;
+  return occurred >= started && (completed === null || occurred <= completed);
 }

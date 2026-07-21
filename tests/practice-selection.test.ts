@@ -3,7 +3,8 @@ import assert from "node:assert/strict";
 import { createTwoPathFixture, fixtureIds } from "./fixtures/multi-path-content";
 import { higherMathsCalculusStrandIds } from "../data/higher-maths";
 import { discoverEligiblePracticeQuestions } from "../lib/practice/practice-eligibility";
-import { createPracticeSessionSelection, selectRetryIncorrectPractice } from "../lib/practice/practice-selection";
+import { createCompletedSessionRetry, createPracticeSessionSelection, selectRetryIncorrectPractice } from "../lib/practice/practice-selection";
+import { derivePracticeSetupVisibility } from "../lib/practice/practice-setup";
 import { attempt, evidence } from "./progress-fixtures";
 import type { CanonicalContentSource } from "../data/canonical-content";
 import type { Question } from "../data/types";
@@ -95,6 +96,46 @@ test("retry-incorrect uses latest current-version genuine attempt only", () => {
     source,
   });
   assert.equal(laterCorrect.session, null);
+});
+
+test("completed-session retry preserves only the supplied failures in original session order", () => {
+  const session = createPracticeSessionSelection({
+    mode: "targeted",
+    courseId: "calculus",
+    selectedPathIds: [fixtureIds.path],
+    requestedCount: 3,
+    seed: "completed-retry",
+    evidence: evidence(),
+    source: createTwoPathFixture(),
+    now: new Date("2026-07-17T10:00:00.000Z"),
+  }).session!;
+  const completed = { ...session, status: "completed" as const, completedAt: "2026-07-17T10:15:00.000Z" };
+  const expected = [session.questionReferences[0], session.questionReferences[2]];
+  const retry = createCompletedSessionRetry(
+    completed,
+    [session.questionReferences[2].questionId, session.questionReferences[0].questionId],
+    new Date("2026-07-17T10:16:00.000Z"),
+  );
+
+  assert.deepEqual(retry?.questionReferences, expected);
+  assert.equal(retry?.mode, "retry_incorrect");
+  assert.equal(retry?.status, "active");
+  assert.equal(retry?.timing.type, "untimed");
+  assert.equal(createCompletedSessionRetry(completed, []), null);
+  assert.equal(createCompletedSessionRetry(session, [session.questionReferences[0].questionId]), null);
+});
+
+test("practice setup hides choices over one while preserving future multi-option controls", () => {
+  assert.deepEqual(derivePracticeSetupVisibility(1, 1), {
+    showCourseChoice: false,
+    showPathChoice: false,
+    showMixedMode: false,
+  });
+  assert.deepEqual(derivePracticeSetupVisibility(2, 2), {
+    showCourseChoice: true,
+    showPathChoice: true,
+    showMixedMode: true,
+  });
 });
 
 test("archived questions are excluded and supported graph questions are adopted generically", () => {

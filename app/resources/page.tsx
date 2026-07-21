@@ -1,5 +1,5 @@
-import { ResourcesPage } from "@/components/resources-page";
+import { redirect } from "next/navigation";
 
 export default function Resources() {
-  return <ResourcesPage />;
+  redirect("/subjects/higher-maths/formula-cards");
 }

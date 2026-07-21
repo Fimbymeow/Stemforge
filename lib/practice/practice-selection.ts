@@ -77,6 +77,44 @@ export function selectRetryIncorrectPractice(input: Omit<PracticeSelectionInput,
   return createPracticeSessionSelection({ ...input, mode: "retry_incorrect" });
 }
 
+export function createCompletedSessionRetry(
+  completedSession: PracticeSession,
+  incorrectQuestionIds: readonly string[],
+  now = new Date(),
+): PracticeSession | null {
+  if (completedSession.status !== "completed") return null;
+  const incorrectIds = new Set(incorrectQuestionIds);
+  const questionReferences = completedSession.questionReferences.filter((reference) => incorrectIds.has(reference.questionId));
+  if (!questionReferences.length) return null;
+  const includedPathIds = unique(questionReferences.map((reference) => reference.pathId));
+  const seed = `session-retry:${completedSession.sessionId}`;
+  return {
+    schemaVersion: PRACTICE_SESSION_SCHEMA_VERSION,
+    sessionId: createSessionId("retry_incorrect", seed, now),
+    mode: "retry_incorrect",
+    courseId: completedSession.courseId,
+    selectedPathIds: includedPathIds,
+    questionReferences,
+    currentQuestionIndex: 0,
+    startedAt: now.toISOString(),
+    updatedAt: now.toISOString(),
+    completedAt: null,
+    status: "active",
+    timing: { type: "untimed" },
+    selectionMetadata: {
+      seed,
+      requestedCount: questionReferences.length,
+      availableCount: questionReferences.length,
+      selectedCount: questionReferences.length,
+      fullySatisfied: true,
+      shortageReason: null,
+      excludedByReason: {},
+      includedPathIds,
+      createdAt: now.toISOString(),
+    },
+  };
+}
+
 function filterForMode(mode: PracticeMode, candidates: EligiblePracticeQuestion[], evidence: ProgressEvidence) {
   if (mode === "needs_work") {
     return candidates.filter((item) => {

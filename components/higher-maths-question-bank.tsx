@@ -53,7 +53,7 @@ export function HigherMathsQuestionBank() {
       <div className="mx-auto mb-3 flex max-w-[1120px] justify-end">
         <AppTopbar demo />
       </div>
-      <main className="mx-auto grid max-w-[1120px] grid-cols-[minmax(0,1fr)_300px] gap-4 max-lg:grid-cols-1">
+      <div className="mx-auto grid max-w-[1120px] grid-cols-[minmax(0,1fr)_300px] gap-4 max-lg:grid-cols-1">
         <section className="grid content-start gap-4">
           <header>
             <nav className="mb-3 flex flex-wrap items-center gap-2 text-sm text-muted" aria-label="Breadcrumb">
@@ -151,7 +151,7 @@ export function HigherMathsQuestionBank() {
         <aside className="grid content-start gap-4">
           <SelectedPathPanel progress={progress} status={status} />
         </aside>
-      </main>
+      </div>
     </AppShell>
   );
 }

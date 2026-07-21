@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, CheckCircle2, Timer } from "lucide-react";
 import { Card } from "@/components/ui";
@@ -8,7 +9,8 @@ import { QuestionWorkspace } from "@/components/questions/question-workspace";
 import { getEmptyProgressEvidence, getProgressEvidence } from "@/lib/local-progress";
 import { resolvePracticeReference } from "@/lib/practice/practice-eligibility";
 import { derivePracticeSessionSummary } from "@/lib/practice/practice-summary";
-import { getPracticeSession, updatePracticeSession } from "@/lib/practice/practice-storage";
+import { createCompletedSessionRetry } from "@/lib/practice/practice-selection";
+import { getPracticeSession, updatePracticeSession, upsertPracticeSession } from "@/lib/practice/practice-storage";
 import type { PracticeSession as PracticeSessionModel } from "@/lib/practice/practice-types";
 
 export function PracticeSession({ sessionId }: { sessionId: string }) {
@@ -119,6 +121,15 @@ function PracticeTimer({ session, onExpire }: { session: PracticeSessionModel; o
 }
 
 function PracticeSummaryCard({ session, summary }: { session: PracticeSessionModel; summary: ReturnType<typeof derivePracticeSessionSummary> }) {
+  const router = useRouter();
+
+  function retryIncorrect() {
+    const retrySession = createCompletedSessionRetry(session, summary.incorrectQuestionIds);
+    if (!retrySession) return;
+    upsertPracticeSession(retrySession);
+    router.push(`/practice/session/${retrySession.sessionId}`);
+  }
+
   return (
     <main className="mx-auto grid max-w-[780px] gap-4 p-5">
       <Card className="p-6" role="status" aria-live="polite">
@@ -135,7 +146,7 @@ function PracticeSummaryCard({ session, summary }: { session: PracticeSessionMod
         {session.timing.type === "timed" ? <p className="mt-4 text-sm text-muted">Elapsed time: {formatTime(session.timing.elapsedSeconds)}. No blank answers were submitted automatically.</p> : null}
         <div className="mt-5 flex flex-wrap gap-3">
           <Link href="/practice" className="inline-flex min-h-10 items-center rounded-lg bg-forge px-4 font-extrabold text-white">Start another session</Link>
-          {summary.incorrectCount > 0 ? <Link href="/practice" className="inline-flex min-h-10 items-center rounded-lg border border-line bg-white px-4 font-extrabold">Retry incorrect</Link> : null}
+          {summary.incorrectCount > 0 ? <button type="button" onClick={retryIncorrect} className="inline-flex min-h-10 items-center rounded-lg border border-line bg-white px-4 font-extrabold">Retry incorrect</button> : null}
           <Link href="/dashboard" className="inline-flex min-h-10 items-center rounded-lg border border-line bg-white px-4 font-extrabold">Dashboard</Link>
         </div>
       </Card>

@@ -117,11 +117,13 @@ export function DashboardLocalProgressSection() {
           <Card className="p-5">
             <h2 className="m-0 flex items-center gap-2 text-xl font-extrabold"><Flame className="size-5 text-forge" /> Weekly evidence</h2>
             <p className="mt-2 text-sm text-muted">{model.weeklyActivity.label}</p>
-            <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-              <MiniStat label="Days" value={model.weeklyActivity.activeDays} />
-              <MiniStat label="Attempts" value={model.weeklyActivity.attempts} />
-              <MiniStat label="Milestones" value={model.weeklyActivity.achievements} />
-            </div>
+            {hasWeeklyActivity(model.weeklyActivity) ? (
+              <div className={`mt-4 grid gap-2 text-center ${model.weeklyActivity.achievements > 0 ? "grid-cols-3" : "grid-cols-2"}`}>
+                <MiniStat label="Days" value={model.weeklyActivity.activeDays} />
+                <MiniStat label="Attempts" value={model.weeklyActivity.attempts} />
+                {model.weeklyActivity.achievements > 0 ? <MiniStat label="Milestones" value={model.weeklyActivity.achievements} /> : null}
+              </div>
+            ) : null}
           </Card>
         </div>
       </div>
@@ -169,6 +171,10 @@ export function DashboardLocalProgressSection() {
       </Card>
     </section>
   );
+}
+
+function hasWeeklyActivity(activity: { activeDays: number; attempts: number; achievements: number }) {
+  return activity.activeDays > 0 || activity.attempts > 0 || activity.achievements > 0;
 }
 
 function PathEvidenceRow({ path }: { path: DashboardPathSummary }) {

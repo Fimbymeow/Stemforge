@@ -1,5 +1,5 @@
 import { expect, test } from "./fixtures/test";
-import { readStoredProgress, STORAGE_KEY } from "./fixtures/progress";
+import { QUESTION_ANSWERS, readStoredProgress, STORAGE_KEY } from "./fixtures/progress";
 import { PRACTICE_SESSIONS_STORAGE_KEY } from "../lib/practice/practice-types";
 
 test("guest targeted practice starts, uses the canonical question workspace, persists, and summarizes", async ({ page }) => {
@@ -30,13 +30,51 @@ test("guest targeted practice starts, uses the canonical question workspace, per
   await page.getByRole("button", { name: /Finish session/i }).click();
   await expect(page.getByRole("heading", { name: "Practice summary" })).toBeVisible();
   await expect(page.getByText("Attempted")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Retry incorrect" })).toHaveCount(0);
   expect(errors).toEqual([]);
+});
+
+test("completed-session retry contains exactly that session's incorrect questions", async ({ page }) => {
+  await page.goto("/practice");
+  await page.getByLabel("Requested questions").fill("2");
+  await page.getByRole("button", { name: /Start session/i }).click();
+  const references = await page.evaluate((key) => {
+    const store = JSON.parse(localStorage.getItem(key)!);
+    return store.sessions[0].questionReferences.map((reference: { questionId: string }) => reference.questionId) as string[];
+  }, PRACTICE_SESSIONS_STORAGE_KEY);
+
+  await page.getByLabel("Your answer").fill("definitely wrong");
+  await page.getByRole("button", { name: "Submit Answer" }).click();
+  await expect(page.getByTestId("question-status")).toContainText("Not quite");
+  await page.getByTestId("practice-session-panel").getByRole("button", { name: "Next" }).click();
+  await page.getByLabel("Your answer").fill(QUESTION_ANSWERS[references[1] as keyof typeof QUESTION_ANSWERS]);
+  await page.getByRole("button", { name: "Submit Answer" }).click();
+  await expect(page.getByTestId("question-status")).toContainText("Correct");
+  await page.getByRole("button", { name: /Finish session/i }).click();
+
+  const retry = page.getByRole("button", { name: "Retry incorrect" });
+  await retry.focus();
+  await expect(retry).toBeFocused();
+  await retry.press("Enter");
+  await expect(page).toHaveURL(/\/practice\/session\//);
+  const retryState = await page.evaluate(({ sessionKey, progressKey }) => {
+    const store = JSON.parse(localStorage.getItem(sessionKey)!);
+    const active = store.sessions.find((session: { status: string }) => session.status === "active");
+    const progress = JSON.parse(localStorage.getItem(progressKey)!);
+    return {
+      mode: active.mode,
+      questionIds: active.questionReferences.map((reference: { questionId: string }) => reference.questionId),
+      attemptCount: progress.data.attempts.length,
+    };
+  }, { sessionKey: PRACTICE_SESSIONS_STORAGE_KEY, progressKey: STORAGE_KEY });
+  expect(retryState).toEqual({ mode: "retry_incorrect", questionIds: [references[0]], attemptCount: 2 });
 });
 
 test("retry-incorrect appears after an incorrect attempt and later correct removes it", async ({ page }) => {
   await page.goto("/practice");
-  await page.getByRole("button", { name: /Retry incorrect/i }).click();
-  await expect(page.getByText(/There are no current-version incorrect attempts/i)).toBeVisible();
+  const initiallyUnavailable = page.getByRole("button", { name: /Retry incorrect/i });
+  await expect(initiallyUnavailable).toBeDisabled();
+  await expect(initiallyUnavailable).toContainText(/There are no current-version incorrect attempts/i);
   await page.goto("/question/hm-calc-diff-basic-f-001");
   await page.getByLabel("Your answer").fill("x^4");
   await page.getByRole("button", { name: "Submit Answer" }).click();
@@ -49,8 +87,9 @@ test("retry-incorrect appears after an incorrect attempt and later correct remov
   await page.getByRole("button", { name: "Submit Answer" }).click();
   await expect(page.getByTestId("question-status")).toContainText("Correct");
   await page.goto("/practice");
-  await page.getByRole("button", { name: /Retry incorrect/i }).click();
-  await expect(page.getByText(/There are no current-version incorrect attempts/i)).toBeVisible();
+  const noLongerAvailable = page.getByRole("button", { name: /Retry incorrect/i });
+  await expect(noLongerAvailable).toBeDisabled();
+  await expect(noLongerAvailable).toContainText(/There are no current-version incorrect attempts/i);
 });
 
 test("timed practice expires without submitting blank answers and mobile layout has no overflow", async ({ page }) => {

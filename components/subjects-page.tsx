@@ -21,7 +21,7 @@ export function SubjectsPage({ mode }: { mode: SubjectsMode }) {
       <div className="mx-auto mb-3 flex max-w-[1120px] justify-end">
         <AppTopbar demo={demo} />
       </div>
-      <main className="mx-auto grid max-w-[1120px] gap-5">
+      <div className="mx-auto grid max-w-[1120px] gap-5">
         <header>
           <div className="grid grid-cols-[48px_1fr] items-center gap-3 max-md:grid-cols-1">
             <span className="grid size-12 place-items-center rounded-xl border border-forge-soft bg-forge-soft text-forge">
@@ -50,7 +50,7 @@ export function SubjectsPage({ mode }: { mode: SubjectsMode }) {
             <EmptyState title="No subjects available yet" copy="Published STEM Forge subjects will appear here when course content is ready." />
           </Card>
         )}
-      </main>
+      </div>
     </AppShell>
   );
 }

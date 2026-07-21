@@ -79,3 +79,20 @@ test("mobile disabled account state remains readable and offers guest continuati
   await expect(page.getByRole("link", { name: "Continue as a guest" })).toBeVisible();
   await expectNoHorizontalOverflow(page);
 });
+
+test("mobile Functional Honesty surfaces remain compact, semantic and error-free", async ({ page, seriousBrowserErrors }) => {
+  await page.goto("/practice");
+  await expect(page.locator("main")).toHaveCount(1);
+  await expect(page.getByRole("combobox", { name: "Course" })).toHaveCount(0);
+  await expect(page.getByRole("combobox", { name: "Path" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /Mixed practice/ })).toHaveCount(0);
+  await expect(page.getByLabel("Notifications")).toHaveCount(0);
+  await expect(page.getByLabel("Profile preview")).toHaveCount(0);
+  await expectNoHorizontalOverflow(page);
+
+  await page.goto("/subjects/higher-maths/formula-cards");
+  await expect(page.locator("main")).toHaveCount(1);
+  await expect(page.getByRole("heading", { name: "Higher Maths Formula Cards", level: 1 })).toBeVisible();
+  await expectNoHorizontalOverflow(page);
+  expect(seriousBrowserErrors).toEqual([]);
+});

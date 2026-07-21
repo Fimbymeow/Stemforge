@@ -11,6 +11,7 @@ import { contentResolver } from "@/lib/content-resolver";
 import { getEmptyProgressEvidence, getProgressEvidence } from "@/lib/local-progress";
 import { useHasMounted } from "@/lib/use-mounted";
 import { createPracticeSessionSelection } from "@/lib/practice/practice-selection";
+import { derivePracticeSetupVisibility } from "@/lib/practice/practice-setup";
 import { upsertPracticeSession } from "@/lib/practice/practice-storage";
 import type { PracticeMode, PracticeTiming } from "@/lib/practice/practice-types";
 
@@ -30,6 +31,7 @@ export function PracticeSetup() {
   const [mode, setMode] = useState<PracticeMode>("targeted");
   const [courseId, setCourseId] = useState(courses[0]?.slug ?? "");
   const availablePaths = paths.filter((context) => context.courseArea.slug === courseId);
+  const visibility = derivePracticeSetupVisibility(courses.length, availablePaths.length);
   const [selectedPathId, setSelectedPathId] = useState(availablePaths[0]?.skillPath.slug ?? "");
   const [questionCount, setQuestionCount] = useState(6);
   const [timed, setTimed] = useState(false);
@@ -45,6 +47,21 @@ export function PracticeSetup() {
     timing: timing(timed, timeLimitMinutes),
     now: new Date("2026-01-01T00:00:00.000Z"),
   });
+  const visibleModes = (Object.keys(modeCopy) as PracticeMode[]).filter((item) => item !== "mixed" || visibility.showMixedMode);
+
+  function previewForMode(candidateMode: PracticeMode) {
+    const candidatePathIds = candidateMode === "mixed" ? availablePaths.map((context) => context.skillPath.slug) : selectedPathId ? [selectedPathId] : [];
+    return createPracticeSessionSelection({
+      mode: candidateMode,
+      courseId,
+      selectedPathIds: candidatePathIds,
+      requestedCount: questionCount,
+      seed: `practice-preview:${candidateMode}`,
+      evidence,
+      timing: timing(timed, timeLimitMinutes),
+      now: new Date("2026-01-01T00:00:00.000Z"),
+    });
+  }
 
   function startSession() {
     const result = createPracticeSessionSelection({
@@ -78,32 +95,42 @@ export function PracticeSetup() {
             <Card className="p-4">
               <h2 className="mb-3 text-xl font-extrabold">Choose a mode</h2>
               <div className="grid grid-cols-2 gap-3 max-md:grid-cols-1">
-                {(Object.keys(modeCopy) as PracticeMode[]).map((item) => (
-                  <button key={item} type="button" onClick={() => setMode(item)} className={`rounded-xl border p-4 text-left ${mode === item ? "border-forge bg-forge-soft" : "border-line bg-white"}`}>
-                    <strong>{modeCopy[item].title}</strong>
-                    <span className="mt-1 block text-sm text-muted">{modeCopy[item].detail}</span>
-                  </button>
-                ))}
+                {visibleModes.map((item) => {
+                  const candidatePreview = previewForMode(item);
+                  const unavailable = (item === "needs_work" || item === "retry_incorrect") && !candidatePreview.session;
+                  return (
+                    <button key={item} type="button" disabled={unavailable} onClick={() => setMode(item)} className={`rounded-xl border p-4 text-left disabled:cursor-not-allowed disabled:opacity-55 ${mode === item ? "border-forge bg-forge-soft" : "border-line bg-white"}`}>
+                      <strong>{modeCopy[item].title}</strong>
+                      <span className="mt-1 block text-sm text-muted">{unavailable ? candidatePreview.shortageReason : modeCopy[item].detail}</span>
+                    </button>
+                  );
+                })}
               </div>
             </Card>
 
             <Card className="grid gap-4 p-4">
-              <label className="grid gap-2">
+              {visibility.showCourseChoice ? <label className="grid gap-2">
                 <span className="font-bold">Course</span>
-                <select value={courseId} onChange={(event) => { setCourseId(event.target.value); setSelectedPathId(paths.find((context) => context.courseArea.slug === event.target.value)?.skillPath.slug ?? ""); }} className="min-h-11 rounded-lg border border-line bg-white px-3">
+                <select value={courseId} onChange={(event) => {
+                  const nextCourseId = event.target.value;
+                  const nextPaths = paths.filter((context) => context.courseArea.slug === nextCourseId);
+                  setCourseId(nextCourseId);
+                  setSelectedPathId(nextPaths[0]?.skillPath.slug ?? "");
+                  if (mode === "mixed" && nextPaths.length < 2) setMode("targeted");
+                }} className="min-h-11 rounded-lg border border-line bg-white px-3">
                   {courses.map((course) => <option key={course.slug} value={course.slug}>{course.name}</option>)}
                 </select>
-              </label>
-              {mode !== "mixed" ? (
+              </label> : null}
+              {mode !== "mixed" && visibility.showPathChoice ? (
                 <label className="grid gap-2">
                   <span className="font-bold">Path</span>
                   <select value={selectedPathId} onChange={(event) => setSelectedPathId(event.target.value)} className="min-h-11 rounded-lg border border-line bg-white px-3">
                     {availablePaths.map((context) => <option key={context.skillPath.slug} value={context.skillPath.slug}>{context.skillPath.name}</option>)}
                   </select>
                 </label>
-              ) : (
+              ) : mode === "mixed" ? (
                 <div className="rounded-xl border border-line bg-paper p-3 text-sm text-muted">Mixed practice will use {availablePaths.length} available path{availablePaths.length === 1 ? "" : "s"} in this course.</div>
-              )}
+              ) : null}
               <label className="grid gap-2">
                 <span className="font-bold">Requested questions</span>
                 <input aria-label="Requested questions" type="number" min={1} max={30} value={questionCount} onChange={(event) => setQuestionCount(Number(event.target.value))} className="min-h-11 rounded-lg border border-line bg-white px-3" />

@@ -55,7 +55,7 @@ export function HigherMathsResourceBrowser({ resourceType }: { resourceType: Res
       <div className="mx-auto mb-3 flex max-w-[1120px] justify-end">
         <AppTopbar demo />
       </div>
-      <main className="mx-auto grid max-w-[1120px] grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] gap-4 max-lg:grid-cols-1">
+      <div className="mx-auto grid max-w-[1120px] grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] gap-4 max-lg:grid-cols-1">
         <section className="grid content-start gap-4">
           <header>
             <nav className="mb-4 flex flex-wrap items-center gap-2 text-sm text-muted" aria-label="Breadcrumb">
@@ -100,7 +100,7 @@ export function HigherMathsResourceBrowser({ resourceType }: { resourceType: Res
           </Card>
           <ResourceContent resourceType={resourceType} skillPath={skillPath} />
         </section>
-      </main>
+      </div>
     </AppShell>
   );
 }
@@ -170,4 +170,3 @@ function FlashcardsContent({ flashcards }: { flashcards: Flashcard[] }) {
   const [revealed, setRevealed] = useState<Record<string, boolean>>({});
   return <div className="grid gap-3">{flashcards.map((card) => { const isRevealed = Boolean(revealed[card.id]); return <Card key={card.id} className="p-4"><div className="font-extrabold"><MathContent>{card.front}</MathContent></div>{isRevealed ? <div className="mt-3 rounded-xl border border-line bg-paper p-3 text-sm text-muted"><MathContent>{card.back}</MathContent></div> : null}<button type="button" onClick={() => setRevealed((current) => ({ ...current, [card.id]: !isRevealed }))} className="mt-3 min-h-9 rounded-lg border border-line bg-white px-3 text-sm font-extrabold hover:border-forge hover:text-forge">{isRevealed ? "Hide answer" : "Reveal answer"}</button></Card>; })}</div>;
 }
-

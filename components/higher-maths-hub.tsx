@@ -40,7 +40,7 @@ export function HigherMathsHub() {
       <div className="mx-auto mb-3 flex max-w-[1120px] justify-end">
         <AppTopbar demo />
       </div>
-      <main className="mx-auto grid max-w-[1120px] gap-5">
+      <div className="mx-auto grid max-w-[1120px] gap-5">
         <header>
           <nav className="mb-3 flex flex-wrap items-center gap-2 text-sm text-muted" aria-label="Breadcrumb">
             <Link href="/subjects">Subjects</Link>
@@ -65,7 +65,7 @@ export function HigherMathsHub() {
         </section>
 
         <SubjectRoadmapNavigator subject={subject} />
-      </main>
+      </div>
     </AppShell>
   );
 }
