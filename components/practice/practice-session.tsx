@@ -1,12 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, CheckCircle2, Timer } from "lucide-react";
 import { Card } from "@/components/ui";
 import { QuestionWorkspace } from "@/components/questions/question-workspace";
-import { getEmptyProgressEvidence, getProgressEvidence } from "@/lib/local-progress";
+import { getPathCompletionSupportingSentence } from "@/components/learning/path-completion-panel";
+import { isCompletedTierStatus, MasteryBadge, ReviewBadge, type CompletedTierStatus } from "@/components/learning/mastery-badge";
+import { contentResolver } from "@/lib/content-resolver";
+import { recordPathCelebrated } from "@/lib/completion-tracking";
+import { getEmptyProgressEvidence, getProgressEvidence, getSkillPathProgress } from "@/lib/local-progress";
 import { resolvePracticeReference } from "@/lib/practice/practice-eligibility";
 import { derivePracticeSessionSummary } from "@/lib/practice/practice-summary";
 import { createCompletedSessionRetry } from "@/lib/practice/practice-selection";
@@ -121,13 +125,57 @@ function PracticeTimer({ session, onExpire }: { session: PracticeSessionModel; o
   return <span role="timer" aria-label="Practice timer" aria-live="off" className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-white px-3 font-bold"><Timer className="size-4" />{formatTime(remaining)}</span>;
 }
 
+type JustCompletedPath = {
+  pathId: string;
+  name: string;
+  status: CompletedTierStatus;
+  completed: number;
+  total: number;
+  accuracy: number | null;
+  reviewCount: number;
+};
+
+/** Claims, at most once, any path this session's completion also completed. */
+function claimPathsCompletedBySession(pathIds: readonly string[]): JustCompletedPath[] {
+  const claimed: JustCompletedPath[] = [];
+  for (const pathId of pathIds) {
+    const skillPath = contentResolver.getPathContext(pathId)?.skillPath;
+    if (!skillPath) continue;
+    const progress = getSkillPathProgress(skillPath);
+    if (progress.totalQuestions === 0 || progress.completedQuestionIds.length < progress.totalQuestions) continue;
+    if (!isCompletedTierStatus(progress.status)) continue;
+    if (recordPathCelebrated(skillPath.slug, progress.status) !== "recorded") continue;
+    claimed.push({
+      pathId: skillPath.slug,
+      name: skillPath.name,
+      status: progress.status,
+      completed: progress.completedQuestionIds.length,
+      total: progress.totalQuestions,
+      accuracy: progress.firstAttemptAccuracyPercentage,
+      reviewCount: progress.reviewQuestionIds.length,
+    });
+  }
+  return claimed;
+}
+
 function PracticeSummaryCard({ session, summary }: { session: PracticeSessionModel; summary: ReturnType<typeof derivePracticeSessionSummary> }) {
   const router = useRouter();
+  const [justCompletedPaths, setJustCompletedPaths] = useState<JustCompletedPath[]>([]);
+  const claimedRef = useRef(false);
   const nextAction = derivePracticeSummaryNextAction({
     evidence: getProgressEvidence(),
     completedSession: session,
     incorrectQuestionIds: summary.incorrectQuestionIds,
   });
+  const fullyCorrect = summary.questionCount > 0 && summary.attemptedCount === summary.questionCount && summary.incorrectCount === 0;
+
+  useEffect(() => {
+    if (claimedRef.current) return;
+    claimedRef.current = true;
+    const claimed = claimPathsCompletedBySession(summary.pathIds);
+    if (claimed.length) setJustCompletedPaths(claimed);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function retryIncorrect() {
     const retrySession = createCompletedSessionRetry(session, summary.incorrectQuestionIds);
@@ -141,6 +189,23 @@ function PracticeSummaryCard({ session, summary }: { session: PracticeSessionMod
       <Card className="p-6" role="status" aria-live="polite">
         <p className="font-mono text-xs font-extrabold uppercase text-forge">Session complete</p>
         <h1 className="mt-2 text-3xl font-extrabold">Practice summary</h1>
+        {justCompletedPaths.map((path) => (
+          <div key={path.pathId} data-testid="practice-summary-path-completion" className="animate-fade-rise mt-4 rounded-xl border border-forge/20 bg-forge-soft/40 p-4">
+            <div className="mb-2 flex flex-wrap items-center gap-2">
+              <MasteryBadge status={path.status} />
+              <ReviewBadge count={path.reviewCount} />
+            </div>
+            <h2 className="m-0 text-lg font-extrabold">{path.name} {path.status === "completed" ? "complete" : path.status}</h2>
+            <p className="mt-2 text-sm text-ink">{getPathCompletionSupportingSentence(path.status, path.reviewCount)}</p>
+            <p className="mt-2 text-sm font-bold text-muted">
+              {path.completed} / {path.total} completed
+              {path.accuracy !== null ? ` · ${path.accuracy}% first-attempt accuracy` : ""}
+            </p>
+          </div>
+        ))}
+        {!justCompletedPaths.length && fullyCorrect ? (
+          <p data-testid="practice-summary-fully-correct" className="mt-4 text-sm font-bold text-forge">Every question in this session was answered correctly.</p>
+        ) : null}
         <div className="mt-5 grid grid-cols-2 gap-3 max-sm:grid-cols-1">
           <SummaryStat label="Questions" value={summary.questionCount} />
           <SummaryStat label="Attempted" value={summary.attemptedCount} />

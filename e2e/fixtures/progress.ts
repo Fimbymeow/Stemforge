@@ -11,6 +11,7 @@ import type {
 
 export const STORAGE_KEY = "stemforge.localProgress.v1";
 export const CELEBRATION_STORAGE_KEY = "stemforge.pathCelebration.v1";
+export const STAGE_CELEBRATION_STORAGE_KEY = "stemforge.stageCelebration.v1";
 export const PATH_ID = "basic-differentiation";
 export const FOUNDATION_STAGE_ID = "basic-diff-stage-foundations";
 export const APPLICATION_STAGE_ID = "basic-diff-stage-applications";

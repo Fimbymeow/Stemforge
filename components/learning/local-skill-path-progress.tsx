@@ -6,7 +6,7 @@ import { RotateCcw, Target, TrendingUp } from "lucide-react";
 import { Card, ProgressBar } from "@/components/ui";
 import { formatProgressStatusLabel, isCompletedTierStatus, MasteryBadge, ReviewBadge, type CompletedTierStatus } from "@/components/learning/mastery-badge";
 import { getPathCompletionSupportingSentence } from "@/components/learning/path-completion-panel";
-import { acknowledgeStatus, clearPathCelebration, getPathCelebration, isAcknowledgedStatusUpgrade } from "@/lib/completion-tracking";
+import { acknowledgeStatus, clearPathCelebration, clearStageCelebration, getPathCelebration, isAcknowledgedStatusUpgrade } from "@/lib/completion-tracking";
 import { getSkillPathHref, getSubjectForSkillPath } from "@/lib/learning-paths";
 import { getEmptyProgressEvidence, getSkillPathProgress, resetSkillPathProgress, type SkillPathProgress } from "@/lib/local-progress";
 import { useHasMounted } from "@/lib/use-mounted";
@@ -213,6 +213,7 @@ export function LocalProgressControls({ skillPath }: { skillPath: SkillPath }) {
     if (!confirmed) return;
     await resetSkillPathProgress(skillPath.slug);
     clearPathCelebration(skillPath.slug);
+    for (const stage of skillPath.learningStages ?? []) clearStageCelebration(skillPath.slug, stage.id);
   }
 
   return (

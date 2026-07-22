@@ -7,6 +7,7 @@ import { ReportDialog } from "@/components/beta-reports/report-dialog";
 import { AppShell } from "@/components/layout/app-shell";
 import { AppTopbar } from "@/components/layout/app-topbar";
 import { PathCompletionPanel } from "@/components/learning/path-completion-panel";
+import { StageCompletionPanel } from "@/components/learning/stage-completion-panel";
 import { useLearnerNextAction } from "@/components/learning/use-learner-next-action";
 import { MathContent } from "@/components/questions/math-content";
 import { QuestionAnswerInput } from "@/components/questions/answer-inputs";
@@ -14,7 +15,7 @@ import { WorkedSolutionContent } from "@/components/questions/worked-solution-co
 import { Card, ProgressBar } from "@/components/ui";
 import type { Question } from "@/data/types";
 import { markQuestionAnswer } from "@/lib/answer-engine";
-import { recordPathCelebrated } from "@/lib/completion-tracking";
+import { recordPathCelebrated, recordStageCelebrated } from "@/lib/completion-tracking";
 import { getQuestionContext, getQuestionHref } from "@/lib/learning-paths";
 import {
   getEmptyProgressEvidence,
@@ -37,6 +38,7 @@ import {
   type AnswerDraftIdentity,
 } from "@/lib/questions/answer-drafts";
 import { deriveStageQuestionPosition } from "@/lib/questions/question-context";
+import { describeReviewReason } from "@/lib/questions/review-reason";
 import { useHasMounted } from "@/lib/use-mounted";
 
 type SubmissionIntent = "keyboard" | "pointer";
@@ -52,7 +54,9 @@ export function QuestionWorkspace({ question, sessionPanel, answerLocked = false
   const [solutionOpenedThisInteraction, setSolutionOpenedThisInteraction] = useState(false);
   const [progressVersion, setProgressVersion] = useState(0);
   const [showCompletionPanel, setShowCompletionPanel] = useState(false);
+  const [showStageCompletionPanel, setShowStageCompletionPanel] = useState(false);
   const wasPathCompleteRef = useRef<boolean | null>(null);
+  const wasStageCompleteRef = useRef<boolean | null>(null);
   const feedbackHeadingRef = useRef<HTMLHeadingElement | null>(null);
   const hintContentRef = useRef<HTMLDivElement | null>(null);
   const solutionHeadingRef = useRef<HTMLHeadingElement | null>(null);
@@ -93,6 +97,9 @@ export function QuestionWorkspace({ question, sessionPanel, answerLocked = false
   const pathCompletedQuestionCount = localProgress?.completedQuestionIds.length ?? 0;
   const pathTotalQuestionCount = localProgress?.totalQuestions ?? 0;
   const pathStatus = localProgress?.status;
+  const stageCompletedQuestionCount = stageLocalProgress?.completedQuestionIds.length ?? 0;
+  const stageTotalQuestionCount = stageLocalProgress?.totalQuestions ?? 0;
+  const stageStatus = stageLocalProgress?.status;
 
   useEffect(() => {
     setAnswer(loadAnswerDraft(browserStorage(), draftIdentity)?.answer ?? "");
@@ -103,6 +110,7 @@ export function QuestionWorkspace({ question, sessionPanel, answerLocked = false
     setHintViewed(false);
     setSolutionOpenedThisInteraction(false);
     setShowCompletionPanel(false);
+    setShowStageCompletionPanel(false);
   }, [draftKey, draftIdentity]);
 
   useEffect(() => {
@@ -140,6 +148,7 @@ export function QuestionWorkspace({ question, sessionPanel, answerLocked = false
   useEffect(() => {
     if (!hasMounted) return;
     wasPathCompleteRef.current = pathTotalQuestionCount > 0 && pathCompletedQuestionCount >= pathTotalQuestionCount;
+    wasStageCompleteRef.current = stageTotalQuestionCount > 0 && stageCompletedQuestionCount >= stageTotalQuestionCount;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [question.id, hasMounted]);
 
@@ -148,12 +157,35 @@ export function QuestionWorkspace({ question, sessionPanel, answerLocked = false
     const isPathCompleteNow = pathCompletedQuestionCount >= pathTotalQuestionCount;
     if (isPathCompleteNow && wasPathCompleteRef.current === false) {
       wasPathCompleteRef.current = true;
-      const acknowledgement = recordPathCelebrated(skillPath.slug, pathStatus);
-      setShowCompletionPanel(
+      // Inside a practice session, defer the one-time claim to the practice summary screen
+      // (see PracticeSummaryCard) rather than claiming it here, where the panel can never
+      // render anyway (sessionPanel takes over this row) — claiming it here would silently
+      // burn the one-time acknowledgement before the summary gets a chance to show it.
+      if (!sessionPanel) {
+        const acknowledgement = recordPathCelebrated(skillPath.slug, pathStatus);
+        setShowCompletionPanel(
+          acknowledgement === "recorded" || acknowledgement === "unavailable" || acknowledgement === "write-failed",
+        );
+      }
+    }
+  }, [hasMounted, skillPath, pathStatus, pathCompletedQuestionCount, pathTotalQuestionCount, sessionPanel]);
+
+  useEffect(() => {
+    if (!hasMounted || !skillPath || !stage || !stageStatus || stageTotalQuestionCount === 0) return;
+    const isStageCompleteNow = stageCompletedQuestionCount >= stageTotalQuestionCount;
+    if (isStageCompleteNow && wasStageCompleteRef.current === false) {
+      wasStageCompleteRef.current = true;
+      // The path-completion moment is the stronger, dominant acknowledgement. If this same
+      // submission also completes the whole path, skip claiming/showing the stage moment —
+      // never stack two completion panels for one submission.
+      const isPathCompleteAlso = pathTotalQuestionCount > 0 && pathCompletedQuestionCount >= pathTotalQuestionCount;
+      if (isPathCompleteAlso || sessionPanel) return;
+      const acknowledgement = recordStageCelebrated(skillPath.slug, stage.id, stageStatus);
+      setShowStageCompletionPanel(
         acknowledgement === "recorded" || acknowledgement === "unavailable" || acknowledgement === "write-failed",
       );
     }
-  }, [hasMounted, skillPath, pathStatus, pathCompletedQuestionCount, pathTotalQuestionCount]);
+  }, [hasMounted, skillPath, stage, stageStatus, stageCompletedQuestionCount, stageTotalQuestionCount, pathCompletedQuestionCount, pathTotalQuestionCount, sessionPanel]);
 
   function updateAnswer(nextAnswer: string) {
     setAnswer(nextAnswer);
@@ -295,6 +327,9 @@ export function QuestionWorkspace({ question, sessionPanel, answerLocked = false
             </div>
 
             <h1 className="mt-4 text-[clamp(24px,3vw,32px)] font-extrabold leading-tight">{question.title}</h1>
+            {questionProgress.reviewRecommended && !submitted ? (
+              <p className="mt-2 text-sm text-muted" data-testid="review-reason">{describeReviewReason(questionProgress)}</p>
+            ) : null}
             <div className="mt-3 rounded-xl border border-line bg-white p-5 shadow-[0_14px_38px_rgba(17,17,17,0.035)] max-sm:p-4" data-testid="question-interaction">
               <div className="text-lg leading-relaxed"><MathContent>{question.questionText}</MathContent></div>
               <div className="mt-5 border-t border-line pt-4">
@@ -416,6 +451,8 @@ export function QuestionWorkspace({ question, sessionPanel, answerLocked = false
 
           {showCompletionPanel && !sessionPanel && skillPath && localProgress ? (
             <PathCompletionPanel skillPath={skillPath} progress={localProgress} nextAction={nextAction} />
+          ) : showStageCompletionPanel && !sessionPanel && skillPath && stage && stageLocalProgress ? (
+            <StageCompletionPanel skillPath={skillPath} stage={stage} progress={stageLocalProgress} nextAction={nextAction} />
           ) : sessionPanel ? null : (
             <div className="grid grid-cols-2 gap-3 max-md:grid-cols-1">
               <Link href={position.previous ? getQuestionHref(position.previous.id) : fallbackPathHref} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-line bg-white text-sm font-bold">

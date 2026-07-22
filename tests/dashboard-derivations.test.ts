@@ -64,6 +64,42 @@ test("current mastered evidence appears in the secure and mastered lane", () => 
   assert.match(model.secureAndMastered[0]?.title ?? "", /mastered/i);
 });
 
+test("achievement recent-activity titles name the specific stage or path rather than a generic kind label", () => {
+  const firstStage = skillPath.learningStages?.[0];
+  assert.ok(firstStage);
+  const model = deriveLearnerDashboardModel({
+    evidence: evidence([], [], [
+      achievementSnapshot("stage_completed", { snapshotId: "snap_stage_completed", stageId: firstStage.id, achievedAt: "2026-07-16T10:00:00.000Z" }),
+      achievementSnapshot("stage_secure", { snapshotId: "snap_stage_secure", stageId: firstStage.id, achievedAt: "2026-07-16T10:01:00.000Z" }),
+      achievementSnapshot("path_secure", { snapshotId: "snap_path_secure", achievedAt: "2026-07-16T10:02:00.000Z" }),
+      achievementSnapshot("path_mastered", { snapshotId: "snap_path_mastered", achievedAt: "2026-07-16T10:03:00.000Z" }),
+    ]),
+    now: now(),
+  });
+
+  const titles = model.recentActivity.map((item) => item.title);
+  assert.ok(titles.includes(`${firstStage.name} completed`), titles.join(", "));
+  assert.ok(titles.includes(`${firstStage.name} is now Secure`), titles.join(", "));
+  assert.ok(titles.includes(`${skillPath.name} is now Secure`), titles.join(", "));
+  assert.ok(titles.includes(`${skillPath.name} is now Mastered`), titles.join(", "));
+  assert.ok(!titles.some((title) => /^(Stage|Path) (Completed|Secure|Mastered)$/.test(title)), titles.join(", "));
+});
+
+test("the learner's first full path completion is framed as a first-time milestone, later ones are not", () => {
+  const model = deriveLearnerDashboardModel({
+    evidence: evidence([], [], [
+      achievementSnapshot("path_completed", { snapshotId: "snap_first", pathId: "basic-differentiation", achievedAt: "2026-07-10T10:00:00.000Z" }),
+      achievementSnapshot("path_completed", { snapshotId: "snap_second", pathId: "basic-differentiation", achievedAt: "2026-07-16T10:00:00.000Z" }),
+    ]),
+    now: now(),
+  });
+
+  const first = model.recentActivity.find((item) => item.id === "achievement:snap_first");
+  const second = model.recentActivity.find((item) => item.id === "achievement:snap_second");
+  assert.equal(first?.title, "Completed your first full learning path");
+  assert.equal(second?.title, `${skillPath.name} completed`);
+});
+
 test("sync states are conservative and do not require public credentials", () => {
   const model = deriveLearnerDashboardModel({
     evidence: evidence(),
@@ -91,6 +127,26 @@ function evidence(
   achievementSnapshots: AchievementSnapshot[] = [],
 ): ProgressEvidence {
   return { attempts, supportEvents, achievementSnapshots };
+}
+
+function achievementSnapshot(kind: AchievementSnapshot["kind"], overrides: Partial<AchievementSnapshot> & { snapshotId: string }): AchievementSnapshot {
+  const isStageKind = kind.startsWith("stage_");
+  return {
+    kind,
+    subjectId: "higher-maths",
+    courseId: "calculus",
+    pathId: skillPath.slug,
+    pathVersion: 1,
+    stageId: isStageKind ? skillPath.learningStages?.[0]?.id : undefined,
+    stageVersion: isStageKind ? 1 : undefined,
+    achievedAt: "2026-07-16T10:00:00.000Z",
+    masteryScore: 100,
+    independentPerformancePercentage: 100,
+    completionCount: 1,
+    totalRequiredCount: 1,
+    source: "derived_current",
+    ...overrides,
+  };
 }
 
 function attempt(questionId: string, sequence: number, overrides: Partial<QuestionAttempt> = {}): QuestionAttempt {

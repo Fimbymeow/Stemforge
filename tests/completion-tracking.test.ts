@@ -3,9 +3,14 @@ import test from "node:test";
 import {
   CELEBRATION_STORAGE_KEY,
   CURRENT_CELEBRATION_VERSION,
+  STAGE_CELEBRATION_STORAGE_KEY,
   LocalStorageCelebrationStorage,
   createBrowserCelebrationStorage,
   isAcknowledgedStatusUpgrade,
+  getStageCelebration,
+  recordStageCelebrated,
+  acknowledgeStageStatus,
+  clearStageCelebration,
   type CelebrationPayload,
   type CelebrationStorageLike,
 } from "../lib/completion-tracking";
@@ -147,4 +152,48 @@ test("storage failures never throw or claim a persisted acknowledgement", () => 
   memory.throwOnWrite = false;
   memory.throwOnClear = true;
   assert.equal(storage.clearAll(), false);
+});
+
+test("stage celebration uses a storage key fully separate from path celebration", () => {
+  const memory = new MemoryStorage();
+  const pathStorage = new LocalStorageCelebrationStorage(memory);
+  const stageStorage = new LocalStorageCelebrationStorage(memory, STAGE_CELEBRATION_STORAGE_KEY);
+
+  assert.equal(pathStorage.recordCompletion("basic-differentiation", "completed"), "recorded");
+  assert.equal(stageStorage.getPath("basic-differentiation"), undefined);
+
+  assert.equal(stageStorage.recordCompletion("basic-differentiation:foundations", "completed"), "recorded");
+  assert.equal(pathStorage.getPath("basic-differentiation:foundations"), undefined);
+
+  assert.notEqual(memory.values.get(CELEBRATION_STORAGE_KEY), memory.values.get(STAGE_CELEBRATION_STORAGE_KEY));
+  assert.equal((JSON.parse(memory.values.get(STAGE_CELEBRATION_STORAGE_KEY)!) as CelebrationPayload).version, CURRENT_CELEBRATION_VERSION);
+});
+
+test("stage celebration composite ids keep the same stage id distinct across paths", () => {
+  const memory = new MemoryStorage();
+  const stageStorage = new LocalStorageCelebrationStorage(memory, STAGE_CELEBRATION_STORAGE_KEY);
+  assert.equal(stageStorage.recordCompletion("basic-differentiation:foundations", "secure"), "recorded");
+  assert.equal(stageStorage.recordCompletion("integration-basics:foundations", "completed"), "recorded");
+  assert.equal(stageStorage.getPath("basic-differentiation:foundations")?.lastAcknowledgedStatus, "secure");
+  assert.equal(stageStorage.getPath("integration-basics:foundations")?.lastAcknowledgedStatus, "completed");
+});
+
+test("stage celebration upgrade and idempotency rules mirror path celebration", () => {
+  const memory = new MemoryStorage();
+  const stageStorage = new LocalStorageCelebrationStorage(memory, STAGE_CELEBRATION_STORAGE_KEY);
+  assert.equal(stageStorage.recordCompletion("basic-differentiation:foundations", "completed"), "recorded");
+  assert.equal(stageStorage.recordCompletion("basic-differentiation:foundations", "mastered"), "unchanged");
+  assert.equal(stageStorage.acknowledgeStatus("basic-differentiation:foundations", "secure"), "updated");
+  assert.equal(stageStorage.acknowledgeStatus("basic-differentiation:foundations", "completed"), "unchanged");
+  assert.equal(stageStorage.acknowledgeStatus("basic-differentiation:foundations", "mastered"), "updated");
+  assert.equal(stageStorage.clearPath("basic-differentiation:foundations"), true);
+  assert.equal(stageStorage.getPath("basic-differentiation:foundations"), undefined);
+});
+
+test("stage celebration wrapper functions report unavailable without a browser environment", () => {
+  assert.equal(createBrowserCelebrationStorage(STAGE_CELEBRATION_STORAGE_KEY).load().status, "unavailable");
+  assert.equal(getStageCelebration("basic-differentiation", "foundations"), undefined);
+  assert.equal(recordStageCelebrated("basic-differentiation", "foundations", "completed"), "unavailable");
+  assert.equal(acknowledgeStageStatus("basic-differentiation", "foundations", "secure"), "unavailable");
+  assert.equal(clearStageCelebration("basic-differentiation", "foundations"), false);
 });

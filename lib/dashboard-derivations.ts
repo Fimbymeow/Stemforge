@@ -283,11 +283,12 @@ function deriveRecentActivity(evidence: ProgressEvidence, limit: number): Dashbo
       href: getQuestionHref(latest.questionId),
     };
   });
+  const firstPathCompletionId = earliestPathCompletionSnapshotId(evidence.achievementSnapshots);
   const achievementItems: DashboardActivityItem[] = evidence.achievementSnapshots.map((snapshot) => ({
     id: `achievement:${snapshot.snapshotId}`,
     type: "achievement",
     occurredAt: snapshot.achievedAt,
-    title: achievementTitle(snapshot.kind),
+    title: achievementTitle(snapshot, snapshot.snapshotId === firstPathCompletionId),
     detail: getPathName(snapshot.pathId),
     href: contentResolver.getPathContext(snapshot.pathId)?.skillPath.href ?? getQuestionBankHref(snapshot.subjectId),
   }));
@@ -329,7 +330,7 @@ function deriveSecureAndMastered(paths: DashboardPathSummary[], evidence: Progre
     .filter((path) => path.status === "secure" || path.status === "mastered")
     .map((path) => ({
       id: `current:${path.skillPathId}:${path.status}`,
-      title: `${path.name} ${path.status}`,
+      title: `${path.name} is now ${path.status === "mastered" ? "Mastered" : "Secure"}`,
       detail: `${path.masteryScore}% mastery · ${path.independentPerformancePercentage}% independent`,
       href: path.href,
       achievedAt: path.latestEvidenceAt,
@@ -340,7 +341,7 @@ function deriveSecureAndMastered(paths: DashboardPathSummary[], evidence: Progre
     .filter((snapshot) => !current.some((item) => item.id.includes(snapshot.pathId)))
     .map((snapshot) => ({
       id: `snapshot:${snapshot.snapshotId}`,
-      title: achievementTitle(snapshot.kind),
+      title: achievementTitle(snapshot, false),
       detail: `${getPathName(snapshot.pathId)} · ${snapshot.masteryScore}% mastery snapshot`,
       href: contentResolver.getPathContext(snapshot.pathId)?.skillPath.href ?? getQuestionBankHref(snapshot.subjectId),
       achievedAt: snapshot.achievedAt,
@@ -451,9 +452,38 @@ function getPathName(pathId: string) {
   return contentResolver.getPathContext(pathId)?.skillPath.name ?? pathId;
 }
 
-function achievementTitle(kind: AchievementSnapshot["kind"]) {
-  const [scope, status] = kind.split("_");
-  return `${scope[0]?.toUpperCase()}${scope.slice(1)} ${status}`;
+function getStageName(pathId: string, stageId: string | undefined) {
+  if (!stageId) return null;
+  return contentResolver.getPathContext(pathId)?.skillPath.learningStages?.find((stage) => stage.id === stageId)?.name ?? null;
+}
+
+function earliestPathCompletionSnapshotId(snapshots: readonly AchievementSnapshot[]) {
+  const pathCompletions = snapshots.filter((snapshot) => snapshot.kind === "path_completed");
+  if (!pathCompletions.length) return null;
+  return pathCompletions.reduce((earliest, snapshot) =>
+    Date.parse(snapshot.achievedAt) < Date.parse(earliest.achievedAt) ? snapshot : earliest,
+  ).snapshotId;
+}
+
+/**
+ * Specific accomplishment language for an achievement snapshot, replacing generic
+ * "Stage Completed"/"Path Secure" title-casing with the actual stage/path name — e.g.
+ * "Foundations completed", "Basic differentiation is now Secure". `isFirstPathCompletion`
+ * is provable from existing evidence (exactly one path_completed snapshot exists) and
+ * swaps in a one-time "first full path" framing rather than inventing new data.
+ */
+function achievementTitle(snapshot: AchievementSnapshot, isFirstPathCompletion: boolean) {
+  const pathName = getPathName(snapshot.pathId);
+  const stageName = getStageName(snapshot.pathId, snapshot.stageId);
+  switch (snapshot.kind) {
+    case "stage_completed": return `${stageName ?? "This stage"} completed`;
+    case "stage_secure": return `${stageName ?? "This stage"} is now Secure`;
+    case "stage_mastered": return `${stageName ?? "This stage"} is now Mastered`;
+    case "path_completed": return isFirstPathCompletion ? "Completed your first full learning path" : `${pathName} completed`;
+    case "path_secure": return `${pathName} is now Secure`;
+    case "path_mastered": return `${pathName} is now Mastered`;
+    default: return `${pathName} progress`;
+  }
 }
 
 function compareActivity(left: DashboardActivityItem, right: DashboardActivityItem) {

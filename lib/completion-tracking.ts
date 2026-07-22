@@ -5,6 +5,11 @@ import type { ProgressStatus } from "@/lib/local-progress";
 // has already been shown. Completion, mastery, review and progression remain derived
 // exclusively from the protected progress evidence.
 export const CELEBRATION_STORAGE_KEY = "stemforge.pathCelebration.v1";
+// Separate key/store for stage-level one-time acknowledgement, reusing the exact same
+// versioned-payload/repair/migration logic as path celebration via a distinct storage key.
+// Entries are keyed by a composite `${skillPathId}:${stageId}` id since stage ids are not
+// globally unique across paths.
+export const STAGE_CELEBRATION_STORAGE_KEY = "stemforge.stageCelebration.v1";
 export const CURRENT_CELEBRATION_VERSION = 1 as const;
 
 export type AcknowledgedPathStatus = "completed" | "secure" | "mastered";
@@ -119,13 +124,16 @@ export function isAcknowledgedStatusUpgrade(
 }
 
 export class LocalStorageCelebrationStorage {
-  constructor(private readonly storage: CelebrationStorageLike | null) {}
+  constructor(
+    private readonly storage: CelebrationStorageLike | null,
+    private readonly storageKey: string = CELEBRATION_STORAGE_KEY,
+  ) {}
 
   load(): CelebrationLoadResult {
     if (!this.storage) return { payload: createDefaultPayload(), status: "unavailable" };
     let raw: string | null;
     try {
-      raw = this.storage.getItem(CELEBRATION_STORAGE_KEY);
+      raw = this.storage.getItem(this.storageKey);
     } catch {
       return { payload: createDefaultPayload(), status: "unavailable" };
     }
@@ -195,7 +203,7 @@ export class LocalStorageCelebrationStorage {
     const loaded = this.load();
     if (loaded.status === "unsupported-version") return false;
     try {
-      this.storage.removeItem(CELEBRATION_STORAGE_KEY);
+      this.storage.removeItem(this.storageKey);
       return true;
     } catch {
       return false;
@@ -205,7 +213,7 @@ export class LocalStorageCelebrationStorage {
   private save(payload: CelebrationPayload) {
     if (!this.storage) return false;
     try {
-      this.storage.setItem(CELEBRATION_STORAGE_KEY, JSON.stringify(payload));
+      this.storage.setItem(this.storageKey, JSON.stringify(payload));
       return true;
     } catch {
       return false;
@@ -213,12 +221,12 @@ export class LocalStorageCelebrationStorage {
   }
 }
 
-export function createBrowserCelebrationStorage() {
-  if (typeof window === "undefined") return new LocalStorageCelebrationStorage(null);
+export function createBrowserCelebrationStorage(storageKey: string = CELEBRATION_STORAGE_KEY) {
+  if (typeof window === "undefined") return new LocalStorageCelebrationStorage(null, storageKey);
   try {
-    return new LocalStorageCelebrationStorage(window.localStorage);
+    return new LocalStorageCelebrationStorage(window.localStorage, storageKey);
   } catch {
-    return new LocalStorageCelebrationStorage(null);
+    return new LocalStorageCelebrationStorage(null, storageKey);
   }
 }
 
@@ -238,4 +246,32 @@ export function acknowledgeStatus(skillPathId: string, status: ProgressStatus) {
 
 export function clearPathCelebration(skillPathId: string) {
   return createBrowserCelebrationStorage().clearPath(skillPathId);
+}
+
+// Stage-level equivalents. Composite id keeps stage entries distinct across paths while
+// reusing the identical versioned-payload/repair/one-time-claim/upgrade-rank logic above.
+function stageEntryId(skillPathId: string, stageId: string) {
+  return `${skillPathId}:${stageId}`;
+}
+
+function createBrowserStageCelebrationStorage() {
+  return createBrowserCelebrationStorage(STAGE_CELEBRATION_STORAGE_KEY);
+}
+
+export function getStageCelebration(skillPathId: string, stageId: string) {
+  return createBrowserStageCelebrationStorage().getPath(stageEntryId(skillPathId, stageId));
+}
+
+/** Claims the one-time crossing from incomplete to complete for a single stage. */
+export function recordStageCelebrated(skillPathId: string, stageId: string, status: ProgressStatus) {
+  return createBrowserStageCelebrationStorage().recordCompletion(stageEntryId(skillPathId, stageId), status);
+}
+
+/** Records only genuine upward mastery-tier acknowledgements for a single stage. */
+export function acknowledgeStageStatus(skillPathId: string, stageId: string, status: ProgressStatus) {
+  return createBrowserStageCelebrationStorage().acknowledgeStatus(stageEntryId(skillPathId, stageId), status);
+}
+
+export function clearStageCelebration(skillPathId: string, stageId: string) {
+  return createBrowserStageCelebrationStorage().clearPath(stageEntryId(skillPathId, stageId));
 }
