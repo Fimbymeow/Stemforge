@@ -60,6 +60,7 @@ test("allowlisted operator triages synthetic reports through the protected dashb
   await expect(page.getByLabel("Status")).toHaveValue("closed");
 
   await page.goto("/account");
+  await page.getByText("More account and data controls", { exact: true }).click();
   await expect(page.getByText(primaryReport)).toBeVisible();
   await expect(page.getByText("Resolved through the synthetic Sprint 22 operator workflow.")).toBeVisible();
   await expect(page.locator("body")).not.toContainText("high severity");

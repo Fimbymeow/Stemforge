@@ -8,10 +8,12 @@ export async function GET(request: NextRequest) {
   if (config.status !== "enabled") return NextResponse.redirect(new URL("/account", request.url));
   const code = request.nextUrl.searchParams.get("code");
   const destination = safeAuthRedirect(request.nextUrl.searchParams.get("next"));
-  if (!code) return NextResponse.redirect(new URL("/account/sign-in?result=callback_invalid", config.siteUrl));
+  const failure = new URL("/account/sign-in", config.siteUrl);
+  failure.searchParams.set("result", "callback_invalid");
+  if (destination !== "/account") failure.searchParams.set("next", destination);
+  if (!code) return NextResponse.redirect(failure);
 
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.exchangeCodeForSession(code);
-  const path = error ? "/account/sign-in?result=callback_invalid" : destination;
-  return NextResponse.redirect(new URL(path, config.siteUrl));
+  return NextResponse.redirect(error ? failure : new URL(destination, config.siteUrl));
 }

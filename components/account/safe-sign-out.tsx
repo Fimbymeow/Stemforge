@@ -3,9 +3,11 @@
 import { useRef, useState } from "react";
 import { useProgressSync } from "@/components/progress-sync-provider";
 import { useModalFocusTrap } from "@/lib/use-modal-focus-trap";
+import { useLearnerNextAction } from "@/components/learning/use-learner-next-action";
 
 export function SafeSignOut({ action }: { action: (formData: FormData) => void | Promise<void> }) {
   const sync = useProgressSync();
+  const nextAction = useLearnerNextAction();
   const formRef = useRef<HTMLFormElement>(null);
   const cancelRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -38,7 +40,10 @@ export function SafeSignOut({ action }: { action: (formData: FormData) => void |
     <section data-testid="safe-sign-out" className="mt-5 rounded-xl border border-line bg-paper p-4">
       <h2 className="m-0 text-lg font-extrabold">Sign out safely</h2>
       <p className="mb-0 mt-2 text-sm leading-relaxed text-muted">Choose what should remain visible to the next person using this browser.</p>
-      <form ref={formRef} action={action}><button type="submit" className="hidden" tabIndex={-1} aria-hidden="true">Submit sign out</button></form>
+      <form ref={formRef} action={action}>
+        <input type="hidden" name="next" value={nextAction.href ?? "/dashboard"} />
+        <button type="submit" className="hidden" tabIndex={-1} aria-hidden="true">Submit sign out</button>
+      </form>
       <div className="mt-4 grid gap-2">
         <button type="button" disabled={busy} className={primaryButton} onClick={() => void submit(false)}>Sign out and keep progress on this browser</button>
         <button type="button" disabled={busy} className={dangerButton} onClick={() => setConfirmRemove(true)}>{"Remove this account's data from this browser, then sign out"}</button>

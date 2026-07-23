@@ -14,7 +14,7 @@ export function ProgressSyncPanel({ accountFingerprint }: { accountFingerprint: 
     <section data-testid="progress-sync-panel" className="mt-5 rounded-xl border border-line bg-paper p-4" aria-live="polite">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="m-0 text-lg font-extrabold">Sync across devices</h2>
+          <h2 className="m-0 text-lg font-extrabold">Keep progress updated across devices</h2>
           <p className="mb-0 mt-2 text-sm leading-relaxed text-muted">
             {!ready ? "Checking sync status..." : copyForStatus(sync.status, sync.pendingCount)}
           </p>
@@ -29,32 +29,27 @@ export function ProgressSyncPanel({ accountFingerprint }: { accountFingerprint: 
       ) : null}
       {associationRequired && ready ? (
         <p className="mb-0 mt-3 text-sm leading-relaxed text-muted">
-          Turning on sync adds this browser&apos;s progress to your account, and brings your account&apos;s progress to this browser. Anyone using this browser may be able to see progress stored here.
+          This is a separate choice from importing. Turning it on sends eligible progress from this browser to your account and brings supported account progress to this browser. Existing progress is retained.
         </p>
       ) : null}
 
-      {ready ? (
-        <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
-          <Metric label="Waiting to upload" value={String(sync.pendingCount)} />
-          <Metric label="Needs attention" value={String(details.permanentlyRejectedCount)} />
-          <Metric label="Last upload" value={formatTimestamp(details.lastSuccessfulPushAt)} />
-          <Metric label="Last download" value={formatTimestamp(details.lastSuccessfulPullAt)} />
-          <Metric label="Last fully caught up" value={formatTimestamp(details.lastFullyCaughtUpAt)} />
-          <Metric label="Multiple tabs" value={details.coordination === "web_locks" ? "Fully supported" : details.coordination === "indexeddb" ? "Partially supported" : "Not supported"} />
-        </dl>
+      {ready && (sync.pendingCount > 0 || details.lastFullyCaughtUpAt) ? (
+        <div className="mt-4 grid gap-2 text-sm">
+          {sync.pendingCount > 0 ? <p className="m-0 font-semibold">{sync.pendingCount} local change{sync.pendingCount === 1 ? "" : "s"} waiting to be protected.</p> : null}
+          {details.lastFullyCaughtUpAt ? <p className="m-0 text-muted">Last fully updated {formatTimestamp(details.lastFullyCaughtUpAt)}.</p> : null}
+        </div>
       ) : null}
 
       {details.permanentlyRejectedCount > 0 ? (
         <p className="mb-0 mt-3 text-xs leading-relaxed text-muted">
-          {details.permanentlyRejectedCount} saved item{details.permanentlyRejectedCount === 1 ? " needs" : "s need"} attention and won&apos;t retry automatically unless something changes. Nothing has been deleted.
+          Some saved progress needs attention and will remain on this browser. Nothing has been deleted.
         </p>
       ) : null}
-      {details.nextRetryAt ? <p className="mb-0 mt-2 text-xs text-muted">Next automatic retry {formatTimestamp(details.nextRetryAt)}.</p> : null}
 
       {ready ? (
         <div className="mt-4 grid gap-2 sm:grid-cols-2">
           {associationRequired ? (
-            <button className={primaryButton} onClick={() => void sync.confirmAssociation()}>Turn on sync</button>
+            <button className={primaryButton} onClick={() => void sync.confirmAssociation()}>Turn on cross-device sync</button>
           ) : paused ? (
             <button className={primaryButton} onClick={() => void sync.resume()}>Resume sync</button>
           ) : (
@@ -67,13 +62,9 @@ export function ProgressSyncPanel({ accountFingerprint }: { accountFingerprint: 
   );
 }
 
-function Metric({ label, value }: { label: string; value: string }) {
-  return <div className="rounded-lg border border-line bg-white p-3"><dt className="text-xs font-bold text-muted">{label}</dt><dd className="m-0 mt-1 font-bold text-ink">{value}</dd></div>;
-}
-
 function copyForStatus(status: ReturnType<typeof useProgressSync>["status"], pending: number) {
   if (status === "syncing") return "Syncing your progress... You can keep learning while this happens.";
-  if (status === "caught_up") return "This browser's progress can sync with your account.";
+  if (status === "caught_up") return "Supported progress on this browser and your account is up to date.";
   if (status === "pending_upload") return `${pending} change${pending === 1 ? "" : "s"} waiting to sync.`;
   if (status === "offline") return "Offline - progress is still being saved on this browser.";
   if (status === "temporary_error") return "Progress could not sync just now. Your browser progress is safe.";

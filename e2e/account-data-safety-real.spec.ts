@@ -25,14 +25,14 @@ test("shared browser keeps or removes account data deliberately without affectin
     expect(await sourceFor(shared, anonymousId)).toBe("local_anonymous");
 
     await signIn(remote);
-    await remote.getByRole("button", { name: "Turn on sync" }).click();
-    await expect(remote.getByTestId("progress-sync-panel")).toContainText("can sync with your account");
+    await remote.getByRole("button", { name: "Turn on cross-device sync" }).click();
+    await expect(remote.getByTestId("progress-sync-panel")).toContainText("is up to date");
     await openQuestion(remote, QUESTION_IDS[1]);
     await submitAnswer(remote, QUESTION_ANSWERS[QUESTION_IDS[1]]);
     const remoteId = (await ids(remote))[0];
     await remote.goto("/account");
     await remote.getByRole("button", { name: "Sync now" }).click();
-    await expect(remote.getByTestId("progress-sync-panel")).toContainText("can sync with your account");
+    await expect(remote.getByTestId("progress-sync-panel")).toContainText("is up to date");
 
     await signIn(shared);
     let sharedPushes = 0;
@@ -41,8 +41,8 @@ test("shared browser keeps or removes account data deliberately without affectin
     });
     await expect(shared.getByTestId("progress-sync-panel")).toContainText("Confirm before");
     expect(sharedPushes).toBe(0);
-    await shared.getByRole("button", { name: "Turn on sync" }).click();
-    await expect(shared.getByTestId("progress-sync-panel")).toContainText("can sync with your account");
+    await shared.getByRole("button", { name: "Turn on cross-device sync" }).click();
+    await expect(shared.getByTestId("progress-sync-panel")).toContainText("is up to date");
     await expect.poll(() => ids(shared)).toEqual(expect.arrayContaining([anonymousId, remoteId]));
     expect(await sourceFor(shared, anonymousId)).toBe("local_anonymous");
     expect(await sourceFor(shared, remoteId)).toBe("remote_pull");
@@ -52,11 +52,11 @@ test("shared browser keeps or removes account data deliberately without affectin
     await remote.getByRole("button", { name: "Pause sync" }).click();
 
     await shared.getByRole("button", { name: "Sign out and keep progress on this browser" }).click();
-    await expect(shared).toHaveURL(/\/account\/sign-in/);
+    await expect(shared).not.toHaveURL(/\/account/);
     await expect.poll(() => ids(shared)).toEqual(expect.arrayContaining([anonymousId, remoteId]));
     await signIn(shared);
-    await expect(shared.getByTestId("progress-sync-panel")).toContainText("can sync with your account");
-    await expect(shared.getByRole("button", { name: "Turn on sync" })).toHaveCount(0);
+    await expect(shared.getByTestId("progress-sync-panel")).toContainText("is up to date");
+    await expect(shared.getByRole("button", { name: "Turn on cross-device sync" })).toHaveCount(0);
 
     const beforeExpiry = await shared.evaluate((key) => localStorage.getItem(key), PROGRESS_STORAGE_KEY);
     await shared.route("**/api/progress/sync/pull*", async (route) => {
@@ -67,12 +67,12 @@ test("shared browser keeps or removes account data deliberately without affectin
     expect(await shared.evaluate((key) => localStorage.getItem(key), PROGRESS_STORAGE_KEY)).toBe(beforeExpiry);
     await shared.unroute("**/api/progress/sync/pull*");
     await shared.reload();
-    await expect(shared.getByTestId("progress-sync-panel")).toContainText("can sync with your account");
+    await expect(shared.getByTestId("progress-sync-panel")).toContainText("is up to date");
 
     await shared.getByRole("button", { name: "Remove this account's data from this browser, then sign out" }).click();
     await expect(shared.getByRole("button", { name: "Cancel" }).last()).toBeFocused();
     await shared.getByRole("button", { name: "Remove and sign out" }).click();
-    await expect(shared).toHaveURL(/\/account\/sign-in/);
+    await expect(shared).not.toHaveURL(/\/account/);
     expect(await ids(shared)).toEqual([anonymousId]);
     expect(await sourceFor(shared, anonymousId)).toBe("local_anonymous");
     await expect.poll(() => ids(remote)).toEqual(expect.arrayContaining([anonymousId, remoteId]));
@@ -93,11 +93,12 @@ test("shared browser keeps or removes account data deliberately without affectin
       }));
     }, PROGRESS_SYNC_METADATA_KEY);
     await shared.reload();
-    await expect(shared.getByTestId("progress-sync-panel")).toContainText("associated with another account");
+    await expect(shared.getByTestId("progress-sync-panel")).toContainText("from a different account");
     expect(sharedPushes).toBe(pushesBeforeMismatch);
 
     await shared.evaluate((key) => localStorage.setItem(key, JSON.stringify({ version: 1, data: { paths: {} } })), CELEBRATION_STORAGE_KEY);
     await shared.setViewportSize({ width: 390, height: 844 });
+    await openMoreControls(shared);
     await expect(shared.getByTestId("account-data-controls")).toBeVisible();
     await shared.getByRole("button", { name: "Clear all STEM Forge progress from this browser" }).click();
     await expect(shared.getByRole("button", { name: "Cancel" }).last()).toBeFocused();
@@ -128,19 +129,20 @@ test("confirmed remote learning-data erasure exports, deletes and reconciles sta
   try {
     await seed(pageA, [remoteAttempt]);
     await signIn(pageA);
-    await pageA.getByRole("button", { name: "Turn on sync" }).click();
-    await expect(pageA.getByTestId("progress-sync-panel")).toContainText("can sync with your account");
+    await pageA.getByRole("button", { name: "Turn on cross-device sync" }).click();
+    await expect(pageA.getByTestId("progress-sync-panel")).toContainText("is up to date");
     await expect.poll(() => remoteEventIds(), { timeout: 20_000 }).toContain(remoteAttempt.eventId);
 
     await signIn(pageB);
-    await pageB.getByRole("button", { name: "Turn on sync" }).click();
+    await pageB.getByRole("button", { name: "Turn on cross-device sync" }).click();
     await pageB.getByRole("button", { name: "Sync now" }).click();
-    await expect(pageB.getByTestId("progress-sync-panel")).toContainText("can sync with your account");
+    await expect(pageB.getByTestId("progress-sync-panel")).toContainText("is up to date");
     await expect.poll(() => ids(pageB)).toContain(remoteAttempt.eventId);
     await pageB.getByRole("button", { name: "Pause sync" }).click();
     await expect(pageB.getByTestId("progress-sync-panel")).toContainText("Sync is paused");
 
     const password = requiredPassword();
+    await openMoreControls(pageA);
     await pageA.getByLabel("Current password").fill(password);
     const exportDownload = pageA.waitForEvent("download");
     await pageA.getByRole("button", { name: "Download remote account learning data" }).click();
@@ -167,6 +169,7 @@ test("confirmed remote learning-data erasure exports, deletes and reconciles sta
       return body.request?.status;
     }, { timeout: 20_000 }).toBe("completed");
     await pageA.reload();
+    await openMoreControls(pageA);
     await expect(pageA.getByTestId("account-learning-data")).toContainText("Remote learning progress was deleted");
 
     const emptyExport = await pageA.request.post("/api/account-data/export", { headers: { Origin: new URL(pageA.url()).origin }, data: { password } });
@@ -176,11 +179,12 @@ test("confirmed remote learning-data erasure exports, deletes and reconciles sta
     await pageB.goto("/account");
     await expect(pageB.getByTestId("progress-sync-panel")).toContainText("older account progress to review");
     expect(await ids(pageB)).toContain(remoteAttempt.eventId);
+    await openMoreControls(pageB);
     await pageB.getByRole("button", { name: "Reconcile this browser" }).click();
     await expect(pageB.getByTestId("account-learning-data")).toContainText("browser's cleanup are complete");
     expect(await ids(pageB)).not.toContain(remoteAttempt.eventId);
-    await pageB.getByRole("button", { name: "Turn on sync" }).click();
-    await expect(pageB.getByTestId("progress-sync-panel")).toContainText("can sync with your account");
+    await pageB.getByRole("button", { name: "Turn on cross-device sync" }).click();
+    await expect(pageB.getByTestId("progress-sync-panel")).toContainText("is up to date");
     const stillEmpty = await pageB.request.post("/api/account-data/export", { headers: { Origin: new URL(pageB.url()).origin }, data: { password } });
     expect(stillEmpty.ok()).toBe(true);
     expect((await stillEmpty.json()).records).toEqual([]);
@@ -201,7 +205,12 @@ async function signIn(page: import("@playwright/test").Page) {
   await page.getByRole("button", { name: "Sign in" }).click();
   await page.waitForURL((url) => url.pathname === "/account" || (url.pathname === "/account/sign-in" && url.searchParams.has("result")), { timeout: 30_000 });
   expect(new URL(page.url()).pathname).toBe("/account");
-  await expect(page.getByText("Account ready")).toBeVisible();
+  await expect(page.getByText(/^Signed in/)).toBeVisible();
+}
+
+async function openMoreControls(page: import("@playwright/test").Page) {
+  const details = page.getByText("More account and data controls", { exact: true });
+  if ((await details.getAttribute("aria-expanded")) !== "true") await details.click();
 }
 
 async function ids(page: import("@playwright/test").Page) {

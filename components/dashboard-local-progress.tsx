@@ -24,6 +24,7 @@ import {
 import { getEmptyProgressEvidence, getProgressEvidence } from "@/lib/local-progress";
 import { useLearnerNextAction } from "@/components/learning/use-learner-next-action";
 import type { ProgressEvidence } from "@/lib/progress/types";
+import { GuestProgressProtection } from "@/components/account/guest-progress-protection";
 
 export function DashboardLocalProgressSection() {
   const [evidence, setEvidence] = useState<ProgressEvidence>(() => getEmptyProgressEvidence());
@@ -68,6 +69,7 @@ export function DashboardLocalProgressSection() {
     ? `${recommendedPath.completedQuestions} / ${recommendedPath.totalQuestions} completed`
     : recommendation.reason;
   const hasLearningActivity = model.course.startedPathCount > 0;
+  const meaningfulEvidenceCount = evidence.attempts.length + evidence.achievementSnapshots.length;
 
   return (
     <section className="grid gap-4" aria-label="Your learning dashboard">
@@ -88,6 +90,12 @@ export function DashboardLocalProgressSection() {
           <span>{model.sync.label}</span>
         </div>
       </Card>
+
+      <GuestProgressProtection
+        meaningfulEvidenceCount={meaningfulEvidenceCount}
+        signedIn={sync.accountFingerprint !== null}
+        authStateReady={sync.status === "authentication_required"}
+      />
 
       {hasLearningActivity ? <><div className="grid grid-cols-[minmax(0,1fr)_340px] gap-4 max-xl:grid-cols-1">
         <Card className="p-5">

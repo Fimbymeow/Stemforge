@@ -4,6 +4,7 @@ import Image from "next/image";
 import { Card } from "@/components/ui";
 import { AUTH_RESULT_MESSAGES, readAuthResultCode } from "@/lib/auth/results";
 import { CurrentBrowserExportButton } from "@/components/account/account-learning-data";
+import { AccountResultMessage } from "@/components/account/account-result-message";
 
 export function AccountShell({
   title,
@@ -26,7 +27,7 @@ export function AccountShell({
         <Card className="p-6 sm:p-9">
           <h1 className="m-0 text-3xl font-extrabold">{title}</h1>
           <p className="mt-3 leading-relaxed text-muted">{introduction}</p>
-          {code ? <p role="status" className="mt-5 rounded-lg border border-line bg-forge-soft p-4 text-sm font-semibold">{AUTH_RESULT_MESSAGES[code]}</p> : null}
+          {code ? <AccountResultMessage code={code} message={AUTH_RESULT_MESSAGES[code]} /> : null}
           {children}
         </Card>
         <p className="mt-6 text-center text-sm leading-relaxed text-muted">

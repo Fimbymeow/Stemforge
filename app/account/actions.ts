@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { getAuthFeatureConfiguration } from "@/lib/auth/config";
+import { safeLearningReturnDestination } from "@/lib/auth/redirects";
 import { mapProviderError } from "@/lib/auth/results";
 import { createSupabaseServerClient } from "@/lib/auth/supabase.server";
 
@@ -10,40 +11,48 @@ function field(formData: FormData, name: string) {
   return typeof value === "string" ? value.trim() : "";
 }
 
-function result(path: string, code: string): never {
-  redirect(`${path}?result=${encodeURIComponent(code)}`);
+function returnDestination(formData: FormData, fallback = "/account") {
+  return safeLearningReturnDestination(field(formData, "next")) ?? fallback;
 }
 
-function enabledConfig() {
+function result(path: string, code: string, next?: string): never {
+  const params = new URLSearchParams({ result: code });
+  if (next) params.set("next", next);
+  redirect(`${path}?${params}`);
+}
+
+function enabledConfig(next?: string) {
   const config = getAuthFeatureConfiguration();
-  if (config.status !== "enabled") result("/account", "unavailable");
+  if (config.status !== "enabled") result("/account", "unavailable", next);
   return config;
 }
 
 export async function signUp(formData: FormData) {
-  const config = enabledConfig();
+  const next = returnDestination(formData);
+  const config = enabledConfig(next);
   const email = field(formData, "email");
   const password = field(formData, "password");
-  if (!email || password.length < 8) result("/account/sign-up", "password_invalid");
+  if (!email || password.length < 8) result("/account/sign-up", "password_invalid", next);
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { emailRedirectTo: `${config.siteUrl}/auth/callback?next=/account` },
+    options: { emailRedirectTo: `${config.siteUrl}/auth/callback?next=${encodeURIComponent(next)}` },
   });
-  if (error) result("/account/sign-up", mapProviderError(error.message));
-  if (data.session) redirect("/account");
-  result("/account/sign-in", "signup_check_email");
+  if (error) result("/account/sign-up", mapProviderError(error.message), next);
+  if (data.session) redirect(next);
+  result("/account/sign-in", "signup_check_email", next);
 }
 
 export async function signIn(formData: FormData) {
-  enabledConfig();
+  const next = returnDestination(formData);
+  enabledConfig(next);
   const email = field(formData, "email");
   const password = field(formData, "password");
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) result("/account/sign-in", mapProviderError(error.message));
-  redirect("/account");
+  if (error) result("/account/sign-in", mapProviderError(error.message), next);
+  redirect(next);
 }
 
 export async function requestPasswordRecovery(formData: FormData) {
@@ -68,9 +77,10 @@ export async function updatePassword(formData: FormData) {
   result("/account", "updated");
 }
 
-export async function signOut() {
-  enabledConfig();
+export async function signOut(formData: FormData) {
+  const next = returnDestination(formData, "/dashboard");
+  enabledConfig(next);
   const supabase = await createSupabaseServerClient();
   await supabase.auth.signOut();
-  result("/account/sign-in", "signed_out");
+  redirect(next);
 }

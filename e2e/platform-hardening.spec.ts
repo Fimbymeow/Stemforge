@@ -76,6 +76,11 @@ test("critical guest journey is accessible, persistent, isolated, and console-cl
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(trigger).toBeFocused();
 
+  await page.goto("/account");
+  await expect(page.getByRole("heading", { name: "Accounts are not available" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Continue as a guest" })).toHaveAttribute("href", "/dashboard");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
+
   const denied = await page.request.get("/api/internal/health");
   expect(denied.status()).toBe(403);
   expect(seriousBrowserErrors).toEqual([]);

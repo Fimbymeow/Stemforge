@@ -5,6 +5,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { BookOpen, Compass, Home, UserRound } from "lucide-react";
 import { useAuthFeatureAvailable } from "@/components/auth-feature-provider";
+import { usePathname } from "next/navigation";
+import { accountHrefFor } from "@/lib/auth/redirects";
+import { useEffect, useState } from "react";
 
 const navItems = [
   ["Dashboard", Home, "dashboard", "Dashboard"],
@@ -14,6 +17,11 @@ const navItems = [
 
 export function AppSidebar({ demo, active = "Dashboard" }: { demo: boolean; active?: string }) {
   const accountsAvailable = useAuthFeatureAvailable();
+  const pathname = usePathname();
+  const [currentDestination, setCurrentDestination] = useState(pathname);
+  useEffect(() => {
+    setCurrentDestination(`${window.location.pathname}${window.location.search}${window.location.hash}`);
+  }, [pathname]);
   const visibleNavItems = accountsAvailable
     ? [...navItems, ["Account", UserRound, "account", "Account"] as const]
     : navItems;
@@ -32,7 +40,7 @@ export function AppSidebar({ demo, active = "Dashboard" }: { demo: boolean; acti
         {visibleNavItems.map(([label, Icon, key, shortLabel]) => (
           <Link
             key={label}
-            href={getAppNavHref(key, demo)}
+            href={key === "account" ? accountHrefFor(currentDestination) : getAppNavHref(key, demo)}
             className={`flex min-h-[58px] items-center justify-center rounded-xl px-5 text-lg font-semibold max-xl:min-h-11 max-xl:flex-1 max-xl:justify-center max-xl:px-2 max-xl:text-sm ${
               label === active ? "bg-forge-soft text-forge" : "text-ink"
             }`}

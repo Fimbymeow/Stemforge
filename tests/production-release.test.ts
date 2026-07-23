@@ -37,9 +37,10 @@ test("canonical production origins require an exact path-free HTTPS origin", () 
   assert.equal(authOriginMatchesCanonical(productionEnvironment), true);
 });
 
-test("authentication redirects allow only the bounded account destinations", () => {
+test("authentication redirects allow only bounded account and learning destinations", () => {
   assert.equal(safeAuthRedirect("/account"), "/account");
   assert.equal(safeAuthRedirect("/account/update-password"), "/account/update-password");
+  assert.equal(safeAuthRedirect("/dashboard"), "/dashboard");
   for (const unsafe of ["https://evil.example", "//evil.example", "/account/../internal", "%2F%2Fevil.example", "not a URL", null]) {
     assert.equal(safeAuthRedirect(unsafe), "/account");
   }

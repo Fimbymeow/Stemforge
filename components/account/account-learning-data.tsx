@@ -115,7 +115,7 @@ export function AccountLearningData() {
         </div>
       </div>
       {message ? <p role="status" className="mt-4 rounded-lg border border-line bg-paper p-3 text-sm">{message}</p> : null}
-      {generation ? <p className="mb-0 mt-3 text-xs text-muted">Account data version {generation}. Browsers with an older copy can&apos;t sync until they&apos;re reviewed.</p> : null}
+      {generation && request?.status === "completed" && !browserClean ? <p className="mb-0 mt-3 text-xs text-muted">Review this browser before turning cross-device sync on again.</p> : null}
     </section>
   );
 }

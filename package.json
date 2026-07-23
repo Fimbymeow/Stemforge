@@ -42,7 +42,7 @@
         "test:practice": "tsx --test tests/practice-selection.test.ts tests/practice-storage-summary.test.ts tests/study-context.test.ts",
         "test:hardening": "tsx --test tests/platform-hardening.test.ts",
         "test:production-release": "tsx --test tests/production-release.test.ts",
-        "test:auth": "tsx --test tests/auth-config.test.ts tests/auth-results.test.ts tests/owner-resolution.test.ts tests/reauthentication.test.ts",
+        "test:auth": "tsx --test tests/auth-config.test.ts tests/auth-results.test.ts tests/account-confidence.test.ts tests/owner-resolution.test.ts tests/reauthentication.test.ts",
         "test:database": "node --conditions=react-server --import tsx --test tests/remote-evidence-postgres.test.ts",
         "test:migration-scripts": "tsx --test tests/migration-command.test.ts",
         "db:migration:create": "node-pg-migrate create --migrations-dir migrations --migration-file-language js",

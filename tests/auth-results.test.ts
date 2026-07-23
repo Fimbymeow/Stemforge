@@ -3,12 +3,14 @@ import test from "node:test";
 import { mapProviderError, readAuthResultCode } from "../lib/auth/results";
 import { safeAuthRedirect } from "../lib/auth/redirects";
 
-test("auth callback destinations use a narrow allowlist", () => {
+test("auth callback destinations allow only bounded account and learning routes", () => {
   assert.equal(safeAuthRedirect("/account"), "/account");
   assert.equal(safeAuthRedirect("/account/update-password"), "/account/update-password");
+  assert.equal(safeAuthRedirect("/dashboard"), "/dashboard");
+  assert.equal(safeAuthRedirect("/question/hm-calc-diff-basic-f-001"), "/question/hm-calc-diff-basic-f-001");
   assert.equal(safeAuthRedirect("https://attacker.example"), "/account");
   assert.equal(safeAuthRedirect("//attacker.example"), "/account");
-  assert.equal(safeAuthRedirect("/dashboard"), "/account");
+  assert.equal(safeAuthRedirect("/account/sign-in"), "/account");
 });
 
 test("provider errors map to restrained learner-safe results", () => {

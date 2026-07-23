@@ -409,7 +409,7 @@ function deriveSyncSummary(sync: DashboardSyncInput): DashboardSyncSummary {
     return { label: "Saved here", detail: "Sync is unavailable right now, so new progress stays safely on this browser.", tone: "attention", accountLinked: sync.accountFingerprint !== null };
   }
   if (sync.status === "authentication_required") {
-    return { label: "Sign in to sync", detail: "Local progress still works. Sign in again to update your account.", tone: "attention", accountLinked: false };
+    return { label: "Saved on this browser", detail: "Local progress still works. Account access can be reviewed separately.", tone: "local", accountLinked: false };
   }
   if (sync.status === "association_required" || sync.status === "cleanup_required" || sync.status === "paused") {
     return { label: "Sync needs confirmation", detail: "Review account data controls before this browser syncs progress.", tone: "attention", accountLinked: sync.accountFingerprint !== null };

@@ -25,6 +25,6 @@ export function syncStatusLabel(status: SyncStatus): string {
 
 export function ProgressSyncStatus() {
   const { status } = useProgressSync();
-  if (status === "saved_locally" || status === "checking" || status === "caught_up") return null;
+  if (status === "saved_locally" || status === "checking" || status === "caught_up" || status === "authentication_required") return null;
   return <span data-testid="progress-sync-status" className="hidden rounded-full border border-line bg-white px-4 py-2 text-sm font-bold text-muted sm:inline-flex">{syncStatusLabel(status)}</span>;
 }
