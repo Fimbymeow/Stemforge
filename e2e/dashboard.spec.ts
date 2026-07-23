@@ -18,7 +18,7 @@ test("guest learner dashboard hydrates without errors and presents course access
   await expect(page.getByRole("heading", { name: "Needs work" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Secure and mastered" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Quick links" })).toHaveCount(0);
-  await expect(page.getByTestId("dashboard-quick-practice")).toContainText("Quick Practice");
+  await expect(page.getByTestId("dashboard-practice")).toContainText("Practice");
   await expect(page.getByRole("navigation", { name: "Main" })).toBeVisible();
   await expectNoHorizontalOverflow(page);
   expect(seriousBrowserErrors).toEqual([]);

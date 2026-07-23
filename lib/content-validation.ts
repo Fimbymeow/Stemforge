@@ -13,6 +13,7 @@ import type {
   WorkedExample,
 } from "@/data/types";
 import { validateMathExpression } from "@/lib/maths/expression-core";
+import { getSubjectFamily, getStudentResourceCapabilities } from "@/lib/resource-capabilities";
 
 export type ContentValidationIssue = {
   severity: "error" | "warning";
@@ -130,6 +131,18 @@ export function validateContent(input: ContentValidationInput): ContentValidatio
     validateId(subject.subjectSlug, "Subject", subjectLocation, `subject:${subject.subjectSlug}`);
     validateRequiredText(subject.subjectName, "Subject name", subjectLocation, issue);
     validateContentStatus(subject.contentStatus, "Subject", subject.subjectSlug, subjectLocation, issue);
+    const subjectFamily = getSubjectFamily(subject.subject);
+    if (!subjectFamily) {
+      issue("error", "unsupported-subject-family", `Subject "${subject.subjectSlug}" must resolve to a supported student resource family.`, subjectLocation);
+    } else {
+      const capabilities = getStudentResourceCapabilities(subjectFamily) as readonly string[];
+      if (!capabilities.includes("notes") || !capabilities.includes("practice")) {
+        issue("error", "invalid-subject-resource-capabilities", `Subject family "${subjectFamily}" must expose Notes and Practice.`, subjectLocation);
+      }
+      if ((subjectFamily === "science") !== capabilities.includes("flashcards")) {
+        issue("error", "invalid-subject-resource-capabilities", `Only the science subject family may expose Flashcards.`, subjectLocation);
+      }
+    }
     validateSiblingSlugs(subject.courseAreas.map((course) => course.slug), "course", subjectLocation, issue);
     counts.courses += subject.courseAreas.length;
     counts.stages += subject.learningStages.length;

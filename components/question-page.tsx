@@ -5,11 +5,9 @@ import {
   ArrowLeft,
   ArrowRight,
   Bookmark,
-  BookOpen,
   Check,
   ChevronRight,
   Flag,
-  FunctionSquare,
   Gauge,
   MessageSquareWarning,
   PartyPopper,
@@ -112,10 +110,6 @@ function QuestionCard({
             <p className="m-0 max-w-3xl text-[clamp(28px,3vw,40px)] font-extrabold leading-[1.18]">
               {question.question}
             </p>
-            <Link href="/subjects/higher-maths/formula-cards" className="mt-8 inline-flex min-h-12 items-center gap-3 rounded-lg border border-line bg-white px-5 font-semibold shadow-sm">
-              <FunctionSquare className="size-5" />
-              Formula Sheet
-            </Link>
             <AnswerInput demo question={question} />
           </div>
           <FeedbackState question={question} />
@@ -251,7 +245,6 @@ function QuestionProgressPanel({
 
       <Card className="p-6">
         <h2 className="mb-6 text-xl font-extrabold">Options</h2>
-        <PanelOption icon={<BookOpen className="size-5" />} label="Formula Sheet" href="/subjects/higher-maths/formula-cards" />
         <PanelOption icon={<Bookmark className="size-5" />} label={demo ? "Bookmarked" : "Bookmark"} active={demo} />
         <PanelOption icon={<Flag className="size-5" />} label="Report an issue" />
         <PanelOption icon={<PenLine className="size-5" />} label="Add a note" />

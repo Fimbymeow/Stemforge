@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
-import Link from "next/link";
-import { BookOpen, FileText, Layers3, Sparkles, Target } from "lucide-react";
+import { useState } from "react";
+import { Sparkles } from "lucide-react";
 import { Card } from "@/components/ui";
 import { IconNodePath } from "@/components/learning/icon-node-path";
-import { getResourceHref } from "@/lib/learning-paths";
+import { SubjectResourceLinks } from "@/components/learning/subject-resource-links";
+import { getResourceHref, getSubjectForSkillPath } from "@/lib/learning-paths";
+import { getSubjectFamily } from "@/lib/resource-capabilities";
 import type { SkillPath } from "@/data/types";
 
 export function TopicRoadmap({ skillPaths, showHeading = true }: { skillPaths: SkillPath[]; showHeading?: boolean }) {
@@ -15,6 +16,8 @@ export function TopicRoadmap({ skillPaths, showHeading = true }: { skillPaths: S
   );
   const [selectedIndex, setSelectedIndex] = useState(initialIndex);
   const selected = skillPaths[selectedIndex];
+  const subject = getSubjectForSkillPath(selected);
+  const subjectFamily = getSubjectFamily(subject?.subject ?? "Maths") ?? "mathematics";
 
   return (
     <section className="min-w-0 max-w-full">
@@ -39,12 +42,16 @@ export function TopicRoadmap({ skillPaths, showHeading = true }: { skillPaths: S
           <p className="mt-1 max-w-[56ch] text-sm text-muted">{selected.description}</p>
 
           {selected.isAvailable ? (
-            <div className="mt-4 grid grid-cols-5 gap-2.5 max-md:grid-cols-2">
-              <RoadmapTile href={getResourceHref("revision-notes")} icon={<FileText className="size-4" />} label="Notes" />
-              <RoadmapTile href={getResourceHref("formula-cards")} icon={<BookOpen className="size-4" />} label="Formula cards" />
-              <RoadmapTile href={getResourceHref("worked-examples")} icon={<Sparkles className="size-4" />} label="Worked examples" />
-              <RoadmapTile href={getResourceHref("flashcards")} icon={<Layers3 className="size-4" />} label="Flashcards" />
-              <RoadmapTile href={selected.href} icon={<Target className="size-4" />} label="Practise" primary />
+            <div className="mt-4">
+              <SubjectResourceLinks
+                family={subjectFamily}
+                variant="tiles"
+                hrefs={{
+                  notes: getResourceHref("revision-notes", subject?.subjectSlug),
+                  flashcards: getResourceHref("flashcards", subject?.subjectSlug),
+                  practice: "/practice",
+                }}
+              />
             </div>
           ) : (
             <div className="mt-4 flex items-center gap-3 rounded-xl bg-[#f4f1eb] px-4 py-3 text-sm font-semibold text-muted">
@@ -55,19 +62,5 @@ export function TopicRoadmap({ skillPaths, showHeading = true }: { skillPaths: S
         </div>
       </Card>
     </section>
-  );
-}
-
-function RoadmapTile({ href, icon, label, primary }: { href: string; icon: ReactNode; label: string; primary?: boolean }) {
-  return (
-    <Link
-      href={href}
-      className={`flex flex-col items-center gap-2 rounded-xl border px-2 py-3.5 text-center text-[11.5px] font-bold transition hover:-translate-y-0.5 ${
-        primary ? "border-forge bg-forge text-white" : "border-line bg-white text-ink hover:border-forge"
-      }`}
-    >
-      <span className={`grid size-8 place-items-center rounded-lg ${primary ? "bg-white/20 text-white" : "bg-forge-soft text-forge"}`}>{icon}</span>
-      {label}
-    </Link>
   );
 }

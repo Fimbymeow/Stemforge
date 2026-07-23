@@ -14,6 +14,7 @@ import { getEmptyProgressEvidence, getSkillPathProgress } from "@/lib/local-prog
 import { useHasMounted } from "@/lib/use-mounted";
 import { useLearnerNextAction } from "@/components/learning/use-learner-next-action";
 import { QuickPracticeAction } from "@/components/practice/quick-practice-action";
+import { PracticeEntryCard } from "@/components/practice/practice-entry-card";
 import type { LearnerNextAction } from "@/lib/learning/next-action";
 
 export function HigherMathsHub() {
@@ -63,7 +64,10 @@ export function HigherMathsHub() {
 
         <section>
           <h2 className="mb-2 text-lg font-extrabold">Start here</h2>
-          <GuidedPathCard progress={progress} nextAction={nextAction} skillPathName={skillPath.name} />
+          <div className="grid grid-cols-[minmax(0,3fr)_minmax(240px,1fr)] items-stretch gap-4 max-[900px]:grid-cols-1">
+            <GuidedPathCard progress={progress} nextAction={nextAction} skillPathName={skillPath.name} />
+            <PracticeEntryCard preferredPathId={nextAction.pathId} testId="higher-maths-practice" />
+          </div>
         </section>
 
         <section aria-labelledby="course-coverage-title" className="min-w-0 max-w-full">
@@ -93,13 +97,13 @@ function GuidedPathCard({
   }
 
   return (
-    <Card className="border-forge/30 bg-gradient-to-br from-forge/10 to-white p-4">
+    <Card aria-label="Learn" className="border-forge/30 bg-gradient-to-br from-forge/10 to-white p-4">
       <div className="grid grid-cols-[76px_1fr] items-center gap-4 max-lg:grid-cols-[64px_1fr] max-md:grid-cols-1">
         <div className="grid size-[76px] place-items-center rounded-xl border border-forge-soft bg-forge-soft text-forge max-md:h-20 max-md:w-full">
           <Target className="size-8" />
         </div>
         <div>
-          <p className="mb-1 text-xs font-extrabold uppercase text-forge">Recommended</p>
+          <p className="mb-1 text-xs font-extrabold uppercase text-forge">Learn · Recommended</p>
           <h3 className="m-0 text-xl font-extrabold">Guided Learning Path</h3>
           <p id="hub-next-action-reason" className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">{nextAction.reason}</p>
           <div className="mt-3 grid max-w-lg gap-2">
@@ -141,13 +145,14 @@ function CompletedGuidedPathCard({
   const supporting = getPathCompletionSupportingSentence(status, reviewCount);
 
   return (
-    <Card className="border-forge/30 bg-gradient-to-br from-forge/10 to-white p-4">
+    <Card aria-label="Learn" className="border-forge/30 bg-gradient-to-br from-forge/10 to-white p-4">
       <div className="grid grid-cols-[76px_1fr] items-center gap-4 max-lg:grid-cols-[64px_1fr] max-md:grid-cols-1">
         <div className="grid size-[76px] place-items-center rounded-xl border border-forge-soft bg-forge-soft text-forge max-md:h-20 max-md:w-full">
           <Target className="size-8" />
         </div>
         <div>
           <div className="mb-1 flex flex-wrap items-center gap-2">
+            <span className="text-xs font-extrabold uppercase tracking-wide text-forge">Learn</span>
             <MasteryBadge status={status} />
             <ReviewBadge count={reviewCount} />
           </div>

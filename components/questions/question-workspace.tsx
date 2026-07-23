@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, BookOpen, Check, Eye, FileText, Layers3, Lightbulb, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Eye, FileText, Lightbulb, X } from "lucide-react";
 import { ReportDialog } from "@/components/beta-reports/report-dialog";
 import { AppShell } from "@/components/layout/app-shell";
 import { AppTopbar } from "@/components/layout/app-topbar";
@@ -12,6 +12,7 @@ import { useLearnerNextAction } from "@/components/learning/use-learner-next-act
 import { MathContent } from "@/components/questions/math-content";
 import { QuestionAnswerInput } from "@/components/questions/answer-inputs";
 import { WorkedSolutionContent } from "@/components/questions/worked-solution-content";
+import { FormulaSheetDrawer } from "@/components/questions/formula-sheet-drawer";
 import { Card, ProgressBar } from "@/components/ui";
 import type { Question } from "@/data/types";
 import { markQuestionAnswer } from "@/lib/answer-engine";
@@ -100,12 +101,9 @@ export function QuestionWorkspace({
   const questionProgress = getQuestionProgress(question.id, evidenceOverride);
   const relatedResources = getRelatedResourcesForQuestion(question.id);
   const questionSupportResources = [
-    relatedResources.find((item) => item.type === "formula-cards"),
     relatedResources.find((item) => item.type === "revision-notes"),
-    ...(submitted || questionProgress.attempted
-      ? [relatedResources.find((item) => item.type === "worked-examples")]
-      : []),
   ].filter((item): item is NonNullable<typeof item> => Boolean(item));
+  const isHigherMathsQuestion = context?.subject.subjectSlug === "higher-maths";
   const solutionViewed = questionProgress.solutionViewed;
   const usesGuidedMarking = question.answerType === "written" || question.answerType === "multi_step";
   const markedSubmission = submitted && submittedAnswer !== null ? markQuestionAnswer(question, submittedAnswer) : null;
@@ -489,6 +487,13 @@ export function QuestionWorkspace({
         </section>
 
         <aside className="grid content-start gap-3" aria-label="Question support">
+          {isHigherMathsQuestion ? (
+            <Card className="p-4">
+              <h2 className="mb-2 text-lg font-extrabold">Assessment reference</h2>
+              <p className="mb-3 text-sm leading-relaxed text-muted">Open the official formulae supplied for Higher Mathematics assessments.</p>
+              <FormulaSheetDrawer />
+            </Card>
+          ) : null}
           <Card className="p-4">
             <h2 className="mb-3 text-lg font-extrabold">Stage progress</h2>
             <PanelProgress
@@ -511,16 +516,14 @@ export function QuestionWorkspace({
               <p className="mb-3 text-sm text-muted">These resources belong to {skillPath?.name ?? "this path"}. Opening one does not record an attempt.</p>
               <div className="grid gap-1">
                 {questionSupportResources.map((item) => {
-                    const Icon = item.type === "formula-cards" ? BookOpen : item.type === "revision-notes" ? FileText : Layers3;
-                    const typeLabel = item.type === "formula-cards" ? "Formula card" : item.type === "revision-notes" ? "Revision note" : "Worked example";
                     return (
                       <Link
                         key={item.resource.id}
                         href={getContextualResourceHref(item.type, context?.subject.subjectSlug ?? "higher-maths", item.resource.id, practiceReturnHref)}
                         className="inline-flex min-h-10 items-center gap-2 rounded-lg px-2 text-sm font-bold text-forge hover:bg-forge-soft"
                       >
-                        <Icon className="size-4" />
-                        {typeLabel}: {item.resource.title}
+                        <FileText className="size-4" />
+                        Notes: {item.resource.title}
                       </Link>
                     );
                 })}

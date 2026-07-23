@@ -2,21 +2,18 @@ import { expect, test } from "./fixtures/test";
 
 test("resources, topbar controls and app landmarks are functionally honest", async ({ page }) => {
   await page.goto("/resources");
-  await expect(page).toHaveURL(/\/subjects\/higher-maths\/formula-cards$/);
-  await expect(page.getByRole("heading", { name: "Higher Maths Formula Cards", level: 1 })).toBeVisible();
+  await expect(page).toHaveURL(/\/subjects\/higher-maths\/revision-notes$/);
+  await expect(page.getByRole("heading", { name: "Higher Maths Notes", level: 1 })).toBeVisible();
 
   await page.goto("/question/demo");
-  const formulaLinks = page.getByRole("link", { name: "Formula Sheet" });
-  await expect(formulaLinks).toHaveCount(2);
-  await expect(page.locator('a[href="/subjects/higher-maths/formula-cards"]').filter({ hasText: "Formula Sheet" })).toHaveCount(2);
-  await formulaLinks.first().focus();
-  await expect(formulaLinks.first()).toBeFocused();
+  await expect(page.getByRole("button", { name: "Formula sheet" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Formula Sheet" })).toHaveCount(0);
 
   for (const route of [
     "/subjects",
     "/subjects/higher-maths",
     "/subjects/higher-maths/question-bank",
-    "/subjects/higher-maths/formula-cards",
+    "/subjects/higher-maths/revision-notes",
     "/dashboard",
     "/practice",
   ]) {

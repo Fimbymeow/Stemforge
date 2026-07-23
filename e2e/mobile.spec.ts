@@ -121,10 +121,10 @@ test("mobile Functional Honesty surfaces remain compact, semantic and error-free
   await expect(page.getByLabel("Profile preview")).toHaveCount(0);
   await expectNoHorizontalOverflow(page);
 
-  await page.goto("/subjects/higher-maths/formula-cards");
+  await page.goto("/subjects/higher-maths/revision-notes");
   await expect(page.locator("main")).toHaveCount(1);
-  await expect(page.getByRole("heading", { name: "Higher Maths Formula Cards", level: 1 })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Power rule" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Higher Maths Notes", level: 1 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Power rule", exact: true })).toBeVisible();
   await expect(page.getByText("Chain rule", { exact: true })).not.toBeVisible();
   await expectNoHorizontalOverflow(page);
   expect(seriousBrowserErrors).toEqual([]);
@@ -182,7 +182,7 @@ test("at 320px practice, questions and resources have no document overflow", asy
   for (const href of [
     "/practice",
     "/subjects/higher-maths/question-bank",
-    "/subjects/higher-maths/formula-cards",
+    "/subjects/higher-maths/revision-notes",
     `/question/${QUESTION_IDS[0]}`,
   ]) {
     await page.goto(href);

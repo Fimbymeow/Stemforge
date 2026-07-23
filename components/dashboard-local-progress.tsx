@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ArrowRight, ShieldCheck, Target, TrendingUp } from "lucide-react";
 import { Card, ProgressBar } from "@/components/ui";
 import { useProgressSync } from "@/components/progress-sync-provider";
-import { QuickPracticeAction } from "@/components/practice/quick-practice-action";
+import { PracticeEntryCard } from "@/components/practice/practice-entry-card";
 import {
   deriveLearnerDashboardModel,
   type DashboardFocusItem,
@@ -59,71 +59,58 @@ export function DashboardLocalProgressSection() {
 
   return (
     <section className="grid gap-4" aria-label="Your learning dashboard">
-      <Card data-testid="dashboard-progress-summary" className="border-forge/30 bg-gradient-to-br from-forge/10 via-white to-white p-5 md:p-6">
-        <div className="grid grid-cols-[64px_minmax(0,1fr)] items-start gap-4 max-md:grid-cols-1">
-          <div className="grid size-16 place-items-center rounded-xl border border-forge-soft bg-forge-soft text-forge max-md:h-14 max-md:w-full">
-            <Target className="size-7" />
-          </div>
-          <div className="min-w-0">
-            <p className="text-xs font-extrabold uppercase tracking-wide text-forge">Higher Maths</p>
-            <h2 className="mt-1 text-2xl font-extrabold md:text-3xl">
-              <Link href={HIGHER_MATHS_HREF} className="rounded-sm hover:text-forge focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-forge">
-                Higher Maths
-              </Link>
-            </h2>
-            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">{model.course.notice}</p>
-          </div>
-        </div>
-
-        <div className="mt-5 rounded-xl border border-forge/20 bg-white/80 p-4">
-          <p className="text-xs font-extrabold uppercase tracking-wide text-forge">Recommended next</p>
-          <h3 className="mt-1 text-lg font-extrabold">{recommendation.title}</h3>
-          <p id="dashboard-next-action-reason" className="mt-1 max-w-2xl text-sm leading-relaxed text-muted">{recommendation.reason}</p>
-        </div>
-
-        {hasLearningActivity ? (
-          <div className="mt-4 grid gap-2 border-t border-forge/20 pt-4" data-testid="dashboard-course-progress">
-            <div className="flex flex-wrap items-center justify-between gap-2 text-sm font-bold text-muted">
-              <span>{recommendedPath?.currentStageName ? `Current position: ${recommendedPath.currentStageName}` : "Current Higher Maths progress"}</span>
-              <span>{model.course.completedQuestions} / {model.course.totalQuestions} completed</span>
+      <div className="grid grid-cols-[minmax(0,3fr)_minmax(240px,1fr)] items-stretch gap-4 max-[900px]:grid-cols-1">
+        <Card data-testid="dashboard-progress-summary" aria-label="Learn" className="border-forge/30 bg-gradient-to-br from-forge/10 via-white to-white p-5 md:p-6">
+          <div className="grid grid-cols-[64px_minmax(0,1fr)] items-start gap-4 max-md:grid-cols-1">
+            <div className="grid size-16 place-items-center rounded-xl border border-forge-soft bg-forge-soft text-forge max-md:h-14 max-md:w-full">
+              <Target className="size-7" />
             </div>
-            <ProgressBar value={model.course.completionPercentage} />
+            <div className="min-w-0">
+              <p className="text-xs font-extrabold uppercase tracking-wide text-forge">Learn · Higher Maths</p>
+              <h2 className="mt-1 text-2xl font-extrabold md:text-3xl">
+                <Link href={HIGHER_MATHS_HREF} className="rounded-sm hover:text-forge focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-forge">
+                  Higher Maths
+                </Link>
+              </h2>
+              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">{model.course.notice}</p>
+            </div>
           </div>
-        ) : null}
 
-        <div className="mt-5 flex flex-col gap-3 border-t border-forge/20 pt-4 sm:flex-row sm:flex-wrap sm:items-center">
-          <Link href={HIGHER_MATHS_HREF} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-forge px-5 text-sm font-extrabold text-white">
-            Open Higher Maths
-            <ArrowRight className="size-4" />
-          </Link>
-          {recommendation.href ? (
-            <Link href={recommendation.href} aria-describedby="dashboard-next-action-reason" className="inline-flex min-h-11 items-center justify-center rounded-lg border border-forge bg-white px-5 text-sm font-extrabold text-forge">
-              {recommendation.label}
-            </Link>
+          <div className="mt-5 rounded-xl border border-forge/20 bg-white/80 p-4">
+            <p className="text-xs font-extrabold uppercase tracking-wide text-forge">Recommended next</p>
+            <h3 className="mt-1 text-lg font-extrabold">{recommendation.title}</h3>
+            <p id="dashboard-next-action-reason" className="mt-1 max-w-2xl text-sm leading-relaxed text-muted">{recommendation.reason}</p>
+          </div>
+
+          {hasLearningActivity ? (
+            <div className="mt-4 grid gap-2 border-t border-forge/20 pt-4" data-testid="dashboard-course-progress">
+              <div className="flex flex-wrap items-center justify-between gap-2 text-sm font-bold text-muted">
+                <span>{recommendedPath?.currentStageName ? `Current position: ${recommendedPath.currentStageName}` : "Current Higher Maths progress"}</span>
+                <span>{model.course.completedQuestions} / {model.course.totalQuestions} completed</span>
+              </div>
+              <ProgressBar value={model.course.completionPercentage} />
+            </div>
           ) : null}
-          <span className="text-sm font-bold text-muted sm:ml-auto">
-            {!hasLearningActivity ? `${model.course.completedQuestions} / ${model.course.totalQuestions} completed · ` : null}
-            {model.sync.label}
-          </span>
-        </div>
-      </Card>
 
-      <Card data-testid="dashboard-quick-practice" className="p-5">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="m-0 text-xl font-extrabold">Quick Practice</h2>
-            <p id="dashboard-quick-practice-reason" className="mt-1 text-sm leading-relaxed text-muted">
-              Start a short untimed session from the most relevant available path.
-            </p>
+          <div className="mt-5 flex flex-col gap-3 border-t border-forge/20 pt-4 sm:flex-row sm:flex-wrap sm:items-center">
+            <Link href={HIGHER_MATHS_HREF} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-forge px-5 text-sm font-extrabold text-white">
+              Open Higher Maths
+              <ArrowRight className="size-4" />
+            </Link>
+            {recommendation.href ? (
+              <Link href={recommendation.href} aria-describedby="dashboard-next-action-reason" className="inline-flex min-h-11 items-center justify-center rounded-lg border border-forge bg-white px-5 text-sm font-extrabold text-forge">
+                {recommendation.label}
+              </Link>
+            ) : null}
+            <span className="text-sm font-bold text-muted sm:ml-auto">
+              {!hasLearningActivity ? `${model.course.completedQuestions} / ${model.course.totalQuestions} completed · ` : null}
+              {model.sync.label}
+            </span>
           </div>
-          <QuickPracticeAction
-            preferredPathId={recommendation.pathId}
-            label="Start Quick Practice"
-            describedBy="dashboard-quick-practice-reason"
-            className="shrink-0 sm:min-w-48"
-          />
-        </div>
-      </Card>
+        </Card>
+
+        <PracticeEntryCard preferredPathId={recommendation.pathId} testId="dashboard-practice" />
+      </div>
 
       <GuestProgressProtection
         meaningfulEvidenceCount={meaningfulEvidenceCount}
