@@ -21,7 +21,7 @@ export function TopicRoadmap({ skillPaths, showHeading = true }: { skillPaths: S
       {showHeading ? (
         <>
           <h2 className="m-0 text-xl font-extrabold">Topic roadmap</h2>
-          <p className="mt-2 text-muted">Differentiation is split into focused topics. Start with Basic differentiation.</p>
+          <p className="mt-2 text-muted">Explore the focused paths in this part of the Higher Maths course.</p>
         </>
       ) : null}
       <Card className={`min-w-0 overflow-hidden p-5 ${showHeading ? "mt-4" : ""}`}>
@@ -49,7 +49,7 @@ export function TopicRoadmap({ skillPaths, showHeading = true }: { skillPaths: S
           ) : (
             <div className="mt-4 flex items-center gap-3 rounded-xl bg-[#f4f1eb] px-4 py-3 text-sm font-semibold text-muted">
               <Sparkles className="size-4 shrink-0" />
-              Notes, formula cards, worked examples and flashcards for this topic are being prepared.
+              This planned path has no published questions or learning resources yet.
             </div>
           )}
         </div>

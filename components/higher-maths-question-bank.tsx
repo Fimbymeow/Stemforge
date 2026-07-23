@@ -43,6 +43,7 @@ export function HigherMathsQuestionBank() {
     sort,
   });
   const lockedPaths = contentResolver.getAllPathContexts().filter((context) => !context.skillPath.isAvailable);
+  const futureCoverage = groupFutureCoverage(lockedPaths);
 
   useEffect(() => {
     const update = () => setVersion((current) => current + 1);
@@ -176,18 +177,61 @@ export function HigherMathsQuestionBank() {
             <span className="inline-flex items-center gap-2"><Lock className="size-4" />Future Higher Maths paths ({lockedPaths.length})</span>
             <ChevronDown className="size-4 transition group-open:rotate-180" />
           </summary>
-          <div className="grid gap-2 border-t border-line p-4">
-            {lockedPaths.map((context) => (
-              <div key={context.skillPath.slug} className="flex items-center justify-between gap-3 rounded-lg bg-paper px-3 py-2 text-sm">
-                <span className="font-bold">{context.skillPath.name}</span>
-                <span className="text-muted">Coming soon</span>
-              </div>
+          <div className="grid gap-3 border-t border-line p-4">
+            <p className="text-sm leading-relaxed text-muted">
+              Planned coverage is grouped broadly here. Only published questions appear in the active bank and its filters.
+            </p>
+            {futureCoverage.map((courseArea) => (
+              <section key={courseArea.slug} className="rounded-lg bg-paper px-4 py-3" aria-labelledby={`future-${courseArea.slug}`}>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h3 id={`future-${courseArea.slug}`} className="font-extrabold">{courseArea.name}</h3>
+                  <span className="text-xs font-bold text-muted">{courseArea.pathCount} planned path{courseArea.pathCount === 1 ? "" : "s"}</span>
+                </div>
+                <ul className="mt-2 flex flex-wrap gap-2 text-sm text-muted">
+                  {courseArea.specAreas.map((specArea) => (
+                    <li key={specArea.slug} className="rounded-full border border-line bg-white px-3 py-1.5">
+                      {specArea.name} ({specArea.pathCount})
+                    </li>
+                  ))}
+                </ul>
+              </section>
             ))}
           </div>
         </details>
       </div>
     </AppShell>
   );
+}
+
+function groupFutureCoverage(lockedPaths: ReturnType<typeof contentResolver.getAllPathContexts>) {
+  const courseAreas = new Map<string, {
+    slug: string;
+    name: string;
+    pathCount: number;
+    specAreas: Array<{ slug: string; name: string; pathCount: number }>;
+  }>();
+
+  for (const context of lockedPaths) {
+    let courseArea = courseAreas.get(context.courseArea.slug);
+    if (!courseArea) {
+      courseArea = {
+        slug: context.courseArea.slug,
+        name: context.courseArea.name,
+        pathCount: 0,
+        specAreas: [],
+      };
+      courseAreas.set(context.courseArea.slug, courseArea);
+    }
+    courseArea.pathCount += 1;
+    let specArea = courseArea.specAreas.find((item) => item.slug === context.routeTopic.slug);
+    if (!specArea) {
+      specArea = { slug: context.routeTopic.slug, name: context.routeTopic.name, pathCount: 0 };
+      courseArea.specAreas.push(specArea);
+    }
+    specArea.pathCount += 1;
+  }
+
+  return [...courseAreas.values()];
 }
 
 function questionStatus(progress: ReturnType<typeof queryAvailableQuestionBankQuestions>[number]["progress"]) {

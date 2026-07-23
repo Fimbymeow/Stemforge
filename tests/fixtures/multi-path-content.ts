@@ -48,7 +48,9 @@ function question(id: string, stageId: string, stageName: LearningStage["name"],
 
 export function createTwoPathFixture(): CanonicalContentSource {
   const subject: Subject = structuredClone(higherMaths);
-  const integrationTopic = subject.courseAreas[0].specAreas.find((topic) => topic.slug === "integration");
+  const integrationTopic = subject.courseAreas
+    .find((courseArea) => courseArea.slug === "calculus")
+    ?.specAreas.find((topic) => topic.slug === "integration");
   const plannedPath = integrationTopic?.skillPaths?.find((path) => path.slug === "basic-integration");
   if (!integrationTopic || !plannedPath) throw new Error("Production taxonomy no longer contains the planned integration mapping.");
 

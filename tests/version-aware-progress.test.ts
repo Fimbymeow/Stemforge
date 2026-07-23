@@ -9,7 +9,7 @@ import {
 import { getVersionEvidenceForQuestion } from "../lib/local-progress";
 import { attempt, evidence, QUESTION_ID, supportEvent } from "./progress-fixtures";
 
-const skillPath = structuredClone(higherMaths.courseAreas[0].specAreas[0].skillPaths?.[0]);
+const skillPath = structuredClone(higherMaths.courseAreas.flatMap((area) => area.specAreas).flatMap((area) => area.skillPaths ?? []).find((path) => path.slug === "basic-differentiation"));
 assert.ok(skillPath);
 const versionsV1 = Object.fromEntries(skillPath.learningStages?.flatMap((stage) => stage.questionIds.map((id) => [id, 1])) ?? []);
 

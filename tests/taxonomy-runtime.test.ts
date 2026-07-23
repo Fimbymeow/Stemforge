@@ -73,7 +73,7 @@ test("a test-only second path keeps sequencing, stage boundaries and completion 
 test("unknown, missing and archived relationships fail safely", () => {
   const source = createTwoPathFixture();
   const subject = source.subjects[0];
-  const integration = subject.courseAreas[0].specAreas.find((topic) => topic.slug === "integration");
+  const integration = subject.courseAreas.find((courseArea) => courseArea.slug === "calculus")?.specAreas.find((topic) => topic.slug === "integration");
   const path = integration?.skillPaths?.find((candidate) => candidate.slug === fixtureIds.path);
   assert.ok(path);
   path.contentStatus = "archived";
@@ -85,19 +85,24 @@ test("unknown, missing and archived relationships fail safely", () => {
 
 test("taxonomy validation rejects invalid ownership, duplicate order and archived-parent leakage", () => {
   const invalidReference = createTwoPathFixture();
-  const invalidPath = invalidReference.subjects[0].courseAreas[0].specAreas[1].skillPaths?.find((path) => path.slug === fixtureIds.path);
+  const invalidPath = invalidReference.subjects[0].courseAreas
+    .find((courseArea) => courseArea.slug === "calculus")
+    ?.specAreas.find((specArea) => specArea.slug === "integration")
+    ?.skillPaths?.find((path) => path.slug === fixtureIds.path);
   assert.ok(invalidPath);
   invalidPath.specificationStrandId = "missing-strand";
   assert.ok(validateContent({ subjects: [...invalidReference.subjects], questions: [...invalidReference.questions] }).errors.some((issue) => issue.code === "invalid-specification-strand-reference"));
 
   const duplicateOrder = createTwoPathFixture();
-  const strands = duplicateOrder.subjects[0].courseAreas[0].specificationStrands;
+  const strands = duplicateOrder.subjects[0].courseAreas.find((courseArea) => courseArea.slug === "calculus")?.specificationStrands;
   assert.ok(strands);
   strands[1].displayOrder = strands[0].displayOrder;
   assert.ok(validateContent({ subjects: [...duplicateOrder.subjects], questions: [...duplicateOrder.questions] }).errors.some((issue) => issue.code === "duplicate-strand-display-order"));
 
   const archivedParent = createTwoPathFixture();
-  const parent = archivedParent.subjects[0].courseAreas[0].specificationStrands?.find((strand) => strand.id === higherMathsCalculusStrandIds.integratingFunctions);
+  const parent = archivedParent.subjects[0].courseAreas
+    .find((courseArea) => courseArea.slug === "calculus")
+    ?.specificationStrands?.find((strand) => strand.id === higherMathsCalculusStrandIds.integratingFunctions);
   assert.ok(parent);
   parent.contentStatus = "archived";
   assert.ok(validateContent({ subjects: [...archivedParent.subjects], questions: [...archivedParent.questions] }).errors.some((issue) => issue.code === "archived-parent-active-child"));

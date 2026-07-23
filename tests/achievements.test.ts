@@ -12,7 +12,7 @@ import { resetPathProgress } from "../lib/progress/calculations";
 import { createDefaultProgressPayload } from "../lib/progress/payload";
 import { attempt, evidence } from "./progress-fixtures";
 
-const path = higherMaths.courseAreas[0].specAreas[0].skillPaths?.[0];
+const path = higherMaths.courseAreas.flatMap((area) => area.specAreas).flatMap((area) => area.skillPaths ?? []).find((item) => item.slug === "basic-differentiation");
 assert.ok(path);
 const questions = (path.learningStages ?? []).flatMap((stage) => stage.questionIds.map((questionId) => ({ questionId, stageId: stage.id })));
 const context = { subjectId: "higher-maths", courseId: "calculus", skillPath: path,

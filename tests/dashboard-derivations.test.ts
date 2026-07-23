@@ -4,7 +4,7 @@ import { higherMaths } from "../data/higher-maths";
 import { deriveLearnerDashboardModel } from "../lib/dashboard-derivations";
 import type { AchievementSnapshot, ProgressEvidence, QuestionAttempt, QuestionSupportEvent } from "../lib/progress/types";
 
-const maybeSkillPath = higherMaths.courseAreas[0].specAreas[0].skillPaths?.[0];
+const maybeSkillPath = higherMaths.courseAreas.flatMap((area) => area.specAreas).flatMap((area) => area.skillPaths ?? []).find((path) => path.slug === "basic-differentiation");
 assert.ok(maybeSkillPath);
 const skillPath = maybeSkillPath;
 const questionIds = skillPath.learningStages?.flatMap((stage) => stage.questionIds) ?? [];

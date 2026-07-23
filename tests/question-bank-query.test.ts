@@ -87,7 +87,7 @@ test("two paths keep progress totals isolated and expose path-agnostic dashboard
 
 test("empty filters are safe and unavailable zero-question paths do not masquerade as progress states", () => {
   const resolver = createContentResolver(createTwoPathFixture());
-  assert.equal(queryQuestionBank(resolver, evidence()).length, 13);
+  assert.equal(queryQuestionBank(resolver, evidence()).length, 2);
   assert.deepEqual(queryQuestionBank(resolver, evidence(), { search: "no such curriculum item" }), []);
   const notStarted = queryQuestionBank(resolver, evidence(), { progressFilter: "not-started" });
   assert.deepEqual(notStarted.map((entry) => entry.id), ["basic-differentiation", fixtureIds.path]);

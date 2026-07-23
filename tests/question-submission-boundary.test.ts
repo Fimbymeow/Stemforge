@@ -6,7 +6,7 @@ import { markQuestionAnswer } from "../lib/answer-engine";
 import { getQuestionProgress, calculateSkillPathProgress, selectNextQuestionId } from "../lib/progress/calculations";
 import { attempt, evidence, supportEvent } from "./progress-fixtures";
 
-const skillPath = higherMaths.courseAreas[0].specAreas[0].skillPaths?.[0];
+const skillPath = higherMaths.courseAreas.flatMap((area) => area.specAreas).flatMap((area) => area.skillPaths ?? []).find((path) => path.slug === "basic-differentiation");
 assert.ok(skillPath);
 const question = higherMathsDifferentiationQuestions[0];
 

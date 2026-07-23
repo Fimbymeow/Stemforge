@@ -99,6 +99,7 @@ test("a local draft survives refresh and navigation, stays out of evidence, and 
   await expect(page.getByLabel("Your answer")).toHaveValue("5x^");
   await page.getByLabel("Your answer").fill(QUESTION_ANSWERS[QUESTION_IDS[0]]);
   await page.getByRole("button", { name: "Submit Answer" }).click();
+  await expect(page.getByTestId("question-status")).toContainText("Correct");
   const matchingKey = createAnswerDraftKey({
     questionId: firstQuestion.id,
     questionVersion: firstQuestion.questionVersion,

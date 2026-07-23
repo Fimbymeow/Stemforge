@@ -4,7 +4,7 @@ import { higherMaths } from "../data/higher-maths";
 import { calculateSkillPathProgress, calculateStageProgress } from "../lib/progress/calculations";
 import { attempt, evidence, supportEvent } from "./progress-fixtures";
 
-const path = higherMaths.courseAreas[0].specAreas[0].skillPaths?.[0];
+const path = higherMaths.courseAreas.flatMap((area) => area.specAreas).flatMap((area) => area.skillPaths ?? []).find((item) => item.slug === "basic-differentiation");
 assert.ok(path);
 const stages = path.learningStages ?? [];
 

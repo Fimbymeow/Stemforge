@@ -14,7 +14,7 @@ import {
 import { expectNoHorizontalOverflow, openQuestion, submitAnswer } from "./fixtures/student-actions";
 
 const PRACTICE_SESSIONS_STORAGE_KEY = "stemforge.practiceSessions.v1";
-const skillPath = higherMaths.courseAreas[0].specAreas[0].skillPaths?.[0];
+const skillPath = higherMaths.courseAreas.flatMap((area) => area.specAreas).flatMap((area) => area.skillPaths ?? []).find((path) => path.slug === "basic-differentiation");
 if (!skillPath) throw new Error("Basic differentiation test path is missing");
 
 const FOUNDATIONS_IDS = QUESTION_IDS.slice(0, 3);

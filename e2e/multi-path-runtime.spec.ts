@@ -27,17 +27,11 @@ test("question bank leads with available questions and keeps future taxonomy sec
   await expect(page.getByRole("link", { name: "Open Differentiate a power" })).toHaveCount(0);
   await search.fill("no such curriculum item");
   await expect(page.getByText("No questions match these filters")).toBeVisible();
-  await expect(page.getByText("Future Higher Maths paths (12)", { exact: true })).toBeVisible();
+  await expect(page.getByText("Future Higher Maths paths (50)", { exact: true })).toBeVisible();
 });
 
-test("a planned path resolves through the generic route without exposing fake questions", async ({ page }) => {
-  await page.goto("/subjects/higher-maths/calculus/integration/basic-integration");
-  await expect(page.getByRole("heading", { level: 1, name: "Basic integration" })).toBeVisible();
-  await expect(page.getByText("Reviewed questions are being prepared", { exact: true })).toBeVisible();
-  await expect(page.getByRole("navigation", { name: "Breadcrumb" }).getByText("Integrating functions", { exact: true })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Open Basic differentiation" })).toHaveAttribute(
-    "href",
-    "/subjects/higher-maths/calculus/differentiation/basic-differentiation",
-  );
-  await expect(page.getByRole("link", { name: /question/i })).toHaveCount(0);
+test("a planned path does not resolve to an empty learning workspace", async ({ page }) => {
+  const response = await page.goto("/subjects/higher-maths/calculus/integration/basic-integration");
+  expect(response?.status()).toBe(404);
+  await expect(page.getByRole("heading", { name: "This page could not be found." })).toBeVisible();
 });

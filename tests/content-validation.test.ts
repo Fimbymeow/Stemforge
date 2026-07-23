@@ -13,6 +13,10 @@ function cloneQuestions(): Question[] {
   return structuredClone(higherMathsDifferentiationQuestions);
 }
 
+function basicDifferentiation(subject: Subject) {
+  return subject.courseAreas.flatMap((area) => area.specAreas).flatMap((area) => area.skillPaths ?? []).find((path) => path.slug === "basic-differentiation");
+}
+
 test("current Higher Maths content has no validation errors", () => {
   const report = validateContent({ subjects: [cloneSubject()], questions: cloneQuestions() });
   assert.deepEqual(report.errors, []);
@@ -27,7 +31,7 @@ test("duplicate question IDs fail validation", () => {
 
 test("missing stage question references fail validation", () => {
   const subject = cloneSubject();
-  const stage = subject.courseAreas[0].specAreas[0].skillPaths?.[0].learningStages?.[0];
+  const stage = basicDifferentiation(subject)?.learningStages?.[0];
   assert.ok(stage);
   stage.questionIds.push("hm-calc-diff-basic-f-999");
   stage.questions = stage.questionIds.length;

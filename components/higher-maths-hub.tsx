@@ -56,7 +56,7 @@ export function HigherMathsHub() {
             <div>
               <h1 className="m-0 text-[32px] font-extrabold leading-none">Higher Maths</h1>
               <p className="mt-2 max-w-3xl text-base leading-relaxed text-muted">Structured Qualifications Scotland learning for Scottish students.</p>
-              <p className="mt-2 text-sm font-bold text-muted">{skillPath.name} is available now. More Higher Maths paths are coming soon.</p>
+              <p className="mt-2 text-sm font-bold text-muted">Calculus is partially available now. More Higher Maths areas are being added.</p>
             </div>
           </div>
         </header>
@@ -66,7 +66,13 @@ export function HigherMathsHub() {
           <GuidedPathCard progress={progress} nextAction={nextAction} skillPathName={skillPath.name} />
         </section>
 
-        <SubjectRoadmapNavigator subject={subject} />
+        <section aria-labelledby="course-coverage-title" className="min-w-0 max-w-full">
+          <h2 id="course-coverage-title" className="mb-2 text-lg font-extrabold">Full course coverage</h2>
+          <p className="mb-4 max-w-3xl text-sm leading-relaxed text-muted">
+            Browse all four course areas. Progress is measured only across published questions in available content.
+          </p>
+          <SubjectRoadmapNavigator subject={subject} />
+        </section>
       </div>
     </AppShell>
   );

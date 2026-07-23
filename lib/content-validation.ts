@@ -104,6 +104,7 @@ export function validateContent(input: ContentValidationInput): ContentValidatio
     archivedResources: 0,
   };
   const declaredIds = new Map<string, string>();
+  const declaredSkillPathSlugs = new Map<string, string>();
   const skillPaths = new Map<string, SkillPathContext>();
   const stages = new Map<string, StageContext>();
   const questionReferences = new Map<string, string[]>();
@@ -140,9 +141,13 @@ export function validateContent(input: ContentValidationInput): ContentValidatio
 
     for (const course of subject.courseAreas) {
       const courseLocation = `${subjectLocation}/course:${course.slug}`;
+      const expectedCourseHref = `${subject.href}/${course.slug}`;
       validateId(course.slug, "Course", courseLocation, `course:${subject.subjectSlug}:${course.slug}`);
       validateRequiredText(course.name, "Course name", courseLocation, issue);
       validateContentStatus(course.contentStatus, "Course", course.slug, courseLocation, issue);
+      if (course.href !== expectedCourseHref) {
+        issue("error", "inconsistent-course-parent", `Course "${course.slug}" href must be "${expectedCourseHref}".`, courseLocation);
+      }
       validateParentLifecycle(subject.contentStatus, course.contentStatus, "subject", subject.subjectSlug, "course", course.slug, subjectLocation, courseLocation, issue);
       const specificationStrands = course.specificationStrands ?? [];
       counts.specificationStrands += specificationStrands.length;
@@ -166,9 +171,13 @@ export function validateContent(input: ContentValidationInput): ContentValidatio
 
       for (const specArea of course.specAreas) {
         const specLocation = `${courseLocation}/spec-area:${specArea.slug}`;
+        const expectedSpecAreaHref = `${course.href}/${specArea.slug}`;
         validateId(specArea.slug, "Spec area", specLocation, `spec-area:${subject.subjectSlug}:${course.slug}:${specArea.slug}`);
         validateRequiredText(specArea.name, "Spec area name", specLocation, issue);
         validateContentStatus(specArea.contentStatus, "Spec area", specArea.slug, specLocation, issue);
+        if (specArea.href !== expectedSpecAreaHref) {
+          issue("error", "inconsistent-spec-area-parent", `Spec area "${specArea.slug}" href must be "${expectedSpecAreaHref}".`, specLocation, courseLocation);
+        }
         validateParentLifecycle(course.contentStatus, specArea.contentStatus, "course", course.slug, "spec area", specArea.slug, courseLocation, specLocation, issue);
         validateSiblingSlugs((specArea.skillPaths ?? []).map((path) => path.slug), "skill path", specLocation, issue);
 
@@ -176,9 +185,19 @@ export function validateContent(input: ContentValidationInput): ContentValidatio
           const pathLocation = `${specLocation}/skill-path:${skillPath.slug}`;
           const specificationStrand = specificationStrands.find((strand) => strand.id === skillPath.specificationStrandId);
           validateId(skillPath.slug, "Skill path", pathLocation, `skill-path:${skillPath.slug}:v${String(skillPath.pathVersion)}`);
+          const existingSlug = declaredSkillPathSlugs.get(skillPath.slug);
+          if (existingSlug) {
+            issue("error", "duplicate-skill-path-slug", `Skill path slug "${skillPath.slug}" must be globally unique.`, existingSlug, pathLocation);
+          } else {
+            declaredSkillPathSlugs.set(skillPath.slug, pathLocation);
+          }
           validateRequiredText(skillPath.name, "Skill path name", pathLocation, issue);
           validatePositiveInteger(skillPath.pathVersion, "pathVersion", "Skill path", skillPath.slug, pathLocation, issue, "invalid-path-version");
           validateContentStatus(skillPath.contentStatus, "Skill path", skillPath.slug, pathLocation, issue);
+          const canonicalPathHref = `${specArea.href}/${skillPath.slug}`;
+          if (skillPath.href !== canonicalPathHref && skillPath.href !== specArea.href) {
+            issue("error", "inconsistent-skill-path-parent", `Skill path "${skillPath.slug}" href must remain within its parent spec area.`, pathLocation, specLocation);
+          }
           validateParentLifecycle(specArea.contentStatus, skillPath.contentStatus, "spec area", specArea.slug, "skill path", skillPath.slug, specLocation, pathLocation, issue);
           if (specificationStrands.length && !skillPath.specificationStrandId) {
             issue("error", "missing-specification-strand-reference", `Skill path "${skillPath.slug}" has no specificationStrandId.`, pathLocation);
@@ -201,6 +220,7 @@ export function validateContent(input: ContentValidationInput): ContentValidatio
           counts.stages += skillPath.learningStages?.length ?? 0;
           counts.resources += countResources(skillPath);
           countResourceLifecycle(skillPath, counts);
+          validatePlaceholderHonesty(skillPath, pathLocation, issue);
 
           const existingPath = skillPaths.get(skillPath.slug);
           if (skillPath.contentStatus === "active" && existingPath) {
@@ -428,6 +448,36 @@ function validateStageShape(
   validateRequiredText(stage.name, `${kind} name`, location, issue);
   if (!Array.isArray(stage.questionIds)) issue("error", "invalid-stage-question-list", `${kind} "${stage.id}" questionIds must be an array.`, location);
   if (stage.questions !== stage.questionIds.length) issue("error", "stage-question-count-mismatch", `${kind} "${stage.id}" declares ${stage.questions} questions but references ${stage.questionIds.length}.`, location);
+}
+
+function validatePlaceholderHonesty(skillPath: SkillPath, location: string, issue: IssueWriter) {
+  if (skillPath.isAvailable) {
+    const referencedQuestions = (skillPath.learningStages ?? []).reduce((total, stage) => total + stage.questionIds.length, 0);
+    if (skillPath.questions === 0 || referencedQuestions === 0) {
+      issue("error", "empty-path-marked-available", `Skill path "${skillPath.slug}" cannot be available without published questions.`, location);
+    }
+    if (skillPath.status !== "available") {
+      issue("error", "available-path-status-mismatch", `Available skill path "${skillPath.slug}" must have available status.`, location);
+    }
+    return;
+  }
+
+  if (skillPath.status === "available") {
+    issue("error", "unavailable-placeholder-marked-available", `Placeholder "${skillPath.slug}" cannot have available status.`, location);
+  }
+  if (skillPath.questions !== 0 || skillPath.completed !== 0 || skillPath.progress !== 0) {
+    issue("error", "placeholder-enters-progress", `Placeholder "${skillPath.slug}" must contribute zero questions, completions and progress.`, location);
+  }
+  const stages = skillPath.learningStages ?? [];
+  if (stages.length > 0 || stages.some((stage) => stage.questionIds.length > 0 || stage.questions > 0)) {
+    issue("error", "placeholder-has-learning-stages", `Placeholder "${skillPath.slug}" cannot contain learning stages or question references.`, location);
+  }
+  if (countResources(skillPath) > 0) {
+    issue("error", "placeholder-has-resources", `Placeholder "${skillPath.slug}" cannot expose resources or practice sets.`, location);
+  }
+  if (skillPath.recommendedAction || (skillPath.sidebarLinks?.length ?? 0) > 0) {
+    issue("error", "placeholder-has-active-action", `Placeholder "${skillPath.slug}" cannot expose an active learning action.`, location);
+  }
 }
 
 function validateResources(

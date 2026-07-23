@@ -21,7 +21,7 @@ import { openQuestion, openWorkedSolution, retryAnswer, submitAnswer } from "./f
 const PATH_ROUTE = "/subjects/higher-maths/calculus/differentiation/basic-differentiation";
 const HUB_ROUTE = "/subjects/higher-maths";
 const FINAL_QUESTION_ID = QUESTION_IDS.at(-1)!;
-const skillPath = higherMaths.courseAreas[0].specAreas[0].skillPaths?.[0];
+const skillPath = higherMaths.courseAreas.flatMap((area) => area.specAreas).flatMap((area) => area.skillPaths ?? []).find((path) => path.slug === "basic-differentiation");
 if (!skillPath) throw new Error("Basic differentiation test path is missing");
 
 function priorIndependentAttempts() {

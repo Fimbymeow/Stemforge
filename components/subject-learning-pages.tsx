@@ -89,6 +89,10 @@ export function CourseAreaPage({ subjectSlug, courseAreaSlug }: { subjectSlug: s
   const courseArea = getCourseArea(subjectSlug, courseAreaSlug);
   if (!subject || !courseArea) return null;
   if (!subject.isAvailable) return <LockedSubjectPage subject={subject} />;
+  const availableSpecAreas = courseArea.specAreas.filter((specArea) => specArea.skillPaths?.some((path) => path.isAvailable));
+  const availablePaths = courseArea.specAreas.flatMap((specArea) => specArea.skillPaths ?? []).filter((path) => path.isAvailable);
+  const plannedPaths = courseArea.specAreas.flatMap((specArea) => specArea.skillPaths ?? []).filter((path) => !path.isAvailable);
+  const recommendedSpecArea = availableSpecAreas[0];
 
   return (
     <AppShell demo active="Subjects">
@@ -96,10 +100,14 @@ export function CourseAreaPage({ subjectSlug, courseAreaSlug }: { subjectSlug: s
       <div className="mx-auto grid max-w-[1120px] grid-cols-[minmax(0,1fr)_280px] gap-4 max-lg:grid-cols-1">
         <section className="grid gap-4">
           <Breadcrumbs items={["Subjects", subject.subjectName, courseArea.name]} />
-          <CourseAreaHero courseArea={courseArea} />
+          <CourseAreaHero courseArea={courseArea} availablePathCount={availablePaths.length} plannedPathCount={plannedPaths.length} />
           <section>
             <h2 className="m-0 text-xl font-extrabold">Spec Areas</h2>
-            <p className="mt-2 text-muted">Choose a spec area to practise.</p>
+            <p className="mt-2 text-muted">
+              {availablePaths.length
+                ? "Available learning is prioritised; planned coverage remains visible without affecting progress."
+                : "This planned course area is visible for orientation. No questions or learning routes are published here yet."}
+            </p>
             <div className="mt-4 grid grid-cols-2 gap-4 max-md:grid-cols-1">
               {courseArea.specAreas.map((specArea, index) => (
                 <SpecAreaCard key={specArea.slug} specArea={specArea} index={index} />
@@ -110,22 +118,27 @@ export function CourseAreaPage({ subjectSlug, courseAreaSlug }: { subjectSlug: s
         <aside className="grid content-start gap-4">
           <Card className="p-4">
             <h2 className="mb-3 text-xl font-extrabold">Recommended Next</h2>
-            <p className="mb-2 text-sm font-bold uppercase text-muted">Continue</p>
-            <h3 className="text-xl font-extrabold">{courseArea.specAreas[0]?.name}</h3>
-            <div className="my-5">
-              <div className="mb-2 flex justify-between font-bold">
-                <span>Progress</span>
-                <span>{courseArea.specAreas[0]?.progress ?? 0}%</span>
-              </div>
-              <ProgressBar value={courseArea.specAreas[0]?.progress ?? 0} />
-            </div>
-            {courseArea.specAreas[0] && <ButtonLink href={courseArea.specAreas[0].href}>Open Spec Area</ButtonLink>}
+            {recommendedSpecArea ? (
+              <>
+                <p className="mb-2 text-sm font-bold uppercase text-forge">Available now</p>
+                <h3 className="text-xl font-extrabold">{recommendedSpecArea.name}</h3>
+                <p className="my-4 text-sm leading-relaxed text-muted">Continue into the published Higher Maths learning path.</p>
+                <ButtonLink href={recommendedSpecArea.href}>Open available content</ButtonLink>
+              </>
+            ) : (
+              <>
+                <p className="mb-2 text-sm font-bold uppercase text-muted">Coming later</p>
+                <h3 className="text-xl font-extrabold">Planned coverage</h3>
+                <p className="mt-3 text-sm leading-relaxed text-muted">Explore the specification areas below, or continue with the available Calculus path.</p>
+                <ButtonLink href={getActiveSkillPathHref()}>Open Basic differentiation</ButtonLink>
+              </>
+            )}
           </Card>
           <Card className="p-4">
-            <h2 className="mb-3 text-xl font-extrabold">Area Progress</h2>
+            <h2 className="mb-3 text-xl font-extrabold">Area Status</h2>
             <SideStat label="Spec areas" value={String(courseArea.specAreas.length)} />
-            <SideStat label="Questions completed" value={String(courseArea.questionsCompleted)} />
-            <SideStat label="Overall progress" value={`${courseArea.progress}%`} />
+            <SideStat label="Available paths" value={String(availablePaths.length)} />
+            <SideStat label="Planned paths" value={String(plannedPaths.length)} />
           </Card>
         </aside>
       </div>
@@ -360,17 +373,28 @@ function SubjectHero({ subject }: { subject: Subject }) {
   );
 }
 
-function CourseAreaHero({ courseArea }: { courseArea: CourseArea }) {
+function CourseAreaHero({ courseArea, availablePathCount, plannedPathCount }: { courseArea: CourseArea; availablePathCount: number; plannedPathCount: number }) {
   return (
     <Card className="overflow-hidden p-4">
+      <p className={`mb-2 text-xs font-extrabold uppercase tracking-wide ${availablePathCount ? "text-forge" : "text-muted"}`}>
+        {availablePathCount ? "Partially available" : "Planned coverage"}
+      </p>
       <h1 className="m-0 text-[30px] font-extrabold leading-none">{courseArea.name}</h1>
       <p className="mt-4 max-w-2xl text-base leading-relaxed text-muted">{courseArea.description}</p>
       <div className="mt-5 grid max-w-2xl grid-cols-3 gap-4 max-md:grid-cols-1">
         <HeroStat label="Spec Areas" value={String(courseArea.specAreas.length)} />
-        <HeroStat label="Questions Completed" value={String(courseArea.questionsCompleted)} />
-        <HeroStat label="Area Progress" value={`${courseArea.progress}%`} />
+        <HeroStat label="Available Paths" value={String(availablePathCount)} />
+        <HeroStat label="Planned Paths" value={String(plannedPathCount)} />
       </div>
-      <ProgressBar value={courseArea.progress} className="mt-5 h-3" />
+      {availablePathCount ? (
+        <div className="mt-5">
+          <div className="mb-2 flex justify-between gap-3 text-sm font-bold text-muted">
+            <span>Progress across available content</span>
+            <span>{courseArea.progress}%</span>
+          </div>
+          <ProgressBar value={courseArea.progress} className="h-3" />
+        </div>
+      ) : null}
     </Card>
   );
 }
@@ -388,7 +412,9 @@ function SpecAreaHubHero({ subject, courseArea, specArea }: { subject: Subject; 
       </div>
       <h1 className="m-0 text-[30px] font-extrabold leading-none">{specArea.name}</h1>
       <p className="mt-3 max-w-3xl text-base leading-relaxed text-muted">
-        Choose a focused skill path. Basic differentiation is available now; the remaining paths are being prepared.
+        {availableCount
+          ? "Choose an available skill path, or preview the planned coverage being prepared."
+          : "These skill paths map the planned course coverage. No questions or learning resources are published here yet."}
       </p>
       <div className="mt-5 grid max-w-3xl grid-cols-3 gap-4 max-md:grid-cols-1">
         <HeroStat label="Available Now" value={String(availableCount)} />
@@ -435,6 +461,7 @@ function SpecAreaHero({ subject, courseArea, specArea }: { subject: Subject; cou
 }
 
 function CourseAreaCard({ area }: { area: CourseArea }) {
+  const availablePaths = area.specAreas.flatMap((specArea) => specArea.skillPaths ?? []).filter((path) => path.isAvailable);
   const content = (
     <Card className={`h-full p-4 transition ${area.available ? "border-forge/40 bg-gradient-to-br from-forge/10 to-white hover:-translate-y-0.5" : "bg-white opacity-70"}`}>
       <div className="mb-3 flex items-start justify-between gap-4">
@@ -448,19 +475,21 @@ function CourseAreaCard({ area }: { area: CourseArea }) {
       </div>
       <div className="mb-3 flex justify-between text-sm font-bold">
         <span>{area.specAreas.length} Spec Areas</span>
-        <span>{area.progress}% Complete</span>
+        <span>{availablePaths.length ? `${availablePaths.length} available` : "Planned"}</span>
       </div>
-      <ProgressBar value={area.progress} />
-      <p className="mt-5 font-extrabold text-forge">{area.available ? "Continue ->" : "Coming soon"}</p>
+      {availablePaths.length ? <ProgressBar value={area.progress} /> : null}
+      <p className="mt-5 font-extrabold text-forge">{availablePaths.length ? "Open area ->" : "View planned coverage ->"}</p>
     </Card>
   );
 
-  return area.available ? <Link href={area.href}>{content}</Link> : content;
+  return <Link href={area.href} aria-label={`Open ${area.name}`}>{content}</Link>;
 }
 
 function SpecAreaCard({ specArea, index }: { specArea: SpecArea; index: number }) {
+  const availablePaths = specArea.skillPaths?.filter((path) => path.isAvailable) ?? [];
+  const plannedPaths = specArea.skillPaths?.filter((path) => !path.isAvailable) ?? [];
   return (
-    <Link href={specArea.href} className="group">
+    <Link href={specArea.href} aria-label={`Open ${specArea.name}`} className="group">
       <Card className="h-full p-4 transition group-hover:-translate-y-0.5 group-hover:border-forge/45">
         <div className="mb-3 flex items-start justify-between gap-4">
           <span className="grid size-11 shrink-0 place-items-center rounded-full bg-forge-soft font-extrabold text-forge">
@@ -470,12 +499,12 @@ function SpecAreaCard({ specArea, index }: { specArea: SpecArea; index: number }
         </div>
         <h3 className="m-0 text-xl font-extrabold">{specArea.name}</h3>
         <p className="mt-3 min-h-[58px] text-muted">{specArea.description}</p>
-        <div className="mb-3 mt-5 flex justify-between text-sm font-bold">
-          <span>{specArea.questions} Questions</span>
-          <span>{specArea.progress}% Complete</span>
+        <div className="mb-3 mt-5 flex justify-between gap-3 text-sm font-bold">
+          <span>{availablePaths.length ? `${availablePaths.length} available path` : "Coming later"}</span>
+          <span>{plannedPaths.length} planned</span>
         </div>
-        <ProgressBar value={specArea.progress} />
-        <p className="mt-5 font-extrabold text-forge">Open spec area -&gt;</p>
+        {availablePaths.length ? <ProgressBar value={specArea.progress} /> : null}
+        <p className="mt-5 font-extrabold text-forge">{availablePaths.length ? "Open spec area ->" : "View planned paths ->"}</p>
       </Card>
     </Link>
   );
@@ -602,8 +631,6 @@ export const SubjectPageTemplate = SubjectCoursePage;
 export const CourseAreaPageTemplate = CourseAreaPage;
 export const TopicHubTemplate = SpecAreaLearningPathPage;
 export const SkillPathPageTemplate = SkillPathLearningPage;
-
-
 
 
 

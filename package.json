@@ -26,7 +26,7 @@
         "test:completion": "tsx --test tests/completion-tracking.test.ts",
         "test:achievements": "tsx --test tests/achievements.test.ts",
         "test:merge": "tsx --test tests/merge.test.ts",
-        "test:taxonomy": "tsx --test tests/taxonomy-runtime.test.ts",
+        "test:taxonomy": "tsx --test tests/taxonomy-runtime.test.ts tests/higher-maths-architecture.test.ts",
         "test:question-bank": "tsx --test tests/question-bank-query.test.ts",
         "test:remote-evidence": "tsx --test tests/remote-evidence-validation.test.ts",
         "test:import": "tsx --test tests/progress-import.test.ts tests/authenticated-import.test.ts",

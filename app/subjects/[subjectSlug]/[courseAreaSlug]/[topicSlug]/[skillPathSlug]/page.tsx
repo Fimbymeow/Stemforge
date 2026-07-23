@@ -8,7 +8,8 @@ export default async function CanonicalSkillPathPage({
   params: Promise<{ subjectSlug: string; courseAreaSlug: string; topicSlug: string; skillPathSlug: string }>;
 }) {
   const { subjectSlug, courseAreaSlug, topicSlug, skillPathSlug } = await params;
-  if (!getSkillPathContextByRoute(subjectSlug, courseAreaSlug, topicSlug, skillPathSlug)) notFound();
+  const context = getSkillPathContextByRoute(subjectSlug, courseAreaSlug, topicSlug, skillPathSlug);
+  if (!context?.skillPath.isAvailable) notFound();
   return (
     <SkillPathLearningPage
       subjectSlug={subjectSlug}

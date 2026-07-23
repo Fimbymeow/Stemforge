@@ -151,7 +151,7 @@ test("archived questions are excluded and supported graph questions are adopted 
 function withArchivedAndGraphQuestion(source: CanonicalContentSource): CanonicalContentSource {
   const cloned = structuredClone(source);
   const subject = cloned.subjects[0];
-  const topic = subject.courseAreas[0].specAreas.find((item) => item.slug === "integration")!;
+  const topic = subject.courseAreas.find((area) => area.slug === "calculus")!.specAreas.find((item) => item.slug === "integration")!;
   const path = topic.skillPaths!.find((item) => item.slug === fixtureIds.path)!;
   path.learningStages![0].questionIds = ["fixture-int-f-001", "fixture-graph-001"];
   const archived = cloned.questions.find((question) => question.id === "fixture-int-f-002")!;

@@ -52,8 +52,8 @@ function latestActivityForPath(pathId: string, evidence: ProgressEvidence) {
 }
 
 function matchesProgressFilter(entry: QuestionBankEntry, filter: QuestionBankProgressFilter) {
-  if (filter === "all") return true;
   if (!entry.context.skillPath.isAvailable || entry.progress.totalQuestions === 0) return false;
+  if (filter === "all") return true;
   if (filter === "not-started") return entry.progress.status === "not_started";
   if (filter === "in-progress") return entry.progress.status === "in_progress";
   if (filter === "review-recommended") return entry.progress.reviewQuestionIds.length > 0;

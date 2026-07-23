@@ -1,6 +1,10 @@
 ﻿import type { Subject } from "@/data/types";
 
 import { ACTIVE_CONTENT_STATUS, INITIAL_CONTENT_REVISION, INITIAL_PATH_VERSION, INITIAL_STAGE_VERSION } from "@/data/content-metadata";
+import { higherMathsAlgebraTrigonometryCourseArea } from "@/data/higher-maths/algebra-trigonometry";
+import { higherMathsLinesCirclesSequencesCourseArea } from "@/data/higher-maths/lines-circles-sequences";
+import { createHigherMathsPlaceholder } from "@/data/higher-maths/placeholder";
+import { higherMathsVectorsCourseArea } from "@/data/higher-maths/vectors";
 
 const basicDifferentiationStageQuestionIds = {
   foundations: ["hm-calc-diff-basic-f-001", "hm-calc-diff-basic-f-002", "hm-calc-diff-basic-f-003"],
@@ -29,10 +33,12 @@ export const higherMaths: Subject = {
   longDescription:
     "Master Higher Maths through structured practice, clean worked solutions and exam-focused progression.",
   href: "/subjects/higher-maths",
-  topicCount: 1,
+  topicCount: 4,
   progress: 0,
   questionsCompleted: 0,
   courseAreas: [
+    higherMathsAlgebraTrigonometryCourseArea,
+    higherMathsVectorsCourseArea,
     {
       slug: "calculus",
       contentStatus: ACTIVE_CONTENT_STATUS,
@@ -419,6 +425,22 @@ export const higherMaths: Subject = {
               completed: 0,
               questions: 0,
             },
+            createHigherMathsPlaceholder({
+              slug: "increasing-and-decreasing-functions",
+              specificationStrandId: higherMathsCalculusStrandIds.investigatingFunctions,
+              displayOrder: 4,
+              name: "Increasing and decreasing functions",
+              description: "Determine the intervals on which a function is strictly increasing or decreasing.",
+              parentHref: "/subjects/higher-maths/calculus/differentiation",
+            }),
+            createHigherMathsPlaceholder({
+              slug: "graph-sketching-using-calculus",
+              specificationStrandId: higherMathsCalculusStrandIds.investigatingFunctions,
+              displayOrder: 5,
+              name: "Graph sketching using calculus",
+              description: "Sketch algebraic functions using axes intersections, stationary points and end behaviour.",
+              parentHref: "/subjects/higher-maths/calculus/differentiation",
+            }),
           ],
         },
         {
@@ -508,8 +530,47 @@ export const higherMaths: Subject = {
             },
           ],
         },
+        {
+          slug: "applying-calculus",
+          contentStatus: ACTIVE_CONTENT_STATUS,
+          name: "Applying Calculus",
+          description: "Use differentiation and integration to solve rate, extrema and reconstruction problems.",
+          href: "/subjects/higher-maths/calculus/applying-calculus",
+          progress: 0,
+          completed: 0,
+          questions: 0,
+          status: "coming-soon",
+          isAvailable: false,
+          skillPaths: [
+            createHigherMathsPlaceholder({
+              slug: "greatest-and-least-values-on-closed-intervals",
+              specificationStrandId: higherMathsCalculusStrandIds.applyingDifferentialCalculus,
+              displayOrder: 2,
+              name: "Greatest and least values on closed intervals",
+              description: "Determine the greatest and least values of a function on a closed interval.",
+              parentHref: "/subjects/higher-maths/calculus/applying-calculus",
+            }),
+            createHigherMathsPlaceholder({
+              slug: "rates-of-change",
+              specificationStrandId: higherMathsCalculusStrandIds.applyingDifferentialCalculus,
+              displayOrder: 3,
+              name: "Rates of change",
+              description: "Solve contextual problems using rates of change.",
+              parentHref: "/subjects/higher-maths/calculus/applying-calculus",
+            }),
+            createHigherMathsPlaceholder({
+              slug: "reconstructing-a-function-from-a-rate-and-initial-conditions",
+              specificationStrandId: higherMathsCalculusStrandIds.applyingIntegralCalculus,
+              displayOrder: 2,
+              name: "Reconstructing a function from a rate and initial conditions",
+              description: "Determine and use a function from a rate of change and initial conditions.",
+              parentHref: "/subjects/higher-maths/calculus/applying-calculus",
+            }),
+          ],
+        },
       ],
     },
+    higherMathsLinesCirclesSequencesCourseArea,
   ],
   learningStages: [
     {

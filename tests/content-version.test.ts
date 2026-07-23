@@ -19,6 +19,10 @@ function reportFor(subject = cloneSubject(), questions = cloneQuestions()) {
   return validateContent({ subjects: [subject], questions });
 }
 
+function basicDifferentiation(subject: Subject) {
+  return subject.courseAreas.flatMap((area) => area.specAreas).flatMap((area) => area.skillPaths ?? []).find((path) => path.slug === "basic-differentiation");
+}
+
 test("canonical content starts at conservative version and revision 1 with active lifecycle", () => {
   for (const question of higherMathsDifferentiationQuestions) {
     assert.equal(question.questionVersion, 1);
@@ -42,7 +46,7 @@ test("active selectors preserve order, exclude archives, and support explicit hi
 
 test("active path view excludes archived stages/questions and recalculates counts", () => {
   const subject = cloneSubject();
-  const path = subject.courseAreas[0].specAreas[0].skillPaths?.[0];
+  const path = basicDifferentiation(subject);
   assert.ok(path?.learningStages);
   const questions = cloneQuestions();
   questions[0].contentStatus = "archived";
@@ -97,7 +101,7 @@ test("active stage cannot reference a question with archived versions only", () 
 
 test("active path cannot contain an archived stage", () => {
   const subject = cloneSubject();
-  const stage = subject.courseAreas[0].specAreas[0].skillPaths?.[0].learningStages?.[0];
+  const stage = basicDifferentiation(subject)?.learningStages?.[0];
   assert.ok(stage);
   stage.contentStatus = "archived";
   assert.ok(reportFor(subject).errors.some((issue) => issue.code === "active-path-includes-archived-stage"));
@@ -105,7 +109,7 @@ test("active path cannot contain an archived stage", () => {
 
 test("invalid stage and path versions are rejected", () => {
   const subject = cloneSubject();
-  const path = subject.courseAreas[0].specAreas[0].skillPaths?.[0];
+  const path = basicDifferentiation(subject);
   const stage = path?.learningStages?.[0];
   assert.ok(path && stage);
   path.pathVersion = 0;
@@ -117,7 +121,7 @@ test("invalid stage and path versions are rejected", () => {
 
 test("resource revisions and lifecycle are validated", () => {
   const subject = cloneSubject();
-  const note = subject.courseAreas[0].specAreas[0].skillPaths?.[0].notes?.[0];
+  const note = basicDifferentiation(subject)?.notes?.[0];
   assert.ok(note);
   note.contentRevision = -1;
   (note as unknown as { contentStatus: unknown }).contentStatus = "retired";

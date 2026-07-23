@@ -78,7 +78,7 @@ export function SubjectRoadmapNavigator({ subject }: { subject: Subject }) {
         ) : level === "spec" ? (
           <Card className="min-w-0 overflow-hidden p-5">
             <IconNodePath
-              items={specAreas.map((item) => ({ id: item.slug, label: item.name, available: (item.skillPaths?.length ?? 0) > 0 }))}
+              items={specAreas.map((item) => ({ id: item.slug, label: item.name, available: item.skillPaths?.some((path) => path.isAvailable) ?? false }))}
               selectedIndex={specIndex}
               onSelect={selectSpec}
             />

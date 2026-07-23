@@ -9,7 +9,7 @@ function stateFromStored(stored: unknown, questionId: string) {
   return getQuestionProgress(questionId, (stored as ProgressPayload).data);
 }
 
-const skillPath = higherMaths.courseAreas[0].specAreas[0].skillPaths?.[0];
+const skillPath = higherMaths.courseAreas.flatMap((area) => area.specAreas).flatMap((area) => area.skillPaths ?? []).find((path) => path.slug === "basic-differentiation");
 if (!skillPath) throw new Error("Basic differentiation test path is missing");
 
 test("empty and whitespace-only input cannot create progress or reveal a solution", async ({ page }) => {
