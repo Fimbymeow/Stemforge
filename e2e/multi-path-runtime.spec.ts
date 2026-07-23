@@ -18,16 +18,15 @@ test("question context and navigation derive from canonical ownership", async ({
 
 test("question bank leads with available questions and keeps future taxonomy secondary", async ({ page }) => {
   await page.goto("/subjects/higher-maths/question-bank");
-  await expect(page.getByRole("heading", { name: "8 questions" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "8 matching questions" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Open Differentiate a power" })).toBeVisible();
-  await page.getByText("Filter and sort", { exact: true }).click();
-  const search = page.getByRole("textbox", { name: "Search available questions" });
+  const search = page.getByRole("textbox", { name: "Search questions" });
   await search.fill("evaluate");
   await expect(page.getByRole("link", { name: "Open Evaluate a derivative" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Open Differentiate a power" })).toHaveCount(0);
   await search.fill("no such curriculum item");
-  await expect(page.getByText("No questions match these filters")).toBeVisible();
-  await expect(page.getByText("Future Higher Maths paths (50)", { exact: true })).toBeVisible();
+  await expect(page.getByText("No available questions match these filters.")).toBeVisible();
+  await expect(page.getByText("Future Higher Maths coverage", { exact: true })).toBeVisible();
 });
 
 test("a planned path does not resolve to an empty learning workspace", async ({ page }) => {

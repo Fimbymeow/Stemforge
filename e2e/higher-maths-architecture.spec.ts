@@ -42,14 +42,14 @@ test("planned paths have no learning workspace while existing deep links remain 
 
 test("Question Bank keeps active questions usable and groups future coverage broadly", async ({ page }) => {
   await page.goto("/subjects/higher-maths/question-bank");
-  await expect(page.getByRole("heading", { name: "8 questions" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "8 matching questions" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Open Differentiate a power" })).toBeVisible();
-  await page.getByText("Future Higher Maths paths (50)", { exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Algebra and Trigonometry" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Vectors" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Calculus" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Lines, Circles and Sequences" })).toBeVisible();
-  await expect(page.getByText("Polynomials (5)", { exact: true })).toBeVisible();
+  await page.getByText("Future Higher Maths coverage", { exact: true }).click();
+  await expect(page.getByText("Algebra and Trigonometry", { exact: true })).toBeVisible();
+  await expect(page.getByText("Vectors", { exact: true })).toBeVisible();
+  await expect(page.getByRole("strong").filter({ hasText: /^Calculus$/ })).toBeVisible();
+  await expect(page.getByText("Lines, Circles and Sequences", { exact: true })).toBeVisible();
+  await expect(page.getByText(/Polynomials/)).toBeVisible();
   await expect(page.getByText("Factorising cubics and quartics", { exact: true })).toHaveCount(0);
 });
 

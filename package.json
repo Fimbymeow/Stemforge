@@ -27,7 +27,7 @@
         "test:achievements": "tsx --test tests/achievements.test.ts",
         "test:merge": "tsx --test tests/merge.test.ts",
         "test:taxonomy": "tsx --test tests/taxonomy-runtime.test.ts tests/higher-maths-architecture.test.ts",
-        "test:question-bank": "tsx --test tests/question-bank-query.test.ts",
+    "test:question-bank": "tsx --test tests/question-bank-query.test.ts tests/scalable-question-bank.test.ts",
         "test:remote-evidence": "tsx --test tests/remote-evidence-validation.test.ts",
         "test:import": "tsx --test tests/progress-import.test.ts tests/authenticated-import.test.ts",
         "test:sync": "tsx --test tests/progress-sync.test.ts tests/authenticated-sync.test.ts",

@@ -64,9 +64,9 @@ test("mobile final completion is readable, stacked and free of horizontal overfl
 
 test("mobile taxonomy and question context remain readable without page overflow", async ({ page }) => {
   await page.goto("/subjects/higher-maths/question-bank");
-  await expect(page.getByRole("heading", { name: "8 questions" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "8 matching questions" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Open Differentiate a power" })).toBeVisible();
-  await expect(page.getByText("Future Higher Maths paths (50)", { exact: true })).toBeVisible();
+  await expect(page.getByText("Future Higher Maths coverage", { exact: true })).toBeVisible();
   await expect(page.getByText("Chain rule", { exact: true })).not.toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
 

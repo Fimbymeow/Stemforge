@@ -24,7 +24,7 @@ test("beta notice stays in flow beside desktop question feedback and mobile dash
 test("Question Bank filters keep a direct question action visible at desktop size", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/subjects/higher-maths/question-bank");
-  await page.getByText("Filter and sort", { exact: true }).click();
+  await page.locator("summary").filter({ hasText: "Filters" }).click();
   const firstQuestion = page.getByRole("link", { name: "Open Differentiate a power" });
   await expect(firstQuestion).toBeInViewport();
   await firstQuestion.focus();

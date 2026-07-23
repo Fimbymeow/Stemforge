@@ -21,6 +21,10 @@ export type QuestionBankQuery = {
   search?: string;
   progressFilter?: QuestionBankProgressFilter;
   stageFilter?: QuestionBankStageFilter;
+  courseAreaId?: string;
+  specAreaId?: string;
+  skillPathId?: string;
+  stageId?: string;
   sort?: QuestionBankSort;
 };
 
@@ -29,6 +33,13 @@ export type QuestionBankQuestionEntry = {
   context: ResolvedQuestionContext;
   progress: QuestionProgressState;
   lastPractisedAt: string | null;
+};
+
+export type QuestionBankFilterOptions = {
+  courseAreas: Array<{ id: string; name: string }>;
+  specAreas: Array<{ id: string; name: string; courseAreaId: string }>;
+  skillPaths: Array<{ id: string; name: string; specAreaId: string; courseAreaId: string }>;
+  stages: Array<{ id: string; name: string; skillPathId: string }>;
 };
 
 type Resolver = ReturnType<typeof createContentResolver>;
@@ -142,6 +153,10 @@ export function queryAvailableQuestionBankQuestions(
   const entries = resolver.getQuestions().flatMap((question) => {
     const context = resolver.getQuestionContext(question.id);
     if (!context?.skillPath.isAvailable) return [];
+    if (query.courseAreaId && context.courseArea.slug !== query.courseAreaId) return [];
+    if (query.specAreaId && context.routeTopic.slug !== query.specAreaId) return [];
+    if (query.skillPathId && context.skillPath.slug !== query.skillPathId) return [];
+    if (query.stageId && context.stage.id !== query.stageId) return [];
     if (stageFilter !== "all" && context.stage.name !== stageFilter) return [];
     const searchable = [
       question.id,
@@ -178,6 +193,25 @@ export function queryAvailableQuestionBankQuestions(
     }
     return defaultQuestionCompare(left, right);
   });
+}
+
+export function deriveQuestionBankFilterOptions(entries: readonly QuestionBankQuestionEntry[]): QuestionBankFilterOptions {
+  const courseAreas = new Map<string, string>();
+  const specAreas = new Map<string, { id: string; name: string; courseAreaId: string }>();
+  const skillPaths = new Map<string, { id: string; name: string; specAreaId: string; courseAreaId: string }>();
+  const stages = new Map<string, { id: string; name: string; skillPathId: string }>();
+  for (const { context } of entries) {
+    courseAreas.set(context.courseArea.slug, context.courseArea.name);
+    specAreas.set(context.routeTopic.slug, { id: context.routeTopic.slug, name: context.routeTopic.name, courseAreaId: context.courseArea.slug });
+    skillPaths.set(context.skillPath.slug, { id: context.skillPath.slug, name: context.skillPath.name, specAreaId: context.routeTopic.slug, courseAreaId: context.courseArea.slug });
+    stages.set(context.stage.id, { id: context.stage.id, name: context.stage.name, skillPathId: context.skillPath.slug });
+  }
+  return {
+    courseAreas: [...courseAreas].map(([id, name]) => ({ id, name })),
+    specAreas: [...specAreas.values()],
+    skillPaths: [...skillPaths.values()],
+    stages: [...stages.values()],
+  };
 }
 
 function matchesQuestionProgress(progress: QuestionProgressState, filter: QuestionBankProgressFilter) {

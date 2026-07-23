@@ -28,7 +28,7 @@ test("new learner receives the same one-click learning entry across major surfac
   await expect(page.getByRole("link", { name: "Explore Applications" })).toHaveAttribute("href", `/question/${QUESTION_IDS[3]}`);
 
   await page.goto(BANK_ROUTE);
-  await expectPrimaryAction(page, "Start learning", `/question/${QUESTION_IDS[0]}`);
+  await expect(page.getByText("Best next step")).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Open Differentiate a power" })).toBeVisible();
   expect(seriousBrowserErrors).toEqual([]);
 });
@@ -38,7 +38,7 @@ test("an incomplete question is resumed consistently instead of opening generic 
     currentAttempt(QUESTION_IDS[1], 1, { isCorrect: false, answer: "wrong" }),
   ]));
 
-  for (const route of ["/dashboard", HUB_ROUTE, PATH_ROUTE, BANK_ROUTE]) {
+  for (const route of ["/dashboard", HUB_ROUTE, PATH_ROUTE]) {
     await page.goto(route);
     if (route === "/dashboard") await expectHigherMathsCourseAccess(page);
     await expectPrimaryAction(page, "Resume question", `/question/${QUESTION_IDS[1]}`);
@@ -59,7 +59,7 @@ test("a valid unfinished practice session becomes the shared primary action", as
   const sessionUrl = new URL(page.url()).pathname;
   expect(sessionUrl).toMatch(/^\/practice\/session\//);
 
-  for (const route of ["/dashboard", HUB_ROUTE, PATH_ROUTE, BANK_ROUTE]) {
+  for (const route of ["/dashboard", HUB_ROUTE, PATH_ROUTE]) {
     await page.goto(route);
     if (route === "/dashboard") await expectHigherMathsCourseAccess(page);
     await expectPrimaryAction(page, "Resume practice", sessionUrl);
@@ -92,7 +92,7 @@ test("stage completion advances to the next recommended stage without hard-locki
 test("completed guided content recommends practice and never locked inventory", async ({ page }) => {
   await seedStoredProgress(page, v3Payload(QUESTION_IDS.map((id, index) => currentAttempt(id, index + 1))));
 
-  for (const route of ["/dashboard", HUB_ROUTE, PATH_ROUTE, BANK_ROUTE]) {
+  for (const route of ["/dashboard", HUB_ROUTE, PATH_ROUTE]) {
     await page.goto(route);
     if (route === "/dashboard") await expectHigherMathsCourseAccess(page);
     await expectPrimaryAction(page, "Practise again", "/practice");

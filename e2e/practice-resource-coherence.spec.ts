@@ -45,7 +45,7 @@ test("an active session is resumed instead of replaced", async ({ page }) => {
 
 test("Question Bank exposes eight direct questions while future paths stay collapsed", async ({ page, seriousBrowserErrors }) => {
   await page.goto("/subjects/higher-maths/question-bank");
-  await expect(page.getByRole("heading", { name: "8 questions" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "8 matching questions" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Open Differentiate a power" })).toBeVisible();
   await expect(page.getByText("Chain rule", { exact: true })).not.toBeVisible();
   await page.getByRole("link", { name: "Open Differentiate a power" }).click();

@@ -3,7 +3,7 @@ import type { ResolvedQuestionContext, ResolvedSkillPath } from "@/lib/content-r
 
 export const PRACTICE_SESSION_SCHEMA_VERSION = 1 as const;
 export const PRACTICE_SESSIONS_STORAGE_KEY = "stemforge.practiceSessions.v1";
-export const MAX_PRACTICE_QUESTIONS = 30;
+export const MAX_PRACTICE_QUESTIONS = 500;
 export const MAX_PRACTICE_HISTORY = 20;
 export const MAX_TIME_LIMIT_SECONDS = 3 * 60 * 60;
 

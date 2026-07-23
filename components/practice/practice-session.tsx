@@ -99,7 +99,7 @@ export function PracticeSession({ sessionId }: { sessionId: string }) {
         <Card className="border-forge/20 bg-forge-soft p-4" data-testid="practice-session-panel">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="font-mono text-xs font-extrabold uppercase text-forge">{practiceModeLabel(session.mode)}</p>
+              <p className="font-mono text-xs font-extrabold uppercase text-forge">{practiceModeLabel(session)}</p>
               <h2 className="m-0 mt-1 text-xl font-extrabold">Question {session.currentQuestionIndex + 1} of {session.questionReferences.length}</h2>
               <p className="mt-1 text-sm text-muted">{session.selectionMetadata.shortageReason ?? "Using available questions."}</p>
             </div>
@@ -108,6 +108,7 @@ export function PracticeSession({ sessionId }: { sessionId: string }) {
               <button type="button" onClick={() => updateIndex(session.currentQuestionIndex - 1)} disabled={session.currentQuestionIndex === 0} className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-line bg-white px-3 font-bold disabled:opacity-40"><ArrowLeft className="size-4" />Previous</button>
               <button type="button" onClick={() => updateIndex(session.currentQuestionIndex + 1)} disabled={session.currentQuestionIndex >= session.questionReferences.length - 1} className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-line bg-white px-3 font-bold disabled:opacity-40">Next<ArrowRight className="size-4" /></button>
               <button type="button" onClick={finish} className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-forge px-3 font-bold text-white"><CheckCircle2 className="size-4" />Finish session</button>
+              {isQuestionBankSession(session) ? <Link href="/subjects/higher-maths/question-bank" className="inline-flex min-h-10 items-center rounded-lg border border-line bg-white px-3 font-bold">Question Bank</Link> : null}
             </div>
           </div>
         </Card>
@@ -229,6 +230,7 @@ function PracticeSummaryCard({ session, summary }: { session: PracticeSessionMod
             <Link href={nextAction.href} aria-describedby="practice-summary-next-reason" className="inline-flex min-h-11 items-center rounded-lg bg-forge px-4 font-extrabold text-white">{nextAction.label}</Link>
           ) : null}
           <Link href="/dashboard" className="inline-flex min-h-10 items-center rounded-lg border border-line bg-white px-4 font-extrabold">Dashboard</Link>
+          {isQuestionBankSession(session) ? <Link href="/subjects/higher-maths/question-bank" className="inline-flex min-h-10 items-center rounded-lg border border-line bg-white px-4 font-extrabold">Question Bank</Link> : null}
         </div>
         </Card>
       </div>
@@ -251,9 +253,14 @@ function formatTime(totalSeconds: number) {
   return `${minutes}:${String(seconds).padStart(2, "0")}`;
 }
 
-function practiceModeLabel(mode: PracticeSessionModel["mode"]) {
-  if (mode === "retry_incorrect") return "Exact-session retry";
-  if (mode === "needs_work") return "Needs Review";
-  if (mode === "mixed") return "Mixed practice";
+function practiceModeLabel(session: PracticeSessionModel) {
+  if (isQuestionBankSession(session)) return "Custom practice";
+  if (session.mode === "retry_incorrect") return "Exact-session retry";
+  if (session.mode === "needs_work") return "Needs Review";
+  if (session.mode === "mixed") return "Mixed practice";
   return "Path practice";
+}
+
+function isQuestionBankSession(session: PracticeSessionModel) {
+  return session.selectionMetadata.seed === "question-bank:custom";
 }
