@@ -79,5 +79,5 @@ function formatTimestamp(value: string | null) {
   return value ? new Date(value).toLocaleString() : "Not yet";
 }
 
-const primaryButton = "min-h-11 w-full rounded-md bg-forge px-5 text-sm font-extrabold text-white disabled:opacity-60";
-const secondaryButton = "min-h-11 w-full rounded-md border border-ink bg-white px-5 text-sm font-extrabold text-ink";
+const primaryButton = "min-h-11 w-full rounded-lg bg-forge px-5 text-sm font-extrabold text-white disabled:opacity-60";
+const secondaryButton = "min-h-11 w-full rounded-lg border border-ink bg-white px-5 text-sm font-extrabold text-ink";

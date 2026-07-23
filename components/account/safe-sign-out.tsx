@@ -63,7 +63,7 @@ export function SafeSignOut({ action }: { action: (formData: FormData) => void |
   );
 }
 
-const primaryButton = "min-h-11 w-full rounded-md bg-forge px-4 text-sm font-extrabold text-white disabled:opacity-60";
-const secondaryButton = "min-h-11 w-full rounded-md border border-ink bg-white px-4 text-sm font-extrabold text-ink disabled:opacity-60";
-const dangerButton = "min-h-11 w-full rounded-md border border-danger/40 bg-white px-4 text-sm font-extrabold text-danger disabled:opacity-60";
-const dangerSolidButton = "min-h-11 w-full rounded-md bg-danger px-4 text-sm font-extrabold text-white disabled:opacity-60";
+const primaryButton = "min-h-11 w-full rounded-lg bg-forge px-4 text-sm font-extrabold text-white disabled:opacity-60";
+const secondaryButton = "min-h-11 w-full rounded-lg border border-ink bg-white px-4 text-sm font-extrabold text-ink disabled:opacity-60";
+const dangerButton = "min-h-11 w-full rounded-lg border border-danger/40 bg-white px-4 text-sm font-extrabold text-danger disabled:opacity-60";
+const dangerSolidButton = "min-h-11 w-full rounded-lg bg-danger px-4 text-sm font-extrabold text-white disabled:opacity-60";

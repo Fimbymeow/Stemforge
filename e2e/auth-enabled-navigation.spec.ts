@@ -33,6 +33,7 @@ test("sign-in and sign-up preserve a safe learning return with accessible mobile
   await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
   await expect(page.getByLabel("Email address")).toHaveAttribute("autocomplete", "email");
   await expect(page.getByLabel("Password")).toHaveAttribute("autocomplete", "current-password");
+  await expectAccountActionStyle(page.getByRole("button", { name: "Sign in" }));
   await expect(page.locator('input[name="next"]')).toHaveValue(destination);
   await expect(page.getByRole("link", { name: "Continue where you left off" })).toHaveAttribute("href", destination);
   await expect(page.getByRole("link", { name: "Create an account" })).toHaveAttribute("href", `/account/sign-up?next=${encodeURIComponent(destination)}`);
@@ -41,6 +42,7 @@ test("sign-in and sign-up preserve a safe learning return with accessible mobile
   await page.getByRole("link", { name: "Create an account" }).click();
   await expect(page.getByRole("heading", { name: "Create an account" })).toBeVisible();
   await expect(page.getByText("not stored in STEM Forge learning data")).toBeVisible();
+  await expectAccountActionStyle(page.getByRole("button", { name: "Create account" }));
   await expect(page.locator('input[name="next"]')).toHaveValue(destination);
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
 
@@ -48,6 +50,9 @@ test("sign-in and sign-up preserve a safe learning return with accessible mobile
   const error = page.locator("#account-result");
   await expect(error).toHaveText("The email address or password was not accepted.");
   await expect(error).toBeFocused();
+
+  await page.goto("/account/forgot-password");
+  await expectAccountActionStyle(page.getByRole("button", { name: "Send recovery link" }));
   expect(seriousBrowserErrors).toEqual([]);
 });
 
@@ -88,3 +93,9 @@ test("signed-in context never receives the guest protection prompt", async ({ pa
   await expect(page.getByTestId("guest-progress-protection")).toHaveCount(0);
   expect(seriousBrowserErrors).toEqual([]);
 });
+
+async function expectAccountActionStyle(locator: import("@playwright/test").Locator) {
+  await expect(locator).toBeVisible();
+  expect(await locator.evaluate((element) => getComputedStyle(element).textTransform)).toBe("none");
+  expect(await locator.evaluate((element) => getComputedStyle(element).borderRadius)).toBe("8px");
+}

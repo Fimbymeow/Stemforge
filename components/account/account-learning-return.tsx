@@ -19,7 +19,7 @@ export function AccountLearningReturn({ requestedDestination }: { requestedDesti
     <section className="mt-5 rounded-xl border border-forge/25 bg-forge-soft p-4" aria-labelledby="account-learning-return-title">
       <h2 id="account-learning-return-title" className="m-0 text-lg font-extrabold">Ready to keep learning?</h2>
       <p id="account-learning-return-reason" className="mt-2 text-sm leading-relaxed text-muted">{reason}</p>
-      <Link href={href} aria-describedby="account-learning-return-reason" className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-md bg-forge px-5 text-sm font-extrabold text-white">
+      <Link href={href} aria-describedby="account-learning-return-reason" className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-forge px-5 text-sm font-extrabold text-white">
         {label}
       </Link>
     </section>

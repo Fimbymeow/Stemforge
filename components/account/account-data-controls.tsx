@@ -92,6 +92,6 @@ function confirmationCopy(action: Exclude<Confirmation, null>) {
   return "This clears all STEM Forge progress and account information from this browser, including anything already added to or kept in sync with your account. Your account's own progress is not deleted.";
 }
 
-const secondaryButton = "min-h-11 w-full rounded-md border border-ink bg-white px-4 text-sm font-extrabold text-ink";
-const dangerButton = "min-h-11 w-full rounded-md border border-danger/40 bg-white px-4 text-sm font-extrabold text-danger";
-const dangerSolidButton = "min-h-11 w-full rounded-md bg-danger px-4 text-sm font-extrabold text-white disabled:opacity-60";
+const secondaryButton = "min-h-11 w-full rounded-lg border border-ink bg-white px-4 text-sm font-extrabold text-ink";
+const dangerButton = "min-h-11 w-full rounded-lg border border-danger/40 bg-white px-4 text-sm font-extrabold text-danger";
+const dangerSolidButton = "min-h-11 w-full rounded-lg bg-danger px-4 text-sm font-extrabold text-white disabled:opacity-60";

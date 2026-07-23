@@ -50,7 +50,7 @@ export function GuestProgressProtection({
         Your progress currently lives on this browser. An optional account can protect it after you review and confirm what to add.
       </p>
       <div className="mt-4 flex flex-wrap items-center gap-4">
-        <Link href={accountHrefFor("/dashboard")} className="inline-flex min-h-11 items-center justify-center rounded-md border border-forge bg-white px-4 text-sm font-extrabold text-forge">
+        <Link href={accountHrefFor("/dashboard")} className="inline-flex min-h-11 items-center justify-center rounded-lg border border-forge bg-white px-4 text-sm font-extrabold text-forge">
           Review account options
         </Link>
         <span className="text-xs font-semibold text-muted">You can keep learning as a guest.</span>

@@ -121,5 +121,5 @@ export function AccountLearningData() {
 }
 
 const inputClass = "mt-2 min-h-11 w-full rounded-lg border border-line bg-white px-3 text-base";
-const secondaryButton = "mt-3 min-h-11 w-full rounded-md border border-ink bg-white px-4 text-sm font-extrabold";
-const dangerButton = "mt-3 min-h-11 w-full rounded-md bg-danger px-4 text-sm font-extrabold text-white disabled:opacity-50";
+const secondaryButton = "mt-3 min-h-11 w-full rounded-lg border border-ink bg-white px-4 text-sm font-extrabold";
+const dangerButton = "mt-3 min-h-11 w-full rounded-lg bg-danger px-4 text-sm font-extrabold text-white disabled:opacity-50";

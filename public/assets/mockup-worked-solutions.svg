@@ -10,7 +10,7 @@
   <text x="50" y="196" fill="#111111" font-family="Inter, Arial, sans-serif" font-size="17">Calculate its acceleration.</text>
   <text x="306" y="242" fill="#111111" font-family="Inter, Arial, sans-serif" font-size="14">[3 marks]</text>
   <text x="414" y="58" fill="#111111" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="800">Solution</text>
-  <path d="M414 74H490" stroke="#FF7514" stroke-width="4"/>
+  <path d="M414 74H490" stroke="#234B6E" stroke-width="4"/>
   <text x="566" y="58" fill="#66615B" font-family="Inter, Arial, sans-serif" font-size="15">Examiner Notes</text>
   <text x="414" y="112" fill="#111111" font-family="Inter, Arial, sans-serif" font-size="15">Use the formula:</text>
   <text x="445" y="158" fill="#111111" font-family="Georgia, serif" font-size="25" font-style="italic">a = (v - u) / t</text>

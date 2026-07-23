@@ -11,9 +11,9 @@
   <text x="48" y="165" fill="#111111" font-family="Inter, Arial, sans-serif" font-size="15">1.1 Scalars and Vectors</text>
   <circle cx="348" cy="159" r="12" fill="#DDF3E5"/>
   <path d="M342 159L347 164L356 153" stroke="#229954" stroke-width="2" stroke-linecap="round"/>
-  <rect x="24" y="188" width="368" height="58" fill="#FFF3E9"/>
-  <text x="48" y="223" fill="#FF7514" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="800">1.2 Kinematics</text>
-  <circle cx="348" cy="217" r="12" stroke="#FF7514" stroke-width="3"/>
+  <rect x="24" y="188" width="368" height="58" fill="#E4EBF1"/>
+  <text x="48" y="223" fill="#234B6E" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="800">1.2 Kinematics</text>
+  <circle cx="348" cy="217" r="12" stroke="#234B6E" stroke-width="3"/>
   <rect x="24" y="246" width="368" height="58" fill="#FFFFFF"/>
   <text x="48" y="281" fill="#111111" font-family="Inter, Arial, sans-serif" font-size="15">1.3 Forces and Newton's Laws</text>
   <circle cx="348" cy="275" r="12" stroke="#D6D0C7" stroke-width="2"/>
@@ -27,6 +27,6 @@
   <text x="424" y="218" fill="#111111" font-family="Inter, Arial, sans-serif" font-size="15">+ Notes</text>
   <text x="424" y="258" fill="#111111" font-family="Inter, Arial, sans-serif" font-size="15">+ Worked examples</text>
   <text x="424" y="298" fill="#111111" font-family="Inter, Arial, sans-serif" font-size="15">+ Exam questions</text>
-  <rect x="424" y="326" width="124" height="42" rx="7" fill="#FF7514"/>
+  <rect x="424" y="326" width="124" height="42" rx="7" fill="#234B6E"/>
   <text x="454" y="352" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="800">Start Topic</text>
 </svg>

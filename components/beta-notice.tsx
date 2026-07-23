@@ -18,14 +18,14 @@ export function BetaNotice() {
 
   if (!visible) return null;
   return (
-    <aside className="pointer-events-none w-full max-w-2xl rounded-2xl border border-forge/20 bg-white p-4 shadow-xl md:max-w-md" aria-label="Private beta notice">
-      <div className="flex items-start gap-3">
-        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-forge-soft text-forge">
+    <aside className="pointer-events-none w-full max-w-2xl rounded-2xl border border-forge/20 bg-white p-3 shadow-xl sm:p-4 md:max-w-md" aria-label="Private beta notice">
+      <div className="flex items-start gap-2 sm:gap-3">
+        <span className="grid size-8 shrink-0 place-items-center rounded-full bg-forge-soft text-forge sm:size-9">
           <FlaskConical className="size-4" />
         </span>
         <div className="min-w-0">
           <p className="font-extrabold">Private beta</p>
-          <p className="mt-1 text-sm leading-relaxed text-muted">STEM Forge is in private beta. If something looks wrong, send a quick report and we&apos;ll look into it.</p>
+          <p className="mt-1 text-[13px] leading-5 text-muted sm:text-sm sm:leading-relaxed">STEM Forge is in private beta. If something looks wrong, send a quick report and we&apos;ll look into it.</p>
         </div>
         <button
           type="button"

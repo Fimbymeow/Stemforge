@@ -192,5 +192,5 @@ function Panel({ title, body, detail, action }: { title: string; body?: string; 
   );
 }
 
-const primaryButton = "inline-flex min-h-11 w-full items-center justify-center rounded-md bg-forge px-5 text-sm font-extrabold uppercase text-white disabled:opacity-60";
-const secondaryButton = "min-h-11 w-full rounded-md border border-ink bg-white px-5 text-sm font-extrabold uppercase text-ink";
+const primaryButton = "inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-forge px-5 text-sm font-extrabold text-white disabled:opacity-60";
+const secondaryButton = "min-h-11 w-full rounded-lg border border-ink bg-white px-5 text-sm font-extrabold text-ink";

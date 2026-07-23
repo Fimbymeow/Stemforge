@@ -4,6 +4,7 @@ import { getActiveSkillPathHref } from "@/lib/learning-paths";
 import Link from "next/link";
 import { useEffect } from "react";
 import { Card } from "@/components/ui";
+import { FocusedProductShell } from "@/components/layout/focused-product-shell";
 
 export default function Error({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   useEffect(() => {
@@ -11,11 +12,11 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
   }, [error]);
 
   return (
-    <main id="main-content" tabIndex={-1} className="min-h-screen bg-paper px-5 py-16 text-ink">
-      <section className="mx-auto grid max-w-[760px] gap-6">
+    <FocusedProductShell maxWidth="max-w-[760px]">
+      <section className="grid gap-4">
         <p className="m-0 text-sm font-extrabold uppercase text-forge">Something went wrong</p>
         <Card className="p-8 max-md:p-5">
-          <h1 className="m-0 text-[clamp(34px,6vw,60px)] font-extrabold leading-none">STEM Forge hit a temporary problem.</h1>
+          <h1 className="m-0 text-[clamp(32px,5vw,48px)] font-extrabold leading-tight">STEM Forge hit a temporary problem.</h1>
           <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted">
             Try again, or return to the current Basic differentiation path. No technical details are shown here.
           </p>
@@ -29,7 +30,7 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
           </div>
         </Card>
       </section>
-    </main>
+    </FocusedProductShell>
   );
 }
 

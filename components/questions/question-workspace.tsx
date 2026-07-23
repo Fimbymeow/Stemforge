@@ -349,7 +349,7 @@ export function QuestionWorkspace({
             {questionProgress.reviewRecommended && !submitted ? (
               <p className="mt-2 text-sm text-muted" data-testid="review-reason">{describeReviewReason(questionProgress)}</p>
             ) : null}
-            <div className="mt-3 rounded-xl border border-line bg-white p-5 shadow-[0_14px_38px_rgba(17,17,17,0.035)] max-sm:p-4" data-testid="question-interaction">
+            <div className="mt-3 rounded-xl border border-line bg-white p-5 shadow-card max-sm:p-4" data-testid="question-interaction">
               <div className="text-lg leading-relaxed"><MathContent>{question.questionText}</MathContent></div>
               <div className="mt-5 border-t border-line pt-4">
                 <label id="answer-label" htmlFor="question-answer" className="mb-2 block text-sm font-extrabold">Your answer</label>

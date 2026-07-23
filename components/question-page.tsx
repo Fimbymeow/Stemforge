@@ -107,7 +107,7 @@ function QuestionCard({
     <Card className="p-6">
       {demo && question && position ? (
         <>
-          <div className="rounded-2xl border border-line bg-white px-8 py-10 shadow-[0_18px_54px_rgba(17,17,17,0.04)] max-md:px-5">
+          <div className="rounded-2xl border border-line bg-white px-8 py-10 shadow-card max-md:px-5">
             <p className="mb-6 font-mono text-[13px] font-extrabold uppercase text-forge">Question {position.current}</p>
             <p className="m-0 max-w-3xl text-[clamp(28px,3vw,40px)] font-extrabold leading-[1.18]">
               {question.question}
@@ -354,4 +354,3 @@ function EmptyQuestionState() {
     </div>
   );
 }
-

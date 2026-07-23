@@ -40,7 +40,7 @@
         "test:review-reason": "tsx --test tests/review-reason.test.ts",
         "test:graphs": "tsx --test tests/maths-expression.test.ts tests/maths-derivative.test.ts tests/graph-sampling.test.ts tests/graph-transformations.test.ts tests/function-analysis.test.ts tests/graph-answer-validation.test.ts",
         "test:practice": "tsx --test tests/practice-selection.test.ts tests/practice-storage-summary.test.ts tests/study-context.test.ts",
-        "test:hardening": "tsx --test tests/platform-hardening.test.ts",
+        "test:hardening": "tsx --test tests/platform-hardening.test.ts tests/product-polish.test.ts",
         "test:production-release": "tsx --test tests/production-release.test.ts",
         "test:auth": "tsx --test tests/auth-config.test.ts tests/auth-results.test.ts tests/account-confidence.test.ts tests/owner-resolution.test.ts tests/reauthentication.test.ts",
         "test:database": "node --conditions=react-server --import tsx --test tests/remote-evidence-postgres.test.ts",

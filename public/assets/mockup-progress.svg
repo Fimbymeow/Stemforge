@@ -6,7 +6,7 @@
   <rect x="610" y="42" width="96" height="32" rx="6" fill="#FFFFFF" stroke="#E8E1D8"/>
   <text x="632" y="63" fill="#111111" font-family="Inter, Arial, sans-serif" font-size="12">All Subjects</text>
   <circle cx="138" cy="162" r="58" stroke="#E6E1D9" stroke-width="14"/>
-  <path d="M138 104A58 58 0 1 1 86 188" stroke="#FF7514" stroke-width="14" stroke-linecap="round"/>
+  <path d="M138 104A58 58 0 1 1 86 188" stroke="#234B6E" stroke-width="14" stroke-linecap="round"/>
   <path d="M138 104A58 58 0 0 1 193 143" stroke="#229954" stroke-width="14" stroke-linecap="round"/>
   <text x="110" y="166" fill="#111111" font-family="Inter, Arial, sans-serif" font-size="30" font-weight="900">72%</text>
   <text x="119" y="190" fill="#66615B" font-family="Inter, Arial, sans-serif" font-size="12">Overall</text>
@@ -17,7 +17,7 @@
   <text x="246" y="105" fill="#66615B" font-family="Inter, Arial, sans-serif" font-size="11">100%</text>
   <text x="252" y="195" fill="#66615B" font-family="Inter, Arial, sans-serif" font-size="11">50%</text>
   <text x="264" y="240" fill="#66615B" font-family="Inter, Arial, sans-serif" font-size="11">0%</text>
-  <path d="M292 230C322 218 333 198 365 212C397 225 407 176 439 190C472 205 480 164 512 177C545 190 552 150 585 166C618 182 626 126 655 136C675 143 682 128 694 118" stroke="#FF7514" stroke-width="4" stroke-linecap="round"/>
+  <path d="M292 230C322 218 333 198 365 212C397 225 407 176 439 190C472 205 480 164 512 177C545 190 552 150 585 166C618 182 626 126 655 136C675 143 682 128 694 118" stroke="#234B6E" stroke-width="4" stroke-linecap="round"/>
   <text x="292" y="268" fill="#66615B" font-family="Inter, Arial, sans-serif" font-size="11">Jan</text>
   <text x="364" y="268" fill="#66615B" font-family="Inter, Arial, sans-serif" font-size="11">Feb</text>
   <text x="436" y="268" fill="#66615B" font-family="Inter, Arial, sans-serif" font-size="11">Mar</text>
@@ -27,14 +27,14 @@
   <text x="48" y="300" fill="#111111" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="800">By Topic</text>
   <text x="48" y="332" fill="#111111" font-family="Inter, Arial, sans-serif" font-size="13">Mechanics</text>
   <path d="M178 327H430" stroke="#EFECE6" stroke-width="5" stroke-linecap="round"/>
-  <path d="M178 327H334" stroke="#FF7514" stroke-width="5" stroke-linecap="round"/>
+  <path d="M178 327H334" stroke="#234B6E" stroke-width="5" stroke-linecap="round"/>
   <text x="450" y="332" fill="#111111" font-family="Inter, Arial, sans-serif" font-size="13">62%</text>
   <text x="48" y="362" fill="#111111" font-family="Inter, Arial, sans-serif" font-size="13">Electricity</text>
   <path d="M178 357H430" stroke="#EFECE6" stroke-width="5" stroke-linecap="round"/>
-  <path d="M178 357H382" stroke="#FF7514" stroke-width="5" stroke-linecap="round"/>
+  <path d="M178 357H382" stroke="#234B6E" stroke-width="5" stroke-linecap="round"/>
   <text x="450" y="362" fill="#111111" font-family="Inter, Arial, sans-serif" font-size="13">81%</text>
   <text x="520" y="332" fill="#111111" font-family="Inter, Arial, sans-serif" font-size="13">Waves</text>
   <path d="M584 327H704" stroke="#EFECE6" stroke-width="5" stroke-linecap="round"/>
-  <path d="M584 327H651" stroke="#FF7514" stroke-width="5" stroke-linecap="round"/>
+  <path d="M584 327H651" stroke="#234B6E" stroke-width="5" stroke-linecap="round"/>
   <text x="716" y="332" fill="#111111" font-family="Inter, Arial, sans-serif" font-size="13">56%</text>
 </svg>

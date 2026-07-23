@@ -53,8 +53,8 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           <p className="mb-0 mt-2 text-sm font-semibold">You can keep learning without an account.</p>
         </div>
         <div className="mt-6 grid gap-3 sm:grid-cols-2">
-          <Link href={authHref("/account/sign-in", next)} className="inline-flex min-h-12 items-center justify-center rounded-md bg-forge px-5 text-sm font-extrabold uppercase text-white">Sign in</Link>
-          <Link href={authHref("/account/sign-up", next)} className="inline-flex min-h-12 items-center justify-center rounded-md border border-ink px-5 text-sm font-extrabold uppercase">Create account</Link>
+          <Link href={authHref("/account/sign-in", next)} className="inline-flex min-h-12 items-center justify-center rounded-lg bg-forge px-5 text-sm font-extrabold text-white">Sign in</Link>
+          <Link href={authHref("/account/sign-up", next)} className="inline-flex min-h-12 items-center justify-center rounded-lg border border-ink px-5 text-sm font-extrabold">Create account</Link>
         </div>
         <AccountLearningReturn requestedDestination={next} />
         <CurrentBrowserExportButton />

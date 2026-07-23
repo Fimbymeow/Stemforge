@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { Card } from "@/components/ui";
+import { FocusedProductShell } from "@/components/layout/focused-product-shell";
 
 export function RouteError({ error, reset, title, message, code, backHref, backLabel }: {
   error: Error & { digest?: string };
@@ -15,7 +16,7 @@ export function RouteError({ error, reset, title, message, code, backHref, backL
 }) {
   useEffect(() => { void error; }, [error]);
   return (
-    <main id="main-content" tabIndex={-1} className="mx-auto grid min-h-[60vh] max-w-[760px] place-content-center p-5">
+    <FocusedProductShell maxWidth="max-w-[760px]">
       <Card className="p-6" role="alert">
         <p className="font-mono text-xs font-extrabold uppercase text-forge">Recovery available &middot; {code}</p>
         <h1 className="mt-2 text-3xl font-extrabold">{title}</h1>
@@ -25,6 +26,6 @@ export function RouteError({ error, reset, title, message, code, backHref, backL
           <Link href={backHref} className="inline-flex min-h-11 items-center rounded-lg border border-line bg-white px-5 font-extrabold">{backLabel}</Link>
         </div>
       </Card>
-    </main>
+    </FocusedProductShell>
   );
 }

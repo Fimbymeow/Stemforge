@@ -18,6 +18,7 @@ import { createCompletedSessionRetry } from "@/lib/practice/practice-selection";
 import { getPracticeSession, updatePracticeSession, upsertPracticeSession } from "@/lib/practice/practice-storage";
 import type { PracticeSession as PracticeSessionModel } from "@/lib/practice/practice-types";
 import { derivePracticeSummaryNextAction } from "@/lib/learning/next-action";
+import { AppShell } from "@/components/layout/app-shell";
 
 export function PracticeSession({ sessionId }: { sessionId: string }) {
   const [session, setSession] = useState<PracticeSessionModel | null>(null);
@@ -187,8 +188,9 @@ function PracticeSummaryCard({ session, summary }: { session: PracticeSessionMod
   }
 
   return (
-    <main id="main-content" tabIndex={-1} className="mx-auto grid max-w-[780px] gap-4 p-5">
-      <Card className="p-6" role="status" aria-live="polite">
+    <AppShell demo={false} active="Current Path">
+      <div className="mx-auto grid max-w-[780px] gap-4">
+        <Card className="p-6" role="status" aria-live="polite">
         <p className="font-mono text-xs font-extrabold uppercase text-forge">Session complete</p>
         <h1 className="mt-2 text-3xl font-extrabold">Practice summary</h1>
         {justCompletedPaths.map((path) => (
@@ -228,8 +230,9 @@ function PracticeSummaryCard({ session, summary }: { session: PracticeSessionMod
           ) : null}
           <Link href="/dashboard" className="inline-flex min-h-10 items-center rounded-lg border border-line bg-white px-4 font-extrabold">Dashboard</Link>
         </div>
-      </Card>
-    </main>
+        </Card>
+      </div>
+    </AppShell>
   );
 }
 
