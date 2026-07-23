@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { AlertCircle, CheckCircle2, MessageSquare, X } from "lucide-react";
 import { useAuthFeatureAvailable } from "@/components/auth-feature-provider";
+import { useModalFocusTrap } from "@/lib/use-modal-focus-trap";
 import { createReportDiagnosticContext } from "@/lib/beta-reports/report-diagnostics";
 import { getOrCreateGuestReportSessionId, recordBetaReportReceipt } from "@/lib/beta-reports/report-receipts";
 import { BETA_REPORT_SCHEMA_VERSION, type BetaReportKind, type SafeContentReference, type SubmitBetaReportResult } from "@/lib/beta-reports/report-types";
@@ -52,7 +53,6 @@ export function ReportDialog({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
-  const previousFocusRef = useRef<HTMLElement | null>(null);
   const diagnostics = open ? createReportDiagnosticContext({
     pageArea,
     contentReference,
@@ -61,27 +61,13 @@ export function ReportDialog({
     authState: accountsAvailable ? "guest" : "disabled",
   }) : null;
 
-  useEffect(() => {
-    if (!open) return;
-    previousFocusRef.current = triggerRef.current ?? (document.activeElement instanceof HTMLElement ? document.activeElement : null);
-    closeRef.current?.focus();
-    const dialog = dialogRef.current;
-    const handleKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") { event.preventDefault(); setOpen(false); return; }
-      if (event.key !== "Tab" || !dialog) return;
-      const focusable = [...dialog.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]):not([tabindex="-1"]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])')];
-      const first = focusable[0];
-      const last = focusable.at(-1);
-      if (!first || !last) return;
-      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
-      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
-    };
-    document.addEventListener("keydown", handleKey);
-    return () => {
-      document.removeEventListener("keydown", handleKey);
-      previousFocusRef.current?.focus();
-    };
-  }, [open]);
+  useModalFocusTrap({
+    open,
+    containerRef: dialogRef,
+    initialFocusRef: closeRef,
+    triggerRef,
+    onClose: () => setOpen(false),
+  });
 
   async function submitReport(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -165,7 +151,7 @@ export function ReportDialog({
                   We only attach safe diagnostics like page, device category and content IDs. We do not send your answers, local progress history, passwords, cookies or browser storage.
                 </p>
               </div>
-              <button ref={closeRef} type="button" onClick={() => setOpen(false)} aria-label="Close report form" className="rounded-full border border-line p-2 text-muted hover:text-ink">
+              <button ref={closeRef} type="button" onClick={() => setOpen(false)} aria-label="Close report form" className="grid min-h-10 min-w-10 shrink-0 place-items-center rounded-full border border-line text-muted hover:text-ink">
                 <X className="size-4" />
               </button>
             </div>

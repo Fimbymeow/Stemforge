@@ -61,7 +61,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <a href="#main-content" className="skip-link">Skip to main content</a>
         <AuthFeatureProvider accountsAvailable={accountsAvailable}>
-          <ProgressSyncProvider accountsAvailable={accountsAvailable}><div id="main-content" tabIndex={-1}>{children}</div></ProgressSyncProvider>
+          <ProgressSyncProvider accountsAvailable={accountsAvailable}>{children}</ProgressSyncProvider>
         </AuthFeatureProvider>
       </body>
     </html>

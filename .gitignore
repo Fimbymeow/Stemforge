@@ -12,6 +12,7 @@ playwright-auth-enabled-report
 test-results
 test-results-auth-enabled
 test-results-production-smoke
+test-results-hardening
 playwright-import-real-report
 test-results-import-real
 blob-report

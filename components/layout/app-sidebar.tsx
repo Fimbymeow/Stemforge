@@ -7,15 +7,15 @@ import { BookOpen, Compass, Home, UserRound } from "lucide-react";
 import { useAuthFeatureAvailable } from "@/components/auth-feature-provider";
 
 const navItems = [
-  ["Dashboard", Home, "dashboard"],
-  ["Subjects", BookOpen, "subjects"],
-  ["Current Path", Compass, "current-path"],
+  ["Dashboard", Home, "dashboard", "Dashboard"],
+  ["Subjects", BookOpen, "subjects", "Subjects"],
+  ["Current Path", Compass, "current-path", "Path"],
 ] as const;
 
 export function AppSidebar({ demo, active = "Dashboard" }: { demo: boolean; active?: string }) {
   const accountsAvailable = useAuthFeatureAvailable();
   const visibleNavItems = accountsAvailable
-    ? [...navItems, ["Account", UserRound, "account"] as const]
+    ? [...navItems, ["Account", UserRound, "account", "Account"] as const]
     : navItems;
   return (
     <aside className="fixed inset-y-0 left-0 z-10 flex w-[268px] flex-col border-r border-line bg-paper/90 px-5 py-8 backdrop-blur-xl max-xl:sticky max-xl:top-0 max-xl:h-auto max-xl:w-full max-xl:border-b max-xl:border-r-0 max-xl:px-5 max-xl:py-4">
@@ -28,17 +28,18 @@ export function AppSidebar({ demo, active = "Dashboard" }: { demo: boolean; acti
       >
         Back to website
       </Link>
-      <nav className="grid gap-3 max-xl:flex max-xl:gap-2 max-xl:overflow-x-auto max-xl:pb-1">
-        {visibleNavItems.map(([label, Icon, key]) => (
+      <nav aria-label="Main" className="grid gap-3 max-xl:flex max-xl:gap-1">
+        {visibleNavItems.map(([label, Icon, key, shortLabel]) => (
           <Link
             key={label}
             href={getAppNavHref(key, demo)}
-            className={`flex min-h-[58px] items-center rounded-xl px-5 text-lg font-semibold max-xl:min-h-[42px] max-xl:flex-none max-xl:px-4 max-xl:text-sm ${
+            className={`flex min-h-[58px] items-center justify-center rounded-xl px-5 text-lg font-semibold max-xl:min-h-11 max-xl:flex-1 max-xl:justify-center max-xl:px-2 max-xl:text-sm ${
               label === active ? "bg-forge-soft text-forge" : "text-ink"
             }`}
           >
             <Icon className="mr-4 size-6 max-xl:hidden" strokeWidth={2} />
-            {label}
+            <span className="max-xl:hidden">{label}</span>
+            <span className="hidden max-xl:inline">{shortLabel}</span>
           </Link>
         ))}
       </nav>

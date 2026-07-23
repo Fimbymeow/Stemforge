@@ -88,7 +88,7 @@ function MasteryUpgradeBanner({ skillPathId, status }: { skillPathId: string; st
         type="button"
         aria-label="Dismiss"
         onClick={() => setVisible(false)}
-        className="min-h-8 min-w-8 shrink-0 rounded-md text-lg leading-none text-forge transition hover:bg-forge/10"
+        className="grid min-h-10 min-w-10 shrink-0 place-items-center rounded-md text-lg leading-none text-forge transition hover:bg-forge/10"
       >
         ×
       </button>

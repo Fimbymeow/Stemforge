@@ -19,6 +19,11 @@ test("guest learner dashboard hydrates without errors and shows deterministic ev
 });
 
 test("dashboard updates from stored evidence with grouped recent activity and a resume action", async ({ page }) => {
+  // The dashboard's "active days in the last 7 days" is a real rolling window measured against
+  // the browser clock, so the test freezes that clock to a fixed instant compatible with the
+  // fixture's attempt timestamps below, rather than relying on the fixture staying "recent"
+  // relative to whatever day this suite happens to run on.
+  await page.clock.setFixedTime(new Date("2026-07-16T12:00:00.000Z"));
   await seedStoredProgress(page, v3Payload([
     currentAttempt(QUESTION_IDS[0], 1, { isCorrect: false, answer: "wrong", attemptedAt: "2026-07-16T10:00:00.000Z" }),
     currentAttempt(QUESTION_IDS[1], 2, { isCorrect: true, attemptedAt: "2026-07-16T10:05:00.000Z" }),

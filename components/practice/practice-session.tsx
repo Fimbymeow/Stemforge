@@ -185,7 +185,7 @@ function PracticeSummaryCard({ session, summary }: { session: PracticeSessionMod
   }
 
   return (
-    <main className="mx-auto grid max-w-[780px] gap-4 p-5">
+    <main id="main-content" tabIndex={-1} className="mx-auto grid max-w-[780px] gap-4 p-5">
       <Card className="p-6" role="status" aria-live="polite">
         <p className="font-mono text-xs font-extrabold uppercase text-forge">Session complete</p>
         <h1 className="mt-2 text-3xl font-extrabold">Practice summary</h1>

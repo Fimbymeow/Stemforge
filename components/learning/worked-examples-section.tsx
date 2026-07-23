@@ -47,7 +47,7 @@ export function WorkedExampleCard({ example }: { example: WorkedExample }) {
         <MathContent>{example.explanation}</MathContent>
       </div>
       {example.commonMistake ? (
-        <div className="mt-4 rounded-xl border border-forge-soft bg-forge-soft p-4 text-muted">
+        <div className="mt-4 rounded-xl border border-forge-soft bg-forge-soft p-4 text-ink">
           <p className="mb-2 font-extrabold text-ink">Common mistake</p>
           <MathContent>{example.commonMistake}</MathContent>
         </div>

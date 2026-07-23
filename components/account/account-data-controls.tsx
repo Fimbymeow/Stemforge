@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useProgressSync } from "@/components/progress-sync-provider";
+import { useModalFocusTrap } from "@/lib/use-modal-focus-trap";
 
 type Confirmation = "association" | "account_progress" | "all_progress" | null;
 
@@ -11,11 +12,15 @@ export function AccountDataControls() {
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const cancelRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
   const data = sync.diagnostics.browserData;
 
-  useEffect(() => {
-    if (confirmation) cancelRef.current?.focus();
-  }, [confirmation]);
+  useModalFocusTrap({
+    open: confirmation !== null,
+    containerRef: dialogRef,
+    initialFocusRef: cancelRef,
+    onClose: () => setConfirmation(null),
+  });
 
   async function perform(action: Exclude<Confirmation, null>) {
     setBusy(true);
@@ -61,7 +66,7 @@ export function AccountDataControls() {
       </div>
 
       {confirmation ? (
-        <div role="alertdialog" aria-modal="true" aria-labelledby="browser-data-confirmation-title" className="mt-4 rounded-lg border border-danger/30 bg-danger-soft p-4">
+        <div ref={dialogRef} role="alertdialog" aria-modal="true" aria-labelledby="browser-data-confirmation-title" className="mt-4 rounded-lg border border-danger/30 bg-danger-soft p-4">
           <h3 id="browser-data-confirmation-title" className="m-0 text-base font-extrabold">Confirm browser-only removal</h3>
           <p className="mb-0 mt-2 text-sm leading-relaxed text-ink">{confirmationCopy(confirmation)}</p>
           <div className="mt-4 grid gap-2 sm:grid-cols-2">

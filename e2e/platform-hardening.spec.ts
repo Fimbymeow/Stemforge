@@ -8,12 +8,35 @@ test("critical guest journey is accessible, persistent, isolated, and console-cl
   expect(response?.headers()["x-content-type-options"]).toBe("nosniff");
   await expect(page.getByRole("heading", { name: "Forge Your Potential.", level: 1 })).toBeVisible();
 
+  await expect(page.getByRole("navigation", { name: "Primary" })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Footer" })).toBeAttached();
+
   const skipLink = page.getByRole("link", { name: "Skip to main content" });
   if (testInfo.project.name === "webkit") await skipLink.focus();
   else await page.keyboard.press("Tab");
   await expect(skipLink).toBeFocused();
   await skipLink.press("Enter");
-  await expect(page.locator("#main-content")).toBeFocused();
+  const main = page.locator("#main-content");
+  await expect(main).toBeFocused();
+  await expect(main).toHaveJSProperty("tagName", "MAIN");
+  // The skip link must genuinely skip navigation: the next Tab should never move focus
+  // back into the navbar it just bypassed. (WebKit only tabs to form controls by default —
+  // matching real Safari without "Full Keyboard Access" — so the landing page's first
+  // in-main element, a link, is legitimately not reached there; this checks the negative
+  // case that holds on every engine instead.)
+  await page.keyboard.press("Tab");
+  const focusReturnedToNav = await page.evaluate(() => {
+    const nav = document.querySelector('nav[aria-label="Primary"]');
+    return !!(nav && document.activeElement && nav.contains(document.activeElement));
+  });
+  expect(focusReturnedToNav).toBe(false);
+  if (testInfo.project.name !== "webkit") {
+    const afterSkipFocusInMain = await page.evaluate(() => {
+      const main = document.getElementById("main-content");
+      return !!(main && document.activeElement && main.contains(document.activeElement) && document.activeElement !== main);
+    });
+    expect(afterSkipFocusInMain).toBe(true);
+  }
   await page.waitForLoadState("networkidle");
 
   await openQuestion(page, QUESTION_IDS[0]);
@@ -34,7 +57,14 @@ test("critical guest journey is accessible, persistent, isolated, and console-cl
   await trigger.focus();
   await trigger.click();
   await expect(page.getByRole("dialog")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Close report form" })).toBeFocused();
+  const closeButton = page.getByRole("button", { name: "Close report form" });
+  await expect(closeButton).toBeFocused();
+  // Shift+Tab from the first focusable element must wrap to the dialog's last focusable
+  // element, not escape into the page behind it — proving the shared trap actually traps.
+  await page.keyboard.press("Shift+Tab");
+  await expect(page.getByLabel("Contact email (optional)")).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(closeButton).toBeFocused();
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(trigger).toBeFocused();

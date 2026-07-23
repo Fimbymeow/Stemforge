@@ -295,7 +295,7 @@ export function QuestionWorkspace({ question, sessionPanel, answerLocked = false
             <span aria-hidden="true">/</span>
             <span className="font-bold text-forge">{stage?.name ?? question.stage}</span>
             <details className="ml-auto max-sm:ml-0 max-sm:w-full">
-              <summary className="cursor-pointer text-xs font-bold text-forge">More context</summary>
+              <summary className="inline-flex min-h-10 cursor-pointer items-center text-xs font-bold text-forge">More context</summary>
               <span className="mt-2 flex flex-wrap gap-2 rounded-lg bg-paper p-2 text-xs">
                 <Link href={context?.courseArea.href ?? "/subjects"}>{context?.courseArea.name ?? question.courseArea}</Link>
                 <span aria-hidden="true">/</span>
@@ -315,7 +315,7 @@ export function QuestionWorkspace({ question, sessionPanel, answerLocked = false
                 </p>
               </div>
               <details className="text-sm text-muted">
-                <summary className="cursor-pointer font-bold text-forge">Question details</summary>
+                <summary className="inline-flex min-h-10 cursor-pointer items-center font-bold text-forge">Question details</summary>
                 <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 rounded-lg bg-paper p-3">
                   <dt>Marks</dt><dd className="font-bold text-ink">{question.marks}</dd>
                   <dt>Skill</dt><dd className="font-bold text-ink">{question.skill}</dd>

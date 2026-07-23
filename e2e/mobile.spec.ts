@@ -123,3 +123,59 @@ test("mobile Functional Honesty surfaces remain compact, semantic and error-free
   await expectNoHorizontalOverflow(page);
   expect(seriousBrowserErrors).toEqual([]);
 });
+
+test("at 320x568 the beta notice and feedback dock never visually overlap each other or obscure the answer input", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 568 });
+  await openQuestion(page, QUESTION_IDS[0]);
+  const notice = page.getByLabel("Private beta notice", { exact: true });
+  const dock = page.getByRole("button", { name: "Send feedback" });
+  await expect(notice).toBeVisible();
+  await expect(dock).toBeVisible();
+  const noticeBox = await notice.boundingBox();
+  const dockBox = await dock.boundingBox();
+  expect(noticeBox).not.toBeNull();
+  expect(dockBox).not.toBeNull();
+  // The dock must sit entirely below the notice's bottom edge (or vice versa) — never overlapping.
+  const verticallySeparate = dockBox!.y >= noticeBox!.y + noticeBox!.height - 1 || noticeBox!.y >= dockBox!.y + dockBox!.height - 1;
+  expect(verticallySeparate).toBe(true);
+  const answer = page.getByLabel("Your answer");
+  await expect(answer).toBeVisible();
+  const answerBox = await answer.boundingBox();
+  expect(answerBox).not.toBeNull();
+  // Neither fixed element's bounding box may intersect the answer input's bounding box.
+  for (const box of [noticeBox!, dockBox!]) {
+    const intersects = box.x < answerBox!.x + answerBox!.width && box.x + box.width > answerBox!.x
+      && box.y < answerBox!.y + answerBox!.height && box.y + box.height > answerBox!.y;
+    expect(intersects).toBe(false);
+  }
+  await expectNoHorizontalOverflow(page);
+});
+
+test("at 320px the app navigation fits without horizontal scrolling and every item stays reachable", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.goto("/dashboard");
+  const nav = page.getByRole("navigation", { name: "Main" });
+  await expect(nav).toBeVisible();
+  const navBox = await nav.boundingBox();
+  expect(navBox).not.toBeNull();
+  expect(navBox!.width).toBeLessThanOrEqual(320);
+  for (const name of ["Dashboard", "Subjects", "Path"]) {
+    const link = nav.getByRole("link", { name });
+    await expect(link).toBeVisible();
+    const box = await link.boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.x).toBeGreaterThanOrEqual(0);
+    expect(box!.x + box!.width).toBeLessThanOrEqual(320);
+  }
+  await expectNoHorizontalOverflow(page);
+});
+
+test("dismiss controls meet the established 40px mobile touch-target floor", async ({ page }) => {
+  await page.goto("/dashboard");
+  const dismissNotice = page.getByRole("button", { name: "Dismiss private beta notice" });
+  await expect(dismissNotice).toBeVisible();
+  const noticeBox = await dismissNotice.boundingBox();
+  expect(noticeBox).not.toBeNull();
+  expect(noticeBox!.width).toBeGreaterThanOrEqual(40);
+  expect(noticeBox!.height).toBeGreaterThanOrEqual(40);
+});
