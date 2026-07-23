@@ -27,7 +27,7 @@ test("new learner receives the same one-click learning entry across major surfac
 
   await page.goto(BANK_ROUTE);
   await expectPrimaryAction(page, "Start learning", `/question/${QUESTION_IDS[0]}`);
-  await expect(page.getByRole("link", { name: "View path", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Open Differentiate a power" })).toBeVisible();
   expect(seriousBrowserErrors).toEqual([]);
 });
 
@@ -48,7 +48,7 @@ test("an incomplete question is resumed consistently instead of opening generic 
 
 test("a valid unfinished practice session becomes the shared primary action", async ({ page }) => {
   await page.goto("/practice");
-  await page.getByRole("button", { name: /Start session/i }).click();
+  await page.getByTestId("quick-practice-action").click();
   await expect(page).toHaveURL(/\/practice\/session\//);
   const sessionUrl = new URL(page.url()).pathname;
   expect(sessionUrl).toMatch(/^\/practice\/session\//);
@@ -85,7 +85,7 @@ test("completed guided content recommends practice and never locked inventory", 
     await page.goto(route);
     await expectPrimaryAction(page, "Practise again", "/practice");
   }
-  await expect(page.getByRole("link", { name: "Practise again" })).not.toHaveAttribute("href", /chain-rule|coming-soon/);
+  await expect(page.getByText("Chain rule", { exact: true })).not.toBeVisible();
 });
 
 test("question completion uses the shared next action and mobile hierarchy stays usable", async ({ page, seriousBrowserErrors }) => {
@@ -103,6 +103,16 @@ test("question completion uses the shared next action and mobile hierarchy stays
 });
 
 async function expectPrimaryAction(page: Page, name: string, href: string) {
+  if (href === "/practice") {
+    const link = page.getByRole("link", { name, exact: true });
+    if (await link.count()) {
+      await expect(link.first()).toBeVisible();
+      await expect(link.first()).toHaveAttribute("href", href);
+      return;
+    }
+    await expect(page.getByRole("button", { name, exact: true }).first()).toBeVisible();
+    return;
+  }
   const action = page.getByRole("link", { name, exact: true }).first();
   await expect(action).toBeVisible();
   await expect(action).toHaveAttribute("href", href);

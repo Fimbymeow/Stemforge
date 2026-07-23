@@ -4,7 +4,7 @@ import { createTwoPathFixture, fixtureIds } from "./fixtures/multi-path-content"
 import { higherMathsCalculusStrandIds } from "../data/higher-maths";
 import { discoverEligiblePracticeQuestions } from "../lib/practice/practice-eligibility";
 import { createCompletedSessionRetry, createPracticeSessionSelection, selectRetryIncorrectPractice } from "../lib/practice/practice-selection";
-import { derivePracticeSetupVisibility } from "../lib/practice/practice-setup";
+import { derivePracticeSetupVisibility, deriveVisiblePracticeModes } from "../lib/practice/practice-setup";
 import { attempt, evidence } from "./progress-fixtures";
 import type { CanonicalContentSource } from "../data/canonical-content";
 import type { Question } from "../data/types";
@@ -136,6 +136,9 @@ test("practice setup hides choices over one while preserving future multi-option
     showPathChoice: true,
     showMixedMode: true,
   });
+  assert.deepEqual(deriveVisiblePracticeModes({ pathCount: 1, hasNeedsWork: false }), ["targeted"]);
+  assert.deepEqual(deriveVisiblePracticeModes({ pathCount: 1, hasNeedsWork: true }), ["targeted", "needs_work"]);
+  assert.deepEqual(deriveVisiblePracticeModes({ pathCount: 2, hasNeedsWork: true }), ["targeted", "needs_work", "mixed"]);
 });
 
 test("archived questions are excluded and supported graph questions are adopted generically", () => {

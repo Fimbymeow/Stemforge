@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ArrowLeft, ArrowRight, CheckCircle2, Timer } from "lucide-react";
 import { Card } from "@/components/ui";
 import { QuestionWorkspace } from "@/components/questions/question-workspace";
+import { QuickPracticeAction } from "@/components/practice/quick-practice-action";
 import { getPathCompletionSupportingSentence } from "@/components/learning/path-completion-panel";
 import { isCompletedTierStatus, MasteryBadge, ReviewBadge, type CompletedTierStatus } from "@/components/learning/mastery-badge";
 import { contentResolver } from "@/lib/content-resolver";
@@ -92,11 +93,12 @@ export function PracticeSession({ sessionId }: { sessionId: string }) {
     <QuestionWorkspace
       question={resolved.question}
       answerLocked={expired}
+      practiceReturnHref={`/practice/session/${session.sessionId}`}
       sessionPanel={(
         <Card className="border-forge/20 bg-forge-soft p-4" data-testid="practice-session-panel">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="font-mono text-xs font-extrabold uppercase text-forge">{session.mode.replace("_", " ")} practice</p>
+              <p className="font-mono text-xs font-extrabold uppercase text-forge">{practiceModeLabel(session.mode)}</p>
               <h2 className="m-0 mt-1 text-xl font-extrabold">Question {session.currentQuestionIndex + 1} of {session.questionReferences.length}</h2>
               <p className="mt-1 text-sm text-muted">{session.selectionMetadata.shortageReason ?? "Using available questions."}</p>
             </div>
@@ -219,6 +221,8 @@ function PracticeSummaryCard({ session, summary }: { session: PracticeSessionMod
         <div className="mt-5 flex flex-wrap gap-3">
           {nextAction.kind === "retry_session" ? (
             <button type="button" onClick={retryIncorrect} aria-describedby="practice-summary-next-reason" className="inline-flex min-h-11 items-center rounded-lg bg-forge px-4 font-extrabold text-white">{nextAction.label}</button>
+          ) : nextAction.kind === "practice_again" ? (
+            <QuickPracticeAction preferredPathId={nextAction.pathId} label={nextAction.label} />
           ) : nextAction.href ? (
             <Link href={nextAction.href} aria-describedby="practice-summary-next-reason" className="inline-flex min-h-11 items-center rounded-lg bg-forge px-4 font-extrabold text-white">{nextAction.label}</Link>
           ) : null}
@@ -242,4 +246,11 @@ function formatTime(totalSeconds: number) {
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
   return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
+
+function practiceModeLabel(mode: PracticeSessionModel["mode"]) {
+  if (mode === "retry_incorrect") return "Exact-session retry";
+  if (mode === "needs_work") return "Needs Review";
+  if (mode === "mixed") return "Mixed practice";
+  return "Path practice";
 }

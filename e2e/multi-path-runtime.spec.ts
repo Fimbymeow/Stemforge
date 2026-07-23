@@ -16,24 +16,18 @@ test("question context and navigation derive from canonical ownership", async ({
   await expect(page.getByTestId("next-question-action")).toHaveAttribute("href", "/question/hm-calc-diff-basic-f-002");
 });
 
-test("question bank exposes ordered specification strands and pure query states", async ({ page }) => {
+test("question bank leads with available questions and keeps future taxonomy secondary", async ({ page }) => {
   await page.goto("/subjects/higher-maths/question-bank");
-  const headings = [
-    "Differentiating functions",
-    "Using differentiation to investigate the nature and properties of functions",
-    "Integrating functions",
-    "Using integration to calculate definite integrals",
-    "Applying differential calculus",
-    "Applying integral calculus",
-  ];
-  for (const heading of headings) await expect(page.getByText(heading, { exact: true })).toBeVisible();
-
-  const search = page.getByRole("textbox", { name: "Search question bank" });
-  await search.fill("definite integrals");
-  await expect(page.getByText("Definite integrals", { exact: true })).toBeVisible();
-  await expect(page.getByText("Differentiating functions", { exact: true })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "8 questions" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Open Differentiate a power" })).toBeVisible();
+  await page.getByText("Filter and sort", { exact: true }).click();
+  const search = page.getByRole("textbox", { name: "Search available questions" });
+  await search.fill("evaluate");
+  await expect(page.getByRole("link", { name: "Open Evaluate a derivative" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Open Differentiate a power" })).toHaveCount(0);
   await search.fill("no such curriculum item");
-  await expect(page.getByText("No topics match the current search and filter.")).toBeVisible();
+  await expect(page.getByText("No questions match these filters")).toBeVisible();
+  await expect(page.getByText("Future Higher Maths paths (12)", { exact: true })).toBeVisible();
 });
 
 test("a planned path resolves through the generic route without exposing fake questions", async ({ page }) => {

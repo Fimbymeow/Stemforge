@@ -41,7 +41,7 @@ test("production guest surface, health, security and internal denial are operati
   await visit("/graph-demo");
   await expect(page.getByTestId("linked-derivative-graphs")).toBeVisible();
   await visit("/practice");
-  await expect(page.getByRole("heading", { name: "Practice sessions", level: 1 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Practise Basic differentiation", level: 1 })).toBeVisible();
 
   await visit("/dashboard");
   const feedback = page.getByRole("button", { name: "Send feedback" });

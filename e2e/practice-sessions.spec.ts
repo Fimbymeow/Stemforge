@@ -6,9 +6,8 @@ test("guest targeted practice starts, uses the canonical question workspace, per
   const errors: string[] = [];
   watchErrors(page, errors);
   await page.goto("/practice");
-  await expect(page.getByRole("heading", { name: "Practice sessions" })).toBeVisible();
-  await expect(page.getByText(/\d+ questions? available\./i)).toBeVisible();
-  await page.getByRole("button", { name: /Start session/i }).click();
+  await expect(page.getByRole("heading", { name: "Practise Basic differentiation" })).toBeVisible();
+  await page.getByTestId("quick-practice-action").click();
   await expect(page).toHaveURL(/\/practice\/session\//);
   await expect(page.getByTestId("practice-session-panel")).toContainText(/Question 1 of/);
   await expect(page.getByRole("heading", { name: "Differentiate a power" })).toBeVisible();
@@ -36,8 +35,10 @@ test("guest targeted practice starts, uses the canonical question workspace, per
 
 test("completed-session retry contains exactly that session's incorrect questions", async ({ page }) => {
   await page.goto("/practice");
+  await page.getByText("Choose practice options", { exact: true }).click();
+  await page.getByText("Advanced options", { exact: true }).click();
   await page.getByLabel("Requested questions").fill("2");
-  await page.getByRole("button", { name: /Start session/i }).click();
+  await page.getByRole("button", { name: "Start configured practice" }).click();
   const references = await page.evaluate((key) => {
     const store = JSON.parse(localStorage.getItem(key)!);
     return store.sessions[0].questionReferences.map((reference: { questionId: string }) => reference.questionId) as string[];
@@ -70,33 +71,34 @@ test("completed-session retry contains exactly that session's incorrect question
   expect(retryState).toEqual({ mode: "retry_incorrect", questionIds: [references[0]], attemptCount: 2 });
 });
 
-test("retry-incorrect appears after an incorrect attempt and later correct removes it", async ({ page }) => {
+test("Needs Review appears only after relevant progress and later correct work removes it", async ({ page }) => {
   await page.goto("/practice");
-  const initiallyUnavailable = page.getByRole("button", { name: /Retry incorrect/i });
-  await expect(initiallyUnavailable).toBeDisabled();
-  await expect(initiallyUnavailable).toContainText(/There are no recent incorrect answers/i);
+  await page.getByText("Choose practice options", { exact: true }).click();
+  await expect(page.getByRole("button", { name: /Needs Review/i })).toHaveCount(0);
   await page.goto("/question/hm-calc-diff-basic-f-001");
   await page.getByLabel("Your answer").fill("x^4");
   await page.getByRole("button", { name: "Submit Answer" }).click();
   await expect(page.getByTestId("question-status")).toContainText("Not quite");
   await page.goto("/practice");
-  await page.getByRole("button", { name: /Retry incorrect/i }).click();
-  await expect(page.getByText(/1 question available/i)).toBeVisible();
+  await page.getByText("Choose practice options", { exact: true }).click();
+  await page.getByRole("button", { name: /Needs Review/i }).click();
+  await expect(page.getByText(/1 question is currently available/i)).toBeVisible();
   await page.goto("/question/hm-calc-diff-basic-f-001");
   await page.getByLabel("Your answer").fill("5x^4");
   await page.getByRole("button", { name: "Submit Answer" }).click();
   await expect(page.getByTestId("question-status")).toContainText("Correct");
   await page.goto("/practice");
-  const noLongerAvailable = page.getByRole("button", { name: /Retry incorrect/i });
-  await expect(noLongerAvailable).toBeDisabled();
-  await expect(noLongerAvailable).toContainText(/There are no recent incorrect answers/i);
+  await page.getByText("Choose practice options", { exact: true }).click();
+  await expect(page.getByRole("button", { name: /Needs Review/i })).toHaveCount(0);
 });
 
 test("timed practice expires without submitting blank answers and mobile layout has no overflow", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/practice");
+  await page.getByText("Choose practice options", { exact: true }).click();
+  await page.getByText("Advanced options", { exact: true }).click();
   await page.getByLabel("Timed session").check();
-  await page.getByRole("button", { name: /Start session/i }).click();
+  await page.getByRole("button", { name: "Start configured practice" }).click();
   await expect(page).toHaveURL(/\/practice\/session\//);
   await page.evaluate((key) => {
     const store = JSON.parse(localStorage.getItem(key)!);

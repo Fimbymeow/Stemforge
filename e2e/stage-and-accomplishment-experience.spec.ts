@@ -110,8 +110,10 @@ test("a path completed through a practice session is acknowledged in the practic
 
 test("a fully-correct practice session is acknowledged without inventing mastery", async ({ page }) => {
   await page.goto("/practice");
+  await page.getByText("Choose practice options", { exact: true }).click();
+  await page.getByText("Advanced options", { exact: true }).click();
   await page.getByLabel("Requested questions").fill("2");
-  await page.getByRole("button", { name: /Start session/i }).click();
+  await page.getByRole("button", { name: "Start configured practice" }).click();
   const references = await page.evaluate((key) => {
     const store = JSON.parse(localStorage.getItem(key)!) as PracticeSessionStore;
     return store.sessions[0].questionReferences.map((reference) => reference.questionId);

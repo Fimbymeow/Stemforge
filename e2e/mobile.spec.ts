@@ -47,7 +47,7 @@ test("mobile final completion is readable, stacked and free of horizontal overfl
   await expect(panel).toBeVisible();
   await expect(panel).toContainText("Basic differentiation mastered");
   await expect(panel).toContainText("8 / 8 completed");
-  const primary = panel.getByTestId("path-completion-primary-action");
+  const primary = panel.getByRole("button", { name: "Practise again" });
   const secondary = panel.getByRole("link", { name: "Review a stage" });
   await expect(primary).toBeVisible();
   await expect(secondary).toBeVisible();
@@ -64,8 +64,10 @@ test("mobile final completion is readable, stacked and free of horizontal overfl
 
 test("mobile taxonomy and question context remain readable without page overflow", async ({ page }) => {
   await page.goto("/subjects/higher-maths/question-bank");
-  await expect(page.getByText("Differentiating functions", { exact: true })).toBeVisible();
-  await expect(page.getByText("Applying integral calculus", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "8 questions" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Open Differentiate a power" })).toBeVisible();
+  await expect(page.getByText("Future Higher Maths paths (12)", { exact: true })).toBeVisible();
+  await expect(page.getByText("Chain rule", { exact: true })).not.toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
 
   await page.goto("/question/hm-calc-diff-basic-a-001");
@@ -113,6 +115,8 @@ test("mobile Functional Honesty surfaces remain compact, semantic and error-free
   await expect(page.getByRole("combobox", { name: "Course" })).toHaveCount(0);
   await expect(page.getByRole("combobox", { name: "Path" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: /Mixed practice/ })).toHaveCount(0);
+  await expect(page.getByTestId("quick-practice-action")).toBeVisible();
+  await expect(page.getByLabel("Requested questions")).not.toBeVisible();
   await expect(page.getByLabel("Notifications")).toHaveCount(0);
   await expect(page.getByLabel("Profile preview")).toHaveCount(0);
   await expectNoHorizontalOverflow(page);
@@ -120,6 +124,8 @@ test("mobile Functional Honesty surfaces remain compact, semantic and error-free
   await page.goto("/subjects/higher-maths/formula-cards");
   await expect(page.locator("main")).toHaveCount(1);
   await expect(page.getByRole("heading", { name: "Higher Maths Formula Cards", level: 1 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Power rule" })).toBeVisible();
+  await expect(page.getByText("Chain rule", { exact: true })).not.toBeVisible();
   await expectNoHorizontalOverflow(page);
   expect(seriousBrowserErrors).toEqual([]);
 });
@@ -168,6 +174,21 @@ test("at 320px the app navigation fits without horizontal scrolling and every it
     expect(box!.x + box!.width).toBeLessThanOrEqual(320);
   }
   await expectNoHorizontalOverflow(page);
+});
+
+test("at 320px practice, questions and resources have no document overflow", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 568 });
+
+  for (const href of [
+    "/practice",
+    "/subjects/higher-maths/question-bank",
+    "/subjects/higher-maths/formula-cards",
+    `/question/${QUESTION_IDS[0]}`,
+  ]) {
+    await page.goto(href);
+    await expect(page.locator("main")).toBeVisible();
+    await expectNoHorizontalOverflow(page);
+  }
 });
 
 test("dismiss controls meet the established 40px mobile touch-target floor", async ({ page }) => {

@@ -12,6 +12,7 @@ import { getEmptyProgressEvidence, getSkillPathProgress, resetSkillPathProgress,
 import { useHasMounted } from "@/lib/use-mounted";
 import type { SkillPath } from "@/data/types";
 import { useLearnerNextAction } from "@/components/learning/use-learner-next-action";
+import { QuickPracticeAction } from "@/components/practice/quick-practice-action";
 import type { LearnerNextAction } from "@/lib/learning/next-action";
 
 function useLocalSkillPathProgress(skillPath: SkillPath) {
@@ -121,7 +122,9 @@ function CompletedPathCard({ skillPath, progress, status, nextAction }: { skillP
       </p>
       <VersionProgressNotice progress={progress} />
       <div className="mt-4 grid gap-2">
-        {nextAction.href ? <Link href={nextAction.href} aria-describedby="completed-path-next-action-reason" className="inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-forge px-5 text-sm font-extrabold text-white">
+        {nextAction.kind === "practice_again" ? (
+          <QuickPracticeAction preferredPathId={skillPath.slug} label={nextAction.label} className="w-full" />
+        ) : nextAction.href ? <Link href={nextAction.href} aria-describedby="completed-path-next-action-reason" className="inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-forge px-5 text-sm font-extrabold text-white">
           {nextAction.label}
         </Link> : null}
         <Link href={secondary.href} className="inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-line bg-white px-5 text-sm font-extrabold text-ink">

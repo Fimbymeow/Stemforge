@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Card, ProgressBar } from "@/components/ui";
 import { useProgressSync } from "@/components/progress-sync-provider";
+import { QuickPracticeAction } from "@/components/practice/quick-practice-action";
 import {
   deriveLearnerDashboardModel,
   type DashboardActivityItem,
@@ -157,7 +158,14 @@ export function DashboardLocalProgressSection() {
             <p className="mt-1 text-sm text-muted">Jump to practice and resources without affecting your progress.</p>
           </div>
           <div className="grid grow grid-cols-3 gap-2 max-md:grid-cols-1 md:max-w-3xl">
-            {model.quickLinks.map((link) => (
+            {model.quickLinks.map((link) => link.href === "/practice" ? (
+              <QuickPracticeAction
+                key={link.href}
+                preferredPathId={recommendation.pathId}
+                label="Quick Practice"
+                className="min-h-16 justify-between !rounded-xl px-4 text-left"
+              />
+            ) : (
               <QuickLink key={link.href} href={link.href} icon={quickLinkIcon(link.title)}>
                 <span>{link.title}</span>
                 <small>{link.detail}</small>

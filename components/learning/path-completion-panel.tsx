@@ -3,6 +3,7 @@ import { Check } from "lucide-react";
 import { Card } from "@/components/ui";
 import { getSkillPathHref, getSubjectForSkillPath } from "@/lib/learning-paths";
 import { MasteryBadge, ReviewBadge, type CompletedTierStatus } from "@/components/learning/mastery-badge";
+import { QuickPracticeAction } from "@/components/practice/quick-practice-action";
 import type { SkillPath } from "@/data/types";
 import type { SkillPathProgress } from "@/lib/local-progress";
 import type { LearnerNextAction } from "@/lib/learning/next-action";
@@ -52,7 +53,15 @@ export function PathCompletionPanel({ skillPath, progress, nextAction }: { skill
             </span>
           </div>
           <div className="mt-4 flex flex-wrap gap-3">
-            {nextAction.href ? <Link
+            {nextAction.kind === "practice_again" ? (
+              <QuickPracticeAction
+                preferredPathId={skillPath.slug}
+                label={nextAction.label}
+                testId="path-completion-primary-action"
+                describedBy="completion-next-action-reason"
+                className="max-md:w-full"
+              />
+            ) : nextAction.href ? <Link
               href={nextAction.href}
               data-testid="path-completion-primary-action"
               aria-describedby="completion-next-action-reason"

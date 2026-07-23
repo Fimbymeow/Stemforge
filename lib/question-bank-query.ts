@@ -1,8 +1,8 @@
 import type { LearningStageName, Question } from "@/data/types";
-import type { ResolvedSkillPath } from "@/lib/content-resolver";
+import type { ResolvedQuestionContext, ResolvedSkillPath } from "@/lib/content-resolver";
 import { createContentResolver } from "@/lib/content-resolver";
-import { calculateSkillPathProgress } from "@/lib/progress/calculations";
-import type { ProgressEvidence, SkillPathProgress } from "@/lib/progress/types";
+import { calculateSkillPathProgress, getQuestionProgressForVersion } from "@/lib/progress/calculations";
+import type { ProgressEvidence, QuestionProgressState, SkillPathProgress } from "@/lib/progress/types";
 
 export type QuestionBankProgressFilter = "all" | "not-started" | "in-progress" | "completed" | "review-recommended";
 export type QuestionBankStageFilter = "all" | LearningStageName;
@@ -22,6 +22,13 @@ export type QuestionBankQuery = {
   progressFilter?: QuestionBankProgressFilter;
   stageFilter?: QuestionBankStageFilter;
   sort?: QuestionBankSort;
+};
+
+export type QuestionBankQuestionEntry = {
+  question: Question;
+  context: ResolvedQuestionContext;
+  progress: QuestionProgressState;
+  lastPractisedAt: string | null;
 };
 
 type Resolver = ReturnType<typeof createContentResolver>;
@@ -121,4 +128,80 @@ export function queryQuestionBank(
     }
     return defaultCompare(left, right);
   });
+}
+
+export function queryAvailableQuestionBankQuestions(
+  resolver: Resolver,
+  evidence: ProgressEvidence,
+  query: QuestionBankQuery = {},
+): QuestionBankQuestionEntry[] {
+  const search = normalizeSearch(query.search ?? "");
+  const progressFilter = query.progressFilter ?? "all";
+  const stageFilter = query.stageFilter ?? "all";
+  const sort = query.sort ?? "default";
+  const entries = resolver.getQuestions().flatMap((question) => {
+    const context = resolver.getQuestionContext(question.id);
+    if (!context?.skillPath.isAvailable) return [];
+    if (stageFilter !== "all" && context.stage.name !== stageFilter) return [];
+    const searchable = [
+      question.id,
+      question.title,
+      question.skill,
+      context.stage.name,
+      context.skillPath.name,
+      context.specificationStrand.name,
+    ].map(normalizeSearch);
+    if (search && !searchable.some((value) => value.includes(search))) return [];
+    const progress = getQuestionProgressForVersion(question.id, question.questionVersion, evidence);
+    if (!matchesQuestionProgress(progress, progressFilter)) return [];
+    return [{
+      question,
+      context,
+      progress,
+      lastPractisedAt: latestActivityForQuestion(question.id, evidence),
+    }];
+  });
+
+  return entries.sort((left, right) => {
+    if (sort === "recently-practised") {
+      const leftTime = left.lastPractisedAt ? Date.parse(left.lastPractisedAt) : Number.NEGATIVE_INFINITY;
+      const rightTime = right.lastPractisedAt ? Date.parse(right.lastPractisedAt) : Number.NEGATIVE_INFINITY;
+      return rightTime - leftTime || defaultQuestionCompare(left, right);
+    }
+    if (sort === "review-priority") {
+      return Number(right.progress.reviewRecommended) - Number(left.progress.reviewRecommended) || defaultQuestionCompare(left, right);
+    }
+    if (sort === "completion-status") {
+      return Number(right.progress.completed) - Number(left.progress.completed)
+        || Number(right.progress.attempted) - Number(left.progress.attempted)
+        || defaultQuestionCompare(left, right);
+    }
+    return defaultQuestionCompare(left, right);
+  });
+}
+
+function matchesQuestionProgress(progress: QuestionProgressState, filter: QuestionBankProgressFilter) {
+  if (filter === "all") return true;
+  if (filter === "not-started") return !progress.attempted;
+  if (filter === "in-progress") return progress.attempted && !progress.completed;
+  if (filter === "review-recommended") return progress.reviewRecommended;
+  return progress.completed;
+}
+
+function latestActivityForQuestion(questionId: string, evidence: ProgressEvidence) {
+  const times = [
+    ...evidence.attempts.filter((attempt) => attempt.questionId === questionId).map((attempt) => attempt.attemptedAt),
+    ...evidence.supportEvents.filter((event) => event.questionId === questionId).map((event) => event.occurredAt),
+  ].filter((value) => !Number.isNaN(Date.parse(value)));
+  return times.sort((left, right) => Date.parse(right) - Date.parse(left))[0] ?? null;
+}
+
+function defaultQuestionCompare(left: QuestionBankQuestionEntry, right: QuestionBankQuestionEntry) {
+  const leftStage = (left.context.skillPath.learningStages ?? []).findIndex((stage) => stage.id === left.context.stage.id);
+  const rightStage = (right.context.skillPath.learningStages ?? []).findIndex((stage) => stage.id === right.context.stage.id);
+  return left.context.specificationStrand.displayOrder - right.context.specificationStrand.displayOrder
+    || (left.context.skillPath.displayOrder ?? Number.MAX_SAFE_INTEGER) - (right.context.skillPath.displayOrder ?? Number.MAX_SAFE_INTEGER)
+    || leftStage - rightStage
+    || (left.question.displayOrder ?? Number.MAX_SAFE_INTEGER) - (right.question.displayOrder ?? Number.MAX_SAFE_INTEGER)
+    || left.question.id.localeCompare(right.question.id);
 }

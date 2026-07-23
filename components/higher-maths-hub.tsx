@@ -13,6 +13,7 @@ import { getActiveSkillPath, getActiveSubject, getQuestionBankHref } from "@/lib
 import { getEmptyProgressEvidence, getSkillPathProgress } from "@/lib/local-progress";
 import { useHasMounted } from "@/lib/use-mounted";
 import { useLearnerNextAction } from "@/components/learning/use-learner-next-action";
+import { QuickPracticeAction } from "@/components/practice/quick-practice-action";
 import type { LearnerNextAction } from "@/lib/learning/next-action";
 
 export function HigherMathsHub() {
@@ -105,7 +106,9 @@ function GuidedPathCard({
         </div>
       </div>
       <div className="mt-4 flex flex-wrap items-center gap-4 border-t border-forge/20 pt-4">
-        {nextAction.href ? <Link href={nextAction.href} aria-describedby="hub-next-action-reason" className="inline-flex min-h-11 items-center justify-center rounded-lg bg-forge px-5 text-sm font-extrabold text-white max-md:w-full">
+        {nextAction.kind === "practice_again" ? (
+          <QuickPracticeAction preferredPathId={nextAction.pathId} label={nextAction.label} className="max-md:w-full" />
+        ) : nextAction.href ? <Link href={nextAction.href} aria-describedby="hub-next-action-reason" className="inline-flex min-h-11 items-center justify-center rounded-lg bg-forge px-5 text-sm font-extrabold text-white max-md:w-full">
           {nextAction.label}
         </Link> : null}
         <Link href={getQuestionBankHref()} className="inline-flex min-h-10 items-center justify-center gap-2 px-2 text-sm font-extrabold text-muted transition hover:text-forge max-md:w-full">
@@ -154,7 +157,9 @@ function CompletedGuidedPathCard({
         </div>
       </div>
       <div className="mt-4 flex flex-wrap items-center gap-4 border-t border-forge/20 pt-4">
-        {nextAction.href ? <Link href={nextAction.href} aria-describedby="hub-next-action-reason" className="inline-flex min-h-11 items-center justify-center rounded-lg bg-forge px-5 text-sm font-extrabold text-white max-md:w-full">
+        {nextAction.kind === "practice_again" ? (
+          <QuickPracticeAction preferredPathId={nextAction.pathId} label={nextAction.label} className="max-md:w-full" />
+        ) : nextAction.href ? <Link href={nextAction.href} aria-describedby="hub-next-action-reason" className="inline-flex min-h-11 items-center justify-center rounded-lg bg-forge px-5 text-sm font-extrabold text-white max-md:w-full">
           {nextAction.label}
         </Link> : null}
         <Link href={getQuestionBankHref()} className="inline-flex min-h-10 items-center justify-center gap-2 px-2 text-sm font-extrabold text-muted transition hover:text-forge max-md:w-full">

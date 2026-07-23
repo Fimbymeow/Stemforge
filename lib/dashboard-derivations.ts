@@ -257,7 +257,7 @@ export function deriveLearnerDashboardModel(input: {
     weeklyActivity: deriveWeeklyActivity(input.evidence, now),
     sync: deriveSyncSummary(sync),
     quickLinks: [
-      { title: "Practice sessions", href: "/practice", detail: "Targeted, mixed, needs-work, or retry sessions from available content." },
+      { title: "Quick Practice", href: "/practice", detail: "Start a short untimed session from the most relevant available path." },
       { title: "Question bank", href: getQuestionBankHref(subject.subjectSlug), detail: "Filter practice by path and stage." },
       { title: "Revision notes", href: getResourceHref("revision-notes", subject.subjectSlug), detail: "Review the ideas behind your progress." },
     ],

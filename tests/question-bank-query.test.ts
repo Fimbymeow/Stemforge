@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { createContentResolver } from "../lib/content-resolver";
 import { deriveCourseDashboardSummary } from "../lib/dashboard-derivations";
-import { queryQuestionBank } from "../lib/question-bank-query";
+import { queryAvailableQuestionBankQuestions, queryQuestionBank } from "../lib/question-bank-query";
 import { attempt, evidence } from "./progress-fixtures";
 import { createTwoPathFixture, fixtureIds } from "./fixtures/multi-path-content";
 
@@ -91,4 +91,31 @@ test("empty filters are safe and unavailable zero-question paths do not masquera
   assert.deepEqual(queryQuestionBank(resolver, evidence(), { search: "no such curriculum item" }), []);
   const notStarted = queryQuestionBank(resolver, evidence(), { progressFilter: "not-started" });
   assert.deepEqual(notStarted.map((entry) => entry.id), ["basic-differentiation", fixtureIds.path]);
+});
+
+test("available-question query exposes real questions before unavailable catalogue inventory", () => {
+  const resolver = createContentResolver(createTwoPathFixture());
+  const questions = queryAvailableQuestionBankQuestions(resolver, evidence());
+  assert.equal(questions.length, 11);
+  assert(questions.every((entry) => entry.context.skillPath.isAvailable));
+  assert.equal(new Set(questions.map((entry) => entry.question.id)).size, questions.length);
+});
+
+test("available-question filters operate on question progress rather than whole-path status", () => {
+  const resolver = createContentResolver(createTwoPathFixture());
+  const activity = evidence([
+    attempt({
+      questionId: fixtureIds.questions[0],
+      skillPathId: fixtureIds.path,
+      stageId: fixtureIds.foundationsStage,
+      eventId: "question-level-review",
+      isCorrect: true,
+      hintViewedBeforeSubmission: true,
+    }),
+  ]);
+  assert.deepEqual(
+    queryAvailableQuestionBankQuestions(resolver, activity, { progressFilter: "review-recommended" }).map((entry) => entry.question.id),
+    [fixtureIds.questions[0]],
+  );
+  assert(!queryAvailableQuestionBankQuestions(resolver, activity, { progressFilter: "not-started" }).some((entry) => entry.question.id === fixtureIds.questions[0]));
 });

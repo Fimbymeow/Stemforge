@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Check, Eye, Lightbulb, MessageSquare, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookOpen, Check, Eye, FileText, Layers3, Lightbulb, MessageSquare, X } from "lucide-react";
 import { ReportDialog } from "@/components/beta-reports/report-dialog";
 import { AppShell } from "@/components/layout/app-shell";
 import { AppTopbar } from "@/components/layout/app-topbar";
@@ -39,11 +39,22 @@ import {
 } from "@/lib/questions/answer-drafts";
 import { deriveStageQuestionPosition } from "@/lib/questions/question-context";
 import { describeReviewReason } from "@/lib/questions/review-reason";
+import { getContextualResourceHref, getRelatedResourcesForQuestion } from "@/lib/study-context";
 import { useHasMounted } from "@/lib/use-mounted";
 
 type SubmissionIntent = "keyboard" | "pointer";
 
-export function QuestionWorkspace({ question, sessionPanel, answerLocked = false }: { question: Question; sessionPanel?: ReactNode; answerLocked?: boolean }) {
+export function QuestionWorkspace({
+  question,
+  sessionPanel,
+  answerLocked = false,
+  practiceReturnHref,
+}: {
+  question: Question;
+  sessionPanel?: ReactNode;
+  answerLocked?: boolean;
+  practiceReturnHref?: string;
+}) {
   const [answer, setAnswer] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [submittedAnswer, setSubmittedAnswer] = useState<string | null>(null);
@@ -87,6 +98,14 @@ export function QuestionWorkspace({ question, sessionPanel, answerLocked = false
   const localProgress = skillPath ? getSkillPathProgress(skillPath, evidenceOverride) : undefined;
   const stageLocalProgress = stage ? localProgress?.stageProgress[stage.id] : undefined;
   const questionProgress = getQuestionProgress(question.id, evidenceOverride);
+  const relatedResources = getRelatedResourcesForQuestion(question.id);
+  const questionSupportResources = [
+    relatedResources.find((item) => item.type === "formula-cards"),
+    relatedResources.find((item) => item.type === "revision-notes"),
+    ...(submitted || questionProgress.attempted
+      ? [relatedResources.find((item) => item.type === "worked-examples")]
+      : []),
+  ].filter((item): item is NonNullable<typeof item> => Boolean(item));
   const solutionViewed = questionProgress.solutionViewed;
   const usesGuidedMarking = question.answerType === "written" || question.answerType === "multi_step";
   const markedSubmission = submitted && submittedAnswer !== null ? markQuestionAnswer(question, submittedAnswer) : null;
@@ -486,6 +505,28 @@ export function QuestionWorkspace({ question, sessionPanel, answerLocked = false
               />
             </div>
           </Card>
+          {relatedResources.length ? (
+            <Card className="p-4">
+              <h2 className="mb-2 text-lg font-extrabold">Helpful resources</h2>
+              <p className="mb-3 text-sm text-muted">These resources belong to {skillPath?.name ?? "this path"}. Opening one does not record an attempt.</p>
+              <div className="grid gap-1">
+                {questionSupportResources.map((item) => {
+                    const Icon = item.type === "formula-cards" ? BookOpen : item.type === "revision-notes" ? FileText : Layers3;
+                    const typeLabel = item.type === "formula-cards" ? "Formula card" : item.type === "revision-notes" ? "Revision note" : "Worked example";
+                    return (
+                      <Link
+                        key={item.resource.id}
+                        href={getContextualResourceHref(item.type, context?.subject.subjectSlug ?? "higher-maths", item.resource.id, practiceReturnHref)}
+                        className="inline-flex min-h-10 items-center gap-2 rounded-lg px-2 text-sm font-bold text-forge hover:bg-forge-soft"
+                      >
+                        <Icon className="size-4" />
+                        {typeLabel}: {item.resource.title}
+                      </Link>
+                    );
+                })}
+              </div>
+            </Card>
+          ) : null}
           <div className="flex min-h-10 items-center justify-center gap-2 rounded-lg border border-line bg-white px-4 text-center text-sm font-bold text-muted">
             <MessageSquare className="size-4" />
             <ReportDialog
