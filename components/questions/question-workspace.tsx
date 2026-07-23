@@ -40,6 +40,7 @@ import {
 } from "@/lib/questions/answer-drafts";
 import { deriveStageQuestionPosition } from "@/lib/questions/question-context";
 import { describeReviewReason } from "@/lib/questions/review-reason";
+import { deriveQuestionSupportPresentation } from "@/lib/questions/question-support";
 import { getContextualResourceHref, getRelatedResourcesForQuestion } from "@/lib/study-context";
 import { useHasMounted } from "@/lib/use-mounted";
 
@@ -105,6 +106,12 @@ export function QuestionWorkspace({
   ].filter((item): item is NonNullable<typeof item> => Boolean(item));
   const isHigherMathsQuestion = context?.subject.subjectSlug === "higher-maths";
   const solutionViewed = questionProgress.solutionViewed;
+  const solutionVisible = solutionViewed || solutionOpenedThisInteraction;
+  const supportPresentation = deriveQuestionSupportPresentation({
+    hasHint: question.hint.trim().length > 0,
+    hintViewed,
+    solutionViewed: solutionVisible,
+  });
   const usesGuidedMarking = question.answerType === "written" || question.answerType === "multi_step";
   const markedSubmission = submitted && submittedAnswer !== null ? markQuestionAnswer(question, submittedAnswer) : null;
   const isCorrect = markedSubmission?.isCorrect === true;
@@ -425,21 +432,21 @@ export function QuestionWorkspace({
             </div>
           </Card>
 
-          <Card className="p-4" data-testid="question-hint-panel">
+          {supportPresentation.showHintPanel ? <Card className="p-4" data-testid="question-hint-panel">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-3">
                 <span className="grid size-9 shrink-0 place-items-center rounded-full bg-forge-soft text-forge"><Lightbulb className="size-5" /></span>
                 <div>
                   <h2 className="m-0 text-lg font-extrabold">Need a hand?</h2>
-                  {!hintViewed ? <p className="mt-1 text-sm text-muted">Use a hint when you need one. Answering on your own shows you&apos;re ready to move on.</p> : null}
+                  {!supportPresentation.showHintContent ? <p className="mt-1 text-sm text-muted">Use a hint when you need one. Answering on your own shows you&apos;re ready to move on.</p> : null}
                 </div>
               </div>
-              {!hintViewed ? (
+              {supportPresentation.showHintControl ? (
                 <button type="button" data-testid="hint-control" onClick={() => void handleHintViewed()} className="inline-flex min-h-10 items-center justify-center rounded-lg border border-line bg-white px-4 text-sm font-extrabold text-forge max-sm:w-full">Show hint</button>
               ) : null}
             </div>
-            {hintViewed ? <div ref={hintContentRef} tabIndex={-1} data-testid="hint-content" className="mt-3 rounded-lg bg-paper p-4 outline-none"><p className="mb-2 text-sm font-extrabold text-forge">Hint</p><MathContent>{question.hint}</MathContent></div> : null}
-          </Card>
+            {supportPresentation.showHintContent ? <div ref={hintContentRef} tabIndex={-1} data-testid="hint-content" className="mt-3 rounded-lg bg-paper p-4 outline-none"><p className="mb-2 text-sm font-extrabold text-forge">Hint</p><MathContent>{question.hint}</MathContent></div> : null}
+          </Card> : null}
 
           {(submitted || questionProgress.attempted) ? (
             <>
@@ -449,20 +456,14 @@ export function QuestionWorkspace({
                     <h2 ref={solutionHeadingRef} tabIndex={-1} className="m-0 text-xl font-extrabold outline-none">Worked solution</h2>
                     <p className="mt-1 text-sm text-muted">Compare each part with your submitted answer when you are ready.</p>
                   </div>
-                  {!solutionViewed ? (
+                  {!solutionVisible ? (
                     <button type="button" data-testid="worked-solution-control" onClick={() => void handleSolutionViewed()} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-forge bg-white px-4 text-sm font-extrabold text-forge">
                       <Eye className="size-4" /> View worked solution
                     </button>
                   ) : null}
                 </div>
-                {solutionViewed ? <div className="mt-4 border-t border-line pt-4"><WorkedSolutionContent key={`${question.id}:${question.questionVersion}`} solution={question.workedSolution} finalAnswer={question.finalAnswer} /></div> : null}
+                {solutionVisible ? <div className="mt-4 border-t border-line pt-4" role="region" aria-label="Worked solution content"><WorkedSolutionContent key={`${question.id}:${question.questionVersion}`} solution={question.workedSolution} finalAnswer={question.finalAnswer} /></div> : null}
               </Card>
-              {question.commonMistake && solutionViewed ? (
-                <Card className="p-4">
-                  <h2 className="mb-2 text-lg font-extrabold">Common mistake</h2>
-                  <MathContent>{question.commonMistake}</MathContent>
-                </Card>
-              ) : null}
             </>
           ) : null}
 

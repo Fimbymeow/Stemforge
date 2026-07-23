@@ -16,7 +16,11 @@ import {
   type AnswerDraftIdentity,
 } from "../lib/questions/answer-drafts";
 import { deriveStageQuestionPosition } from "../lib/questions/question-context";
-import { deriveWorkedSolutionPresentation } from "../lib/questions/worked-solution";
+import {
+  deriveWorkedSolutionPresentation,
+  workedSolutionEndsWithFinalAnswer,
+} from "../lib/questions/worked-solution";
+import { deriveQuestionSupportPresentation } from "../lib/questions/question-support";
 import { contentResolver } from "../lib/content-resolver";
 import type { StorageLike } from "../lib/progress/storage";
 
@@ -144,6 +148,68 @@ test("structured solutions progress while unstructured live Maths content remain
   ]);
   assert.equal(structured.mode, "progressive");
   if (structured.mode === "progressive") assert.equal(structured.steps.length, 2);
+});
+
+test("worked solution presentation supersedes hint presentation without changing support facts", () => {
+  assert.deepEqual(deriveQuestionSupportPresentation({
+    hasHint: true,
+    hintViewed: false,
+    solutionViewed: false,
+  }), {
+    showHintPanel: true,
+    showHintControl: true,
+    showHintContent: false,
+  });
+  assert.deepEqual(deriveQuestionSupportPresentation({
+    hasHint: true,
+    hintViewed: true,
+    solutionViewed: false,
+  }), {
+    showHintPanel: true,
+    showHintControl: false,
+    showHintContent: true,
+  });
+  assert.deepEqual(deriveQuestionSupportPresentation({
+    hasHint: true,
+    hintViewed: true,
+    solutionViewed: true,
+  }), {
+    showHintPanel: false,
+    showHintControl: false,
+    showHintContent: false,
+  });
+});
+
+test("questions without hints render no hint surface before or after solution reveal", () => {
+  for (const solutionViewed of [false, true]) {
+    assert.deepEqual(deriveQuestionSupportPresentation({
+      hasHint: false,
+      hintViewed: false,
+      solutionViewed,
+    }), {
+      showHintPanel: false,
+      showHintControl: false,
+      showHintContent: false,
+    });
+  }
+});
+
+test("a separate final answer is unnecessary only when the solution already ends with it", () => {
+  assert.equal(workedSolutionEndsWithFinalAnswer(algebraic.workedSolution, algebraic.finalAnswer), true);
+  assert.equal(workedSolutionEndsWithFinalAnswer("Differentiate to obtain $f'(x)=5x^4$.", "$5x^4$"), true);
+  assert.equal(workedSolutionEndsWithFinalAnswer("Apply the power rule.", "$5x^4$"), false);
+  assert.equal(workedSolutionEndsWithFinalAnswer("An incorrect result is $15x^4$.", "$5x^4$"), false);
+  assert.equal(workedSolutionEndsWithFinalAnswer([
+    { title: "Method", body: "Apply the power rule." },
+    { title: "Result", body: "Therefore $f'(x)=5x^4$." },
+  ], "$5x^4$"), true);
+});
+
+test("legacy Common Mistakes data remains valid source content but is not part of support presentation", () => {
+  assert.match(algebraic.commonMistake, /coefficient 5/i);
+  assert.equal(algebraic.id, "hm-calc-diff-basic-f-001");
+  assert.equal(algebraic.questionVersion, 1);
+  assert.equal(algebraic.contentRevision, 1);
 });
 
 test("stage-relative position uses canonical active stage membership", () => {

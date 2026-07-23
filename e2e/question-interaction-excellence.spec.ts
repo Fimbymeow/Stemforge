@@ -82,7 +82,7 @@ test("current unstructured solutions use the safe full fallback after a genuine 
   await openWorkedSolution(page);
   await expect(page.getByRole("heading", { name: "Worked solution" })).toBeFocused();
   await expect(page.getByTestId("full-solution-fallback")).toBeVisible();
-  await expect(page.getByTestId("full-solution-fallback")).toContainText("Final answer");
+  await expect(page.getByTestId("full-solution-fallback").getByText("Final answer", { exact: true })).toHaveCount(0);
   await expect(page.getByTestId("question-status")).toContainText("Completed with solution");
 });
 

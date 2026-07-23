@@ -9,7 +9,6 @@ import {
   ChevronRight,
   Flag,
   Gauge,
-  MessageSquareWarning,
   PartyPopper,
   PenLine,
   Star,
@@ -37,7 +36,6 @@ export function QuestionPage({ mode, questionId = "motion-f-001" }: { mode: Ques
             <QuestionHeaderCard demo={demo} question={question} position={position} />
             <QuestionCard demo={demo} question={question} position={position} />
             <SolutionPanel demo={demo} question={question} />
-            <MistakeCard demo={demo} question={question} />
             <QuestionNavigation demo={demo} position={position} />
           </section>
           <QuestionProgressPanel demo={demo} question={question} position={position} />
@@ -179,24 +177,6 @@ function SolutionPanel({ demo, question }: { demo: boolean; question?: StemForge
           A worked solution will appear after a question is loaded.
         </p>
       )}
-    </Card>
-  );
-}
-
-function MistakeCard({ demo, question }: { demo: boolean; question?: StemForgeQuestion }) {
-  return (
-    <Card className="p-6">
-      <div className="flex gap-5">
-        <MessageSquareWarning className="mt-1 size-6 shrink-0 text-forge" />
-        <div>
-          <h2 className="m-0 text-lg font-extrabold">Common mistake</h2>
-          <p className="mt-3 text-muted">
-            {demo
-              ? question?.commonMistake
-              : "Common mistakes will appear here once a question is loaded."}
-          </p>
-        </div>
-      </div>
     </Card>
   );
 }

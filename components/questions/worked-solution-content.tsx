@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { MathContent } from "@/components/questions/math-content";
 import {
   deriveWorkedSolutionPresentation,
+  workedSolutionEndsWithFinalAnswer,
   type StructuredSolutionStep,
 } from "@/lib/questions/worked-solution";
 
@@ -15,13 +16,17 @@ export function WorkedSolutionContent({
   finalAnswer: string;
 }) {
   const presentation = useMemo(() => deriveWorkedSolutionPresentation(solution), [solution]);
+  const needsSeparateFinalAnswer = useMemo(
+    () => !workedSolutionEndsWithFinalAnswer(solution, finalAnswer),
+    [finalAnswer, solution],
+  );
   const [revealedCount, setRevealedCount] = useState(1);
 
   if (presentation.mode === "full") {
     return (
       <div data-testid="full-solution-fallback">
         <MathContent>{presentation.content}</MathContent>
-        <FinalAnswer answer={finalAnswer} />
+        {needsSeparateFinalAnswer ? <FinalAnswer answer={finalAnswer} /> : null}
       </div>
     );
   }
@@ -56,7 +61,7 @@ export function WorkedSolutionContent({
             Show full solution
           </button>
         </div>
-      ) : <FinalAnswer answer={finalAnswer} />}
+      ) : needsSeparateFinalAnswer ? <FinalAnswer answer={finalAnswer} /> : null}
     </div>
   );
 }

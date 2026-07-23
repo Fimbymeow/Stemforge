@@ -102,6 +102,7 @@ test("keyboard users can move from a resource into practice and reach the summar
   await expect(page).toHaveURL(/\/practice\/session\//);
   await page.getByLabel("Your answer").fill("wrong");
   await page.getByRole("button", { name: "Submit Answer" }).press("Enter");
+  await expect(page.getByRole("heading", { name: "Not quite yet" })).toBeFocused();
   const finish = page.getByRole("button", { name: "Finish session" });
   await finish.focus();
   await finish.press("Enter");
