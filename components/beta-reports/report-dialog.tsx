@@ -137,7 +137,7 @@ export function ReportDialog({
         }}
         className={className || "inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-line bg-white px-4 text-sm font-extrabold text-forge shadow-sm transition hover:border-forge"}
       >
-        <MessageSquare className="size-4" />
+        <MessageSquare aria-hidden="true" className="size-4" />
         {triggerLabel}
       </button>
       {open ? (

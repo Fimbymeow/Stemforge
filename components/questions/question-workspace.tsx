@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, BookOpen, Check, Eye, FileText, Layers3, Lightbulb, MessageSquare, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookOpen, Check, Eye, FileText, Layers3, Lightbulb, X } from "lucide-react";
 import { ReportDialog } from "@/components/beta-reports/report-dialog";
 import { AppShell } from "@/components/layout/app-shell";
 import { AppTopbar } from "@/components/layout/app-topbar";
@@ -527,26 +527,22 @@ export function QuestionWorkspace({
               </div>
             </Card>
           ) : null}
-          <div className="flex min-h-10 items-center justify-center gap-2 rounded-lg border border-line bg-white px-4 text-center text-sm font-bold text-muted">
-            <MessageSquare className="size-4" />
-            <ReportDialog
-              triggerLabel="Report this question"
-              defaultKind="content_issue"
-              pageArea="question_workspace"
-              contentReference={{
-                subjectId: context?.subject.subjectSlug,
-                courseId: context?.courseArea.slug,
-                pathId: question.skillPathId ?? skillPath?.slug,
-                stageId: question.stageId ?? stage?.id,
-                questionId: question.id,
-                questionVersion: question.questionVersion,
-                contentRevision: question.contentRevision,
-                questionType: question.answerType,
-              }}
-              component={question.graphConfig ? "graph_question" : question.natureTableConfig ? "nature_table_question" : question.answerType}
-              className="font-bold text-forge"
-            />
-          </div>
+          <ReportDialog
+            triggerLabel="Report this question"
+            defaultKind="content_issue"
+            pageArea="question_workspace"
+            contentReference={{
+              subjectId: context?.subject.subjectSlug,
+              courseId: context?.courseArea.slug,
+              pathId: question.skillPathId ?? skillPath?.slug,
+              stageId: question.stageId ?? stage?.id,
+              questionId: question.id,
+              questionVersion: question.questionVersion,
+              contentRevision: question.contentRevision,
+              questionType: question.answerType,
+            }}
+            component={question.graphConfig ? "graph_question" : question.natureTableConfig ? "nature_table_question" : question.answerType}
+          />
         </aside>
       </div>
     </AppShell>

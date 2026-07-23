@@ -9,11 +9,13 @@ const BANK_ROUTE = "/subjects/higher-maths/question-bank";
 
 test("new learner receives the same one-click learning entry across major surfaces", async ({ page, seriousBrowserErrors }) => {
   await page.goto("/dashboard");
+  await expectHigherMathsCourseAccess(page);
   await expectPrimaryAction(page, "Start learning", `/question/${QUESTION_IDS[0]}`);
   await page.getByTestId("dashboard-progress-summary").getByRole("link", { name: "Start learning" }).focus();
   await expect(page.getByTestId("dashboard-progress-summary").getByRole("link", { name: "Start learning" })).toBeFocused();
 
   await page.goto("/subjects");
+  await expectHigherMathsCourseAccess(page);
   await expect(page.getByRole("link", { name: "Start learning" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
 
   await page.goto(HUB_ROUTE);
@@ -38,9 +40,13 @@ test("an incomplete question is resumed consistently instead of opening generic 
 
   for (const route of ["/dashboard", HUB_ROUTE, PATH_ROUTE, BANK_ROUTE]) {
     await page.goto(route);
+    if (route === "/dashboard") await expectHigherMathsCourseAccess(page);
     await expectPrimaryAction(page, "Resume question", `/question/${QUESTION_IDS[1]}`);
   }
 
+  await page.goto("/subjects");
+  await expectHigherMathsCourseAccess(page);
+  await expectPrimaryAction(page, "Resume question", `/question/${QUESTION_IDS[1]}`);
   await page.getByRole("link", { name: "Resume question" }).click();
   await expect(page).toHaveURL(new RegExp(`/question/${QUESTION_IDS[1]}$`));
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
@@ -55,8 +61,13 @@ test("a valid unfinished practice session becomes the shared primary action", as
 
   for (const route of ["/dashboard", HUB_ROUTE, PATH_ROUTE, BANK_ROUTE]) {
     await page.goto(route);
+    if (route === "/dashboard") await expectHigherMathsCourseAccess(page);
     await expectPrimaryAction(page, "Resume practice", sessionUrl);
   }
+
+  await page.goto("/subjects");
+  await expectHigherMathsCourseAccess(page);
+  await expectPrimaryAction(page, "Resume practice", sessionUrl);
 });
 
 test("stage completion advances to the next recommended stage without hard-locking exploration", async ({ page }) => {
@@ -83,9 +94,25 @@ test("completed guided content recommends practice and never locked inventory", 
 
   for (const route of ["/dashboard", HUB_ROUTE, PATH_ROUTE, BANK_ROUTE]) {
     await page.goto(route);
+    if (route === "/dashboard") await expectHigherMathsCourseAccess(page);
     await expectPrimaryAction(page, "Practise again", "/practice");
   }
+  await page.goto("/subjects");
+  await expectHigherMathsCourseAccess(page);
+  await expectPrimaryAction(page, "Practise again", "/practice");
   await expect(page.getByText("Chain rule", { exact: true })).not.toBeVisible();
+});
+
+test("review recommendation remains secondary to ordinary Higher Maths access", async ({ page }) => {
+  await seedStoredProgress(page, v3Payload(
+    QUESTION_IDS.map((id, index) => currentAttempt(id, index + 1, { hintViewedBeforeSubmission: index === 0 })),
+  ));
+
+  for (const route of ["/dashboard", "/subjects"]) {
+    await page.goto(route);
+    await expectHigherMathsCourseAccess(page);
+    await expectPrimaryAction(page, "Review 1 question", `/question/${QUESTION_IDS[0]}`);
+  }
 });
 
 test("question completion uses the shared next action and mobile hierarchy stays usable", async ({ page, seriousBrowserErrors }) => {
@@ -116,4 +143,11 @@ async function expectPrimaryAction(page: Page, name: string, href: string) {
   const action = page.getByRole("link", { name, exact: true }).first();
   await expect(action).toBeVisible();
   await expect(action).toHaveAttribute("href", href);
+}
+
+async function expectHigherMathsCourseAccess(page: Page) {
+  const access = page.getByRole("link", { name: "Open Higher Maths", exact: true });
+  await expect(access).toHaveCount(1);
+  await expect(access).toBeVisible();
+  await expect(access).toHaveAttribute("href", HUB_ROUTE);
 }

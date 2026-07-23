@@ -68,14 +68,28 @@ function SubjectCard({ subject, nextAction }: { subject: (typeof subjectCatalog)
       <span className="mb-3 grid size-10 place-items-center rounded-xl bg-forge-soft text-forge">
         <Icon className="size-5" />
       </span>
-      <h3 className="m-0 text-lg font-extrabold">{subject.name}</h3>
+      <h3 className="m-0 text-lg font-extrabold">
+        {subject.available ? <Link href={subject.href} className="rounded-sm hover:text-forge focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-forge">{subject.name}</Link> : subject.name}
+      </h3>
       <p className="mt-2 min-h-[54px] text-sm text-muted">{subject.description}</p>
       <p className={`mt-3 text-xs font-bold ${subject.available ? "text-forge" : "text-muted"}`}>{subject.status}</p>
       {subject.available ? (
-        <Link href={recommended ? nextAction.href! : subject.href} className="mt-4 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg bg-forge text-sm font-extrabold text-white">
-          {recommended ? nextAction.label : "Open subject"}
-          <ArrowRight className="size-4" />
-        </Link>
+        <div className="mt-4 grid gap-2">
+          <Link href={subject.href} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-forge px-3 text-center text-sm font-extrabold text-white">
+            {subject.name === "Higher Maths" ? "Open Higher Maths" : "Open subject"}
+            <ArrowRight className="size-4" />
+          </Link>
+          {recommended ? (
+            <>
+              <p id="subjects-higher-maths-recommendation" className="mt-1 text-xs font-bold leading-relaxed text-muted">
+                Recommended next: {nextAction.title}
+              </p>
+              <Link href={nextAction.href!} aria-describedby="subjects-higher-maths-recommendation" className="inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-forge bg-white px-3 text-center text-sm font-extrabold text-forge">
+                {nextAction.label}
+              </Link>
+            </>
+          ) : null}
+        </div>
       ) : (
         <span className="mt-4 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg border border-line bg-paper text-sm font-extrabold text-muted">
           <Lock className="size-4" />

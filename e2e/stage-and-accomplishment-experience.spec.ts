@@ -174,12 +174,14 @@ test("stage-completion panel and accomplishment language fit without overflow on
   await expectNoHorizontalOverflow(page);
 });
 
-test("the dashboard names the specific stage completed instead of a generic label", async ({ page }) => {
+test("stage completion drives the retained dashboard recommendation and denominator without an activity widget", async ({ page }) => {
   await seedStoredProgress(page, v3Payload(priorAttempts(FOUNDATIONS_IDS.slice(0, 2))));
   await openQuestion(page, FOUNDATIONS_IDS[2]);
   await submitAnswer(page, QUESTION_ANSWERS[FOUNDATIONS_IDS[2] as keyof typeof QUESTION_ANSWERS]);
 
   await page.goto("/dashboard");
-  await expect(page.getByText("Foundations completed")).toBeVisible();
+  await expect(page.getByTestId("dashboard-progress-summary")).toContainText("Begin Applications");
+  await expect(page.getByTestId("dashboard-progress-summary")).toContainText("3 / 8 completed");
+  await expect(page.getByRole("heading", { name: "Recent activity" })).toHaveCount(0);
   await expect(page.getByText(/^Stage Completed$/)).toHaveCount(0);
 });

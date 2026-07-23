@@ -30,7 +30,7 @@ test("dashboard, Higher Maths hub and path agree for mixed outcomes", async ({ p
 
   await page.goto("/dashboard");
   await expect(page.getByTestId("dashboard-progress-summary")).toContainText("3 / 8 completed");
-  await expect(page.getByTestId("dashboard-path-basic-differentiation").getByRole("progressbar").first()).toHaveAttribute("aria-valuenow", "38");
+  await expect(page.getByTestId("dashboard-course-progress").getByRole("progressbar")).toHaveAttribute("aria-valuenow", "38");
 
   await page.goto("/subjects/higher-maths");
   await expect(page.getByText("3 / 8 completed", { exact: true })).toBeVisible();
@@ -50,11 +50,14 @@ test("path reset clears only Basic differentiation and remains valid after refre
   );
   await seedStoredProgress(page, payload);
   await page.goto("/subjects/higher-maths/calculus/differentiation/basic-differentiation");
+  const resetRoute = page.url();
   await expect(page.getByTestId("skill-path-hero-progress").getByRole("progressbar")).toHaveAttribute("aria-valuenow", "13");
 
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByTestId("reset-progress").click();
+  await expect(page).toHaveURL(resetRoute);
   await expect(page.getByTestId("path-mastery-status")).toContainText("Not Started");
+  await expect(page.getByRole("navigation", { name: "Main" })).toBeVisible();
   let stored = await readStoredProgress(page) as ProgressPayload;
   expect(stored.version).toBe(4);
   expect(stored.data.attempts).toHaveLength(1);
@@ -64,7 +67,10 @@ test("path reset clears only Basic differentiation and remains valid after refre
   await page.reload();
   await expect(page.getByTestId("path-mastery-status")).toContainText("Not Started");
   await page.goto("/dashboard");
+  await expect(page).toHaveURL(/\/dashboard$/);
   await expect(page.getByTestId("dashboard-progress-summary")).toContainText("0 / 8 completed");
+  await expect(page.getByTestId("dashboard-progress-summary")).toContainText("Start Basic differentiation");
+  await expect(page.getByRole("navigation", { name: "Main" })).toBeVisible();
   stored = await readStoredProgress(page) as ProgressPayload;
   expect(stored.data.attempts.some((item) => item.skillPathId === PATH_ID)).toBe(false);
 });

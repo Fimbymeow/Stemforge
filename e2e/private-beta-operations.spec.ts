@@ -1,5 +1,14 @@
 import { test, expect } from "./fixtures/test";
 
+test("question report trigger has one accessible control and one decorative icon", async ({ page }) => {
+  await page.goto("/question/hm-calc-diff-basic-f-001");
+  const trigger = page.getByRole("button", { name: "Report this question", exact: true });
+  await expect(trigger).toHaveCount(1);
+  await expect(trigger).toBeVisible();
+  await expect(trigger.locator("svg")).toHaveCount(1);
+  await expect(trigger.locator("svg")).toHaveAttribute("aria-hidden", "true");
+});
+
 test("guest can submit an explicit beta report with safe diagnostics and receive a reference", async ({ page }) => {
   let captured: unknown;
   await page.route("**/api/beta-reports", async (route) => {
