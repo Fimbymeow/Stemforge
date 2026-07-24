@@ -39,6 +39,101 @@ export type LearnerNextActionInput = {
   activePracticeSession?: PracticeSession | null;
 };
 
+export function deriveSkillPathNextAction(
+  input: LearnerNextActionInput & { pathId: string },
+): LearnerNextAction {
+  const resolver = input.source ? createContentResolver(input.source) : contentResolver;
+  const questionVersions = resolver.getQuestionVersions();
+  const context = resolver.getPathContext(input.pathId);
+  if (!context?.skillPath.isAvailable) return unavailableAction();
+
+  const practice = actionForActivePractice(input.activePracticeSession, resolver);
+  if (practice?.pathId === input.pathId) return practice;
+
+  const unfinished = latestCurrentVersionUnfinishedQuestion(
+    input.evidence,
+    resolver,
+    questionVersions,
+    input.pathId,
+  );
+  if (unfinished) {
+    return questionAction({
+      kind: "resume_question",
+      intent: "resuming",
+      context: unfinished.context,
+      label: "Resume question",
+      title: `Resume ${unfinished.context.stage.name}`,
+      reason: unfinished.reason,
+    });
+  }
+
+  const progress = calculateSkillPathProgress(context.skillPath, input.evidence, questionVersions);
+  const nextQuestionId = selectNextQuestionId(context.skillPath, input.evidence, questionVersions);
+  if (nextQuestionId) {
+    const questionContext = resolver.getQuestionContext(nextQuestionId);
+    if (questionContext?.skillPath.slug === input.pathId) {
+      const reassessment = progress.reassessmentRequiredQuestionIds.includes(nextQuestionId)
+        || progress.reassessmentRecommendedQuestionIds.includes(nextQuestionId);
+      if (reassessment) {
+        return questionAction({
+          kind: "review_question",
+          intent: "reviewing",
+          context: questionContext,
+          label: "Review updated question",
+          title: `Review ${questionContext.stage.name}`,
+          reason: "This question has changed since your earlier work, so revisiting it is the safest next step.",
+        });
+      }
+
+      const stageProgress = progress.stageProgress[questionContext.stage.id];
+      const stages = context.skillPath.learningStages ?? [];
+      const stageIndex = stages.findIndex((stage) => stage.id === questionContext.stage.id);
+      const precedingStagesComplete = stageIndex > 0 && stages
+        .slice(0, stageIndex)
+        .every((stage) => progress.stageProgress[stage.id]?.completionPercentage === 100);
+      const beginningStage = precedingStagesComplete && (stageProgress?.attemptedCount ?? 0) === 0;
+      return questionAction({
+        kind: progress.attemptedCount === 0 ? "start_learning" : beginningStage ? "start_stage" : "continue_question",
+        intent: progress.attemptedCount === 0 || beginningStage ? "starting" : "continuing",
+        context: questionContext,
+        label: progress.attemptedCount === 0
+          ? "Start learning"
+          : beginningStage
+            ? `Begin ${questionContext.stage.name}`
+            : `Continue ${questionContext.stage.name}`,
+        title: progress.attemptedCount === 0
+          ? `Start ${context.skillPath.name}`
+          : beginningStage
+            ? `Begin ${questionContext.stage.name}`
+            : `Continue ${context.skillPath.name}`,
+        reason: progress.attemptedCount === 0
+          ? `Begin with the first ${questionContext.stage.name} question. Your progress is saved automatically.`
+          : beginningStage
+            ? `You completed the previous stage. ${questionContext.stage.name} is the recommended next step.`
+            : "Continue with the next incomplete question in your current stage.",
+      });
+    }
+  }
+
+  const review = actionForReview([context], input.evidence, resolver, questionVersions);
+  if (review) return review;
+  return {
+    kind: "practice_again",
+    intent: "practising",
+    href: "/practice",
+    label: "Practise again",
+    title: `Practise ${context.skillPath.name}`,
+    reason: "You have completed the guided questions currently available. Use targeted practice to keep the skill fresh.",
+    subjectId: context.subject.subjectSlug,
+    courseId: context.courseArea.slug,
+    pathId: context.skillPath.slug,
+    stageId: null,
+    questionId: null,
+    questionVersion: null,
+    practiceSessionId: null,
+  };
+}
+
 export function deriveLearnerNextAction(input: LearnerNextActionInput): LearnerNextAction {
   const resolver = input.source ? createContentResolver(input.source) : contentResolver;
   const questionVersions = resolver.getQuestionVersions();
@@ -195,6 +290,7 @@ function latestCurrentVersionUnfinishedQuestion(
   evidence: ProgressEvidence,
   resolver: ReturnType<typeof createContentResolver>,
   questionVersions: Readonly<Record<string, number>>,
+  pathId?: string,
 ) {
   const events = [
     ...evidence.attempts.filter((attempt) => attempt.isGenuine).map((attempt) => ({
@@ -221,6 +317,7 @@ function latestCurrentVersionUnfinishedQuestion(
     const context = resolver.getQuestionContext(event.questionId);
     const version = questionVersions[event.questionId];
     if (!context || !context.skillPath.isAvailable || !version) continue;
+    if (pathId && context.skillPath.slug !== pathId) continue;
     if (event.version.kind !== "known" || event.version.questionVersion !== version) continue;
     const progress = getQuestionProgressForVersion(event.questionId, version, evidence);
     if (!progress.completed) return { context, reason: event.reason };

@@ -22,7 +22,7 @@ const modeCopy: Record<Exclude<PracticeMode, "retry_incorrect">, { title: string
   needs_work: { title: "Needs Review", detail: "Revisit unfinished and review-recommended questions from your earlier work." },
 };
 
-export function PracticeSetup() {
+export function PracticeSetup({ workingContextPathId }: { workingContextPathId?: string | null }) {
   const router = useRouter();
   const hasMounted = useHasMounted();
   const evidence = hasMounted ? getProgressEvidence() : getEmptyProgressEvidence();
@@ -32,7 +32,11 @@ export function PracticeSetup() {
   const [courseId, setCourseId] = useState(courses[0]?.slug ?? "");
   const availablePaths = paths.filter((context) => context.courseArea.slug === courseId);
   const visibility = derivePracticeSetupVisibility(courses.length, availablePaths.length);
-  const [selectedPathId, setSelectedPathId] = useState(availablePaths[0]?.skillPath.slug ?? "");
+  const [selectedPathId, setSelectedPathId] = useState(
+    availablePaths.some((item) => item.skillPath.slug === workingContextPathId)
+      ? workingContextPathId!
+      : availablePaths[0]?.skillPath.slug ?? "",
+  );
   const [questionCount, setQuestionCount] = useState(6);
   const [timed, setTimed] = useState(false);
   const [timeLimitMinutes, setTimeLimitMinutes] = useState(15);
@@ -77,7 +81,7 @@ export function PracticeSetup() {
   }
 
   return (
-    <AppShell demo active="Practice" className="py-8 max-xl:pt-5">
+    <AppShell demo active="Practice" className="py-8 max-xl:pt-5" workingContextPathId={workingContextPathId}>
       <div className="mx-auto grid max-w-[920px] gap-5">
         <header className="flex items-start justify-between gap-4 max-md:grid">
           <div>
@@ -96,7 +100,7 @@ export function PracticeSetup() {
               <h2 className="m-0 text-xl font-extrabold">Quick Practice</h2>
               <p className="mt-1 text-sm text-muted">Six untimed questions selected deterministically from your most relevant available path.</p>
             </div>
-            <QuickPracticeAction className="max-md:w-full" />
+            <QuickPracticeAction className="max-md:w-full" preferredPathId={workingContextPathId} />
           </div>
         </Card>
 

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
-import { SkillPathLearningPage } from "@/components/subject-learning-pages";
 import { getSkillPathContextByRoute } from "@/lib/learning-paths";
+import { WorkingContextOverview } from "@/components/working-context/working-context-overview";
 
 export default async function CanonicalSkillPathPage({
   params,
@@ -10,12 +10,5 @@ export default async function CanonicalSkillPathPage({
   const { subjectSlug, courseAreaSlug, topicSlug, skillPathSlug } = await params;
   const context = getSkillPathContextByRoute(subjectSlug, courseAreaSlug, topicSlug, skillPathSlug);
   if (!context?.skillPath.isAvailable) notFound();
-  return (
-    <SkillPathLearningPage
-      subjectSlug={subjectSlug}
-      courseAreaSlug={courseAreaSlug}
-      specAreaSlug={topicSlug}
-      skillPathSlug={skillPathSlug}
-    />
-  );
+  return <WorkingContextOverview pathId={context.skillPath.slug} />;
 }

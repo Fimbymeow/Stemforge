@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, ChevronDown, FileText, Lock } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
@@ -9,25 +9,46 @@ import { SubjectResourceLinks } from "@/components/learning/subject-resource-lin
 import { PracticeEntryCard } from "@/components/practice/practice-entry-card";
 import { Card } from "@/components/ui";
 import { MathContent } from "@/components/questions/math-content";
-import { getActiveSubject, getActiveSkillPath, getAllSkillPaths } from "@/lib/learning-paths";
+import { getActiveSubject, getActiveSkillPath, getAllSkillPaths, getQuestionContext } from "@/lib/learning-paths";
 import type { FormulaCard, NoteBlock, WorkedExample } from "@/data/types";
+import {
+  WORKING_CONTEXT_NOTES_ORIGIN_PREFIX,
+} from "@/lib/working-context";
 
-export function HigherMathsResourceBrowser() {
+export function HigherMathsResourceBrowser({
+  returnTo: requestedReturnTo,
+  questionOrigin,
+}: {
+  returnTo?: string;
+  questionOrigin?: {
+    questionId?: string;
+    questionNumber?: string;
+    token?: string;
+  };
+}) {
+  const router = useRouter();
   const subject = getActiveSubject();
   const skillPath = getActiveSkillPath();
   const lockedPaths = getAllSkillPaths(subject).filter((path) => !path.isAvailable);
   const notes = skillPath.notes ?? [];
   const formulaCards = skillPath.formulaCards ?? [];
   const workedExamples = skillPath.workedExamples ?? [];
-  const [returnTo, setReturnTo] = useState<string | null>(null);
-
-  useEffect(() => {
-    const requested = new URLSearchParams(window.location.search).get("returnTo");
-    if (requested?.startsWith("/") && !requested.startsWith("//")) setReturnTo(requested);
-  }, []);
+  const returnTo = requestedReturnTo?.startsWith("/") && !requestedReturnTo.startsWith("//") ? requestedReturnTo : null;
+  const originQuestionId = questionOrigin?.questionId && /^[a-z0-9-]+$/i.test(questionOrigin.questionId)
+    ? questionOrigin.questionId
+    : null;
+  const originQuestionNumber = Number.parseInt(questionOrigin?.questionNumber ?? "", 10);
+  const originQuestionContext = originQuestionId ? getQuestionContext(originQuestionId) : null;
+  const hasQuestionOrigin = Boolean(
+    originQuestionId
+    && originQuestionContext?.skillPath.slug === "basic-differentiation"
+    && Number.isInteger(originQuestionNumber)
+    && originQuestionNumber > 0
+    && questionOrigin?.token,
+  );
 
   return (
-    <AppShell demo active="Subjects">
+    <AppShell demo active="Subjects" workingContextPathId={skillPath.slug}>
       <div className="mx-auto mb-3 flex max-w-[980px] justify-end"><AppTopbar demo /></div>
       <div className="mx-auto grid max-w-[980px] gap-4">
         <header>
@@ -51,6 +72,15 @@ export function HigherMathsResourceBrowser() {
             <ArrowLeft className="size-4" />Return to active practice
           </Link>
         ) : null}
+        {!returnTo && hasQuestionOrigin ? (
+          <button
+            type="button"
+            onClick={returnToOriginQuestion}
+            className="inline-flex min-h-11 w-fit items-center gap-2 rounded-lg border border-line bg-white px-4 font-extrabold text-forge"
+          >
+            <ArrowLeft className="size-4" />Back to Question {originQuestionNumber}
+          </button>
+        ) : null}
 
         <SubjectResourceLinks
           family="mathematics"
@@ -58,7 +88,7 @@ export function HigherMathsResourceBrowser() {
           hrefs={{
             notes: "/subjects/higher-maths/revision-notes",
             flashcards: "/subjects/higher-maths/flashcards",
-            practice: "/practice",
+            practice: `/practice?path=${encodeURIComponent(skillPath.slug)}`,
           }}
         />
 
@@ -83,6 +113,32 @@ export function HigherMathsResourceBrowser() {
       </div>
     </AppShell>
   );
+
+  function returnToOriginQuestion() {
+    if (!originQuestionId || !questionOrigin?.token) return;
+    const explicitHref = `/question/${originQuestionId}`;
+    const marker = readNotesOriginMarker(questionOrigin.token);
+    const navigation = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
+    const safePreviousEntry = navigation?.type !== "reload"
+      && marker?.originHref === explicitHref
+      && window.history.length === marker.historyLength + 1;
+    if (safePreviousEntry) router.back();
+    else router.push(explicitHref);
+  }
+}
+
+function readNotesOriginMarker(token: string) {
+  try {
+    const parsed = JSON.parse(sessionStorage.getItem(`${WORKING_CONTEXT_NOTES_ORIGIN_PREFIX}${token}`) ?? "null") as {
+      originHref?: unknown;
+      historyLength?: unknown;
+    } | null;
+    return parsed && typeof parsed.originHref === "string" && typeof parsed.historyLength === "number"
+      ? { originHref: parsed.originHref, historyLength: parsed.historyLength }
+      : null;
+  } catch {
+    return null;
+  }
 }
 
 function NotesContent({

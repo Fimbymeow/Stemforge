@@ -11,9 +11,10 @@ test("fresh student reaches the Basic differentiation path through the app", asy
   const mathsCard = page.locator("article").filter({ has: page.getByRole("heading", { name: "Higher Maths", level: 3 }) });
   await mathsCard.getByRole("link", { name: "Open Higher Maths" }).click();
   await expect(page).toHaveURL(/\/subjects\/higher-maths$/);
-  await page.getByRole("link", { name: "Start learning" }).click();
+  await page.getByRole("link", { name: "Start", exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`/question/hm-calc-diff-basic-f-001$`));
-  await page.getByRole("link", { name: "Current Path" }).click();
+  await page.getByRole("button", { name: "Current Path: Basic differentiation" }).click();
+  await page.getByRole("link", { name: "View full overview" }).click();
   await expect(page.getByRole("heading", { name: "Basic differentiation", level: 1 })).toBeVisible();
   await expect(page.getByTestId("skill-path-hero-progress")).toContainText("8");
   await expect(page.getByTestId("path-mastery-status")).toContainText("Not Started");

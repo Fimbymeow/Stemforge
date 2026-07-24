@@ -19,11 +19,11 @@ test("new learner receives the same one-click learning entry across major surfac
   await expect(page.getByRole("link", { name: "Start learning" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
 
   await page.goto(HUB_ROUTE);
-  await expectPrimaryAction(page, "Start learning", `/question/${QUESTION_IDS[0]}`);
-  await expect(page.getByRole("link", { name: "Question bank" })).toBeVisible();
+  await expectPrimaryAction(page, "Start", `/question/${QUESTION_IDS[0]}`);
+  await expect(page.getByRole("link", { name: "View full overview" })).toBeVisible();
 
   await page.goto(PATH_ROUTE);
-  await expectPrimaryAction(page, "Start learning", `/question/${QUESTION_IDS[0]}`);
+  await expectPrimaryAction(page, "Start", `/question/${QUESTION_IDS[0]}`);
   await expect(page.locator('[data-recommended="true"]')).toContainText("Foundations");
   await expect(page.getByRole("link", { name: "Explore Applications" })).toHaveAttribute("href", `/question/${QUESTION_IDS[3]}`);
 
@@ -38,10 +38,14 @@ test("an incomplete question is resumed consistently instead of opening generic 
     currentAttempt(QUESTION_IDS[1], 1, { isCorrect: false, answer: "wrong" }),
   ]));
 
-  for (const route of ["/dashboard", HUB_ROUTE, PATH_ROUTE]) {
+  for (const route of ["/dashboard"]) {
     await page.goto(route);
     if (route === "/dashboard") await expectHigherMathsCourseAccess(page);
     await expectPrimaryAction(page, "Resume question", `/question/${QUESTION_IDS[1]}`);
+  }
+  for (const route of [HUB_ROUTE, PATH_ROUTE]) {
+    await page.goto(route);
+    await expectPrimaryAction(page, "Continue", `/question/${QUESTION_IDS[1]}`);
   }
 
   await page.goto("/subjects");
@@ -59,9 +63,13 @@ test("a valid unfinished practice session becomes the shared primary action", as
   const sessionUrl = new URL(page.url()).pathname;
   expect(sessionUrl).toMatch(/^\/practice\/session\//);
 
-  for (const route of ["/dashboard", HUB_ROUTE, PATH_ROUTE]) {
+  for (const route of ["/dashboard"]) {
     await page.goto(route);
     if (route === "/dashboard") await expectHigherMathsCourseAccess(page);
+    await expectPrimaryAction(page, "Resume practice", sessionUrl);
+  }
+  for (const route of [HUB_ROUTE, PATH_ROUTE]) {
+    await page.goto(route);
     await expectPrimaryAction(page, "Resume practice", sessionUrl);
   }
 
@@ -79,10 +87,10 @@ test("stage completion advances to the next recommended stage without hard-locki
   await expectPrimaryAction(page, "Begin Applications", `/question/${QUESTION_IDS[3]}`);
 
   await page.goto(HUB_ROUTE);
-  await expectPrimaryAction(page, "Begin Applications", `/question/${QUESTION_IDS[3]}`);
+  await expectPrimaryAction(page, "Continue", `/question/${QUESTION_IDS[3]}`);
 
   await page.goto(PATH_ROUTE);
-  await expectPrimaryAction(page, "Begin Applications", `/question/${QUESTION_IDS[3]}`);
+  await expectPrimaryAction(page, "Continue", `/question/${QUESTION_IDS[3]}`);
   const recommended = page.locator('[data-recommended="true"]');
   await expect(recommended).toContainText("Applications");
   await expect(page.getByRole("link", { name: "Explore Past Paper-style Questions" })).toHaveAttribute("href", `/question/${QUESTION_IDS[6]}`);
@@ -92,10 +100,14 @@ test("stage completion advances to the next recommended stage without hard-locki
 test("completed guided content recommends practice and never locked inventory", async ({ page }) => {
   await seedStoredProgress(page, v3Payload(QUESTION_IDS.map((id, index) => currentAttempt(id, index + 1))));
 
-  for (const route of ["/dashboard", HUB_ROUTE, PATH_ROUTE]) {
+  for (const route of ["/dashboard"]) {
     await page.goto(route);
     if (route === "/dashboard") await expectHigherMathsCourseAccess(page);
     await expectPrimaryAction(page, "Practise again", "/practice");
+  }
+  for (const route of [HUB_ROUTE, PATH_ROUTE]) {
+    await page.goto(route);
+    await expectPrimaryAction(page, "Practise this skill", "/practice?path=basic-differentiation");
   }
   await page.goto("/subjects");
   await expectHigherMathsCourseAccess(page);

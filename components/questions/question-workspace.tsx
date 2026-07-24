@@ -43,6 +43,10 @@ import { describeReviewReason } from "@/lib/questions/review-reason";
 import { deriveQuestionSupportPresentation } from "@/lib/questions/question-support";
 import { getContextualResourceHref, getRelatedResourcesForQuestion } from "@/lib/study-context";
 import { useHasMounted } from "@/lib/use-mounted";
+import {
+  WORKING_CONTEXT_NOTES_ORIGIN_PREFIX,
+  questionHelpNotesHref,
+} from "@/lib/working-context";
 
 type SubmissionIntent = "keyboard" | "pointer";
 
@@ -104,6 +108,7 @@ export function QuestionWorkspace({
   const questionSupportResources = [
     relatedResources.find((item) => item.type === "revision-notes"),
   ].filter((item): item is NonNullable<typeof item> => Boolean(item));
+  const notesOriginToken = `${question.id}-${question.questionVersion}`;
   const isHigherMathsQuestion = context?.subject.subjectSlug === "higher-maths";
   const solutionViewed = questionProgress.solutionViewed;
   const solutionVisible = solutionViewed || solutionOpenedThisInteraction;
@@ -306,7 +311,11 @@ export function QuestionWorkspace({
         : feedback?.message;
 
   return (
-    <AppShell demo active="Current Path">
+    <AppShell
+      demo
+      active="Current Path"
+      workingContextPathId={skillPath?.slug}
+    >
       <div className="mx-auto mb-2 flex max-w-[1080px] justify-end">
         <AppTopbar demo />
       </div>
@@ -517,10 +526,20 @@ export function QuestionWorkspace({
               <p className="mb-3 text-sm text-muted">These resources belong to {skillPath?.name ?? "this path"}. Opening one does not record an attempt.</p>
               <div className="grid gap-1">
                 {questionSupportResources.map((item) => {
+                    const contextualNotesHref = isHigherMathsQuestion && !practiceReturnHref
+                      ? questionHelpNotesHref({
+                          subjectSlug: context?.subject.subjectSlug ?? "higher-maths",
+                          questionId: question.id,
+                          questionNumber: currentQuestion,
+                          noteId: item.resource.id,
+                          token: notesOriginToken,
+                        })
+                      : null;
                     return (
                       <Link
                         key={item.resource.id}
-                        href={getContextualResourceHref(item.type, context?.subject.subjectSlug ?? "higher-maths", item.resource.id, practiceReturnHref)}
+                        href={contextualNotesHref ?? getContextualResourceHref(item.type, context?.subject.subjectSlug ?? "higher-maths", item.resource.id, practiceReturnHref)}
+                        onClick={contextualNotesHref ? () => recordNotesOrigin(notesOriginToken) : undefined}
                         className="inline-flex min-h-10 items-center gap-2 rounded-lg px-2 text-sm font-bold text-forge hover:bg-forge-soft"
                       >
                         <FileText className="size-4" />
@@ -551,6 +570,17 @@ export function QuestionWorkspace({
       </div>
     </AppShell>
   );
+
+  function recordNotesOrigin(token: string) {
+    try {
+      sessionStorage.setItem(`${WORKING_CONTEXT_NOTES_ORIGIN_PREFIX}${token}`, JSON.stringify({
+        originHref: `${window.location.pathname}${window.location.search}`,
+        historyLength: window.history.length,
+      }));
+    } catch {
+      // The explicit question URL in the Notes query remains a safe fallback.
+    }
+  }
 }
 
 function PanelProgress({ label, value, valueLabel, secondary = false }: { label: string; value: number; valueLabel: string; secondary?: boolean }) {

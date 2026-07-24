@@ -8,7 +8,7 @@ test("Higher Maths hub presents four broad areas and prioritises the live path",
   await expect(page.getByRole("button", { name: "Vectors" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Calculus" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Lines, Circles and Sequences" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Start learning" })).toHaveAttribute("href", "/question/hm-calc-diff-basic-f-001");
+  await expect(page.getByRole("link", { name: "Start", exact: true })).toHaveAttribute("href", "/question/hm-calc-diff-basic-f-001");
   await expect(page.getByText(/1 of 51|1 \/ 51|1 of 50|1 \/ 50/i)).toHaveCount(0);
 });
 

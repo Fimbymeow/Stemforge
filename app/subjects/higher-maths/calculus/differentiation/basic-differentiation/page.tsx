@@ -1,12 +1,5 @@
-import { SkillPathLearningPage } from "@/components/subject-learning-pages";
+import { WorkingContextOverview } from "@/components/working-context/working-context-overview";
 
 export default function BasicDifferentiationPath() {
-  return (
-    <SkillPathLearningPage
-      subjectSlug="higher-maths"
-      courseAreaSlug="calculus"
-      specAreaSlug="differentiation"
-      skillPathSlug="basic-differentiation"
-    />
-  );
+  return <WorkingContextOverview pathId="basic-differentiation" />;
 }
