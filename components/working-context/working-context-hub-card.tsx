@@ -5,6 +5,7 @@ import { ArrowRight, BookOpen, Target } from "lucide-react";
 import { Card, ProgressBar } from "@/components/ui";
 import { useWorkingContextModel } from "@/components/working-context/use-working-context-model";
 import { formatProgressStatusLabel } from "@/components/learning/mastery-badge";
+import { formatReviewDueLabel } from "@/lib/working-context";
 
 export function WorkingContextHubCard({ pathId }: { pathId: string }) {
   const model = useWorkingContextModel(pathId);
@@ -19,7 +20,7 @@ export function WorkingContextHubCard({ pathId }: { pathId: string }) {
         <div className="min-w-0">
           <p className="text-xs font-extrabold uppercase tracking-wide text-forge">Learn · Recommended</p>
           <h3 className="mt-1 text-2xl font-extrabold">
-            <Link href={model.overviewHref} className="rounded-sm hover:text-forge">{model.skillName}</Link>
+            <Link href={model.overviewHref} className="rounded-sm underline decoration-line decoration-[1.5px] underline-offset-[3px] hover:text-forge hover:decoration-forge">{model.skillName}</Link>
           </h3>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">{model.nextActionReason}</p>
           <div className="mt-4 grid max-w-lg gap-2">
@@ -42,7 +43,7 @@ export function WorkingContextHubCard({ pathId }: { pathId: string }) {
           <BookOpen aria-hidden="true" className="size-4" /> Notes
         </Link> : null}
         <Link href={model.practiceHref} className="inline-flex min-h-11 items-center justify-center rounded-lg border border-line bg-white px-4 text-sm font-extrabold text-ink max-md:flex-1">Practice</Link>
-        {model.reviewHref ? <Link href={model.reviewHref} className="inline-flex min-h-11 items-center justify-center rounded-lg border border-line bg-white px-4 text-sm font-extrabold text-forge max-md:flex-1">Review {model.reviewCount} question due</Link> : null}
+        {model.reviewHref ? <Link href={model.reviewHref} className="inline-flex min-h-11 items-center justify-center rounded-lg border border-line bg-white px-4 text-sm font-extrabold text-forge max-md:flex-1">{formatReviewDueLabel(model.reviewCount)}</Link> : null}
         <Link href={model.overviewHref} className="inline-flex min-h-11 items-center justify-center px-3 text-sm font-bold text-muted max-md:w-full">View full overview</Link>
       </div>
     </Card>

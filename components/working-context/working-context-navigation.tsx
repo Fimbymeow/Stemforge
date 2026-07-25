@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import { ChevronDown, Compass, X } from "lucide-react";
 import { useWorkingContextModel } from "@/components/working-context/use-working-context-model";
 import { useModalFocusTrap } from "@/lib/use-modal-focus-trap";
-import type { WorkingContextModel } from "@/lib/working-context";
+import { formatReviewDueLabel, type WorkingContextModel } from "@/lib/working-context";
 
 export function WorkingContextNavigation({
   pathId,
@@ -53,7 +53,7 @@ export function WorkingContextNavigation({
         aria-haspopup="dialog"
         onClick={openForViewport}
         data-testid="working-context-trigger"
-        className="flex min-h-[58px] w-full items-center rounded-xl bg-forge-soft px-2 text-left font-semibold text-forge max-xl:min-h-11 max-xl:justify-center max-xl:text-sm"
+        className="flex min-h-[58px] w-full items-center rounded-xl bg-forge-soft px-2 text-left font-semibold text-forge max-xl:min-h-11 max-xl:justify-center max-xl:rounded-b-none max-xl:border-b-2 max-xl:border-forge max-xl:text-sm"
       >
         <Compass aria-hidden="true" className="mr-1 size-5 shrink-0 fill-forge/15 max-xl:mr-0" strokeWidth={2} />
         <span className="min-w-0 flex-1 max-xl:hidden">
@@ -107,21 +107,41 @@ function WorkingContextActions({
       >
         {model.primaryLabel}
       </Link>
-      <nav aria-label="Learning actions" className="grid gap-1">
-        {model.notesHref ? <WorkingLink href={model.notesHref}>Notes</WorkingLink> : null}
-        <WorkingLink href={model.practiceHref}>Practice</WorkingLink>
-        {model.reviewHref ? <WorkingLink href={model.reviewHref}>Review {model.reviewCount} question due</WorkingLink> : null}
-      </nav>
+      <div>
+        <p className="mb-1 px-2 text-[11px] font-extrabold uppercase tracking-wide text-muted">In this skill</p>
+        <nav aria-label="Learning actions" className="grid gap-1">
+          {model.notesHref ? <WorkingLink href={model.notesHref}>Notes</WorkingLink> : null}
+          <WorkingLink href={model.practiceHref}>Practice</WorkingLink>
+          {model.reviewHref ? <WorkingLink href={model.reviewHref}>{formatReviewDueLabel(model.reviewCount)}</WorkingLink> : null}
+        </nav>
+      </div>
       <nav aria-label="Context navigation" className="grid gap-1 border-t border-line pt-2">
-        <WorkingLink href={model.overviewHref}>View full overview</WorkingLink>
-        <WorkingLink href={model.higherMathsHref}>Leave to Higher Maths</WorkingLink>
+        <ContextLink href={model.overviewHref}>View full overview</ContextLink>
+        <ContextLink href={model.higherMathsHref} className="mt-1">Leave to Higher Maths</ContextLink>
       </nav>
     </>
   );
 }
 
-function WorkingLink({ href, children }: { href: string; children: React.ReactNode }) {
-  return <Link href={href} className="inline-flex min-h-10 items-center rounded-lg px-2 text-sm font-bold text-ink hover:bg-forge-soft hover:text-forge">{children}</Link>;
+function WorkingLink({ href, children, className = "" }: { href: string; children: React.ReactNode; className?: string }) {
+  return (
+    <Link href={href} className={`flex min-h-11 items-center justify-between gap-2 rounded-lg bg-paper px-3 text-sm font-bold text-ink hover:bg-forge-soft hover:text-forge ${className}`}>
+      <span>{children}</span>
+      <span aria-hidden="true" className="text-muted">→</span>
+    </Link>
+  );
+}
+
+/**
+ * Deliberately plainer than WorkingLink (no rest tint, no trailing arrow) — orientation/exit
+ * are wayfinding, not learning actions, and must not read as more rows in the same list.
+ */
+function ContextLink({ href, children, className = "" }: { href: string; children: React.ReactNode; className?: string }) {
+  return (
+    <Link href={href} className={`flex min-h-11 items-center rounded-lg px-3 text-sm font-bold text-muted hover:bg-forge-soft hover:text-forge ${className}`}>
+      {children}
+    </Link>
+  );
 }
 
 function WorkingContextSheet({

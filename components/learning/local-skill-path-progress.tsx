@@ -36,7 +36,7 @@ function useLocalSkillPathProgress(skillPath: SkillPath) {
   };
 }
 
-export function LocalRecommendedNextAction({ skillPath }: { skillPath: SkillPath }) {
+export function LocalRecommendedNextAction({ skillPath, hidePrimaryAction = false, secondaryStagesHref }: { skillPath: SkillPath; hidePrimaryAction?: boolean; secondaryStagesHref?: string }) {
   const { progress } = useLocalSkillPathProgress(skillPath);
   const nextAction = useLearnerNextAction();
   const isComplete = progress.totalQuestions > 0 && progress.completedQuestionIds.length >= progress.totalQuestions;
@@ -45,7 +45,7 @@ export function LocalRecommendedNextAction({ skillPath }: { skillPath: SkillPath
     return (
       <div className="grid gap-3">
         <MasteryUpgradeBanner skillPathId={skillPath.slug} status={progress.status} />
-        <CompletedPathCard skillPath={skillPath} progress={progress} status={progress.status} nextAction={nextAction} />
+        <CompletedPathCard skillPath={skillPath} progress={progress} status={progress.status} nextAction={nextAction} hidePrimaryAction={hidePrimaryAction} secondaryStagesHref={secondaryStagesHref} />
       </div>
     );
   }
@@ -97,8 +97,16 @@ function MasteryUpgradeBanner({ skillPathId, status }: { skillPathId: string; st
   );
 }
 
-/** Permanent state for a completed/secure/mastered path. Not a relabelled "Continue" button. */
-function CompletedPathCard({ skillPath, progress, status, nextAction }: { skillPath: SkillPath; progress: SkillPathProgress; status: CompletedTierStatus; nextAction: LearnerNextAction }) {
+/**
+ * Permanent state for a completed/secure/mastered path. Not a relabelled "Continue" button.
+ * `hidePrimaryAction` is set by the canonical Working Context overview, which already renders
+ * its own review-aware primary action in the page header — this card's own primary button would
+ * otherwise duplicate it a few hundred pixels below. Every other caller keeps the primary action.
+ * `secondaryStagesHref` overrides the "Review a stage" destination for callers that already are
+ * the skill-path overview, where linking to `getSkillPathHref(skillPath)` would just reload the
+ * page the learner is already on. Callers elsewhere keep the default (navigate to the overview).
+ */
+function CompletedPathCard({ skillPath, progress, status, nextAction, hidePrimaryAction = false, secondaryStagesHref }: { skillPath: SkillPath; progress: SkillPathProgress; status: CompletedTierStatus; nextAction: LearnerNextAction; hidePrimaryAction?: boolean; secondaryStagesHref?: string }) {
   const reviewCount = progress.reviewQuestionIds.length;
   const heading = `${skillPath.name} ${status === "completed" ? "complete" : status}`;
   const supporting = getPathCompletionSupportingSentence(status, reviewCount);
@@ -106,7 +114,7 @@ function CompletedPathCard({ skillPath, progress, status, nextAction }: { skillP
   const subjectAction = { href: subject?.href ?? "/subjects", label: `Return to ${subject?.subjectName ?? "subject"}` };
   const secondary = nextAction.kind === "review_question"
     ? subjectAction
-    : { href: getSkillPathHref(skillPath), label: "Review a stage" };
+    : { href: secondaryStagesHref ?? getSkillPathHref(skillPath), label: "Review a stage" };
 
   return (
     <Card data-testid="completed-path-card" className="border-forge/30 bg-gradient-to-br from-forge/10 to-white p-4">
@@ -122,7 +130,7 @@ function CompletedPathCard({ skillPath, progress, status, nextAction }: { skillP
       </p>
       <VersionProgressNotice progress={progress} />
       <div className="mt-4 grid gap-2">
-        {nextAction.kind === "practice_again" ? (
+        {hidePrimaryAction ? null : nextAction.kind === "practice_again" ? (
           <QuickPracticeAction preferredPathId={skillPath.slug} label={nextAction.label} className="w-full" />
         ) : nextAction.href ? <Link href={nextAction.href} aria-describedby="completed-path-next-action-reason" className="inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-forge px-5 text-sm font-extrabold text-white">
           {nextAction.label}

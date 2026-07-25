@@ -14,6 +14,7 @@ export type WorkingContextStageModel = {
   completed: number;
   total: number;
   href: string;
+  reviewDue: boolean;
 };
 
 export type WorkingContextModel = {
@@ -23,7 +24,7 @@ export type WorkingContextModel = {
   subjectHref: string;
   higherMathsHref: string;
   stageName: string;
-  primaryLabel: "Start" | "Continue" | "Resume practice" | "Practise this skill";
+  primaryLabel: string;
   primaryHref: string;
   nextActionReason: string;
   progressSummary: string;
@@ -70,9 +71,14 @@ export function deriveWorkingContextModel(input: {
       ) ?? context.skillPath.learningStages?.at(-1);
   const stageName = activeStage?.name ?? "Learning path";
   const practiceHref = workingContextPracticeHref(input.pathId);
-  const primaryHref = isComplete ? practiceHref : nextAction.href ?? context.skillPath.href;
+  const reviewHref = reviewQuestionIds[0] ? `/question/${reviewQuestionIds[0]}` : null;
+  const primaryHref = isComplete
+    ? (reviewHref ?? practiceHref)
+    : nextAction.href ?? context.skillPath.href;
   const primaryLabel = isComplete
-    ? "Practise this skill"
+    ? (reviewQuestionIds.length > 0
+        ? (reviewQuestionIds.length === 1 ? "Review due question" : `Review ${reviewQuestionIds.length} due questions`)
+        : "Practise this skill")
     : nextAction.kind === "resume_practice"
       ? "Resume practice"
     : progress.attemptedCount === 0
@@ -100,7 +106,7 @@ export function deriveWorkingContextModel(input: {
       : `${stageName} · ${stageCompleted} of ${stageTotal} complete`,
     collapsedSummary,
     reviewCount: reviewQuestionIds.length,
-    reviewHref: reviewQuestionIds[0] ? `/question/${reviewQuestionIds[0]}` : null,
+    reviewHref,
     notesHref: getActiveRecords(context.skillPath.notes ?? []).length
       ? `/subjects/${context.subject.subjectSlug}/revision-notes`
       : null,
@@ -121,6 +127,7 @@ export function deriveWorkingContextModel(input: {
         completed: item?.completedQuestionIds.length ?? 0,
         total: item?.totalQuestions ?? stage.questionIds.length,
         href: stage.questionIds[0] ? `/question/${stage.questionIds[0]}` : context.skillPath.href,
+        reviewDue: stage.questionIds.some((questionId) => reviewQuestionIds.includes(questionId)),
       };
     }),
   };
@@ -135,6 +142,11 @@ export function parseWorkingContextPathId(value: unknown) {
 
 export function workingContextPracticeHref(pathId: string) {
   return `/practice?path=${encodeURIComponent(pathId)}`;
+}
+
+/** Single source of truth for the rail/hub/overview "Review N question(s) due" label. */
+export function formatReviewDueLabel(reviewCount: number): string {
+  return `Review ${reviewCount} question${reviewCount === 1 ? "" : "s"} due`;
 }
 
 export function questionHelpNotesHref(input: {

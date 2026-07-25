@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { contentResolver } from "../lib/content-resolver";
 import {
   deriveWorkingContextModel,
+  formatReviewDueLabel,
   parseWorkingContextPathId,
   questionHelpNotesHref,
   workingContextPracticeHref,
@@ -59,6 +60,44 @@ test("review is shown only when existing evidence genuinely recommends it", () =
   const model = deriveWorkingContextModel({ pathId, evidence: evidence(attempts) })!;
   assert.equal(model.reviewCount, 1);
   assert.equal(model.reviewHref, `/question/${questionIds[0]}`);
+});
+
+test("formatReviewDueLabel pluralises the noun, not the verb, and never touches other counts", () => {
+  assert.equal(formatReviewDueLabel(1), "Review 1 question due");
+  assert.equal(formatReviewDueLabel(2), "Review 2 questions due");
+  assert.equal(formatReviewDueLabel(0), "Review 0 questions due");
+});
+
+test("completed skill with one genuine review due prioritises reviewing it over generic practice", () => {
+  const attempts = questionIds.map((id, index) => attempt(id, index + 1, true, {
+    hintViewedBeforeSubmission: index === 0,
+  }));
+  const model = deriveWorkingContextModel({ pathId, evidence: evidence(attempts) })!;
+  assert.equal(model.isComplete, true);
+  assert.equal(model.primaryLabel, "Review due question");
+  assert.equal(model.primaryHref, `/question/${questionIds[0]}`);
+});
+
+test("completed skill with multiple genuine reviews due pluralises the primary action honestly", () => {
+  const attempts = questionIds.map((id, index) => attempt(id, index + 1, true, {
+    hintViewedBeforeSubmission: index === 0 || index === 1,
+  }));
+  const model = deriveWorkingContextModel({ pathId, evidence: evidence(attempts) })!;
+  assert.equal(model.reviewCount, 2);
+  assert.equal(model.primaryLabel, "Review 2 due questions");
+  assert.equal(model.primaryHref, `/question/${questionIds[0]}`);
+});
+
+test("stage models expose reviewDue only for the specific stage a genuine review question belongs to", () => {
+  const foundations = context.skillPath.learningStages![0];
+  const attempts = questionIds.map((id, index) => attempt(id, index + 1, true, {
+    hintViewedBeforeSubmission: index === 0,
+  }));
+  const model = deriveWorkingContextModel({ pathId, evidence: evidence(attempts) })!;
+  const foundationsStage = model.stages.find((stage) => stage.id === foundations.id)!;
+  const otherStages = model.stages.filter((stage) => stage.id !== foundations.id);
+  assert.equal(foundationsStage.reviewDue, true);
+  assert.ok(otherStages.every((stage) => stage.reviewDue === false));
 });
 
 test("path parsing accepts only an available canonical path", () => {

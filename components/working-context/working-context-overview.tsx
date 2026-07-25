@@ -8,6 +8,7 @@ import { formatProgressStatusLabel } from "@/components/learning/mastery-badge";
 import { Card, ProgressBar } from "@/components/ui";
 import { useWorkingContextModel } from "@/components/working-context/use-working-context-model";
 import { contentResolver } from "@/lib/content-resolver";
+import { formatReviewDueLabel } from "@/lib/working-context";
 
 export function WorkingContextOverview({ pathId }: { pathId: string }) {
   const model = useWorkingContextModel(pathId);
@@ -39,30 +40,43 @@ export function WorkingContextOverview({ pathId }: { pathId: string }) {
           </Link>
         </header>
 
-        {model.isComplete && skillPath ? <LocalRecommendedNextAction skillPath={skillPath} /> : null}
+        {model.isComplete && skillPath ? <LocalRecommendedNextAction skillPath={skillPath} hidePrimaryAction secondaryStagesHref="#stages" /> : null}
 
-        <section aria-labelledby="working-context-stages" className="grid gap-2">
-          <h2 id="working-context-stages" className="text-xl font-extrabold">Stages</h2>
-          {model.stages.map((stage) => (
-            <Card key={stage.id} className="p-4 shadow-none" data-recommended={stage.name === model.stageName ? "true" : undefined}>
-              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 max-sm:grid-cols-1">
-                <div>
-                  <h3 className="font-extrabold">{stage.name}</h3>
-                  <p className="mt-1 text-sm text-muted">{stage.description}</p>
-                  <p className="mt-2 text-sm font-bold text-muted">{stage.completed} / {stage.total} complete</p>
+        <section aria-labelledby="stages" className="grid gap-2">
+          <h2 id="stages" tabIndex={-1} className="text-xl font-extrabold">Stages</h2>
+          {model.stages.map((stage) => {
+            const isCurrent = stage.name === model.stageName;
+            const isStageComplete = stage.total > 0 && stage.completed >= stage.total;
+            const actionLabel = stage.total === 0
+              ? null
+              : isStageComplete
+                ? (stage.reviewDue ? `Review ${stage.name}` : `Revisit ${stage.name}`)
+                : isCurrent
+                  ? model.primaryLabel
+                  : `Start ${stage.name}`;
+            return (
+              <Card key={stage.id} className={`p-4 shadow-none ${isCurrent ? "bg-forge-soft" : ""}`} data-recommended={isCurrent ? "true" : undefined}>
+                <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 max-sm:grid-cols-1">
+                  <div>
+                    <h3 className="font-extrabold">{stage.name}</h3>
+                    <p className="mt-1 text-sm text-muted">{stage.description}</p>
+                    <p className="mt-2 text-sm font-bold text-muted">{stage.completed} / {stage.total} complete</p>
+                  </div>
+                  {actionLabel ? (
+                    <Link href={stage.href} className="inline-flex min-h-10 items-center justify-center rounded-lg border border-line bg-white px-4 text-sm font-extrabold text-ink">
+                      {actionLabel}
+                    </Link>
+                  ) : null}
                 </div>
-                <Link href={stage.href} className="inline-flex min-h-10 items-center justify-center rounded-lg border border-line bg-white px-4 text-sm font-extrabold text-ink">
-                  {stage.completed >= stage.total ? `Review ${stage.name}` : stage.name === model.stageName ? model.primaryLabel : `Explore ${stage.name}`}
-                </Link>
-              </div>
-            </Card>
-          ))}
+              </Card>
+            );
+          })}
         </section>
         <nav aria-label="Skill resources" className="flex flex-wrap gap-2 rounded-xl border border-line bg-white p-3">
           {model.notesHref ? <Link href={model.notesHref} className="inline-flex min-h-10 items-center rounded-lg px-3 font-bold hover:bg-forge-soft">Notes</Link> : null}
           <Link href={model.practiceHref} className="inline-flex min-h-10 items-center rounded-lg px-3 font-bold hover:bg-forge-soft">Practice</Link>
           <Link href={model.questionBankHref} className="inline-flex min-h-10 items-center rounded-lg px-3 font-bold hover:bg-forge-soft">Browse Questions</Link>
-          {model.reviewHref ? <Link href={model.reviewHref} className="inline-flex min-h-10 items-center rounded-lg px-3 font-bold text-forge hover:bg-forge-soft">Review {model.reviewCount} question due</Link> : null}
+          {model.reviewHref ? <Link href={model.reviewHref} className="inline-flex min-h-10 items-center rounded-lg px-3 font-bold text-forge hover:bg-forge-soft">{formatReviewDueLabel(model.reviewCount)}</Link> : null}
         </nav>
         {skillPath ? <LocalProgressControls skillPath={skillPath} /> : null}
         <Link href={model.higherMathsHref} className="inline-flex min-h-10 items-center px-3 text-sm font-bold text-forge">Back to Higher Maths</Link>

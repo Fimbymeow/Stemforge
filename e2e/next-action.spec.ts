@@ -25,7 +25,7 @@ test("new learner receives the same one-click learning entry across major surfac
   await page.goto(PATH_ROUTE);
   await expectPrimaryAction(page, "Start", `/question/${QUESTION_IDS[0]}`);
   await expect(page.locator('[data-recommended="true"]')).toContainText("Foundations");
-  await expect(page.getByRole("link", { name: "Explore Applications" })).toHaveAttribute("href", `/question/${QUESTION_IDS[3]}`);
+  await expect(page.getByRole("link", { name: "Start Applications" })).toHaveAttribute("href", `/question/${QUESTION_IDS[3]}`);
 
   await page.goto(BANK_ROUTE);
   await expect(page.getByText("Best next step")).toHaveCount(0);
@@ -93,8 +93,8 @@ test("stage completion advances to the next recommended stage without hard-locki
   await expectPrimaryAction(page, "Continue", `/question/${QUESTION_IDS[3]}`);
   const recommended = page.locator('[data-recommended="true"]');
   await expect(recommended).toContainText("Applications");
-  await expect(page.getByRole("link", { name: "Explore Past Paper-style Questions" })).toHaveAttribute("href", `/question/${QUESTION_IDS[6]}`);
-  await expect(page.getByRole("link", { name: "Review Foundations" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
+  await expect(page.getByRole("link", { name: "Start Past Paper-style Questions" })).toHaveAttribute("href", `/question/${QUESTION_IDS[6]}`);
+  await expect(page.getByRole("link", { name: "Revisit Foundations" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
 });
 
 test("completed guided content recommends practice and never locked inventory", async ({ page }) => {
