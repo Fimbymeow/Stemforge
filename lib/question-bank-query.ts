@@ -1,4 +1,4 @@
-import type { LearningStageName, Question } from "@/data/types";
+import type { AnswerType, LearningStageName, Question } from "@/data/types";
 import type { ResolvedQuestionContext, ResolvedSkillPath } from "@/lib/content-resolver";
 import { createContentResolver } from "@/lib/content-resolver";
 import { calculateSkillPathProgress, getQuestionProgressForVersion } from "@/lib/progress/calculations";
@@ -7,6 +7,8 @@ import type { ProgressEvidence, QuestionProgressState, SkillPathProgress } from 
 export type QuestionBankProgressFilter = "all" | "not-started" | "in-progress" | "completed" | "review-recommended";
 export type QuestionBankStageFilter = "all" | LearningStageName;
 export type QuestionBankSort = "default" | "recently-practised" | "review-priority" | "completion-status";
+export type QuestionBankTypeFilter = "all" | AnswerType;
+export type QuestionBankCalculatorFilter = "all" | "allowed" | "not-allowed";
 
 export type QuestionBankEntry = {
   id: string;
@@ -25,8 +27,12 @@ export type QuestionBankQuery = {
   specAreaId?: string;
   skillPathId?: string;
   stageId?: string;
+  typeFilter?: QuestionBankTypeFilter;
+  calculatorFilter?: QuestionBankCalculatorFilter;
   sort?: QuestionBankSort;
 };
+
+export type AvailableQuestionBankQuery = QuestionBankQuery & { subjectSlug: string };
 
 export type QuestionBankQuestionEntry = {
   question: Question;
@@ -40,6 +46,8 @@ export type QuestionBankFilterOptions = {
   specAreas: Array<{ id: string; name: string; courseAreaId: string }>;
   skillPaths: Array<{ id: string; name: string; specAreaId: string; courseAreaId: string }>;
   stages: Array<{ id: string; name: string; skillPathId: string }>;
+  types: AnswerType[];
+  hasCalculatorQuestions: boolean;
 };
 
 type Resolver = ReturnType<typeof createContentResolver>;
@@ -144,7 +152,7 @@ export function queryQuestionBank(
 export function queryAvailableQuestionBankQuestions(
   resolver: Resolver,
   evidence: ProgressEvidence,
-  query: QuestionBankQuery = {},
+  query: AvailableQuestionBankQuery,
 ): QuestionBankQuestionEntry[] {
   const search = normalizeSearch(query.search ?? "");
   const progressFilter = query.progressFilter ?? "all";
@@ -153,11 +161,15 @@ export function queryAvailableQuestionBankQuestions(
   const entries = resolver.getQuestions().flatMap((question) => {
     const context = resolver.getQuestionContext(question.id);
     if (!context?.skillPath.isAvailable) return [];
+    if (context.subject.subjectSlug !== query.subjectSlug) return [];
     if (query.courseAreaId && context.courseArea.slug !== query.courseAreaId) return [];
     if (query.specAreaId && context.routeTopic.slug !== query.specAreaId) return [];
     if (query.skillPathId && context.skillPath.slug !== query.skillPathId) return [];
     if (query.stageId && context.stage.id !== query.stageId) return [];
     if (stageFilter !== "all" && context.stage.name !== stageFilter) return [];
+    if (query.typeFilter && query.typeFilter !== "all" && question.answerType !== query.typeFilter) return [];
+    if (query.calculatorFilter === "allowed" && !question.calculatorAllowed) return [];
+    if (query.calculatorFilter === "not-allowed" && question.calculatorAllowed) return [];
     const searchable = [
       question.id,
       question.title,
@@ -200,17 +212,23 @@ export function deriveQuestionBankFilterOptions(entries: readonly QuestionBankQu
   const specAreas = new Map<string, { id: string; name: string; courseAreaId: string }>();
   const skillPaths = new Map<string, { id: string; name: string; specAreaId: string; courseAreaId: string }>();
   const stages = new Map<string, { id: string; name: string; skillPathId: string }>();
-  for (const { context } of entries) {
+  const types = new Set<AnswerType>();
+  let hasCalculatorQuestions = false;
+  for (const { context, question } of entries) {
     courseAreas.set(context.courseArea.slug, context.courseArea.name);
     specAreas.set(context.routeTopic.slug, { id: context.routeTopic.slug, name: context.routeTopic.name, courseAreaId: context.courseArea.slug });
     skillPaths.set(context.skillPath.slug, { id: context.skillPath.slug, name: context.skillPath.name, specAreaId: context.routeTopic.slug, courseAreaId: context.courseArea.slug });
     stages.set(context.stage.id, { id: context.stage.id, name: context.stage.name, skillPathId: context.skillPath.slug });
+    types.add(question.answerType);
+    if (question.calculatorAllowed) hasCalculatorQuestions = true;
   }
   return {
     courseAreas: [...courseAreas].map(([id, name]) => ({ id, name })),
     specAreas: [...specAreas.values()],
     skillPaths: [...skillPaths.values()],
     stages: [...stages.values()],
+    types: [...types],
+    hasCalculatorQuestions,
   };
 }
 

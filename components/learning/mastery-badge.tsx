@@ -34,7 +34,7 @@ export function MasteryBadge({ status, className = "" }: { status: CompletedTier
  * Single source for progress-status display labels. Completed/Secure/Mastered read from the
  * same TIER_LABEL map as MasteryBadge; every other status (not_started, in_progress, ...) falls
  * back to the same split-and-capitalize rule, so the three previously independent formatters
- * (here, local-skill-path-progress.tsx, higher-maths-question-bank.tsx) can't drift apart.
+ * (here, local-skill-path-progress.tsx, question-bank.tsx) can't drift apart.
  */
 export function formatProgressStatusLabel(status: string): string {
   if (status in TIER_LABEL) return TIER_LABEL[status as CompletedTierStatus];

@@ -25,7 +25,7 @@ test("question bank leads with available questions and keeps future taxonomy sec
   await expect(page.getByRole("link", { name: "Open Evaluate a derivative" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Open Differentiate a power" })).toHaveCount(0);
   await search.fill("no such curriculum item");
-  await expect(page.getByText("No available questions match these filters.")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "No questions match your search" })).toBeVisible();
   await expect(page.getByText("Future Higher Maths coverage", { exact: true })).toBeVisible();
 });
 

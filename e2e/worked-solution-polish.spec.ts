@@ -40,7 +40,7 @@ test("worked solution directly supersedes the unused hint in Quick Practice", as
 test("worked solution supersession is identical in custom Question Bank practice", async ({ page }) => {
   await page.goto("/subjects/higher-maths/question-bank");
   await page.getByLabel("Select Basic differentiation, Foundations, Question 1").check();
-  await page.getByRole("button", { name: "Start practice" }).click();
+  await page.getByRole("button", { name: "Start selected practice" }).click();
   await submitAnswer(page, "wrong");
   await openHint(page);
   await openWorkedSolution(page);

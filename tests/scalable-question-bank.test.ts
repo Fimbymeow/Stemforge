@@ -14,11 +14,12 @@ import { createTwoPathFixture, fixtureIds } from "./fixtures/multi-path-content"
 
 test("active filter nodes derive only from published questions and compose across the full hierarchy", () => {
   const resolver = createContentResolver(createTwoPathFixture());
-  const entries = queryAvailableQuestionBankQuestions(resolver, evidence());
+  const entries = queryAvailableQuestionBankQuestions(resolver, evidence(), { subjectSlug: fixtureIds.subjectSlug });
   const options = deriveQuestionBankFilterOptions(entries);
   assert(options.skillPaths.some((item) => item.id === fixtureIds.path));
   assert(!options.skillPaths.some((item) => item.id === "chain-rule"));
   assert.equal(queryAvailableQuestionBankQuestions(resolver, evidence(), {
+    subjectSlug: fixtureIds.subjectSlug,
     courseAreaId: "calculus",
     specAreaId: "integration",
     skillPathId: fixtureIds.path,
@@ -27,7 +28,7 @@ test("active filter nodes derive only from published questions and compose acros
 });
 
 test("invalid child filters clear while valid parent-compatible values remain", () => {
-  const options = deriveQuestionBankFilterOptions(queryAvailableQuestionBankQuestions(createContentResolver(createTwoPathFixture()), evidence()));
+  const options = deriveQuestionBankFilterOptions(queryAvailableQuestionBankQuestions(createContentResolver(createTwoPathFixture()), evidence(), { subjectSlug: fixtureIds.subjectSlug }));
   assert.deepEqual(normalizeQuestionBankFilters({
     courseAreaId: "calculus",
     specAreaId: "differentiation",
@@ -91,7 +92,7 @@ test("a deterministic 500-question fixture filters, selects and paginates withou
   path.questions = 500;
   const fixture = { subjects: source.subjects, questions: [...source.questions.filter((question) => question.skillPathId !== fixtureIds.path), ...questions] };
   const started = performance.now();
-  const results = queryAvailableQuestionBankQuestions(createContentResolver(fixture), evidence(), { skillPathId: fixtureIds.path });
+  const results = queryAvailableQuestionBankQuestions(createContentResolver(fixture), evidence(), { subjectSlug: fixtureIds.subjectSlug, skillPathId: fixtureIds.path });
   const selected = setQuestionGroupSelection(new Set<string>(), results.map((entry) => entry.question.id), true);
   const firstPage = paginateQuestionIds(results.map((entry) => entry.question.id), 1);
   assert.equal(results.length, 500);

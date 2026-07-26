@@ -5,6 +5,15 @@
 :root {
   --paper: #f5f4f0;
   --ink: #16191c;
+
+  /* Fixed-UI layout contract: kept as separate concepts so no element's own
+     offset doubles as another element's measured height. Runtime-measured
+     values (dock/tray height) are written onto the AppShell root; these are
+     the safe first-paint fallbacks before that measurement runs. */
+  --global-bottom-inset: calc(1rem + env(safe-area-inset-bottom, 0px));
+  --feedback-dock-height: 3rem;
+  --question-bank-selection-height: 0px;
+  --fixed-ui-gap: 0.75rem;
 }
 
 * {

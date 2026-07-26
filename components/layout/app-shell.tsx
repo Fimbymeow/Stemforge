@@ -1,4 +1,6 @@
-import type { ReactNode } from "react";
+"use client";
+
+import { useEffect, useRef, type ReactNode } from "react";
 import { BetaNotice } from "@/components/beta-notice";
 import { GlobalReportDock } from "@/components/beta-reports/global-report-dock";
 import { AppSidebar } from "@/components/layout/app-sidebar";
@@ -17,8 +19,26 @@ export function AppShell({
   className?: string;
   workingContextPathId?: string | null;
 }) {
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const dockRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const root = rootRef.current;
+    const dock = dockRef.current;
+    if (!root || !dock) return;
+    const observer = new ResizeObserver(([entry]) => {
+      const height = entry?.borderBoxSize?.[0]?.blockSize ?? entry?.contentRect.height;
+      if (height) root.style.setProperty("--feedback-dock-height", `${height}px`);
+    });
+    observer.observe(dock);
+    return () => {
+      observer.disconnect();
+      root.style.removeProperty("--feedback-dock-height");
+    };
+  }, []);
+
   return (
-    <div className="min-h-screen bg-paper text-ink">
+    <div ref={rootRef} className="min-h-screen bg-paper text-ink">
       <AppSidebar
         demo={demo}
         active={active}
@@ -31,9 +51,10 @@ export function AppShell({
         {children}
       </PageContainer>
       <div
+        ref={dockRef}
         data-global-report-dock
         className="pointer-events-none fixed inset-x-4 z-30 mx-auto flex max-w-2xl justify-end md:inset-x-auto md:right-4 md:max-w-md"
-        style={{ bottom: "calc(1rem + env(safe-area-inset-bottom, 0px))" }}
+        style={{ bottom: "var(--global-bottom-inset)" }}
       >
         <div className="pointer-events-auto">
           <GlobalReportDock />

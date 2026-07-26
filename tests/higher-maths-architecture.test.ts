@@ -118,7 +118,7 @@ test("recommendations, practice and active Question Bank queries ignore placehol
   const practice = discoverEligiblePracticeQuestions(canonicalContent);
   assert.deepEqual(new Set(practice.eligible.map((entry) => entry.reference.pathId)), new Set(["basic-differentiation"]));
   assert.equal(practice.eligible.length, 8);
-  const bank = queryAvailableQuestionBankQuestions(resolver, evidence());
+  const bank = queryAvailableQuestionBankQuestions(resolver, evidence(), { subjectSlug: "higher-maths" });
   assert.equal(bank.length, 8);
   assert(bank.every((entry) => entry.context.skillPath.slug === "basic-differentiation"));
 });

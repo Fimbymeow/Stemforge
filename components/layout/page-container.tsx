@@ -1,11 +1,17 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
+
+/** Bottom padding always reserves space for the global feedback dock, which is fixed and can overlap unpadded content. */
+const bottomReservationStyle: CSSProperties = {
+  paddingBottom: "calc(var(--global-bottom-inset) + var(--feedback-dock-height) + var(--fixed-ui-gap))",
+};
 
 export function PageContainer({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
     <main
       id="main-content"
       tabIndex={-1}
-      className={`ml-[268px] px-[clamp(20px,3vw,42px)] py-8 max-xl:ml-0 max-md:px-4 max-md:py-5 [@media(max-height:800px)]:pb-16 ${className}`}
+      style={bottomReservationStyle}
+      className={`ml-[268px] px-[clamp(20px,3vw,42px)] pt-8 max-xl:ml-0 max-md:px-4 max-md:pt-5 ${className}`}
     >
       {children}
     </main>

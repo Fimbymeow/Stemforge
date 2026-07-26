@@ -200,3 +200,36 @@ test("dismiss controls meet the established 40px mobile touch-target floor", asy
   expect(noticeBox!.width).toBeGreaterThanOrEqual(40);
   expect(noticeBox!.height).toBeGreaterThanOrEqual(40);
 });
+
+test("at 390x844 the Question Bank's first result row begins inside the initial viewport", async ({ page }) => {
+  await page.goto("/subjects/higher-maths/question-bank");
+  const firstRow = page.locator("li").first();
+  await expect(firstRow).toBeVisible();
+  const box = await firstRow.boundingBox();
+  expect(box).not.toBeNull();
+  expect(box!.y).toBeLessThan(844);
+});
+
+test("the mobile filter sheet traps focus, supports Escape, restores focus and exposes Reset/Apply", async ({ page }) => {
+  await page.goto("/subjects/higher-maths/question-bank");
+  const trigger = page.getByRole("button", { name: "Filters" });
+  await trigger.click();
+  const sheet = page.getByRole("dialog", { name: "Filters" });
+  await expect(sheet).toBeVisible();
+  await expect(sheet.getByLabel("Course area")).toBeVisible();
+  await expect(sheet.getByRole("button", { name: "Reset filters" })).toBeVisible();
+  await expect(sheet.getByRole("button", { name: "Apply" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(sheet).toHaveCount(0);
+  await expect(trigger).toBeFocused();
+});
+
+test("a same-subject skill path pre-scopes the Bank and the broaden action clears it without leaving the route", async ({ page }) => {
+  await page.goto("/subjects/higher-maths/question-bank?path=basic-differentiation");
+  await expect(page.getByText("Scoped to Basic differentiation")).toBeVisible();
+  const resultsHeading = page.getByRole("heading", { name: /matching question/ });
+  await expect(resultsHeading).toBeVisible();
+  await page.getByRole("button", { name: "Browse all Higher Maths" }).click();
+  await expect(page).toHaveURL("/subjects/higher-maths/question-bank");
+  await expect(page.getByText("Scoped to")).toHaveCount(0);
+});

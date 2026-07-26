@@ -112,3 +112,46 @@ The existing practice store now permits up to 500 references so a filtered custo
 No commit or push has been performed. Recommended commit message:
 
 `Complete Sprint C scalable Question Bank and custom practice`
+
+# Workbench Core with Contextual Shortcuts (subsequent redesign)
+
+This section documents the redesign that followed Sprint C and supersedes it wherever the two disagree. Sprint C made the Bank scalable for Higher Maths; this pass made it subject-generic, URL-shareable and added two capped contextual shortcuts, while keeping every Sprint C contract (canonical selection, custom-session creation, fail-closed eligibility, evidence-derived status) unchanged.
+
+## Final product boundary
+
+The Bank remains a direct question-browsing and custom-set-building workspace: open into results, optionally narrow by a Working Context scope or a review-due shortcut, search or filter, inspect compact rows, open one question or select several, review the selection, start a version-pinned custom Practice Session. It is deliberately not a goal-selection screen, a Dashboard-style recommendation surface, or a taxonomy tree, and it does not filter by difficulty or marks range.
+
+## Subject-generic route and query scope contract
+
+- `app/subjects/[subjectSlug]/question-bank/page.tsx` is the sole route for every subject's Question Bank; it resolves and validates `subjectSlug` via `getSubjectBySlug` and calls `notFound()` for unknown subjects, matching the convention already used by `app/subjects/[subjectSlug]/[courseAreaSlug]/page.tsx`. The former static `app/subjects/higher-maths/question-bank/page.tsx` was deleted (not redirected) so the dynamic route owns the unchanged public Higher Maths URL.
+- `components/question-bank.tsx` exports `QuestionBank({ subjectSlug })`; no subject name, filter option, review count or empty-state copy is hardcoded — all of it is derived from the resolved subject.
+- `lib/question-bank-query.ts`'s `AvailableQuestionBankQuery` extends `QuestionBankQuery` with a required `subjectSlug: string`. `queryAvailableQuestionBankQuestions` checks `context.subject.subjectSlug !== query.subjectSlug` before any course/spec/path/stage/status/type/calculator filtering, so subject isolation cannot be bypassed by filter combination. `deriveQuestionBankFilterOptions` needs no subject parameter of its own — it only ever sees the already subject-scoped entry list it is given.
+- Cross-subject isolation is covered by a dedicated two-subject test fixture (`createTwoSubjectFixture`/`subjectTwoFixtureIds` in `tests/fixtures/multi-path-content.ts`), proving neither questions nor filter options leak between two simultaneously available subjects.
+
+## URL-state contract
+
+`lib/question-bank-url.ts` is the single parser/serializer for shareable browsing state. Canonical parameters: `course`, `spec`, `path`, `stage`, `status`, `type`, `calc`, `sort`, `page`. Defaults are omitted from the URL; invalid enum/page values are discarded back to their default; `QuestionBank` additionally runs `normalizeQuestionBankFilters` against the live, subject-scoped options every render and writes any corrected (cascade-invalidated or out-of-range-page) result back as the canonical URL via `router.replace`, so a stale or cross-subject `path` value is silently repaired rather than left dangling. Selected question IDs, active Practice Session state, row expansion, mobile-sheet open state and the search box's live text are never URL-encoded; search is applied to the query only after a short debounce. Material filter/sort/page changes use `router.push` (so Back/Forward walk through prior browsing states); only involuntary corrections use `router.replace`. Because two rapid filter changes could otherwise each read a stale closed-over URL snapshot and clobber one another, the component tracks the URL state it last wrote in a ref and builds every new change on top of that ref rather than on last render's props.
+
+## Row-preview strategy
+
+Collapsed rows never mount `MathContent`. `lib/question-bank-preview.ts` produces a deterministic, non-rendering plain-text excerpt: it strips `$...$`/`$$...$$`/`\(...\)`/`\[...\]` delimiters, converts common LaTeX (`\frac`, `\sqrt`, symbols) into readable approximations, strips Markdown decoration, collapses whitespace, truncates at a word boundary (or hard-truncates a single overlong word) with an ellipsis at ~72 characters, and falls back to the question title — or, when the question is a visual type with no usable text, to a type-aware message ("Graph question — open to preview.", "Table question — open to preview."). Expansion is a native button with `aria-expanded`/`aria-controls`; only one row expands at a time; `MathContent` and the full safe prompt render only inside the expanded panel.
+
+## Visual-question browsing behaviour
+
+`AnswerType` currently has no dedicated point-plotting/graph-construction/derived-graph/diagram-only variants — only `graph_structured` and `nature_table` are visual. The label map (`ANSWER_TYPE_LABELS` in `components/question-bank.tsx`) is a `Record<AnswerType, string>`, so it fails to compile the day a new type is added until that type is given a label; it does not claim types that do not exist in the runtime type system. No graph editor, plotting tool, answer input or nature-table control ever mounts in the Bank; an expanded visual-type row shows the safe prompt plus a message that the interactive response opens on the question page.
+
+## Group-selection semantics
+
+Selecting a group targets every question in that skill-path/stage group that matches the current filters, across every pagination page — not just the page currently on screen. Eligibility is fail-closed via the existing `checkPracticeEligibility`; the group checkbox only ever selects/deselects the eligible subset and is rendered tri-state (checked only when every eligible member is selected, indeterminate when some but not all are). Its accessible label reports the live scope and count, e.g. "Select all 3 matching Foundations questions" / "Deselect all 3 matching Foundations questions", and an honest inline note appears when some group members are currently ineligible. Selection itself stays in local component state (never URL-encoded) keyed by question ID against the full, unfiltered subject entry list, so hidden/filtered-out selections and their total marks are never lost when filters change.
+
+## Contextual shortcut cap
+
+At most two contextual affordances render, both in normal document flow above the result list (never replacing it): a Working Context scope chip ("Scoped to {skill path}" / "Browse all {subject}", driven by the same `path` URL parameter used for ordinary browsing — no separate `workingContextPath` parameter was introduced) and a subject-scoped review-due shortcut ("Review N questions due", using the shared `formatReviewDueLabel` and counting only eligible, subject-scoped `reviewRecommended` questions). Activating the shortcut opens a lightweight confirmation showing the exact eligible count, the affected skill paths/stages, and a truthful note if any due question is currently ineligible; "Start review practice" creates a session through the existing `createCustomPracticeSession` contract and reuses the existing `ActiveSessionConflict` dialog rather than stacking a second one.
+
+## Fixed-UI layout contract
+
+Four separately-scoped CSS custom properties (`--global-bottom-inset`, `--feedback-dock-height`, `--question-bank-selection-height`, `--fixed-ui-gap`; defaults in `app/globals.css`) replace the previous single reused variable and the `page-container.tsx` `max-height` media-query hack. `AppShell` measures the feedback dock's real height with a `ResizeObserver` and writes `--feedback-dock-height`; `PageContainer`'s bottom padding is always `global-bottom-inset + feedback-dock-height + gap`. The Bank's selection tray is `fixed` (not `sticky`), positioned at `bottom: global-bottom-inset + feedback-dock-height + gap`, and reports its own measured height into `--question-bank-selection-height`, which the Bank's own content area then reserves as extra bottom padding while the tray is visible. No element uses its own height as its own offset. Verified at 1366×768 via `document.elementFromPoint` on the "Start selected practice" button centre (resolves to the button itself) and on the feedback trigger centre (also resolves to itself) with a selection active.
+
+## Deferred work
+
+Retry weak / weak-question filtering, difficulty filtering, marks-range filtering, selected question IDs in the URL, saved/named sets, public sharing, infinite scroll, virtualisation, evidence indexing, search indexing, a content-bundle architecture redesign, Exam Mode, and diagnostics are all explicitly out of scope for this pass.

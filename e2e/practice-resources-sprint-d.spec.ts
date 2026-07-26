@@ -104,7 +104,7 @@ test("official formula sheet opens in structured, Quick and custom Higher Maths 
 
   await page.goto("/subjects/higher-maths/question-bank");
   await page.getByLabel("Select Basic differentiation, Foundations, Question 1").check();
-  await page.getByRole("button", { name: "Start practice" }).click();
+  await page.getByRole("button", { name: "Start selected practice" }).click();
   const conflict = page.getByRole("dialog", { name: "You already have active practice" });
   await expect(conflict).toBeVisible();
   await conflict.getByRole("button", { name: "Replace and start" }).click();

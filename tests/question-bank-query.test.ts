@@ -2,9 +2,9 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { createContentResolver } from "../lib/content-resolver";
 import { deriveCourseDashboardSummary } from "../lib/dashboard-derivations";
-import { queryAvailableQuestionBankQuestions, queryQuestionBank } from "../lib/question-bank-query";
+import { deriveQuestionBankFilterOptions, queryAvailableQuestionBankQuestions, queryQuestionBank } from "../lib/question-bank-query";
 import { attempt, evidence } from "./progress-fixtures";
-import { createTwoPathFixture, fixtureIds } from "./fixtures/multi-path-content";
+import { createTwoPathFixture, createTwoSubjectFixture, fixtureIds, subjectTwoFixtureIds } from "./fixtures/multi-path-content";
 
 test("question-bank search is case-insensitive, whitespace-tolerant and matches question fields", () => {
   const resolver = createContentResolver(createTwoPathFixture());
@@ -95,7 +95,7 @@ test("empty filters are safe and unavailable zero-question paths do not masquera
 
 test("available-question query exposes real questions before unavailable catalogue inventory", () => {
   const resolver = createContentResolver(createTwoPathFixture());
-  const questions = queryAvailableQuestionBankQuestions(resolver, evidence());
+  const questions = queryAvailableQuestionBankQuestions(resolver, evidence(), { subjectSlug: fixtureIds.subjectSlug });
   assert.equal(questions.length, 11);
   assert(questions.every((entry) => entry.context.skillPath.isAvailable));
   assert.equal(new Set(questions.map((entry) => entry.question.id)).size, questions.length);
@@ -114,8 +114,62 @@ test("available-question filters operate on question progress rather than whole-
     }),
   ]);
   assert.deepEqual(
-    queryAvailableQuestionBankQuestions(resolver, activity, { progressFilter: "review-recommended" }).map((entry) => entry.question.id),
+    queryAvailableQuestionBankQuestions(resolver, activity, { subjectSlug: fixtureIds.subjectSlug, progressFilter: "review-recommended" }).map((entry) => entry.question.id),
     [fixtureIds.questions[0]],
   );
-  assert(!queryAvailableQuestionBankQuestions(resolver, activity, { progressFilter: "not-started" }).some((entry) => entry.question.id === fixtureIds.questions[0]));
+  assert(!queryAvailableQuestionBankQuestions(resolver, activity, { subjectSlug: fixtureIds.subjectSlug, progressFilter: "not-started" }).some((entry) => entry.question.id === fixtureIds.questions[0]));
+});
+
+test("available-question query never leaks questions or filter options across subject boundaries", () => {
+  const resolver = createContentResolver(createTwoSubjectFixture());
+
+  const subjectTwoQuestionIds = new Set<string>(subjectTwoFixtureIds.questions);
+  const subjectOneEntries = queryAvailableQuestionBankQuestions(resolver, evidence(), { subjectSlug: fixtureIds.subjectSlug });
+  assert(subjectOneEntries.length > 0);
+  assert(subjectOneEntries.every((entry) => entry.context.subject.subjectSlug === fixtureIds.subjectSlug));
+  assert(!subjectOneEntries.some((entry) => subjectTwoQuestionIds.has(entry.question.id)));
+
+  const subjectTwoEntries = queryAvailableQuestionBankQuestions(resolver, evidence(), { subjectSlug: subjectTwoFixtureIds.subjectSlug });
+  assert.equal(subjectTwoEntries.length, subjectTwoFixtureIds.questions.length);
+  assert(subjectTwoEntries.every((entry) => entry.context.subject.subjectSlug === subjectTwoFixtureIds.subjectSlug));
+  assert.deepEqual(
+    new Set(subjectTwoEntries.map((entry) => entry.question.id)),
+    new Set(subjectTwoFixtureIds.questions),
+  );
+
+  const subjectOneOptions = deriveQuestionBankFilterOptions(subjectOneEntries);
+  assert(!subjectOneOptions.courseAreas.some((area) => area.id === "fixture-course"));
+  assert(!subjectOneOptions.skillPaths.some((path) => path.id === subjectTwoFixtureIds.path));
+
+  const subjectTwoOptions = deriveQuestionBankFilterOptions(subjectTwoEntries);
+  assert.deepEqual(subjectTwoOptions.courseAreas.map((area) => area.id), ["fixture-course"]);
+  assert.deepEqual(subjectTwoOptions.skillPaths.map((path) => path.id), [subjectTwoFixtureIds.path]);
+});
+
+test("type and calculator filters narrow to matching questions only, and options reflect only published subject-scoped questions", () => {
+  const source = createTwoPathFixture();
+  const numericalQuestion = source.questions.find((question) => question.answerType === "numerical");
+  const algebraicQuestion = source.questions.find((question) => question.answerType === "algebraic");
+  if (!numericalQuestion || !algebraicQuestion) throw new Error("Fixture no longer contains both a numerical and an algebraic differentiation question.");
+  const calculatorQuestions = source.questions.map((question) =>
+    question.id === numericalQuestion.id ? { ...question, calculatorAllowed: true } : question,
+  );
+  const resolver = createContentResolver({ subjects: source.subjects, questions: calculatorQuestions });
+
+  const allEntries = queryAvailableQuestionBankQuestions(resolver, evidence(), { subjectSlug: fixtureIds.subjectSlug });
+  const options = deriveQuestionBankFilterOptions(allEntries);
+  assert(options.types.includes("numerical"));
+  assert(options.types.includes("algebraic"));
+  assert(options.hasCalculatorQuestions);
+
+  const numericalOnly = queryAvailableQuestionBankQuestions(resolver, evidence(), { subjectSlug: fixtureIds.subjectSlug, typeFilter: "numerical" });
+  assert(numericalOnly.length > 0);
+  assert(numericalOnly.every((entry) => entry.question.answerType === "numerical"));
+
+  const calculatorAllowed = queryAvailableQuestionBankQuestions(resolver, evidence(), { subjectSlug: fixtureIds.subjectSlug, calculatorFilter: "allowed" });
+  assert.deepEqual(calculatorAllowed.map((entry) => entry.question.id), [numericalQuestion.id]);
+
+  const calculatorNotAllowed = queryAvailableQuestionBankQuestions(resolver, evidence(), { subjectSlug: fixtureIds.subjectSlug, calculatorFilter: "not-allowed" });
+  assert(!calculatorNotAllowed.some((entry) => entry.question.id === numericalQuestion.id));
+  assert(calculatorNotAllowed.some((entry) => entry.question.id === algebraicQuestion.id));
 });
