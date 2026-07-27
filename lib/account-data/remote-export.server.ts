@@ -20,6 +20,8 @@ export async function exportRemoteLearningData(pool: Pool, ownerId: string) {
           FROM stemforge_remote.question_attempts WHERE owner_id=$1
         UNION ALL SELECT 'support_event', 'accepted', event_id, payload, account_generation, receive_order, received_at
           FROM stemforge_remote.support_events WHERE owner_id=$1
+        UNION ALL SELECT 'guided_self_assessment', 'accepted', event_id, payload, account_generation, receive_order, received_at
+          FROM stemforge_remote.guided_self_assessments WHERE owner_id=$1
         UNION ALL SELECT 'achievement_snapshot', 'accepted', event_id, payload, account_generation, receive_order, received_at
           FROM stemforge_remote.achievement_snapshots WHERE owner_id=$1
         UNION ALL SELECT evidence_kind, 'conflict_retained', event_id, incoming_payload, account_generation, receive_order, received_at

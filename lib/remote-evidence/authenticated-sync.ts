@@ -97,9 +97,10 @@ function response(
 }
 
 function validateRecord(kind: string, eventId: string, evidence: unknown) {
-  const payload: ProgressPayload = { version: 4, data: { attempts: [], supportEvents: [], achievementSnapshots: [] } };
+  const payload: ProgressPayload = { version: 5, data: { attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [] } };
   if (kind === "attempt") payload.data.attempts.push(evidence as ProgressPayload["data"]["attempts"][number]);
   else if (kind === "support_event") payload.data.supportEvents.push(evidence as ProgressPayload["data"]["supportEvents"][number]);
+  else if (kind === "guided_self_assessment") payload.data.guidedSelfAssessments.push(evidence as ProgressPayload["data"]["guidedSelfAssessments"][number]);
   else if (kind === "achievement_snapshot") payload.data.achievementSnapshots.push(evidence as ProgressPayload["data"]["achievementSnapshots"][number]);
   else return false;
   const validated = validateRemoteEvidenceBatch(payload);
@@ -108,7 +109,9 @@ function validateRecord(kind: string, eventId: string, evidence: unknown) {
     ? validated.payload.data.achievementSnapshots[0]?.snapshotId
     : kind === "attempt"
       ? validated.payload.data.attempts[0]?.eventId
-      : validated.payload.data.supportEvents[0]?.eventId;
+      : kind === "support_event"
+        ? validated.payload.data.supportEvents[0]?.eventId
+        : validated.payload.data.guidedSelfAssessments[0]?.eventId;
   return storedId === eventId;
 }
 

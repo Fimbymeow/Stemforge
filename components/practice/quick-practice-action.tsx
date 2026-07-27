@@ -1,11 +1,10 @@
 "use client";
 
 import { useMemo } from "react";
-import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
+import { usePracticeActivation } from "@/components/practice/use-practice-activation";
 import { getEmptyProgressEvidence, getProgressEvidence } from "@/lib/local-progress";
 import { deriveLearnerNextAction } from "@/lib/learning/next-action";
-import { loadPracticeSessionStore, upsertPracticeSession } from "@/lib/practice/practice-storage";
 import { createQuickPracticeSelection } from "@/lib/study-context";
 import { useHasMounted } from "@/lib/use-mounted";
 
@@ -22,49 +21,38 @@ export function QuickPracticeAction({
   testId?: string;
   describedBy?: string;
 }) {
-  const router = useRouter();
+  const activation = usePracticeActivation();
   const hasMounted = useHasMounted();
   const evidence = hasMounted ? getProgressEvidence() : getEmptyProgressEvidence();
-  const activeSession = hasMounted ? getActiveSession() : null;
-  const nextAction = deriveLearnerNextAction({ evidence, activePracticeSession: activeSession });
+  const nextAction = deriveLearnerNextAction({ evidence });
   const quick = useMemo(
     () => createQuickPracticeSelection({ evidence, preferredPathId: preferredPathId ?? nextAction.pathId }),
     [evidence, nextAction.pathId, preferredPathId],
   );
-  const resume = nextAction.kind === "resume_practice" && nextAction.href ? nextAction : null;
-
   function begin() {
-    if (resume?.href) {
-      router.push(resume.href);
-      return;
-    }
     const selection = createQuickPracticeSelection({
       evidence: getProgressEvidence(),
       preferredPathId: preferredPathId ?? nextAction.pathId,
     });
     if (!selection.result.session) return;
-    upsertPracticeSession(selection.result.session);
-    router.push(`/practice/session/${selection.result.session.sessionId}`);
+    void activation.begin(selection.result.session);
   }
 
   return (
-    <button
-      type="button"
-      data-testid={testId}
-      aria-describedby={describedBy}
-      onClick={begin}
-      disabled={!hasMounted || (!resume && !quick.result.session)}
-      className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-forge px-5 font-extrabold text-white disabled:opacity-45 ${className}`}
-    >
-      {resume ? "Resume Practice" : label}
-      <ArrowRight className="size-5" />
-    </button>
+    <>
+      <button
+        type="button"
+        data-testid={testId}
+        aria-describedby={describedBy}
+        onClick={begin}
+        disabled={!hasMounted || !quick.result.session || activation.busy}
+        className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-forge px-5 font-extrabold text-white disabled:opacity-45 ${className}`}
+      >
+        {label}
+        <ArrowRight className="size-5" />
+      </button>
+      {activation.error ? <p role="status" className="text-sm text-red-700">{activation.error}</p> : null}
+      {activation.activationUi}
+    </>
   );
-}
-
-function getActiveSession() {
-  const store = loadPracticeSessionStore().store;
-  return store.activeSessionId
-    ? store.sessions.find((session) => session.sessionId === store.activeSessionId) ?? null
-    : null;
 }

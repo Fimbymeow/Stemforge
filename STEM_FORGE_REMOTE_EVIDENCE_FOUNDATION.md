@@ -2,12 +2,12 @@
 
 Production migration verification is non-mutating: run `pnpm run db:migrate:status` with the migration-only SSL connection before and after `pnpm run db:migrate`. Confirm the production/private-beta Supabase project first; never infer it from a development `.env.local`. See `STEM_FORGE_PRODUCTION_DEPLOYMENT_AND_RELEASE_VERIFICATION.md` for the release boundary.
 
-Updated: 14 July 2026
-Status: Sprint 12 PostgreSQL foundation preserved; Sprint 13 trusted owner mapping added; Sprint 14 confirmed import connects them through an authenticated server route
+Updated: 27 July 2026
+Status: append-only V5 evidence foundation with trusted ownership, confirmed import and incremental synchronization
 
 ## 1. Outcome
 
-STEM Forge has a server-only asynchronous PostgreSQL repository for canonical V4 evidence owned by an opaque learner identifier. It persists immutable question attempts, support events and structural achievement snapshots as separate rows. LocalStorage remains the active learning runtime. Optional authentication and the confirmed `/api/progress/import` endpoint can append explicitly approved browser evidence; continuous synchronization is not implemented.
+STEM Forge has a server-only asynchronous PostgreSQL repository for canonical V5 evidence owned by an opaque learner identifier. It persists immutable question attempts, support events, guided Practice self-assessments and structural achievement snapshots as separate rows. LocalStorage remains the active learning runtime. Confirmed import and explicitly associated incremental synchronization append through the same validation and ownership boundary.
 
 ## 2. Database and query decision
 
@@ -23,7 +23,7 @@ Migrations live in `migrations/` and are applied explicitly with `node-pg-migrat
 
 ## 4. Schema
 
-The `stemforge_remote` schema contains `question_attempts`, `support_events`, `achievement_snapshots`, `evidence_conflicts`, and one shared `evidence_receive_order_seq`.
+The `stemforge_remote` schema contains `question_attempts`, `support_events`, `guided_self_assessments`, `achievement_snapshots`, `evidence_conflicts`, and one shared `evidence_receive_order_seq`.
 
 Each accepted evidence table stores `owner_id`, stable `event_id`, canonical `payload` as JSONB, database-calculated SHA-256 `payload_hash`, global `receive_order`, and database-controlled `received_at`. The conflict table stores kind, owner, event ID, the accepted hash, complete incoming JSONB, its database-calculated hash, conflict identity, receive order and receive time.
 
@@ -37,17 +37,17 @@ Each evidence table has a unique `(owner_id, event_id)` constraint and an `(owne
 
 ## 7. Append-only enforcement
 
-Database `BEFORE UPDATE OR DELETE` and `BEFORE TRUNCATE` triggers raise SQLSTATE `55000` for all four tables. UPDATE, DELETE and TRUNCATE are also revoked from `PUBLIC`. Production should make the migration role the schema owner and grant its runtime role only schema usage, sequence usage, and table INSERT/SELECT. The repository exposes no update, delete or replace-all method.
+Database `BEFORE UPDATE OR DELETE` and `BEFORE TRUNCATE` triggers raise SQLSTATE `55000` for all five evidence/conflict tables. UPDATE, DELETE and TRUNCATE are also revoked from `PUBLIC`. The narrowly authorized account-erasure function remains the only deletion path. Production should make the migration role the schema owner and grant its runtime role only schema usage, sequence usage, and table INSERT/SELECT. The repository exposes no update or replace-all method.
 
-## 8. V4 validation boundary
+## 8. V5 validation boundary
 
-The remote boundary accepts canonical V4 only. It reuses the existing attempt, support-event and snapshot guards, then adds strict event-ID, logical-ID, ISO timestamp, exact-key, answer-length, owner-ID, item-count and UTF-8 byte limits. Known versions must remain positive and `unknown_legacy` remains valid. Validation never consults the active content registry, so archived, removed and historically unknown logical IDs survive.
+The remote boundary accepts canonical V5 only. It reuses the existing attempt, support-event, guided-self-assessment and snapshot guards, then adds strict event-ID, logical-ID, session-ID, outcome, ISO timestamp, exact-key, answer-length, owner-ID, item-count and UTF-8 byte limits. Known versions must remain positive and `unknown_legacy` remains valid for historical attempt/support evidence. Validation never consults the active content registry, so archived, removed and historically unknown logical IDs survive.
 
-Older payload migration remains solely in the existing local normalization boundary. The remote repository does not accept V1/V2/V3 directly and never invents event IDs, versions or snapshots.
+Older payload migration remains solely in the existing local normalization boundary. The remote repository does not accept V1–V4 directly and never invents event IDs, versions, self-assessments or snapshots.
 
 ## 9. Repository interface
 
-`PostgresRemoteEvidenceRepository.append(ownerId, unknownBatch)` validates and transactionally classifies a batch into accepted, identical duplicates, same-ID conflicts and rejected invalid records. `read(ownerId, afterCursor?)` reconstructs canonical V4 evidence plus trusted receive metadata. Owner is present in every query. Reads are deterministic by global receive order, kind and event ID.
+`PostgresRemoteEvidenceRepository.append(ownerId, unknownBatch)` validates and transactionally classifies a batch into accepted, identical duplicates, same-ID conflicts and rejected invalid records. `read(ownerId, afterCursor?)` reconstructs canonical V5 evidence plus trusted receive metadata. Owner is present in every query. Reads are deterministic by global receive order, kind and event ID.
 
 `createRemoteEvidencePool` reads `STEMFORGE_DATABASE_URL` only when invoked. Both the pool factory and PostgreSQL repository carry Next.js's `server-only` marker. No client component, browser bundle or API route imports them.
 

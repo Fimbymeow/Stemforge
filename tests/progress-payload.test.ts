@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { createDefaultProgressPayload, migrateProgressPayload } from "../lib/progress/payload";
 import type { AchievementSnapshot, QuestionAttemptV2, QuestionSupportEventV2 } from "../lib/progress/types";
-import { attempt, supportEvent } from "./progress-fixtures";
+import { attempt, selfAssessment, supportEvent } from "./progress-fixtures";
 
 const legacyAttempt = {
   questionId: "hm-calc-diff-basic-f-001",
@@ -23,8 +23,8 @@ function v2Event(overrides: Partial<QuestionSupportEventV2> = {}): QuestionSuppo
   return record;
 }
 
-test("creates an empty version 4 payload", () => {
-  assert.deepEqual(createDefaultProgressPayload(), { version: 4, data: { attempts: [], supportEvents: [], achievementSnapshots: [] } });
+test("creates an empty version 5 payload", () => {
+  assert.deepEqual(createDefaultProgressPayload(), { version: 5, data: { attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [] } });
 });
 
 test("loads valid V3 known and unknown evidence without semantic mutation", () => {
@@ -40,7 +40,7 @@ test("loads valid V3 known and unknown evidence without semantic mutation", () =
   };
   const result = migrateProgressPayload(payload);
   assert.equal(result.status, "migrated-v3");
-  assert.equal(result.payload.version, 4);
+  assert.equal(result.payload.version, 5);
   assert.deepEqual(result.payload.data.attempts.map(({ eventId: _id, ...item }) => item), payload.data.attempts);
   assert.deepEqual(result.payload.data.supportEvents.map(({ eventId: _id, ...item }) => item), payload.data.supportEvents);
   assert.deepEqual(result.payload.data.achievementSnapshots, []);
@@ -50,7 +50,7 @@ test("migrates V2 attempts and support events to explicit unknown evidence", () 
   const source = { version: 2, data: { attempts: [v2Attempt()], supportEvents: [v2Event()] } };
   const result = migrateProgressPayload(source);
   assert.equal(result.status, "migrated-v2");
-  assert.equal(result.payload.version, 4);
+  assert.equal(result.payload.version, 5);
   const { eventId: _attemptId, ...migratedAttempt } = result.payload.data.attempts[0];
   const { eventId: _supportId, ...migratedSupport } = result.payload.data.supportEvents[0];
   assert.deepEqual(migratedAttempt, {
@@ -73,7 +73,7 @@ test("V2 repeated attempts remain repeated and never receive invented version 1"
 test("migrates V1 without deleting historical completion or inventing version evidence", () => {
   const result = migrateProgressPayload({ version: 1, data: { attempts: [legacyAttempt] } });
   assert.equal(result.status, "migrated-v1");
-  assert.equal(result.payload.version, 4);
+  assert.equal(result.payload.version, 5);
   assert.equal(result.payload.data.attempts[0].legacyCompleted, true);
   assert.equal(result.payload.data.attempts[0].supportKnowledge, "unknown_legacy");
   assert.deepEqual(result.payload.data.attempts[0].versionEvidence, { kind: "unknown_legacy", questionVersion: null });
@@ -121,7 +121,7 @@ test("malformed V2 subrecords are dropped during migration", () => {
 });
 
 test("future, null and invalid payloads fail safely", () => {
-  assert.equal(migrateProgressPayload({ version: 5, data: {} }).status, "unsupported-version");
+  assert.equal(migrateProgressPayload({ version: 6, data: {} }).status, "unsupported-version");
   assert.equal(migrateProgressPayload(null).status, "invalid-structure");
   assert.equal(migrateProgressPayload({ version: 3, data: { attempts: [] } }).status, "invalid-structure");
 });
@@ -144,7 +144,7 @@ test("V3 migration IDs are deterministic, preserve repeats, and invent no snapsh
   assert.deepEqual(first.data.achievementSnapshots, []);
 });
 
-test("V4 validates snapshots individually and preserves structurally valid orphan references", () => {
+test("V4 migrates snapshots individually and preserves structurally valid orphan references", () => {
   const valid: AchievementSnapshot = {
     snapshotId: "snapshot_valid", kind: "stage_completed", subjectId: "removed-subject", courseId: "removed-course",
     pathId: "removed-path", pathVersion: 2, stageId: "removed-stage", stageVersion: 3,
@@ -153,7 +153,22 @@ test("V4 validates snapshots individually and preserves structurally valid orpha
   };
   const result = migrateProgressPayload({ version: 4, data: { attempts: [], supportEvents: [],
     achievementSnapshots: [valid, { ...valid, snapshotId: "bad", completionCount: 4 }] } });
-  assert.equal(result.status, "current-repaired");
+  assert.equal(result.status, "migrated-v4");
   assert.equal(result.droppedSnapshots, 1);
   assert.deepEqual(result.payload.data.achievementSnapshots, [valid]);
+});
+
+test("V4 migrates to V5 with an empty self-assessment stream and V5 repairs events individually", () => {
+  const migrated = migrateProgressPayload({ version: 4, data: {
+    attempts: [attempt()], supportEvents: [supportEvent()], achievementSnapshots: [],
+  } });
+  assert.equal(migrated.status, "migrated-v4");
+  assert.deepEqual(migrated.payload.data.guidedSelfAssessments, []);
+  const valid = selfAssessment();
+  const repaired = migrateProgressPayload({ version: 5, data: {
+    attempts: [], supportEvents: [], guidedSelfAssessments: [valid, { ...valid, eventId: "" }], achievementSnapshots: [],
+  } });
+  assert.equal(repaired.status, "current-repaired");
+  assert.equal(repaired.droppedSelfAssessments, 1);
+  assert.deepEqual(repaired.payload.data.guidedSelfAssessments, [valid]);
 });

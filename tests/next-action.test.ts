@@ -131,11 +131,11 @@ test("empty and invalid catalogue conditions return an explicit unavailable resu
 });
 
 function emptyEvidence(): ProgressEvidence {
-  return { attempts: [], supportEvents: [], achievementSnapshots: [] };
+  return { attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [] };
 }
 
 function evidence(attempts: QuestionAttempt[] = [], supportEvents: QuestionSupportEvent[] = []): ProgressEvidence {
-  return { attempts, supportEvents, achievementSnapshots: [] };
+  return { attempts, supportEvents, guidedSelfAssessments: [], achievementSnapshots: [] };
 }
 
 function attempt(
@@ -181,8 +181,10 @@ function support(questionId: string, sequence: number, overrides: Partial<Questi
 function activeSession(): PracticeSession {
   const context = resolver.getQuestionContext(questionIds[0])!;
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     sessionId: "next-action-active-session",
+    origin: "configured_practice",
+    subjectId: context.subject.subjectSlug,
     mode: "targeted",
     courseId: context.courseArea.slug,
     selectedPathIds: [context.skillPath.slug],
@@ -212,5 +214,6 @@ function activeSession(): PracticeSession {
       includedPathIds: [context.skillPath.slug],
       createdAt: "2026-07-20T10:00:00.000Z",
     },
+    skippedQuestionIds: [],
   };
 }

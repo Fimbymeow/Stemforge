@@ -1,4 +1,4 @@
-export const CURRENT_PROGRESS_VERSION = 4 as const;
+export const CURRENT_PROGRESS_VERSION = 5 as const;
 
 export type LegacyQuestionAttempt = {
   questionId: string;
@@ -77,10 +77,26 @@ export type ProgressPayloadV3 = {
 
 export type QuestionAttempt = QuestionAttemptV3 & {
   eventId: string;
+  practiceSessionId?: string;
 };
 
 export type QuestionSupportEvent = QuestionSupportEventV3 & {
   eventId: string;
+  practiceSessionId?: string;
+};
+
+export type GuidedSelfAssessmentOutcome = "confident" | "unsure" | "needs_review";
+
+export type GuidedSelfAssessmentEvent = {
+  eventId: string;
+  practiceSessionId: string;
+  questionId: string;
+  skillPathId: string;
+  stageId: string;
+  outcome: GuidedSelfAssessmentOutcome;
+  occurredAt: string;
+  sequence: number;
+  versionEvidence: VersionEvidence;
 };
 
 export type AchievementSnapshotKind =
@@ -109,7 +125,7 @@ export type AchievementSnapshot = {
 };
 
 export type ProgressPayloadV4 = {
-  version: typeof CURRENT_PROGRESS_VERSION;
+  version: 4;
   data: {
     attempts: QuestionAttempt[];
     supportEvents: QuestionSupportEvent[];
@@ -117,8 +133,18 @@ export type ProgressPayloadV4 = {
   };
 };
 
-export type ProgressPayload = ProgressPayloadV4;
-export type ProgressEvidence = ProgressPayloadV4["data"];
+export type ProgressPayloadV5 = {
+  version: typeof CURRENT_PROGRESS_VERSION;
+  data: {
+    attempts: QuestionAttempt[];
+    supportEvents: QuestionSupportEvent[];
+    guidedSelfAssessments: GuidedSelfAssessmentEvent[];
+    achievementSnapshots: AchievementSnapshot[];
+  };
+};
+
+export type ProgressPayload = ProgressPayloadV5;
+export type ProgressEvidence = ProgressPayloadV5["data"];
 
 export type ProgressLoadStatus =
   | "current"
@@ -130,6 +156,7 @@ export type ProgressLoadStatus =
   | "migrated-v1"
   | "migrated-v2"
   | "migrated-v3"
+  | "migrated-v4"
   | "unavailable"
   | "unsupported-version";
 
@@ -138,6 +165,7 @@ export type ProgressLoadResult = {
   status: ProgressLoadStatus;
   droppedAttempts: number;
   droppedEvents: number;
+  droppedSelfAssessments: number;
   droppedSnapshots: number;
 };
 

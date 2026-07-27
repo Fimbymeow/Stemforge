@@ -1,5 +1,6 @@
 import { canonicalContent, type CanonicalContentSource } from "@/data/canonical-content";
 import { resolvePracticeReference } from "@/lib/practice/practice-eligibility";
+import { derivePracticeQuestionStatuses } from "@/lib/practice/practice-question-status";
 import type { PracticeSession } from "@/lib/practice/practice-types";
 import type { ProgressEvidence } from "@/lib/progress/types";
 
@@ -13,6 +14,12 @@ export type PracticeSessionSummary = {
   incorrectQuestionIds: string[];
   unansweredCount: number;
   supportUsedCount: number;
+  skippedCount: number;
+  unavailableCount: number;
+  confidentCount: number;
+  unsureCount: number;
+  needsReviewCount: number;
+  revisitQuestionIds: string[];
   elapsedSeconds: number | null;
   pathIds: string[];
   suggestedNextAction: "retry_incorrect" | "continue_path" | "start_targeted" | "dashboard";
@@ -23,38 +30,16 @@ export function derivePracticeSessionSummary(
   evidence: ProgressEvidence,
   source: CanonicalContentSource = canonicalContent,
 ): PracticeSessionSummary {
-  const questionIds = session.questionReferences.map((reference) => reference.questionId);
-  const relevantAttempts = evidence.attempts.filter((attempt) =>
-    questionIds.includes(attempt.questionId) &&
-    isWithinSession(attempt.attemptedAt, session) &&
-    attempt.isGenuine &&
-    attempt.versionEvidence.kind === "known" &&
-    session.questionReferences.some((reference) =>
-      reference.questionId === attempt.questionId &&
-      reference.questionVersion === attempt.versionEvidence.questionVersion),
-  );
-  const latestByQuestion = new Map<string, (typeof relevantAttempts)[number]>();
-  for (const attempt of relevantAttempts) {
-    const previous = latestByQuestion.get(attempt.questionId);
-    if (!previous || Date.parse(attempt.attemptedAt) > Date.parse(previous.attemptedAt) || attempt.sequence > previous.sequence) {
-      latestByQuestion.set(attempt.questionId, attempt);
-    }
-  }
-  const supportUsedCount = evidence.supportEvents.filter((event) =>
-    questionIds.includes(event.questionId) &&
-    isWithinSession(event.occurredAt, session) &&
-    event.afterGenuineAttempt,
-  ).length;
+  const statuses = derivePracticeQuestionStatuses(session, evidence, source);
   const pathIds = [...new Set(session.questionReferences.map((reference) => {
     const resolved = resolvePracticeReference(reference, source);
     return resolved.status === "resolved" ? resolved.context.skillPath.slug : reference.pathId;
   }))];
-  const attemptedCount = latestByQuestion.size;
-  const correctCount = [...latestByQuestion.values()].filter((attempt) => attempt.isCorrect === true).length;
-  const incorrectCount = [...latestByQuestion.values()].filter((attempt) => attempt.isCorrect === false).length;
-  const incorrectQuestionIds = session.questionReferences
-    .filter((reference) => latestByQuestion.get(reference.questionId)?.isCorrect === false)
-    .map((reference) => reference.questionId);
+  const attemptedCount = statuses.filter((status) => status.latestAttempt).length;
+  const correctCount = statuses.filter((status) => status.latestAttempt?.isCorrect === true).length;
+  const incorrectQuestionIds = statuses.filter((status) => status.latestAttempt?.isCorrect === false).map((status) => status.questionId);
+  const incorrectCount = incorrectQuestionIds.length;
+  const revisitQuestionIds = statuses.filter((status) => status.worthRevisit).map((status) => status.questionId);
   return {
     sessionId: session.sessionId,
     mode: session.mode,
@@ -63,17 +48,17 @@ export function derivePracticeSessionSummary(
     correctCount,
     incorrectCount,
     incorrectQuestionIds,
-    unansweredCount: session.questionReferences.length - attemptedCount,
-    supportUsedCount,
+    unansweredCount: statuses.filter((status) =>
+      status.primary === "unanswered" && !status.skipped && !status.unavailable).length,
+    supportUsedCount: statuses.filter((status) => status.supportUsed).length,
+    skippedCount: statuses.filter((status) => status.skipped).length,
+    unavailableCount: statuses.filter((status) => status.unavailable).length,
+    confidentCount: statuses.filter((status) => status.selfAssessment === "confident").length,
+    unsureCount: statuses.filter((status) => status.selfAssessment === "unsure").length,
+    needsReviewCount: statuses.filter((status) => status.selfAssessment === "needs_review").length,
+    revisitQuestionIds,
     elapsedSeconds: session.timing.type === "timed" ? session.timing.elapsedSeconds : null,
     pathIds,
-    suggestedNextAction: incorrectCount > 0 ? "retry_incorrect" : pathIds.length ? "continue_path" : "dashboard",
+    suggestedNextAction: revisitQuestionIds.length > 0 ? "retry_incorrect" : pathIds.length ? "continue_path" : "dashboard",
   };
-}
-
-function isWithinSession(occurredAt: string, session: PracticeSession) {
-  const occurred = Date.parse(occurredAt);
-  const started = Date.parse(session.startedAt);
-  const completed = session.completedAt ? Date.parse(session.completedAt) : null;
-  return occurred >= started && (completed === null || occurred <= completed);
 }

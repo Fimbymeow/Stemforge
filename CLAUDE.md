@@ -1,6 +1,6 @@
 # STEM Forge — orientation for Claude Code
 
-STEM Forge is a private-beta learning platform for Scottish SQA STEM students (Next.js 15 App Router, React 19, Tailwind 3). Higher Maths → Calculus → Differentiation → Basic differentiation is the complete production slice; the content resolver and routes are multi-path capable. Guest progress is canonical V4 evidence in localStorage. Optional Supabase SSR authentication maps verified users to immutable PostgreSQL owners. Sprint 14 adds confirmed append-only import, Sprint 15 adds explicit incremental sync, and Sprint 16 adds provenance-backed shared-device controls and safe sign-out.
+STEM Forge is a private-beta learning platform for Scottish SQA STEM students (Next.js 15 App Router, React 19, Tailwind 3). Higher Maths → Calculus → Differentiation → Basic differentiation is the complete production slice; the content resolver and routes are multi-path capable. Guest progress is canonical V5 evidence in localStorage, including append-only guided self-assessments and optional practice-session attribution. Optional Supabase SSR authentication maps verified users to immutable PostgreSQL owners. Sprint 14 adds confirmed append-only import, Sprint 15 adds explicit incremental sync, and Sprint 16 adds provenance-backed shared-device controls and safe sign-out.
 
 **Read `docs/frontend-work-plan.md` before starting new frontend work.** It has the current status and prioritized next steps from the last session in detail; this file is orientation, that file is the punch list.
 

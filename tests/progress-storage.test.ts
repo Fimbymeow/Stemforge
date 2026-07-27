@@ -16,7 +16,7 @@ class MemoryStorage implements StorageLike {
   removeItem(key: string) { if (this.throwOnClear) throw new Error("clear blocked"); this.values.delete(key); }
 }
 
-const payload: ProgressPayload = { version: 4, data: { attempts: [attempt()], supportEvents: [supportEvent()], achievementSnapshots: [] } };
+const payload: ProgressPayload = { version: 5, data: { attempts: [attempt()], supportEvents: [supportEvent()], guidedSelfAssessments: [], achievementSnapshots: [] } };
 const legacyAttempt = {
   questionId: attempt().questionId,
   skillPathId: attempt().skillPathId,
@@ -26,7 +26,7 @@ const legacyAttempt = {
   attemptedAt: "2026-07-11T12:00:00.000Z",
 };
 
-test("save then load preserves V4", () => {
+test("save then load preserves V5", () => {
   const memory = new MemoryStorage();
   const storage = new LocalStorageProgressStorage(memory);
   assert.equal(storage.save(payload), true);
@@ -37,25 +37,25 @@ test("storage key remains unchanged", () => {
   assert.equal(PROGRESS_STORAGE_KEY, "stemforge.localProgress.v1");
 });
 
-test("V1 load then save writes V4 without duplicate attempts", () => {
+test("V1 load then save writes V5 without duplicate attempts", () => {
   const memory = new MemoryStorage();
   memory.values.set(PROGRESS_STORAGE_KEY, JSON.stringify({ version: 1, data: { attempts: [legacyAttempt] } }));
   const repository = new ProgressRepository(new LocalStorageProgressStorage(memory));
   assert.equal(repository.recordAttempt(attempt({ questionId: "hm-calc-diff-basic-f-002", sequence: 2 })), true);
   const saved = JSON.parse(memory.values.get(PROGRESS_STORAGE_KEY) ?? "null") as ProgressPayload;
-  assert.equal(saved.version, 4);
+  assert.equal(saved.version, 5);
   assert.equal(saved.data.attempts.length, 2);
   assert.equal(saved.data.attempts[0].legacyCompleted, true);
 });
 
-test("unversioned load remains readable and next event saves V4", () => {
+test("unversioned load remains readable and next event saves V5", () => {
   const memory = new MemoryStorage();
   memory.values.set(PROGRESS_STORAGE_KEY, JSON.stringify([legacyAttempt]));
   const repository = new ProgressRepository(new LocalStorageProgressStorage(memory));
   assert.equal(repository.load().status, "migrated-legacy");
   assert.equal(repository.recordSupportEvent(supportEvent({ sequence: 2 })), true);
   const saved = JSON.parse(memory.values.get(PROGRESS_STORAGE_KEY) ?? "null") as ProgressPayload;
-  assert.equal(saved.version, 4);
+  assert.equal(saved.version, 5);
   assert.equal(saved.data.attempts.length, 1);
 });
 
@@ -98,12 +98,12 @@ test("SSR factory is safe", () => {
 test("invalid payloads cannot be saved", () => {
   const memory = new MemoryStorage();
   const storage = new LocalStorageProgressStorage(memory);
-  assert.equal(storage.save({ version: 4, data: { attempts: [{ ...attempt(), sequence: -1 }], supportEvents: [], achievementSnapshots: [] } }), false);
+  assert.equal(storage.save({ version: 5, data: { attempts: [{ ...attempt(), sequence: -1 }], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [] } }), false);
 });
 
 test("unsupported future data is preserved", () => {
   const memory = new MemoryStorage();
-  const future = JSON.stringify({ version: 5, data: { attempts: [] } });
+  const future = JSON.stringify({ version: 6, data: { attempts: [] } });
   memory.values.set(PROGRESS_STORAGE_KEY, future);
   const repository = new ProgressRepository(new LocalStorageProgressStorage(memory));
   assert.equal(repository.recordAttempt(attempt()), false);

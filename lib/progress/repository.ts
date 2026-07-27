@@ -1,8 +1,18 @@
-import { recordQuestionSubmission, recordSupportEvent, resetPathProgress } from "@/lib/progress/calculations";
+import {
+  recordGuidedSelfAssessment,
+  recordQuestionSubmission,
+  recordSupportEvent,
+  resetPathProgress,
+} from "@/lib/progress/calculations";
 import { appendAchievementTransitions, type StructuralAchievementContext } from "@/lib/progress/achievements";
 import { createEventId, type EventIdFactory } from "@/lib/progress/event-identity";
 import type { ProgressStorage } from "@/lib/progress/storage";
-import type { ProgressLoadResult, QuestionAttempt, QuestionSupportEvent } from "@/lib/progress/types";
+import type {
+  GuidedSelfAssessmentEvent,
+  ProgressLoadResult,
+  QuestionAttempt,
+  QuestionSupportEvent,
+} from "@/lib/progress/types";
 
 export class ProgressRepository {
   constructor(private readonly storage: ProgressStorage, private readonly idFactory: EventIdFactory = createEventId) {}
@@ -37,6 +47,12 @@ export class ProgressRepository {
       ? appendAchievementTransitions(loaded.payload.data, updated.data, context, event.occurredAt, this.idFactory)
       : updated.data;
     return this.storage.save({ ...updated, data });
+  }
+
+  recordGuidedSelfAssessment(event: GuidedSelfAssessmentEvent) {
+    const loaded = this.load();
+    if (!canWriteLoadedProgress(loaded)) return false;
+    return this.storage.save(recordGuidedSelfAssessment(loaded.payload, event));
   }
 
   resetPath(skillPathId: string) {

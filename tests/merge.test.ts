@@ -4,10 +4,10 @@ import { mergeProgressEvidence, mergeSupportedProgressPayloads } from "../lib/pr
 import { getQuestionProgressForVersion } from "../lib/progress/calculations";
 import { createDefaultProgressPayload, migrateProgressPayload } from "../lib/progress/payload";
 import type { AchievementSnapshot, ProgressPayload } from "../lib/progress/types";
-import { attempt, supportEvent } from "./progress-fixtures";
+import { attempt, selfAssessment, supportEvent } from "./progress-fixtures";
 
 const payload = (attempts = [attempt()], supportEvents = [supportEvent()], achievementSnapshots: AchievementSnapshot[] = []): ProgressPayload =>
-  ({ version: 4, data: { attempts, supportEvents, achievementSnapshots } });
+  ({ version: 5, data: { attempts, supportEvents, guidedSelfAssessments: [], achievementSnapshots } });
 const snapshot = (overrides: Partial<AchievementSnapshot> = {}): AchievementSnapshot => ({
   snapshotId: "snapshot_1", kind: "path_completed", subjectId: "higher-maths", courseId: "calculus",
   pathId: "basic-differentiation", pathVersion: 1, achievedAt: "2026-07-13T12:00:00.000Z", masteryScore: 70,
@@ -74,4 +74,17 @@ test("supported legacy merge uses stable migration IDs and refuses future versio
   const future = mergeSupportedProgressPayloads(legacy, { version: 99, data: {} });
   assert.equal(future.payload, null);
   assert.equal(future.conflicts[0]?.type, "unsupported_payload_version");
+});
+
+test("guided self-assessments merge append-only and surface same-ID conflicts", () => {
+  const left = payload([], []);
+  left.data.guidedSelfAssessments.push(selfAssessment({ outcome: "confident" }));
+  const right = payload([], []);
+  right.data.guidedSelfAssessments.push(
+    selfAssessment({ eventId: "self_assessment_2", outcome: "unsure", sequence: 4 }),
+    selfAssessment({ eventId: "self_assessment_1", outcome: "needs_review" }),
+  );
+  const merged = mergeProgressEvidence(left, right);
+  assert.equal(merged.payload.data.guidedSelfAssessments.length, 2);
+  assert.equal(merged.conflicts.some((item) => item.recordType === "guided_self_assessment"), true);
 });

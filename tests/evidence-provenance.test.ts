@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { attempt, supportEvent } from "./progress-fixtures";
+import { attempt, selfAssessment, supportEvent } from "./progress-fixtures";
 import type { ProgressPayload } from "../lib/progress/types";
 import {
   assignEvidenceProvenance,
@@ -32,12 +32,13 @@ test("anonymous, associated and pulled provenance remain separately attributable
   metadata = assignEvidenceProvenance(metadata, source, ["attempt:attempt_a"], "local_anonymous", null);
   metadata = assignEvidenceProvenance(metadata, source, ["support_event:support_a"], "local_associated", fingerprintA);
   metadata = assignEvidenceProvenance(metadata, source, ["attempt:attempt_b"], "remote_pull", fingerprintB);
-  assert.deepEqual([...referencesForAccount(metadata, fingerprintA)], ["support_event:support_a"]);
+  metadata = assignEvidenceProvenance(metadata, source, ["guided_self_assessment:self_a"], "local_associated", fingerprintA);
+  assert.deepEqual([...referencesForAccount(metadata, fingerprintA)], ["support_event:support_a", "guided_self_assessment:self_a"]);
   assert.deepEqual(evidenceProvenanceSummary(metadata, source, fingerprintA), {
-    total: 3,
+    total: 4,
     anonymous: 1,
     legacyUnknown: 0,
-    currentAccount: 1,
+    currentAccount: 2,
     otherAccounts: 1,
     remotePulledForCurrentAccount: 0,
   });
@@ -51,9 +52,10 @@ test("malformed provenance recovers conservatively and future versions fail clos
 });
 
 function payload(): ProgressPayload {
-  return { version: 4, data: {
+  return { version: 5, data: {
     attempts: [attempt({ eventId: "attempt_a" }), attempt({ eventId: "attempt_b", attemptedAt: "2026-07-12T10:02:00.000Z" })],
     supportEvents: [supportEvent({ eventId: "support_a" })],
+    guidedSelfAssessments: [selfAssessment({ eventId: "self_a" })],
     achievementSnapshots: [],
   } };
 }

@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { stableStringify } from "@/lib/progress/event-identity";
 import type { RemoteEvidenceKind } from "@/lib/remote-evidence/types";
 
-export const ACCOUNT_EXPORT_SCHEMA_VERSION = 1 as const;
+export const ACCOUNT_EXPORT_SCHEMA_VERSION = 2 as const;
 export const MAX_ACCOUNT_EXPORT_RECORDS = 10_000;
 export const MAX_ACCOUNT_EXPORT_BYTES = 5_000_000;
 
@@ -21,7 +21,7 @@ export type AccountLearningDataExport = {
   generatedAt: string;
   scope: "remote_account_learning_data";
   accountCreatedAt: string;
-  categoryCounts: { attempts: number; supportEvents: number; achievementSnapshots: number; retainedConflicts: number };
+  categoryCounts: { attempts: number; supportEvents: number; guidedSelfAssessments: number; achievementSnapshots: number; retainedConflicts: number };
   records: AccountExportRecord[];
   integrity: { algorithm: "SHA-256"; canonicalDataDigest: string };
 };
@@ -46,6 +46,7 @@ function categoryCounts(records: AccountExportRecord[]) {
   return {
     attempts: records.filter((item) => item.disposition === "accepted" && item.kind === "attempt").length,
     supportEvents: records.filter((item) => item.disposition === "accepted" && item.kind === "support_event").length,
+    guidedSelfAssessments: records.filter((item) => item.disposition === "accepted" && item.kind === "guided_self_assessment").length,
     achievementSnapshots: records.filter((item) => item.disposition === "accepted" && item.kind === "achievement_snapshot").length,
     retainedConflicts: records.filter((item) => item.disposition === "conflict_retained").length,
   };

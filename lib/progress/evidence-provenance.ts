@@ -171,6 +171,7 @@ function payloadReferences(payload: ProgressPayload) {
   return new Map<string, string>([
     ...payload.data.attempts.map((item) => [`attempt:${item.eventId}`, item.attemptedAt] as const),
     ...payload.data.supportEvents.map((item) => [`support_event:${item.eventId}`, item.occurredAt] as const),
+    ...payload.data.guidedSelfAssessments.map((item) => [`guided_self_assessment:${item.eventId}`, item.occurredAt] as const),
     ...payload.data.achievementSnapshots.map((item) => [`achievement_snapshot:${item.snapshotId}`, item.achievedAt] as const),
   ]);
 }

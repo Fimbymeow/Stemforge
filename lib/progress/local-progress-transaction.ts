@@ -43,7 +43,15 @@ export class ProgressCoordinationUnavailableError extends Error {
 }
 
 export function withLocalProgressTransaction<T>(operation: () => Promise<T> | T, requireCrossTab = false): Promise<T> {
-  const run = sameTabQueue.then(() => runCoordinated(operation, requireCrossTab));
+  return withBrowserStorageTransaction(PROGRESS_LOCK_NAME, operation, requireCrossTab);
+}
+
+export function withBrowserStorageTransaction<T>(
+  lockName: string,
+  operation: () => Promise<T> | T,
+  requireCrossTab = false,
+): Promise<T> {
+  const run = sameTabQueue.then(() => runCoordinated(lockName, operation, requireCrossTab));
   sameTabQueue = run.then(() => undefined, () => undefined);
   return run;
 }
@@ -83,6 +91,7 @@ export function applyProgressSyncPullPage(response: ProgressSyncPullResponse) {
     const present = new Set([
       ...verified.payload.data.attempts.map((item) => `attempt:${item.eventId}`),
       ...verified.payload.data.supportEvents.map((item) => `support_event:${item.eventId}`),
+      ...verified.payload.data.guidedSelfAssessments.map((item) => `guided_self_assessment:${item.eventId}`),
       ...verified.payload.data.achievementSnapshots.map((item) => `achievement_snapshot:${item.snapshotId}`),
     ]);
     for (const reference of expected) if (!present.has(reference)) throw new Error("Synchronized evidence was not durably stored.");
@@ -225,28 +234,28 @@ export function inspectBrowserProgressData(fingerprint: string | null) {
   };
 }
 
-async function runCoordinated<T>(operation: () => Promise<T> | T, requireCrossTab: boolean): Promise<T> {
+async function runCoordinated<T>(lockName: string, operation: () => Promise<T> | T, requireCrossTab: boolean): Promise<T> {
   if (typeof navigator !== "undefined" && navigator.locks) {
-    return navigator.locks.request(PROGRESS_LOCK_NAME, { mode: "exclusive" }, operation);
+    return navigator.locks.request(lockName, { mode: "exclusive" }, operation);
   }
-  if (typeof indexedDB !== "undefined") return withIndexedDbLease(operation);
+  if (typeof indexedDB !== "undefined") return withIndexedDbLease(lockName, operation);
   if (requireCrossTab) throw new ProgressCoordinationUnavailableError();
   return operation();
 }
 
-async function withIndexedDbLease<T>(operation: () => Promise<T> | T) {
+async function withIndexedDbLease<T>(lockName: string, operation: () => Promise<T> | T) {
   const database = await openLeaseDatabase();
   const token = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
   try {
     let acquired = false;
     for (let attempt = 0; attempt < 40 && !acquired; attempt += 1) {
-      acquired = await tryAcquireLease(database, token);
+      acquired = await tryAcquireLease(database, lockName, token);
       if (!acquired) await delay(20 + Math.floor(Math.random() * 30));
     }
     if (!acquired) throw new ProgressCoordinationUnavailableError();
     return await operation();
   } finally {
-    await releaseLease(database, token).catch(() => undefined);
+    await releaseLease(database, lockName, token).catch(() => undefined);
     database.close();
   }
 }
@@ -263,16 +272,16 @@ function openLeaseDatabase() {
   });
 }
 
-function tryAcquireLease(database: IDBDatabase, token: string) {
+function tryAcquireLease(database: IDBDatabase, lockName: string, token: string) {
   return new Promise<boolean>((resolve, reject) => {
     const transaction = database.transaction(LEASE_STORE, "readwrite");
     const store = transaction.objectStore(LEASE_STORE);
     let acquired = false;
-    const request = store.get(PROGRESS_LOCK_NAME);
+    const request = store.get(lockName);
     request.onsuccess = () => {
       const current = request.result as { token?: string; expiresAt?: number } | undefined;
       if (!current || typeof current.expiresAt !== "number" || current.expiresAt <= Date.now()) {
-        store.put({ token, expiresAt: Date.now() + LEASE_DURATION_MS }, PROGRESS_LOCK_NAME);
+        store.put({ token, expiresAt: Date.now() + LEASE_DURATION_MS }, lockName);
         acquired = true;
       }
     };
@@ -282,13 +291,13 @@ function tryAcquireLease(database: IDBDatabase, token: string) {
   });
 }
 
-function releaseLease(database: IDBDatabase, token: string) {
+function releaseLease(database: IDBDatabase, lockName: string, token: string) {
   return new Promise<void>((resolve, reject) => {
     const transaction = database.transaction(LEASE_STORE, "readwrite");
     const store = transaction.objectStore(LEASE_STORE);
-    const request = store.get(PROGRESS_LOCK_NAME);
+    const request = store.get(lockName);
     request.onsuccess = () => {
-      if ((request.result as { token?: string } | undefined)?.token === token) store.delete(PROGRESS_LOCK_NAME);
+      if ((request.result as { token?: string } | undefined)?.token === token) store.delete(lockName);
     };
     transaction.oncomplete = () => resolve();
     transaction.onerror = () => reject(transaction.error);

@@ -9,6 +9,7 @@ import {
   getRelatedResourcesForQuestion,
   QUICK_PRACTICE_QUESTION_COUNT,
 } from "../lib/study-context";
+import { isPracticeSession } from "../lib/practice/practice-validation";
 
 test("Quick Practice selects the preferred available path with a short untimed pinned session", () => {
   const source = createTwoPathFixture();
@@ -21,6 +22,8 @@ test("Quick Practice selects the preferred available path with a short untimed p
 
   assert.equal(quick.path?.slug, fixtureIds.path);
   assert.equal(quick.result.session?.mode, "targeted");
+  assert.equal(quick.result.session?.origin, "quick_practice");
+  assert.equal(isPracticeSession(quick.result.session), true);
   assert.equal(quick.result.session?.timing.type, "untimed");
   assert.equal(quick.result.session?.selectionMetadata.requestedCount, QUICK_PRACTICE_QUESTION_COUNT);
   assert(quick.result.session?.questionReferences.every((reference) => reference.pathId === fixtureIds.path));

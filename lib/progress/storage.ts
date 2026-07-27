@@ -15,20 +15,20 @@ export class LocalStorageProgressStorage implements ProgressStorage {
   constructor(private readonly storage: StorageLike | null) {}
 
   load(): ProgressLoadResult {
-    if (!this.storage) return { payload: createDefaultProgressPayload(), status: "unavailable", droppedAttempts: 0, droppedEvents: 0, droppedSnapshots: 0 };
+    if (!this.storage) return { payload: createDefaultProgressPayload(), status: "unavailable", droppedAttempts: 0, droppedEvents: 0, droppedSelfAssessments: 0, droppedSnapshots: 0 };
 
     let raw: string | null;
     try {
       raw = this.storage.getItem(PROGRESS_STORAGE_KEY);
     } catch {
-      return { payload: createDefaultProgressPayload(), status: "unavailable", droppedAttempts: 0, droppedEvents: 0, droppedSnapshots: 0 };
+      return { payload: createDefaultProgressPayload(), status: "unavailable", droppedAttempts: 0, droppedEvents: 0, droppedSelfAssessments: 0, droppedSnapshots: 0 };
     }
-    if (raw === null) return { payload: createDefaultProgressPayload(), status: "empty", droppedAttempts: 0, droppedEvents: 0, droppedSnapshots: 0 };
+    if (raw === null) return { payload: createDefaultProgressPayload(), status: "empty", droppedAttempts: 0, droppedEvents: 0, droppedSelfAssessments: 0, droppedSnapshots: 0 };
 
     try {
       return migrateProgressPayload(JSON.parse(raw));
     } catch {
-      return { payload: createDefaultProgressPayload(), status: "malformed-json", droppedAttempts: 0, droppedEvents: 0, droppedSnapshots: 0 };
+      return { payload: createDefaultProgressPayload(), status: "malformed-json", droppedAttempts: 0, droppedEvents: 0, droppedSelfAssessments: 0, droppedSnapshots: 0 };
     }
   }
 

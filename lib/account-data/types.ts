@@ -32,7 +32,7 @@ export type SafeErasureRequest = {
   irreversibleAt: string | null;
   completedAt: string | null;
   cancelledAt: string | null;
-  deletedCounts: { attempts: number; supportEvents: number; achievementSnapshots: number; conflicts: number } | null;
+  deletedCounts: { attempts: number; supportEvents: number; guidedSelfAssessments: number; achievementSnapshots: number; conflicts: number } | null;
   failureCode: string | null;
 };
 

@@ -1,7 +1,7 @@
 # STEM Forge Progress Architecture
 
-Updated: 13 July 2026  
-Scope: browser-local V4 evidence persistence, structural achievements, and migration
+Updated: 27 July 2026
+Scope: browser-local V5 evidence persistence, structural achievements, practice attribution, and migration
 
 ## Current architecture
 
@@ -20,10 +20,11 @@ The current payload is:
 
 ```ts
 {
-  version: 4,
+  version: 5,
   data: {
     attempts: QuestionAttempt[], // stable ID + required version evidence
     supportEvents: QuestionSupportEvent[], // stable ID + required version evidence
+    guidedSelfAssessments: GuidedSelfAssessmentEvent[], // append-only session self-checks
     achievementSnapshots: AchievementSnapshot[] // immutable structural history
   }
 }
@@ -42,10 +43,11 @@ Derived completion, mastery, status, accuracy, and review values are not stored.
 ## Version evidence and migration
 
 - New canonical evidence stores `{ kind: "known", questionVersion }` from the active question registry.
-- Unversioned arrays and V1 wrappers -> V4 through conservative legacy migration.
-- V2 attempts/events -> V4 with `{ kind: "unknown_legacy", questionVersion: null }`.
-- V3 -> V4 with preserved version evidence and deterministic migration IDs.
-- V4 -> V4 idempotently.
+- Unversioned arrays and V1 wrappers -> V5 through conservative legacy migration.
+- V2 attempts/events -> V5 with `{ kind: "unknown_legacy", questionVersion: null }`.
+- V3 -> V5 with preserved version evidence and deterministic migration IDs.
+- V4 -> V5 with prior evidence preserved and an empty guided self-assessment stream.
+- V5 -> V5 idempotently, repairing malformed records within each array individually.
 - Future versions -> safe default in memory with writes blocked.
 - Valid historical records are preserved in sequence.
 - Malformed subrecords are dropped individually.
@@ -59,7 +61,7 @@ Missing `window`, blocked LocalStorage, read/write failures, malformed JSON, and
 
 ## Reset and content
 
-Path reset removes that path's attempts and support events after confirmation and preserves immutable achievement snapshots. Other paths remain. Removed questions remain historical but do not affect current totals; newly added active questions enter current denominators.
+Path reset removes that path's attempts, support events and guided self-assessments after confirmation and preserves immutable achievement snapshots. Other paths remain. Removed questions remain historical but do not affect current totals; newly added active questions enter current denominators.
 
 ## Commands
 
@@ -77,15 +79,15 @@ pnpm build
 
 Question, stage, and path derivation exposes strict current-version completion/mastery separately from historical achievement. Unknown evidence against unchanged version-1 content can remain compatibility-visible with reassessment recommended, but cannot prove current-version mastery. Older known evidence against a newer version requires reassessment.
 
-## V4 structural achievements and merging
+## V5 evidence and merging
 
-Payload V4 adds stable IDs to attempts/support events and an append-oriented `achievementSnapshots` array. Repository writes compare before/after current-version state and atomically append newly crossed stage/path Completed, Secure, and Mastered tiers. Passive migration creates no snapshots. Path reset preserves snapshots while clearing current path evidence.
+V5 retains V4 stable IDs and structural snapshots, adds optional `practiceSessionId` attribution to attempts/support events, and adds append-only guided self-assessments. Standalone records omit session identity. A self-assessment requires a real session ID, question/version identity, timestamp, sequence and one of Confident, Unsure or Needs review.
 
-Pure merging unions all three evidence types by ID, reports conflicts, and applies canonical timestamp/ID ordering. Focused tests establish idempotency, commutativity, and associativity. Live status remains calculated; snapshots are historical only. See `STEM_FORGE_STRUCTURAL_ACHIEVEMENTS_AND_MERGING.md`.
+Pure merging unions all four evidence types by ID, reports conflicts, and applies canonical timestamp/ID ordering. Import batching, sync acknowledgement, provenance, remote storage, account export and erasure use the same fourth kind. Guided outcomes are excluded from mastery and correctness derivation. Structural snapshots remain historical only.
 
 ## Historical note
 
-V1 treated any submitted answer as completion and used the latest result as its single accuracy measure. That behavior is retained only when interpreting migrated historical completion. New V4 activity follows the approved mastery model, records exact canonical question-version evidence, and assigns stable event identity.
+V1 treated any submitted answer as completion and used the latest result as its single accuracy measure. That behavior is retained only when interpreting migrated historical completion. New V5 activity follows the approved mastery model, records exact canonical question-version evidence, and assigns stable event identity.
 ## Practice-session boundary
 
-Sprint 20 practice sessions are not progress evidence. `stemforge.practiceSessions.v1` stores local session references, current index, timing and summary context only. Submitted answers, hints and worked-solution events remain canonical V4 progress evidence and continue through existing import, sync and erasure rules.
+Practice session records are not progress evidence. `stemforge.practiceSessions.v1` stores local session references, origin, subject, current index, timing, Skip and summary context only. Session-originated attempts, hints and worked-solution events are canonical V5 evidence tagged with that session ID. Guided self-assessments are a separate append-only V5 stream. Legacy session attribution uses timestamps only when an evidence record has no session ID; an explicit different ID always prevents fallback double counting.

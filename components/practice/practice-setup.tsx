@@ -1,18 +1,17 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowRight, ChevronDown, Clock, SlidersHorizontal, Target } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { AppTopbar } from "@/components/layout/app-topbar";
 import { QuickPracticeAction } from "@/components/practice/quick-practice-action";
+import { usePracticeActivation } from "@/components/practice/use-practice-activation";
 import { Card } from "@/components/ui";
 import { contentResolver } from "@/lib/content-resolver";
 import { getEmptyProgressEvidence, getProgressEvidence } from "@/lib/local-progress";
 import { createPracticeSessionSelection } from "@/lib/practice/practice-selection";
 import { derivePracticeSetupVisibility, deriveVisiblePracticeModes } from "@/lib/practice/practice-setup";
-import { upsertPracticeSession } from "@/lib/practice/practice-storage";
 import type { PracticeMode, PracticeTiming } from "@/lib/practice/practice-types";
 import { useHasMounted } from "@/lib/use-mounted";
 
@@ -23,7 +22,7 @@ const modeCopy: Record<Exclude<PracticeMode, "retry_incorrect">, { title: string
 };
 
 export function PracticeSetup({ workingContextPathId }: { workingContextPathId?: string | null }) {
-  const router = useRouter();
+  const activation = usePracticeActivation();
   const hasMounted = useHasMounted();
   const evidence = hasMounted ? getProgressEvidence() : getEmptyProgressEvidence();
   const paths = useMemo(() => contentResolver.getAllPathContexts().filter((context) => context.skillPath.isAvailable), []);
@@ -31,6 +30,8 @@ export function PracticeSetup({ workingContextPathId }: { workingContextPathId?:
   const [mode, setMode] = useState<Exclude<PracticeMode, "retry_incorrect">>("targeted");
   const [courseId, setCourseId] = useState(courses[0]?.slug ?? "");
   const availablePaths = paths.filter((context) => context.courseArea.slug === courseId);
+  const hasWorkingContextPrefill = availablePaths.some((item) => item.skillPath.slug === workingContextPathId);
+  const sessionOrigin = hasWorkingContextPrefill ? "working_context_practice" : "configured_practice";
   const visibility = derivePracticeSetupVisibility(courses.length, availablePaths.length);
   const [selectedPathId, setSelectedPathId] = useState(
     availablePaths.some((item) => item.skillPath.slug === workingContextPathId)
@@ -42,6 +43,7 @@ export function PracticeSetup({ workingContextPathId }: { workingContextPathId?:
   const [timeLimitMinutes, setTimeLimitMinutes] = useState(15);
   const selectedPathIds = mode === "mixed" ? availablePaths.map((context) => context.skillPath.slug) : selectedPathId ? [selectedPathId] : [];
   const needsWorkPreview = createPracticeSessionSelection({
+    origin: sessionOrigin,
     mode: "needs_work",
     courseId,
     selectedPathIds: selectedPathId ? [selectedPathId] : [],
@@ -55,6 +57,7 @@ export function PracticeSetup({ workingContextPathId }: { workingContextPathId?:
     hasNeedsWork: Boolean(needsWorkPreview.session),
   }) as Exclude<PracticeMode, "retry_incorrect">[];
   const preview = createPracticeSessionSelection({
+    origin: sessionOrigin,
     mode,
     courseId,
     selectedPathIds,
@@ -67,6 +70,7 @@ export function PracticeSetup({ workingContextPathId }: { workingContextPathId?:
 
   function startConfiguredSession() {
     const result = createPracticeSessionSelection({
+      origin: sessionOrigin,
       mode,
       courseId,
       selectedPathIds,
@@ -76,8 +80,7 @@ export function PracticeSetup({ workingContextPathId }: { workingContextPathId?:
       timing: timing(timed, timeLimitMinutes),
     });
     if (!result.session) return;
-    upsertPracticeSession(result.session);
-    router.push(`/practice/session/${result.session.sessionId}`);
+    void activation.begin(result.session);
   }
 
   return (
@@ -179,7 +182,7 @@ export function PracticeSetup({ workingContextPathId }: { workingContextPathId?:
                 <h2 className="m-0 text-lg font-extrabold">Session preview</h2>
                 <p className="mt-1 text-sm text-muted">{preview.shortageReason ?? `${preview.session?.questionReferences.length ?? 0} question${preview.session?.questionReferences.length === 1 ? "" : "s"} selected from available content.`}</p>
               </div>
-              <button type="button" onClick={startConfiguredSession} disabled={!preview.session} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-forge px-4 font-extrabold text-white disabled:opacity-45 max-md:w-full">
+              <button type="button" onClick={startConfiguredSession} disabled={!preview.session || activation.busy} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-forge px-4 font-extrabold text-white disabled:opacity-45 max-md:w-full">
                 Start configured practice <ArrowRight className="size-5" />
               </button>
             </div>
@@ -187,8 +190,10 @@ export function PracticeSetup({ workingContextPathId }: { workingContextPathId?:
         </details>
 
         <p className="text-sm text-muted">Opening Practice or choosing options does not record an attempt. Progress is recorded only after you submit an answer.</p>
+        {activation.error ? <p role="status" className="text-sm text-red-700">{activation.error}</p> : null}
         <Link href="/dashboard" className="text-sm font-bold text-forge">Back to dashboard</Link>
       </div>
+      {activation.activationUi}
     </AppShell>
   );
 }

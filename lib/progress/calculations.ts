@@ -1,5 +1,6 @@
 import type { LearningStage, LearningStageName, SkillPath } from "@/data/types";
 import type {
+  GuidedSelfAssessmentEvent,
   DashboardProgressSummary,
   ProgressEvidence,
   ProgressPayload,
@@ -37,12 +38,26 @@ export function recordSupportEvent(payload: ProgressPayload, event: QuestionSupp
   return { ...payload, data: { ...payload.data, supportEvents: [...payload.data.supportEvents, { ...event }] } };
 }
 
+export function recordGuidedSelfAssessment(
+  payload: ProgressPayload,
+  event: GuidedSelfAssessmentEvent,
+): ProgressPayload {
+  return {
+    ...payload,
+    data: {
+      ...payload.data,
+      guidedSelfAssessments: [...payload.data.guidedSelfAssessments, { ...event }],
+    },
+  };
+}
+
 export function resetPathProgress(payload: ProgressPayload, skillPathId: string): ProgressPayload {
   return {
     ...payload,
     data: {
       attempts: payload.data.attempts.filter((attempt) => attempt.skillPathId !== skillPathId),
       supportEvents: payload.data.supportEvents.filter((event) => event.skillPathId !== skillPathId),
+      guidedSelfAssessments: payload.data.guidedSelfAssessments.filter((event) => event.skillPathId !== skillPathId),
       achievementSnapshots: payload.data.achievementSnapshots,
     },
   };

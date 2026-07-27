@@ -48,6 +48,7 @@ export function createQuickPracticeSelection(input: {
   return {
     path: context.skillPath,
     result: createPracticeSessionSelection({
+      origin: "quick_practice",
       mode: "targeted",
       courseId: context.courseArea.slug,
       selectedPathIds: [context.skillPath.slug],

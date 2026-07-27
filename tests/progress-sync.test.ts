@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { attempt, supportEvent } from "./progress-fixtures";
+import { attempt, selfAssessment, supportEvent } from "./progress-fixtures";
 import type { ProgressPayload } from "../lib/progress/types";
 import {
   canRunProgressSync,
@@ -122,6 +122,23 @@ test("pull response validation accepts retained conflicts and rejects mismatched
   assert.equal(payload.data.attempts.length, 1);
 });
 
+test("guided self-assessments round-trip through sync validation and payload reconstruction", () => {
+  const assessment = selfAssessment({ eventId: "self_sync" });
+  const response: ProgressSyncPullResponse = {
+    ...pullResponse(),
+    events: [{
+      kind: "guided_self_assessment",
+      eventId: assessment.eventId,
+      disposition: "accepted",
+      receiveCursor: "4",
+      receivedAt: time,
+      evidence: assessment,
+    }],
+  };
+  assert.equal(isProgressSyncPullResponse(response), true);
+  assert.deepEqual(progressSyncEventsToPayload(response.events).data.guidedSelfAssessments, [assessment]);
+});
+
 test("expected sync state responses are typed application states for console-clean generation conflicts", () => {
   assert.equal(isProgressSyncExpectedStateResponse({
     protocolVersion: 1,
@@ -158,9 +175,10 @@ test("malformed and future sync metadata fail closed", () => {
 });
 
 function payload(): ProgressPayload {
-  return { version: 4, data: {
+  return { version: 5, data: {
     attempts: [attempt({ eventId: "attempt_sync" })],
     supportEvents: [supportEvent({ eventId: "support_sync" })],
+    guidedSelfAssessments: [],
     achievementSnapshots: [],
   } };
 }

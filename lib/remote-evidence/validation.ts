@@ -1,10 +1,12 @@
 import {
   isAchievementSnapshot,
+  isGuidedSelfAssessmentEvent,
   isQuestionAttempt,
   isQuestionSupportEvent,
 } from "@/lib/progress/payload";
 import type {
   AchievementSnapshot,
+  GuidedSelfAssessmentEvent,
   ProgressPayload,
   QuestionAttempt,
   QuestionSupportEvent,
@@ -28,18 +30,19 @@ export function validateOwnerId(ownerId: unknown): ownerId is string {
 }
 
 export function validateRemoteEvidenceBatch(value: unknown): ValidatedRemoteEvidenceBatch {
-  const empty = (): ProgressPayload => ({ version: 4, data: { attempts: [], supportEvents: [], achievementSnapshots: [] } });
-  if (!value || typeof value !== "object") return fatal(empty(), "A canonical V4 evidence payload is required.");
+  const empty = (): ProgressPayload => ({ version: 5, data: { attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [] } });
+  if (!value || typeof value !== "object") return fatal(empty(), "A canonical V5 evidence payload is required.");
   const candidate = value as { version?: unknown; data?: unknown };
-  if (!hasExactKeys(candidate, ["version", "data"])) return fatal(empty(), "Only canonical V4 payload fields are accepted.");
-  if (candidate.version !== 4) return fatal(empty(), "Only canonical V4 evidence payloads are accepted.");
-  if (!candidate.data || typeof candidate.data !== "object") return fatal(empty(), "The V4 data object is required.");
-  const data = candidate.data as { attempts?: unknown; supportEvents?: unknown; achievementSnapshots?: unknown };
-  if (!hasExactKeys(data, ["attempts", "supportEvents", "achievementSnapshots"])) return fatal(empty(), "Only canonical V4 data fields are accepted.");
-  if (!Array.isArray(data.attempts) || !Array.isArray(data.supportEvents) || !Array.isArray(data.achievementSnapshots)) {
-    return fatal(empty(), "V4 attempts, supportEvents and achievementSnapshots arrays are required.");
+  if (!hasExactKeys(candidate, ["version", "data"])) return fatal(empty(), "Only canonical V5 payload fields are accepted.");
+  if (candidate.version !== 5) return fatal(empty(), "Only canonical V5 evidence payloads are accepted.");
+  if (!candidate.data || typeof candidate.data !== "object") return fatal(empty(), "The V5 data object is required.");
+  const data = candidate.data as { attempts?: unknown; supportEvents?: unknown; guidedSelfAssessments?: unknown; achievementSnapshots?: unknown };
+  if (!hasExactKeys(data, ["attempts", "supportEvents", "guidedSelfAssessments", "achievementSnapshots"])) return fatal(empty(), "Only canonical V5 data fields are accepted.");
+  if (!Array.isArray(data.attempts) || !Array.isArray(data.supportEvents) ||
+      !Array.isArray(data.guidedSelfAssessments) || !Array.isArray(data.achievementSnapshots)) {
+    return fatal(empty(), "V5 attempts, supportEvents, guidedSelfAssessments and achievementSnapshots arrays are required.");
   }
-  const total = data.attempts.length + data.supportEvents.length + data.achievementSnapshots.length;
+  const total = data.attempts.length + data.supportEvents.length + data.guidedSelfAssessments.length + data.achievementSnapshots.length;
   if (total > MAX_REMOTE_EVIDENCE_BATCH_ITEMS) return fatal(empty(), `Evidence batches may contain at most ${MAX_REMOTE_EVIDENCE_BATCH_ITEMS} records.`);
   let bytes: number;
   try { bytes = new TextEncoder().encode(JSON.stringify(value)).length; } catch { return fatal(empty(), "Evidence payload must be JSON serializable."); }
@@ -48,8 +51,9 @@ export function validateRemoteEvidenceBatch(value: unknown): ValidatedRemoteEvid
   const rejected: RejectedRemoteEvidence[] = [];
   const attempts = data.attempts.filter((item): item is QuestionAttempt => validateItem(item, "attempt", rejected));
   const supportEvents = data.supportEvents.filter((item): item is QuestionSupportEvent => validateItem(item, "support_event", rejected));
+  const guidedSelfAssessments = data.guidedSelfAssessments.filter((item): item is GuidedSelfAssessmentEvent => validateItem(item, "guided_self_assessment", rejected));
   const achievementSnapshots = data.achievementSnapshots.filter((item): item is AchievementSnapshot => validateItem(item, "achievement_snapshot", rejected));
-  return { payload: { version: 4, data: { attempts, supportEvents, achievementSnapshots } }, rejected, fatal: false };
+  return { payload: { version: 5, data: { attempts, supportEvents, guidedSelfAssessments, achievementSnapshots } }, rejected, fatal: false };
 }
 
 function validateItem(value: unknown, kind: RemoteEvidenceKind, rejected: RejectedRemoteEvidence[]) {
@@ -62,10 +66,16 @@ function validateItem(value: unknown, kind: RemoteEvidenceKind, rejected: Reject
         ? "Question attempt contains an unsafe ID, timestamp or answer."
         : null;
   } else if (kind === "support_event") {
-    reason = !isQuestionSupportEvent(value) || !hasExactKeys(value, supportKeys)
+    reason = !isQuestionSupportEvent(value) || !hasExactKeys(value, supportKeys, supportOptionalKeys)
       ? "Invalid canonical support event."
       : !validCommonSupportFields(value)
         ? "Support event contains an unsafe ID or timestamp."
+        : null;
+  } else if (kind === "guided_self_assessment") {
+    reason = !isGuidedSelfAssessmentEvent(value) || !hasExactKeys(value, selfAssessmentKeys)
+      ? "Invalid canonical guided self-assessment."
+      : !validSelfAssessmentFields(value)
+        ? "Guided self-assessment contains an unsafe ID or timestamp."
         : null;
   } else {
     reason = !isAchievementSnapshot(value) || !hasExactKeys(value, snapshotKeys, snapshotOptionalKeys)
@@ -81,11 +91,17 @@ function validateItem(value: unknown, kind: RemoteEvidenceKind, rejected: Reject
 
 function validCommonAttemptFields(value: QuestionAttempt) {
   return validEvidenceId(value.eventId) && validLogicalIds(value.questionId, value.skillPathId, value.stageId) &&
-    isIsoTimestamp(value.attemptedAt) && value.answer.length <= MAX_ANSWER_LENGTH;
+    optionalPracticeSessionId(value.practiceSessionId) && isIsoTimestamp(value.attemptedAt) && value.answer.length <= MAX_ANSWER_LENGTH;
 }
 
 function validCommonSupportFields(value: QuestionSupportEvent) {
-  return validEvidenceId(value.eventId) && validLogicalIds(value.questionId, value.skillPathId, value.stageId) && isIsoTimestamp(value.occurredAt);
+  return validEvidenceId(value.eventId) && validLogicalIds(value.questionId, value.skillPathId, value.stageId) &&
+    optionalPracticeSessionId(value.practiceSessionId) && isIsoTimestamp(value.occurredAt);
+}
+
+function validSelfAssessmentFields(value: GuidedSelfAssessmentEvent) {
+  return validEvidenceId(value.eventId) && validLogicalIds(value.practiceSessionId, value.questionId, value.skillPathId, value.stageId) &&
+    isIsoTimestamp(value.occurredAt);
 }
 
 function validSnapshotFields(value: AchievementSnapshot) {
@@ -94,6 +110,7 @@ function validSnapshotFields(value: AchievementSnapshot) {
 }
 
 function validEvidenceId(value: string) { return SAFE_ID.test(value); }
+function optionalPracticeSessionId(value: string | undefined) { return value === undefined || safeLogicalId(value); }
 function safeLogicalId(value: string) { return value.trim().length > 0 && value.length <= MAX_IDENTIFIER_LENGTH; }
 function validLogicalIds(...values: string[]) { return values.every(safeLogicalId); }
 function isIsoTimestamp(value: string) { return Number.isFinite(Date.parse(value)) && new Date(value).toISOString() === value; }
@@ -119,9 +136,14 @@ const attemptKeys = [
   "questionId", "skillPathId", "stageId", "isCorrect", "answer", "attemptedAt", "sequence", "isGenuine",
   "hintViewedBeforeSubmission", "supportKnowledge", "versionEvidence", "eventId",
 ] as const;
-const attemptOptionalKeys = ["legacyCompleted"] as const;
+const attemptOptionalKeys = ["legacyCompleted", "practiceSessionId"] as const;
 const supportKeys = [
   "questionId", "skillPathId", "stageId", "type", "occurredAt", "sequence", "afterGenuineAttempt", "versionEvidence", "eventId",
+] as const;
+const supportOptionalKeys = ["practiceSessionId"] as const;
+const selfAssessmentKeys = [
+  "eventId", "practiceSessionId", "questionId", "skillPathId", "stageId", "outcome",
+  "occurredAt", "sequence", "versionEvidence",
 ] as const;
 const snapshotKeys = [
   "snapshotId", "kind", "subjectId", "courseId", "pathId", "pathVersion", "achievedAt", "masteryScore",

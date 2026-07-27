@@ -106,7 +106,7 @@ function isAcknowledgementList(value: unknown): value is ImportAcknowledgedEvent
 }
 
 function isKind(value: unknown): value is RemoteEvidenceKind {
-  return value === "attempt" || value === "support_event" || value === "achievement_snapshot";
+  return value === "attempt" || value === "support_event" || value === "guided_self_assessment" || value === "achievement_snapshot";
 }
 
 function isIsoTimestamp(value: unknown): value is string {

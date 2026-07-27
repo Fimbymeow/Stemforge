@@ -2,6 +2,7 @@ import { createMigrationEventId } from "@/lib/progress/event-identity";
 import {
   CURRENT_PROGRESS_VERSION,
   type AchievementSnapshot,
+  type GuidedSelfAssessmentEvent,
   type LegacyQuestionAttempt,
   type ProgressLoadResult,
   type ProgressPayload,
@@ -16,12 +17,17 @@ import {
 } from "@/lib/progress/types";
 
 export function createDefaultProgressPayload(): ProgressPayload {
-  return { version: CURRENT_PROGRESS_VERSION, data: { attempts: [], supportEvents: [], achievementSnapshots: [] } };
+  return {
+    version: CURRENT_PROGRESS_VERSION,
+    data: { attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [] },
+  };
 }
 
 const hasText = (value: unknown): value is string => typeof value === "string" && value.trim().length > 0;
 const isIsoTimestamp = (value: unknown): value is string =>
   typeof value === "string" && Number.isFinite(Date.parse(value)) && new Date(value).toISOString() === value;
+const hasOptionalSessionId = (value: { practiceSessionId?: unknown }) =>
+  value.practiceSessionId === undefined || hasText(value.practiceSessionId);
 
 export function isLegacyQuestionAttempt(value: unknown): value is LegacyQuestionAttempt {
   if (!value || typeof value !== "object") return false;
@@ -50,7 +56,9 @@ export function isQuestionAttemptV2(value: unknown): value is QuestionAttemptV2 
 const isQuestionAttemptV3 = (value: unknown): value is QuestionAttemptV3 =>
   isQuestionAttemptV2(value) && isVersionEvidence((value as QuestionAttemptV3).versionEvidence);
 export const isQuestionAttempt = (value: unknown): value is QuestionAttempt =>
-  isQuestionAttemptV3(value) && hasText((value as QuestionAttempt).eventId);
+  isQuestionAttemptV3(value) &&
+  hasText((value as QuestionAttempt).eventId) &&
+  hasOptionalSessionId(value as QuestionAttempt);
 
 export function isQuestionSupportEventV2(value: unknown): value is QuestionSupportEventV2 {
   if (!value || typeof value !== "object") return false;
@@ -63,7 +71,24 @@ export function isQuestionSupportEventV2(value: unknown): value is QuestionSuppo
 const isQuestionSupportEventV3 = (value: unknown): value is QuestionSupportEventV3 =>
   isQuestionSupportEventV2(value) && isVersionEvidence((value as QuestionSupportEventV3).versionEvidence);
 export const isQuestionSupportEvent = (value: unknown): value is QuestionSupportEvent =>
-  isQuestionSupportEventV3(value) && hasText((value as QuestionSupportEvent).eventId);
+  isQuestionSupportEventV3(value) &&
+  hasText((value as QuestionSupportEvent).eventId) &&
+  hasOptionalSessionId(value as QuestionSupportEvent);
+
+export function isGuidedSelfAssessmentEvent(value: unknown): value is GuidedSelfAssessmentEvent {
+  if (!value || typeof value !== "object") return false;
+  const event = value as GuidedSelfAssessmentEvent;
+  return hasText(event.eventId) &&
+    hasText(event.practiceSessionId) &&
+    hasText(event.questionId) &&
+    hasText(event.skillPathId) &&
+    hasText(event.stageId) &&
+    ["confident", "unsure", "needs_review"].includes(event.outcome) &&
+    isIsoTimestamp(event.occurredAt) &&
+    Number.isInteger(event.sequence) &&
+    event.sequence >= 0 &&
+    isVersionEvidence(event.versionEvidence);
+}
 
 const snapshotKinds = new Set([
   "stage_completed", "stage_secure", "stage_mastered", "path_completed", "path_secure", "path_mastered",
@@ -91,35 +116,81 @@ export function isCurrentProgressPayload(value: unknown): value is ProgressPaylo
   return candidate.version === CURRENT_PROGRESS_VERSION && Boolean(candidate.data) &&
     Array.isArray(candidate.data?.attempts) && candidate.data.attempts.every(isQuestionAttempt) &&
     Array.isArray(candidate.data?.supportEvents) && candidate.data.supportEvents.every(isQuestionSupportEvent) &&
+    Array.isArray(candidate.data?.guidedSelfAssessments) && candidate.data.guidedSelfAssessments.every(isGuidedSelfAssessmentEvent) &&
     Array.isArray(candidate.data?.achievementSnapshots) && candidate.data.achievementSnapshots.every(isAchievementSnapshot);
 }
 
 export function migrateProgressPayload(value: unknown): ProgressLoadResult {
   if (Array.isArray(value)) return migrateLegacyAttempts(value, "migrated-legacy");
   if (!value || typeof value !== "object") return fallback("invalid-structure");
-  const candidate = value as { version?: unknown; data?: { attempts?: unknown; supportEvents?: unknown; achievementSnapshots?: unknown } };
+  const candidate = value as {
+    version?: unknown;
+    data?: {
+      attempts?: unknown;
+      supportEvents?: unknown;
+      guidedSelfAssessments?: unknown;
+      achievementSnapshots?: unknown;
+    };
+  };
   if (candidate.version === 1) {
     if (!candidate.data || !Array.isArray(candidate.data.attempts)) return fallback("invalid-structure");
     return migrateLegacyAttempts(candidate.data.attempts, "migrated-v1");
   }
   if (candidate.version === 2 || candidate.version === 3) return migrateV2OrV3(candidate, candidate.version);
+  if (candidate.version === 4) return migrateV4(candidate);
   if (candidate.version !== CURRENT_PROGRESS_VERSION) return fallback("unsupported-version");
+  if (!candidate.data || !Array.isArray(candidate.data.attempts) || !Array.isArray(candidate.data.supportEvents) ||
+      !Array.isArray(candidate.data.guidedSelfAssessments) || !Array.isArray(candidate.data.achievementSnapshots)) {
+    return fallback("invalid-structure");
+  }
+  const attempts = candidate.data.attempts.filter(isQuestionAttempt);
+  const supportEvents = candidate.data.supportEvents.filter(isQuestionSupportEvent);
+  const guidedSelfAssessments = candidate.data.guidedSelfAssessments.filter(isGuidedSelfAssessmentEvent);
+  const achievementSnapshots = candidate.data.achievementSnapshots.filter(isAchievementSnapshot);
+  const counts = {
+    droppedAttempts: candidate.data.attempts.length - attempts.length,
+    droppedEvents: candidate.data.supportEvents.length - supportEvents.length,
+    droppedSelfAssessments: candidate.data.guidedSelfAssessments.length - guidedSelfAssessments.length,
+    droppedSnapshots: candidate.data.achievementSnapshots.length - achievementSnapshots.length,
+  };
+  return {
+    payload: {
+      version: CURRENT_PROGRESS_VERSION,
+      data: { attempts, supportEvents, guidedSelfAssessments, achievementSnapshots },
+    },
+    status: Object.values(counts).some(Boolean) ? "current-repaired" : "current",
+    ...counts,
+  };
+}
+
+function migrateV4(candidate: {
+  data?: { attempts?: unknown; supportEvents?: unknown; achievementSnapshots?: unknown };
+}): ProgressLoadResult {
   if (!candidate.data || !Array.isArray(candidate.data.attempts) || !Array.isArray(candidate.data.supportEvents) ||
       !Array.isArray(candidate.data.achievementSnapshots)) return fallback("invalid-structure");
   const attempts = candidate.data.attempts.filter(isQuestionAttempt);
   const supportEvents = candidate.data.supportEvents.filter(isQuestionSupportEvent);
   const achievementSnapshots = candidate.data.achievementSnapshots.filter(isAchievementSnapshot);
-  const counts = {
+  return {
+    payload: {
+      version: CURRENT_PROGRESS_VERSION,
+      data: { attempts, supportEvents, guidedSelfAssessments: [], achievementSnapshots },
+    },
+    status: "migrated-v4",
     droppedAttempts: candidate.data.attempts.length - attempts.length,
     droppedEvents: candidate.data.supportEvents.length - supportEvents.length,
+    droppedSelfAssessments: 0,
     droppedSnapshots: candidate.data.achievementSnapshots.length - achievementSnapshots.length,
   };
-  return { payload: { version: 4, data: { attempts, supportEvents, achievementSnapshots } },
-    status: Object.values(counts).some(Boolean) ? "current-repaired" : "current", ...counts };
 }
 
-function migrateV2OrV3(candidate: { data?: { attempts?: unknown; supportEvents?: unknown } }, version: 2 | 3): ProgressLoadResult {
-  if (!candidate.data || !Array.isArray(candidate.data.attempts) || !Array.isArray(candidate.data.supportEvents)) return fallback("invalid-structure");
+function migrateV2OrV3(
+  candidate: { data?: { attempts?: unknown; supportEvents?: unknown } },
+  version: 2 | 3,
+): ProgressLoadResult {
+  if (!candidate.data || !Array.isArray(candidate.data.attempts) || !Array.isArray(candidate.data.supportEvents)) {
+    return fallback("invalid-structure");
+  }
   const attemptGuard = version === 3 ? isQuestionAttemptV3 : isQuestionAttemptV2;
   const eventGuard = version === 3 ? isQuestionSupportEventV3 : isQuestionSupportEventV2;
   const attempts = candidate.data.attempts.flatMap((value, index) => attemptGuard(value) ? [{
@@ -132,22 +203,53 @@ function migrateV2OrV3(candidate: { data?: { attempts?: unknown; supportEvents?:
     ...(version === 2 ? { versionEvidence: { ...UNKNOWN_LEGACY_VERSION_EVIDENCE } } : {}),
     eventId: createMigrationEventId("support", index, value),
   } as QuestionSupportEvent] : []);
-  return { payload: { version: 4, data: { attempts, supportEvents, achievementSnapshots: [] } },
+  return {
+    payload: {
+      version: CURRENT_PROGRESS_VERSION,
+      data: { attempts, supportEvents, guidedSelfAssessments: [], achievementSnapshots: [] },
+    },
     status: version === 2 ? "migrated-v2" : "migrated-v3",
     droppedAttempts: candidate.data.attempts.length - attempts.length,
-    droppedEvents: candidate.data.supportEvents.length - supportEvents.length, droppedSnapshots: 0 };
+    droppedEvents: candidate.data.supportEvents.length - supportEvents.length,
+    droppedSelfAssessments: 0,
+    droppedSnapshots: 0,
+  };
 }
 
-function migrateLegacyAttempts(values: unknown[], status: "migrated-legacy" | "migrated-v1"): ProgressLoadResult {
+function migrateLegacyAttempts(
+  values: unknown[],
+  status: "migrated-legacy" | "migrated-v1",
+): ProgressLoadResult {
   const attempts = values.flatMap((value, index) => isLegacyQuestionAttempt(value) ? [{
-    ...value, sequence: index + 1, isGenuine: value.answer.trim().length > 0, hintViewedBeforeSubmission: false,
-    supportKnowledge: "unknown_legacy" as const, versionEvidence: { ...UNKNOWN_LEGACY_VERSION_EVIDENCE }, legacyCompleted: true,
+    ...value,
+    sequence: index + 1,
+    isGenuine: value.answer.trim().length > 0,
+    hintViewedBeforeSubmission: false,
+    supportKnowledge: "unknown_legacy" as const,
+    versionEvidence: { ...UNKNOWN_LEGACY_VERSION_EVIDENCE },
+    legacyCompleted: true,
     eventId: createMigrationEventId("attempt", index, value),
   }] : []);
-  return { payload: { version: 4, data: { attempts, supportEvents: [], achievementSnapshots: [] } }, status,
-    droppedAttempts: values.length - attempts.length, droppedEvents: 0, droppedSnapshots: 0 };
+  return {
+    payload: {
+      version: CURRENT_PROGRESS_VERSION,
+      data: { attempts, supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [] },
+    },
+    status,
+    droppedAttempts: values.length - attempts.length,
+    droppedEvents: 0,
+    droppedSelfAssessments: 0,
+    droppedSnapshots: 0,
+  };
 }
 
 function fallback(status: ProgressLoadResult["status"]): ProgressLoadResult {
-  return { payload: createDefaultProgressPayload(), status, droppedAttempts: 0, droppedEvents: 0, droppedSnapshots: 0 };
+  return {
+    payload: createDefaultProgressPayload(),
+    status,
+    droppedAttempts: 0,
+    droppedEvents: 0,
+    droppedSelfAssessments: 0,
+    droppedSnapshots: 0,
+  };
 }

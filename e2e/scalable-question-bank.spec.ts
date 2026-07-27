@@ -96,7 +96,12 @@ test("an active session is never overwritten without explicit confirmation", asy
   await page.getByRole("button", { name: "Start selected practice" }).click();
   const conflict = page.getByRole("dialog", { name: "You already have active practice" });
   await expect(conflict).toBeVisible();
-  await expect(conflict.getByRole("link", { name: "Resume current session" })).toHaveAttribute("href", activeUrl);
+  await conflict.getByRole("button", { name: "Resume current session" }).click();
+  await expect(page).toHaveURL((url) => url.pathname === activeUrl);
+  await page.goto(bank);
+  await page.getByLabel("Select Basic differentiation, Foundations, Question 1").check();
+  await page.getByRole("button", { name: "Start selected practice" }).click();
+  await expect(conflict).toBeVisible();
   await conflict.getByRole("button", { name: "Replace and start" }).click();
   await expect(page).toHaveURL(/\/practice\/session\/practice_custom_/);
 });

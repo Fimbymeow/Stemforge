@@ -8,7 +8,12 @@ import {
 } from "@/lib/progress/calculations";
 import { ProgressRepository } from "@/lib/progress/repository";
 import { createBrowserProgressStorage } from "@/lib/progress/storage";
-import type { LegacyQuestionAttempt, ProgressEvidence, QuestionAttempt } from "@/lib/progress/types";
+import type {
+  GuidedSelfAssessmentOutcome,
+  LegacyQuestionAttempt,
+  ProgressEvidence,
+  QuestionAttempt,
+} from "@/lib/progress/types";
 import { UNKNOWN_LEGACY_VERSION_EVIDENCE, type VersionEvidence } from "@/lib/progress/types";
 import { createEventId } from "@/lib/progress/event-identity";
 import { getSkillPathContext } from "@/lib/learning-paths";
@@ -31,17 +36,26 @@ export type {
   ProgressPayloadV2,
   ProgressPayloadV3,
   ProgressPayloadV4,
+  ProgressPayloadV5,
   ProgressStatus,
   QuestionAttempt,
   QuestionOutcome,
   QuestionProgressState,
   QuestionSupportEvent,
+  GuidedSelfAssessmentEvent,
+  GuidedSelfAssessmentOutcome,
   VersionEvidence,
   SkillPathProgress,
   StageProgress,
 } from "@/lib/progress/types";
 
-type SubmissionInput = LegacyQuestionAttempt & { hintViewedBeforeSubmission?: boolean };
+type SubmissionInput = LegacyQuestionAttempt & {
+  hintViewedBeforeSubmission?: boolean;
+  practiceSessionId?: string;
+};
+type SupportInput = Omit<LegacyQuestionAttempt, "isCorrect" | "answer"> & {
+  practiceSessionId?: string;
+};
 
 function createRepository() {
   return new ProgressRepository(createBrowserProgressStorage());
@@ -52,7 +66,7 @@ function readEvidence(): ProgressEvidence {
 }
 
 function emptyEvidence(): ProgressEvidence {
-  return { attempts: [], supportEvents: [], achievementSnapshots: [] };
+  return { attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [] };
 }
 
 function dispatchProgressUpdate() {
@@ -60,7 +74,12 @@ function dispatchProgressUpdate() {
 }
 
 function nextSequence(evidence: ProgressEvidence) {
-  return Math.max(0, ...evidence.attempts.map((item) => item.sequence), ...evidence.supportEvents.map((item) => item.sequence)) + 1;
+  return Math.max(
+    0,
+    ...evidence.attempts.map((item) => item.sequence),
+    ...evidence.supportEvents.map((item) => item.sequence),
+    ...evidence.guidedSelfAssessments.map((item) => item.sequence),
+  ) + 1;
 }
 
 export function getVersionEvidenceForQuestion(questionId: string): VersionEvidence {
@@ -119,17 +138,17 @@ export async function saveQuestionAttempt(input: SubmissionInput) {
   });
 }
 
-export async function recordHintViewed(input: Omit<LegacyQuestionAttempt, "isCorrect" | "answer">) {
+export async function recordHintViewed(input: SupportInput) {
   return recordSupport("hint_viewed", input);
 }
 
-export async function recordWorkedSolutionViewed(input: Omit<LegacyQuestionAttempt, "isCorrect" | "answer">) {
+export async function recordWorkedSolutionViewed(input: SupportInput) {
   return recordSupport("solution_viewed", input, true);
 }
 
 function recordSupport(
   type: "hint_viewed" | "solution_viewed",
-  input: Omit<LegacyQuestionAttempt, "isCorrect" | "answer">,
+  input: SupportInput,
   knownAfterAttempt?: boolean,
 ) {
   return withLocalProgressTransaction(() => {
@@ -142,7 +161,11 @@ function recordSupport(
     );
     if (knownAfterAttempt && !afterGenuineAttempt) return false;
     const alreadyRecorded = evidence.supportEvents.some(
-      (event) => event.questionId === input.questionId && event.type === type && sameVersionEvidence(event.versionEvidence, versionEvidence),
+      (event) =>
+        event.questionId === input.questionId &&
+        event.type === type &&
+        event.practiceSessionId === input.practiceSessionId &&
+        sameVersionEvidence(event.versionEvidence, versionEvidence),
     );
     if (alreadyRecorded) return true;
     const saved = repository.recordSupportEvent({
@@ -156,6 +179,32 @@ function recordSupport(
       versionEvidence,
       eventId: createEventId("support"),
     }, getStructuralContext(input.skillPathId));
+    if (saved) {
+      try { recordLocalEvidenceProvenance(before, repository.load().payload); } catch { /* Preserve local-first learning. */ }
+      dispatchProgressUpdate();
+    }
+    return saved;
+  });
+}
+
+export async function recordGuidedSelfAssessment(input: {
+  practiceSessionId: string;
+  questionId: string;
+  skillPathId: string;
+  stageId: string;
+  outcome: GuidedSelfAssessmentOutcome;
+  occurredAt: string;
+}) {
+  if (!input.practiceSessionId.trim()) return false;
+  return withLocalProgressTransaction(() => {
+    const repository = createRepository();
+    const before = repository.load().payload;
+    const saved = repository.recordGuidedSelfAssessment({
+      ...input,
+      sequence: nextSequence(before.data),
+      versionEvidence: getVersionEvidenceForQuestion(input.questionId),
+      eventId: createEventId("self_assessment"),
+    });
     if (saved) {
       try { recordLocalEvidenceProvenance(before, repository.load().payload); } catch { /* Preserve local-first learning. */ }
       dispatchProgressUpdate();

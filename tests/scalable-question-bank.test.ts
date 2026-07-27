@@ -9,8 +9,14 @@ import {
   toggleQuestionSelection,
 } from "../lib/question-bank-selection";
 import { createCustomPracticeSession } from "../lib/practice/custom-practice";
+import { isPracticeSession } from "../lib/practice/practice-validation";
 import { evidence } from "./progress-fixtures";
-import { createTwoPathFixture, fixtureIds } from "./fixtures/multi-path-content";
+import {
+  createTwoPathFixture,
+  createTwoSubjectFixture,
+  fixtureIds,
+  subjectTwoFixtureIds,
+} from "./fixtures/multi-path-content";
 
 test("active filter nodes derive only from published questions and compose across the full hierarchy", () => {
   const resolver = createContentResolver(createTwoPathFixture());
@@ -68,7 +74,22 @@ test("custom sessions remove invalid and duplicate IDs, refuse empty sets and re
   assert.deepEqual(result.validQuestionIds, [fixtureIds.questions[0], fixtureIds.questions[2]]);
   assert.equal(result.removedCount, 1);
   assert.equal(new Set(result.session.questionReferences.map((item) => item.questionId)).size, 2);
+  assert.equal(result.session.origin, "question_bank_custom");
+  assert.equal(result.session.subjectId, fixtureIds.subjectSlug);
+  assert.equal(isPracticeSession(result.session), true);
   assert.equal(createCustomPracticeSession(["missing"], { source }).session, null);
+});
+
+test("custom sessions reject cross-subject selections instead of truncating them", () => {
+  const source = createTwoSubjectFixture();
+  const higherMathsQuestionId = source.questions.find((question) =>
+    !subjectTwoFixtureIds.questions.includes(question.id as typeof subjectTwoFixtureIds.questions[number]))!.id;
+  const result = createCustomPracticeSession(
+    [higherMathsQuestionId, subjectTwoFixtureIds.questions[0]],
+    { source },
+  );
+  assert.equal(result.session, null);
+  assert.deepEqual(result.validQuestionIds, []);
 });
 
 test("a deterministic 500-question fixture filters, selects and paginates without production content", () => {

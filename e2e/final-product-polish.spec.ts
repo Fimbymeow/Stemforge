@@ -38,6 +38,7 @@ test("practice summary retains the app shell and exact-session retry priority", 
   await page.getByLabel("Your answer").fill("wrong");
   await page.getByRole("button", { name: "Submit Answer" }).click();
   await page.getByRole("button", { name: "Finish session" }).click();
+  await page.getByRole("dialog", { name: "Finish this session?" }).getByRole("button", { name: "Finish session" }).click();
 
   await expect(page.getByRole("heading", { name: "Practice summary" })).toBeVisible();
   await expect(page.locator("main")).toHaveCount(1);

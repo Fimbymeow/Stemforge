@@ -34,8 +34,7 @@ import {
 } from "@/lib/question-bank-url";
 import { checkPracticeEligibility } from "@/lib/practice/practice-eligibility";
 import { createCustomPracticeSession } from "@/lib/practice/custom-practice";
-import { loadPracticeSessionStore, updatePracticeSession, upsertPracticeSession } from "@/lib/practice/practice-storage";
-import type { PracticeSession } from "@/lib/practice/practice-types";
+import { usePracticeActivation } from "@/components/practice/use-practice-activation";
 import { useHasMounted } from "@/lib/use-mounted";
 import { useModalFocusTrap } from "@/lib/use-modal-focus-trap";
 import { formatReviewDueLabel } from "@/lib/working-context";
@@ -104,7 +103,7 @@ export function QuestionBank({ subjectSlug }: { subjectSlug: string }) {
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [reviewDueConfirmOpen, setReviewDueConfirmOpen] = useState(false);
-  const [pendingSession, setPendingSession] = useState<PracticeSession | null>(null);
+  const activation = usePracticeActivation();
   const closeReviewRef = useRef<HTMLButtonElement | null>(null);
   const filterSheetRef = useRef<HTMLElement | null>(null);
   const filterSheetCloseRef = useRef<HTMLButtonElement | null>(null);
@@ -301,42 +300,17 @@ export function QuestionBank({ subjectSlug }: { subjectSlug: string }) {
       setSelected(new Set());
       return;
     }
-    const store = loadPracticeSessionStore().store;
-    const active = store.activeSessionId ? store.sessions.find((session) => session.sessionId === store.activeSessionId && session.status === "active") : null;
-    if (active) {
-      setPendingSession(result.session);
-      return;
-    }
-    saveAndOpen(result.session);
-  }
-
-  function replaceActiveSession() {
-    if (!pendingSession) return;
-    const store = loadPracticeSessionStore().store;
-    if (store.activeSessionId) {
-      updatePracticeSession(store.activeSessionId, (session) => ({
-        ...session, status: "abandoned", updatedAt: new Date().toISOString(),
-      }));
-    }
-    saveAndOpen(pendingSession);
-  }
-
-  function saveAndOpen(session: PracticeSession) {
-    upsertPracticeSession(session);
-    router.push(`/practice/session/${session.sessionId}`);
+    void activation.begin(result.session);
   }
 
   function startReviewPractice() {
-    const result = createCustomPracticeSession(reviewDueEligible.map((entry) => entry.question.id));
+    const result = createCustomPracticeSession(
+      reviewDueEligible.map((entry) => entry.question.id),
+      { origin: "subject_review" },
+    );
     setReviewDueConfirmOpen(false);
     if (!result.session) return;
-    const store = loadPracticeSessionStore().store;
-    const active = store.activeSessionId ? store.sessions.find((session) => session.sessionId === store.activeSessionId && session.status === "active") : null;
-    if (active) {
-      setPendingSession(result.session);
-      return;
-    }
-    saveAndOpen(result.session);
+    void activation.begin(result.session);
   }
 
   const rawChips: Array<FilterChip | null> = [
@@ -541,7 +515,8 @@ export function QuestionBank({ subjectSlug }: { subjectSlug: string }) {
         onClose={() => setReviewDueConfirmOpen(false)}
         onStart={startReviewPractice}
       /> : null}
-      {pendingSession ? <ActiveSessionConflict session={pendingSession} onCancel={() => setPendingSession(null)} onReplace={replaceActiveSession} /> : null}
+      {activation.error ? <p role="status" className="text-sm text-red-700">{activation.error}</p> : null}
+      {activation.activationUi}
     </AppShell>
   );
 }
@@ -686,10 +661,6 @@ function ReviewDueConfirmation({ containerRef, closeRef, eligibleCount, ineligib
   </div>;
 }
 
-function ActiveSessionConflict({ session, onCancel, onReplace }: { session: PracticeSession; onCancel: () => void; onReplace: () => void }) {
-  const store = loadPracticeSessionStore().store;
-  return <div className="fixed inset-0 z-[60] grid place-items-center bg-ink/45 p-3"><section role="dialog" aria-modal="true" aria-labelledby="active-session-title" className="w-full max-w-lg rounded-xl bg-white p-5"><h2 id="active-session-title" className="text-xl font-extrabold">You already have active practice</h2><p className="mt-2 text-muted">Resume it, or replace it with your {session.questionReferences.length}-question selection. Your recorded progress will not be deleted.</p><div className="mt-5 flex flex-wrap gap-2"><Link href={`/practice/session/${store.activeSessionId}`} className="inline-flex min-h-11 items-center rounded-lg border border-line px-4 font-bold">Resume current session</Link><button type="button" onClick={onReplace} className="min-h-11 rounded-lg bg-forge px-4 font-extrabold text-white">Replace and start</button><button type="button" onClick={onCancel} className="min-h-11 px-3 font-bold text-muted">Cancel</button></div></section></div>;
-}
 
 function groupFutureCoverage(lockedPaths: ReturnType<typeof contentResolver.getAllPathContexts>) {
   const areas = new Map<string, { slug: string; name: string; pathCount: number; specAreas: Array<{ slug: string; name: string }> }>();

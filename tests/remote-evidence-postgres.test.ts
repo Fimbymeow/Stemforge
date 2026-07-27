@@ -23,8 +23,8 @@ import { BETA_REPORT_SCHEMA_VERSION, type ReportDiagnosticContext } from "../lib
 import { AccountDataAccessError } from "../lib/account-data/types";
 import { runRemoteEvidenceMigrations } from "../scripts/database/migration-runner";
 import { assertSafeTestDatabaseUrl } from "../scripts/database/safety";
-import { attempt, supportEvent } from "./progress-fixtures";
-import type { AchievementSnapshot, ProgressPayload } from "../lib/progress/types";
+import { attempt, selfAssessment, supportEvent } from "./progress-fixtures";
+import type { AchievementSnapshot, GuidedSelfAssessmentEvent, ProgressPayload } from "../lib/progress/types";
 
 let postgres: EmbeddedPostgres;
 let pool: Pool;
@@ -78,7 +78,7 @@ test("clean migrations create the append-only evidence schema", async () => {
     WHERE table_schema = 'stemforge_remote' ORDER BY table_name
   `);
   assert.deepEqual(result.rows.map((row) => row.table_name), [
-    "achievement_snapshots", "evidence_conflicts", "question_attempts", "support_events",
+    "achievement_snapshots", "evidence_conflicts", "guided_self_assessments", "question_attempts", "support_events",
   ]);
 });
 
@@ -387,15 +387,16 @@ test("owner creation has no remote evidence side effect", async () => {
   assert.equal(await evidenceRowCount(), before);
 });
 
-test("attempts, support events and snapshots round-trip without payload loss", async () => {
+test("all four accepted evidence kinds round-trip without payload loss", async () => {
   const owner = await ownerId();
   const source = batch(
     [attempt({ eventId: "attempt_round_trip", versionEvidence: { kind: "unknown_legacy", questionVersion: null } })],
     [supportEvent({ eventId: "support_round_trip" })],
     [snapshot({ snapshotId: "snapshot_round_trip" })],
+    [selfAssessment({ eventId: "self_round_trip" })],
   );
   const appended = await repository.append(owner, source);
-  assert.equal(appended.accepted.length, 3);
+  assert.equal(appended.accepted.length, 4);
   assert.deepEqual(appended.rejected, []);
   const stored = await repository.read(owner);
   assert.deepEqual(stored.payload, source);
@@ -591,7 +592,12 @@ test("processing erasure hard-deletes retained evidence and advances generation"
   const owner = await ownerId();
   const accepted = attempt({ eventId: "attempt_erasure_delete", answer: "accepted" });
   const conflict = attempt({ eventId: "attempt_erasure_delete", answer: "conflict" });
-  await repository.append(owner, batch([accepted], [supportEvent({ eventId: "support_erasure_delete" })], [snapshot({ snapshotId: "snapshot_erasure_delete" })]), "1");
+  await repository.append(owner, batch(
+    [accepted],
+    [supportEvent({ eventId: "support_erasure_delete" })],
+    [snapshot({ snapshotId: "snapshot_erasure_delete" })],
+    [selfAssessment({ eventId: "self_erasure_delete" })],
+  ), "1");
   await repository.append(owner, batch([conflict]), "1");
 
   const request = await accountDataRepository.startRequest(owner);
@@ -605,7 +611,7 @@ test("processing erasure hard-deletes retained evidence and advances generation"
   const completed = await accountDataRepository.latestRequest(owner);
   const state = await accountDataRepository.readState(owner);
   assert.equal(completed?.status, "completed");
-  assert.deepEqual(completed?.deletedCounts, { attempts: 1, supportEvents: 1, achievementSnapshots: 1, conflicts: 1 });
+  assert.deepEqual(completed?.deletedCounts, { attempts: 1, supportEvents: 1, guidedSelfAssessments: 1, achievementSnapshots: 1, conflicts: 1 });
   assert.equal(state.status, "active");
   assert.equal(state.generation, "2");
   assert.equal(await evidenceRowCountForOwner(owner), "0");
@@ -624,8 +630,9 @@ function batch(
   attempts = [attempt()],
   supportEvents = [] as ReturnType<typeof supportEvent>[],
   achievementSnapshots = [] as AchievementSnapshot[],
+  guidedSelfAssessments = [] as GuidedSelfAssessmentEvent[],
 ): ProgressPayload {
-  return { version: 4, data: { attempts, supportEvents, achievementSnapshots } };
+  return { version: 5, data: { attempts, supportEvents, guidedSelfAssessments, achievementSnapshots } };
 }
 
 function snapshot(overrides: Partial<AchievementSnapshot> = {}): AchievementSnapshot {
@@ -704,6 +711,7 @@ async function evidenceRowCount() {
     SELECT (
       (SELECT count(*) FROM stemforge_remote.question_attempts) +
       (SELECT count(*) FROM stemforge_remote.support_events) +
+      (SELECT count(*) FROM stemforge_remote.guided_self_assessments) +
       (SELECT count(*) FROM stemforge_remote.achievement_snapshots) +
       (SELECT count(*) FROM stemforge_remote.evidence_conflicts)
     )::text AS count
@@ -716,6 +724,7 @@ async function evidenceRowCountForOwner(owner: string) {
     SELECT (
       (SELECT count(*) FROM stemforge_remote.question_attempts WHERE owner_id = $1) +
       (SELECT count(*) FROM stemforge_remote.support_events WHERE owner_id = $1) +
+      (SELECT count(*) FROM stemforge_remote.guided_self_assessments WHERE owner_id = $1) +
       (SELECT count(*) FROM stemforge_remote.achievement_snapshots WHERE owner_id = $1) +
       (SELECT count(*) FROM stemforge_remote.evidence_conflicts WHERE owner_id = $1)
     )::text AS count

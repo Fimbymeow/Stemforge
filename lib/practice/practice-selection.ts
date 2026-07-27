@@ -32,10 +32,21 @@ export function createPracticeSessionSelection(
       ? `${selected.length} question${selected.length === 1 ? " is" : "s are"} currently available, so this session uses all available questions.`
       : null;
   if (!selected.length) return { session: null, eligibleQuestions: candidates, excludedByReason: discovered.excludedByReason, shortageReason };
+  const subjectIds = unique(selected.map((item) => item.reference.subjectId));
+  if (subjectIds.length !== 1) {
+    return {
+      session: null,
+      eligibleQuestions: candidates,
+      excludedByReason: discovered.excludedByReason,
+      shortageReason: "Questions from more than one subject cannot be combined in one practice session.",
+    };
+  }
   const includedPathIds = unique(selected.map((item) => item.reference.pathId));
   const session: PracticeSession = {
     schemaVersion: PRACTICE_SESSION_SCHEMA_VERSION,
     sessionId: createSessionId(input.mode, input.seed, now),
+    origin: input.origin ?? (input.mode === "retry_incorrect" ? "retry_incorrect" : "configured_practice"),
+    subjectId: subjectIds[0],
     mode: input.mode,
     courseId: input.courseId,
     selectedPathIds: input.selectedPathIds.length ? input.selectedPathIds : includedPathIds,
@@ -57,6 +68,7 @@ export function createPracticeSessionSelection(
       includedPathIds,
       createdAt: now.toISOString(),
     },
+    skippedQuestionIds: [],
   };
   return { session, eligibleQuestions: candidates, excludedByReason: discovered.excludedByReason, shortageReason };
 }
@@ -83,15 +95,36 @@ export function createCompletedSessionRetry(
   now = new Date(),
 ): PracticeSession | null {
   if (completedSession.status !== "completed") return null;
-  const incorrectIds = new Set(incorrectQuestionIds);
-  const questionReferences = completedSession.questionReferences.filter((reference) => incorrectIds.has(reference.questionId));
+  return createSessionSubsetRetry(completedSession, incorrectQuestionIds, "retry_incorrect", now);
+}
+
+export function createCompletedSkippedRetry(
+  completedSession: PracticeSession,
+  skippedQuestionIds: readonly string[] = completedSession.finalSkippedQuestionIds ?? completedSession.skippedQuestionIds,
+  now = new Date(),
+): PracticeSession | null {
+  return createSessionSubsetRetry(completedSession, skippedQuestionIds, "retry_skipped", now);
+}
+
+function createSessionSubsetRetry(
+  completedSession: PracticeSession,
+  questionIds: readonly string[],
+  origin: "retry_incorrect" | "retry_skipped",
+  now: Date,
+): PracticeSession | null {
+  if (completedSession.status !== "completed") return null;
+  const selectedIds = new Set(questionIds);
+  const questionReferences = completedSession.questionReferences.filter((reference) => selectedIds.has(reference.questionId));
   if (!questionReferences.length) return null;
   const includedPathIds = unique(questionReferences.map((reference) => reference.pathId));
-  const seed = `session-retry:${completedSession.sessionId}`;
+  const seed = `${origin}:${completedSession.sessionId}`;
   return {
     schemaVersion: PRACTICE_SESSION_SCHEMA_VERSION,
     sessionId: createSessionId("retry_incorrect", seed, now),
-    mode: "retry_incorrect",
+    origin,
+    subjectId: completedSession.subjectId,
+    parentSessionId: completedSession.sessionId,
+    mode: "retry_incorrect" as const,
     courseId: completedSession.courseId,
     selectedPathIds: includedPathIds,
     questionReferences,
@@ -112,6 +145,7 @@ export function createCompletedSessionRetry(
       includedPathIds,
       createdAt: now.toISOString(),
     },
+    skippedQuestionIds: [],
   };
 }
 

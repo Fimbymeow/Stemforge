@@ -5,6 +5,7 @@ import { higherMathsCalculusStrandIds } from "../data/higher-maths";
 import { discoverEligiblePracticeQuestions } from "../lib/practice/practice-eligibility";
 import { createCompletedSessionRetry, createPracticeSessionSelection, selectRetryIncorrectPractice } from "../lib/practice/practice-selection";
 import { derivePracticeSetupVisibility, deriveVisiblePracticeModes } from "../lib/practice/practice-setup";
+import { isPracticeSession } from "../lib/practice/practice-validation";
 import { attempt, evidence } from "./progress-fixtures";
 import type { CanonicalContentSource } from "../data/canonical-content";
 import type { Question } from "../data/types";
@@ -22,6 +23,10 @@ test("targeted practice discovers synthetic future paths without engine changes 
     now: new Date("2026-07-17T10:00:00.000Z"),
   });
   assert.equal(result.session?.questionReferences.length, 3);
+  assert.equal(result.session?.schemaVersion, 2);
+  assert.equal(result.session?.origin, "configured_practice");
+  assert.equal(result.session?.subjectId, fixtureIds.subjectSlug);
+  assert.equal(isPracticeSession(result.session), true);
   assert.equal(result.session?.selectionMetadata.fullySatisfied, false);
   assert.match(result.session?.selectionMetadata.shortageReason ?? "", /3 questions are currently available/);
 });
@@ -119,6 +124,11 @@ test("completed-session retry preserves only the supplied failures in original s
 
   assert.deepEqual(retry?.questionReferences, expected);
   assert.equal(retry?.mode, "retry_incorrect");
+  assert.equal(retry?.origin, "retry_incorrect");
+  assert.equal(retry?.parentSessionId, completed.sessionId);
+  assert.equal(retry?.subjectId, completed.subjectId);
+  assert.deepEqual(retry?.skippedQuestionIds, []);
+  assert.equal(isPracticeSession(retry), true);
   assert.equal(retry?.status, "active");
   assert.equal(retry?.timing.type, "untimed");
   assert.equal(createCompletedSessionRetry(completed, []), null);

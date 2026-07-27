@@ -1,4 +1,4 @@
-import type { ProgressEvidence, QuestionAttempt, QuestionSupportEvent } from "../lib/progress/types";
+import type { GuidedSelfAssessmentEvent, ProgressEvidence, QuestionAttempt, QuestionSupportEvent } from "../lib/progress/types";
 
 export const QUESTION_ID = "hm-calc-diff-basic-f-001";
 export const PATH_ID = "basic-differentiation";
@@ -38,5 +38,20 @@ export function supportEvent(overrides: Partial<QuestionSupportEvent> = {}): Que
 }
 
 export function evidence(attempts: QuestionAttempt[] = [], supportEvents: QuestionSupportEvent[] = []): ProgressEvidence {
-  return { attempts, supportEvents, achievementSnapshots: [] };
+  return { attempts, supportEvents, guidedSelfAssessments: [], achievementSnapshots: [] };
+}
+
+export function selfAssessment(overrides: Partial<GuidedSelfAssessmentEvent> = {}): GuidedSelfAssessmentEvent {
+  return {
+    eventId: "self_assessment_1",
+    practiceSessionId: "practice_session_1",
+    questionId: QUESTION_ID,
+    skillPathId: PATH_ID,
+    stageId: STAGE_ID,
+    outcome: "confident",
+    occurredAt: "2026-07-12T10:02:00.000Z",
+    sequence: 3,
+    versionEvidence: { kind: "known", questionVersion: 1 },
+    ...overrides,
+  };
 }

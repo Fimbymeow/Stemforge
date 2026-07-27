@@ -15,6 +15,7 @@ type RequestRow = {
   created_at: Date; updated_at: Date; cancellation_deadline: Date | null; irreversible_at: Date | null;
   completed_at: Date | null; cancelled_at: Date | null; deleted_attempt_count: string | null;
   deleted_support_event_count: string | null; deleted_achievement_snapshot_count: string | null;
+  deleted_guided_self_assessment_count: string | null;
   deleted_conflict_count: string | null; failure_code: string | null;
 };
 
@@ -157,7 +158,8 @@ export async function ownerLock(client: PoolClient, ownerId: string) {
 
 const requestColumns = `request_id::text, status, generation_before::text, generation_after::text, created_at,
   updated_at, cancellation_deadline, irreversible_at, completed_at, cancelled_at, deleted_attempt_count::text,
-  deleted_support_event_count::text, deleted_achievement_snapshot_count::text, deleted_conflict_count::text, failure_code`;
+  deleted_support_event_count::text, deleted_guided_self_assessment_count::text,
+  deleted_achievement_snapshot_count::text, deleted_conflict_count::text, failure_code`;
 const requestSelect = `SELECT ${requestColumns} FROM stemforge_account_data.requests`;
 const requestInsert = `INSERT INTO stemforge_account_data.requests (owner_id,status,generation_before)`;
 
@@ -168,6 +170,7 @@ function toState(row: StateRow): AccountDataState {
 function toRequest(row: RequestRow): SafeErasureRequest {
   const counts = row.deleted_attempt_count === null ? null : {
     attempts: Number(row.deleted_attempt_count), supportEvents: Number(row.deleted_support_event_count),
+    guidedSelfAssessments: Number(row.deleted_guided_self_assessment_count),
     achievementSnapshots: Number(row.deleted_achievement_snapshot_count), conflicts: Number(row.deleted_conflict_count),
   };
   return { requestId: row.request_id, status: row.status, generationBefore: row.generation_before,

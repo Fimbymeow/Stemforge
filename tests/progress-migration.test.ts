@@ -37,8 +37,8 @@ test("V1 incorrect then correct preserves sequence and historical ambiguity", ()
   assert.equal(getQuestionProgress(base.questionId, migrated.data).historicalBestOutcome, "legacy_correct_unknown_support");
 });
 
-test("empty V1 and unversioned payloads migrate to empty V4", () => {
-  const empty = { attempts: [], supportEvents: [], achievementSnapshots: [] };
+test("empty V1 and unversioned payloads migrate to empty V5", () => {
+  const empty = { attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [] };
   assert.deepEqual(migrateProgressPayload({ version: 1, data: { attempts: [] } }).payload.data, empty);
   assert.deepEqual(migrateProgressPayload([]).payload.data, empty);
 });

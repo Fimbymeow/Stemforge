@@ -121,11 +121,11 @@ test("production helpers contain path and question context without activation fl
 });
 
 function emptyEvidence(): ProgressEvidence {
-  return { attempts: [], supportEvents: [], achievementSnapshots: [] };
+  return { attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [] };
 }
 
 function evidence(attempts: QuestionAttempt[]): ProgressEvidence {
-  return { attempts, supportEvents: [], achievementSnapshots: [] };
+  return { attempts, supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [] };
 }
 
 function attempt(questionId: string, sequence: number, isCorrect: boolean, overrides: Partial<QuestionAttempt> = {}): QuestionAttempt {

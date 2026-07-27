@@ -8,14 +8,14 @@ import {
   validateRemoteEvidenceBatch,
 } from "../lib/remote-evidence/validation";
 import { assertSafeTestDatabaseUrl } from "../scripts/database/safety";
-import { attempt, supportEvent } from "./progress-fixtures";
+import { attempt, selfAssessment, supportEvent } from "./progress-fixtures";
 
 const payload = (overrides: Record<string, unknown> = {}) => ({
-  version: 4,
-  data: { attempts: [attempt()], supportEvents: [supportEvent()], achievementSnapshots: [], ...overrides },
+  version: 5,
+  data: { attempts: [attempt()], supportEvents: [supportEvent()], guidedSelfAssessments: [], achievementSnapshots: [], ...overrides },
 });
 
-test("remote validation accepts canonical V4 and unknown legacy version evidence", () => {
+test("remote validation accepts canonical V5 and unknown legacy version evidence", () => {
   const unknown = attempt({ eventId: "migrated_attempt_0_deadbeef", versionEvidence: { kind: "unknown_legacy", questionVersion: null }, legacyCompleted: true });
   const result = validateRemoteEvidenceBatch(payload({ attempts: [unknown] }));
   assert.equal(result.fatal, false);
@@ -33,7 +33,7 @@ test("remote validation rejects malformed evidence item-by-item without discardi
 });
 
 test("future and malformed payload shapes are rejected without migration", () => {
-  assert.equal(validateRemoteEvidenceBatch({ version: 5, data: {} }).fatal, true);
+  assert.equal(validateRemoteEvidenceBatch({ version: 6, data: {} }).fatal, true);
   assert.equal(validateRemoteEvidenceBatch({ version: 4, data: { attempts: [] } }).fatal, true);
   assert.equal(validateRemoteEvidenceBatch({ ...payload(), unexpected: true }).fatal, true);
   assert.equal(validateRemoteEvidenceBatch(null).fatal, true);
@@ -46,6 +46,18 @@ test("known versions must be positive and timestamps must be canonical ISO strin
   assert.equal(result.payload.data.attempts.length, 0);
   assert.equal(result.payload.data.supportEvents.length, 0);
   assert.equal(result.rejected.length, 2);
+});
+
+test("guided self-assessment requires canonical session identity and accepts every outcome", () => {
+  for (const outcome of ["confident", "unsure", "needs_review"] as const) {
+    const result = validateRemoteEvidenceBatch(payload({ guidedSelfAssessments: [selfAssessment({ outcome })] }));
+    assert.equal(result.fatal, false);
+    assert.equal(result.rejected.length, 0);
+  }
+  const invalid = validateRemoteEvidenceBatch(payload({
+    guidedSelfAssessments: [selfAssessment({ practiceSessionId: "" })],
+  }));
+  assert.equal(invalid.rejected[0]?.kind, "guided_self_assessment");
 });
 
 test("batch count and byte limits reject the complete unsafe batch", () => {

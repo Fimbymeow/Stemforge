@@ -22,6 +22,7 @@ import {
   getEmptyProgressEvidence,
   getQuestionProgress,
   getSkillPathProgress,
+  recordGuidedSelfAssessment,
   recordHintViewed,
   recordWorkedSolutionViewed,
   saveQuestionAttempt,
@@ -47,19 +48,25 @@ import {
   WORKING_CONTEXT_NOTES_ORIGIN_PREFIX,
   questionHelpNotesHref,
 } from "@/lib/working-context";
+import type { GuidedSelfAssessmentOutcome } from "@/lib/progress/types";
 
 type SubmissionIntent = "keyboard" | "pointer";
 
+export type QuestionWorkspaceSessionConfig = {
+  practiceSessionId: string;
+  panel: ReactNode;
+  answerLocked: boolean;
+  returnHref: string;
+  currentSelfAssessment: GuidedSelfAssessmentOutcome | null;
+  onEvidenceRecorded?: () => void | Promise<void>;
+};
+
 export function QuestionWorkspace({
   question,
-  sessionPanel,
-  answerLocked = false,
-  practiceReturnHref,
+  session,
 }: {
   question: Question;
-  sessionPanel?: ReactNode;
-  answerLocked?: boolean;
-  practiceReturnHref?: string;
+  session?: QuestionWorkspaceSessionConfig;
 }) {
   const [answer, setAnswer] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -69,6 +76,8 @@ export function QuestionWorkspace({
   const [submitting, setSubmitting] = useState(false);
   const [hintViewed, setHintViewed] = useState(false);
   const [solutionOpenedThisInteraction, setSolutionOpenedThisInteraction] = useState(false);
+  const [selfAssessmentSaving, setSelfAssessmentSaving] = useState(false);
+  const [selfAssessmentError, setSelfAssessmentError] = useState<string | null>(null);
   const [progressVersion, setProgressVersion] = useState(0);
   const [showCompletionPanel, setShowCompletionPanel] = useState(false);
   const [showStageCompletionPanel, setShowStageCompletionPanel] = useState(false);
@@ -138,6 +147,8 @@ export function QuestionWorkspace({
     setSubmitting(false);
     setHintViewed(false);
     setSolutionOpenedThisInteraction(false);
+    setSelfAssessmentSaving(false);
+    setSelfAssessmentError(null);
     setShowCompletionPanel(false);
     setShowStageCompletionPanel(false);
   }, [draftKey, draftIdentity]);
@@ -190,14 +201,14 @@ export function QuestionWorkspace({
       // (see PracticeSummaryCard) rather than claiming it here, where the panel can never
       // render anyway (sessionPanel takes over this row) — claiming it here would silently
       // burn the one-time acknowledgement before the summary gets a chance to show it.
-      if (!sessionPanel) {
+      if (!session) {
         const acknowledgement = recordPathCelebrated(skillPath.slug, pathStatus);
         setShowCompletionPanel(
           acknowledgement === "recorded" || acknowledgement === "unavailable" || acknowledgement === "write-failed",
         );
       }
     }
-  }, [hasMounted, skillPath, pathStatus, pathCompletedQuestionCount, pathTotalQuestionCount, sessionPanel]);
+  }, [hasMounted, skillPath, pathStatus, pathCompletedQuestionCount, pathTotalQuestionCount, session]);
 
   useEffect(() => {
     if (!hasMounted || !skillPath || !stage || !stageStatus || stageTotalQuestionCount === 0) return;
@@ -208,13 +219,13 @@ export function QuestionWorkspace({
       // submission also completes the whole path, skip claiming/showing the stage moment —
       // never stack two completion panels for one submission.
       const isPathCompleteAlso = pathTotalQuestionCount > 0 && pathCompletedQuestionCount >= pathTotalQuestionCount;
-      if (isPathCompleteAlso || sessionPanel) return;
+      if (isPathCompleteAlso || session) return;
       const acknowledgement = recordStageCelebrated(skillPath.slug, stage.id, stageStatus);
       setShowStageCompletionPanel(
         acknowledgement === "recorded" || acknowledgement === "unavailable" || acknowledgement === "write-failed",
       );
     }
-  }, [hasMounted, skillPath, stage, stageStatus, stageCompletedQuestionCount, stageTotalQuestionCount, pathCompletedQuestionCount, pathTotalQuestionCount, sessionPanel]);
+  }, [hasMounted, skillPath, stage, stageStatus, stageCompletedQuestionCount, stageTotalQuestionCount, pathCompletedQuestionCount, pathTotalQuestionCount, session]);
 
   function updateAnswer(nextAnswer: string) {
     setAnswer(nextAnswer);
@@ -228,7 +239,7 @@ export function QuestionWorkspace({
   }
 
   async function handleSubmit() {
-    if (submitted || submitting || answerLocked) return;
+    if (submitted || submitting || session?.answerLocked) return;
     setSubmitting(true);
     try {
       const marking = markQuestionAnswer(question, answer);
@@ -245,6 +256,7 @@ export function QuestionWorkspace({
         answer,
         attemptedAt: new Date().toISOString(),
         hintViewedBeforeSubmission: hintViewed,
+        ...(session ? { practiceSessionId: session.practiceSessionId } : {}),
       });
       if (!saved) {
         showFeedback(internalAnswerFailureFeedback());
@@ -253,6 +265,7 @@ export function QuestionWorkspace({
       setSubmittedAnswer(answer);
       setSubmitted(true);
       showFeedback(classified);
+      await session?.onEvidenceRecorded?.();
       if (marking.isCorrect === true) clearAnswerDraft(browserStorage(), draftIdentity);
     } catch {
       showFeedback(internalAnswerFailureFeedback());
@@ -267,7 +280,28 @@ export function QuestionWorkspace({
       skillPathId: question.skillPathId ?? skillPath?.slug ?? "unknown",
       stageId: question.stageId ?? stage?.id ?? question.stage,
       attemptedAt: new Date().toISOString(),
+      ...(session ? { practiceSessionId: session.practiceSessionId } : {}),
     };
+  }
+
+  async function handleSelfAssessment(outcome: GuidedSelfAssessmentOutcome) {
+    if (!session || !usesGuidedMarking || !submitted || selfAssessmentSaving) return;
+    setSelfAssessmentSaving(true);
+    setSelfAssessmentError(null);
+    const saved = await recordGuidedSelfAssessment({
+      practiceSessionId: session.practiceSessionId,
+      questionId: question.id,
+      skillPathId: question.skillPathId ?? skillPath?.slug ?? "unknown",
+      stageId: question.stageId ?? stage?.id ?? question.stage,
+      outcome,
+      occurredAt: new Date().toISOString(),
+    });
+    setSelfAssessmentSaving(false);
+    if (!saved) {
+      setSelfAssessmentError("Your self-check could not be saved. Try again.");
+      return;
+    }
+    await session.onEvidenceRecorded?.();
   }
 
   async function handleHintViewed() {
@@ -337,7 +371,7 @@ export function QuestionWorkspace({
             </details>
           </nav>
 
-          {sessionPanel}
+          {session?.panel}
 
           <Card className="p-4 max-sm:p-3" data-testid="question-workspace-card">
             <div className="flex flex-wrap items-start justify-between gap-2 border-b border-line pb-3">
@@ -359,7 +393,7 @@ export function QuestionWorkspace({
               </details>
             </div>
 
-            <h1 className="mt-4 text-[clamp(24px,3vw,32px)] font-extrabold leading-tight">{question.title}</h1>
+            <h1 id="question-heading" tabIndex={-1} className="mt-4 text-[clamp(24px,3vw,32px)] font-extrabold leading-tight outline-none">{question.title}</h1>
             {questionProgress.reviewRecommended && !submitted ? (
               <p className="mt-2 text-sm text-muted" data-testid="review-reason">{describeReviewReason(questionProgress)}</p>
             ) : null}
@@ -387,10 +421,10 @@ export function QuestionWorkspace({
                     <button
                       type="submit"
                       onPointerDown={() => { submissionIntentRef.current = "pointer"; }}
-                      disabled={submitted || submitting || answerLocked}
+                      disabled={submitted || submitting || session?.answerLocked}
                       className="inline-flex min-h-11 items-center justify-center rounded-lg bg-forge px-6 text-sm font-extrabold text-white disabled:cursor-not-allowed disabled:opacity-45 max-sm:w-full"
                     >
-                      {answerLocked ? "Session ended" : submitting ? "Saving..." : "Submit Answer"}
+                      {session?.answerLocked ? "Session ended" : submitting ? "Saving..." : "Submit Answer"}
                     </button>
                   </div>
                 </form>
@@ -434,6 +468,30 @@ export function QuestionWorkspace({
                           Try again
                         </button>
                       ) : null}
+                      {submitted && usesGuidedMarking && session ? (
+                        <fieldset className="mt-4 border-t border-line pt-4" disabled={selfAssessmentSaving}>
+                          <legend className="text-sm font-extrabold">How did your method compare?</legend>
+                          <div className="mt-2 grid gap-2 sm:grid-cols-3">
+                            {([
+                              ["confident", "Confident"],
+                              ["unsure", "Unsure"],
+                              ["needs_review", "Needs review"],
+                            ] as const).map(([value, label]) => (
+                              <label key={value} className="flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border border-line bg-white px-3 font-bold">
+                                <input
+                                  type="radio"
+                                  name={`self-assessment-${session.practiceSessionId}-${question.id}`}
+                                  value={value}
+                                  checked={session.currentSelfAssessment === value}
+                                  onChange={() => void handleSelfAssessment(value)}
+                                />
+                                {label}
+                              </label>
+                            ))}
+                          </div>
+                          {selfAssessmentError ? <p role="alert" className="mt-2 text-sm font-bold text-danger">{selfAssessmentError}</p> : null}
+                        </fieldset>
+                      ) : null}
                     </div>
                   </div>
                 </div>
@@ -476,11 +534,11 @@ export function QuestionWorkspace({
             </>
           ) : null}
 
-          {showCompletionPanel && !sessionPanel && skillPath && localProgress ? (
+          {showCompletionPanel && !session && skillPath && localProgress ? (
             <PathCompletionPanel skillPath={skillPath} progress={localProgress} nextAction={nextAction} />
-          ) : showStageCompletionPanel && !sessionPanel && skillPath && stage && stageLocalProgress ? (
+          ) : showStageCompletionPanel && !session && skillPath && stage && stageLocalProgress ? (
             <StageCompletionPanel skillPath={skillPath} stage={stage} progress={stageLocalProgress} nextAction={nextAction} />
-          ) : sessionPanel ? null : (
+          ) : session ? null : (
             <div className="grid grid-cols-2 gap-3 max-md:grid-cols-1">
               <Link href={position.previous ? getQuestionHref(position.previous.id) : fallbackPathHref} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-line bg-white text-sm font-bold">
                 <ArrowLeft className="size-5" /> Previous
@@ -526,7 +584,7 @@ export function QuestionWorkspace({
               <p className="mb-3 text-sm text-muted">These resources belong to {skillPath?.name ?? "this path"}. Opening one does not record an attempt.</p>
               <div className="grid gap-1">
                 {questionSupportResources.map((item) => {
-                    const contextualNotesHref = isHigherMathsQuestion && !practiceReturnHref
+                    const contextualNotesHref = isHigherMathsQuestion && !session?.returnHref
                       ? questionHelpNotesHref({
                           subjectSlug: context?.subject.subjectSlug ?? "higher-maths",
                           questionId: question.id,
@@ -538,7 +596,7 @@ export function QuestionWorkspace({
                     return (
                       <Link
                         key={item.resource.id}
-                        href={contextualNotesHref ?? getContextualResourceHref(item.type, context?.subject.subjectSlug ?? "higher-maths", item.resource.id, practiceReturnHref)}
+                        href={contextualNotesHref ?? getContextualResourceHref(item.type, context?.subject.subjectSlug ?? "higher-maths", item.resource.id, session?.returnHref)}
                         onClick={contextualNotesHref ? () => recordNotesOrigin(notesOriginToken) : undefined}
                         className="inline-flex min-h-10 items-center gap-2 rounded-lg px-2 text-sm font-bold text-forge hover:bg-forge-soft"
                       >

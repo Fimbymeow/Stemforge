@@ -1,6 +1,6 @@
-import type { AchievementSnapshot, ProgressPayload, QuestionAttempt, QuestionSupportEvent } from "@/lib/progress/types";
+import type { AchievementSnapshot, GuidedSelfAssessmentEvent, ProgressPayload, QuestionAttempt, QuestionSupportEvent } from "@/lib/progress/types";
 
-export type RemoteEvidenceKind = "attempt" | "support_event" | "achievement_snapshot";
+export type RemoteEvidenceKind = "attempt" | "support_event" | "guided_self_assessment" | "achievement_snapshot";
 
 export type RemoteEvidenceRef = {
   kind: RemoteEvidenceKind;
@@ -41,7 +41,7 @@ export type RemoteEvidenceRead = {
 
 export type RemoteEvidencePageRecord = AcceptedRemoteEvidence & {
   disposition: "accepted" | "conflict_retained";
-  evidence: QuestionAttempt | QuestionSupportEvent | AchievementSnapshot;
+  evidence: QuestionAttempt | QuestionSupportEvent | GuidedSelfAssessmentEvent | AchievementSnapshot;
 };
 
 export type RemoteEvidencePage = {

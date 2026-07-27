@@ -1,6 +1,10 @@
 import { canonicalContent, type CanonicalContentSource } from "@/data/canonical-content";
 import { discoverEligiblePracticeQuestions } from "@/lib/practice/practice-eligibility";
-import { PRACTICE_SESSION_SCHEMA_VERSION, type PracticeSession } from "@/lib/practice/practice-types";
+import {
+  PRACTICE_SESSION_SCHEMA_VERSION,
+  type PracticeSession,
+  type PracticeSessionOrigin,
+} from "@/lib/practice/practice-types";
 
 export type CustomPracticeResult = {
   session: PracticeSession | null;
@@ -10,7 +14,11 @@ export type CustomPracticeResult = {
 
 export function createCustomPracticeSession(
   selectedQuestionIds: readonly string[],
-  options: { source?: CanonicalContentSource; now?: Date } = {},
+  options: {
+    source?: CanonicalContentSource;
+    now?: Date;
+    origin?: Extract<PracticeSessionOrigin, "question_bank_custom" | "subject_review">;
+  } = {},
 ): CustomPracticeResult {
   const source = options.source ?? canonicalContent;
   const now = options.now ?? new Date();
@@ -19,6 +27,10 @@ export function createCustomPracticeSession(
   const eligible = discoverEligiblePracticeQuestions(source).eligible.filter((item) => selected.has(item.question.id));
   const removedCount = uniqueIds.length - eligible.length;
   if (!eligible.length) return { session: null, removedCount, validQuestionIds: [] };
+  const subjectIds = [...new Set(eligible.map((item) => item.reference.subjectId))];
+  if (subjectIds.length !== 1) {
+    return { session: null, removedCount: uniqueIds.length, validQuestionIds: [] };
+  }
   const includedPathIds = [...new Set(eligible.map((item) => item.reference.pathId))];
   const shortageReason = removedCount
     ? `${removedCount} unavailable question${removedCount === 1 ? " was" : "s were"} removed. Practice started with ${eligible.length} question${eligible.length === 1 ? "" : "s"}.`
@@ -27,6 +39,8 @@ export function createCustomPracticeSession(
   const session: PracticeSession = {
     schemaVersion: PRACTICE_SESSION_SCHEMA_VERSION,
     sessionId: `practice_custom_${hash(`${stamp}:${eligible.map((item) => item.question.id).join("|")}`).toString(36)}`,
+    origin: options.origin ?? "question_bank_custom",
+    subjectId: subjectIds[0],
     mode: "targeted",
     courseId: eligible[0].reference.courseId,
     selectedPathIds: includedPathIds,
@@ -48,6 +62,7 @@ export function createCustomPracticeSession(
       includedPathIds,
       createdAt: stamp,
     },
+    skippedQuestionIds: [],
   };
   return { session, removedCount, validQuestionIds: eligible.map((item) => item.question.id) };
 }

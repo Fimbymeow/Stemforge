@@ -1,4 +1,4 @@
-export type EventIdFactory = (kind: "attempt" | "support" | "snapshot") => string;
+export type EventIdFactory = (kind: "attempt" | "support" | "snapshot" | "self_assessment") => string;
 
 export const createEventId: EventIdFactory = (kind) => {
   const uuid = globalThis.crypto?.randomUUID?.();

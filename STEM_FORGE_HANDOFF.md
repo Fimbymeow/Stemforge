@@ -41,13 +41,13 @@ Sprint 19 adds a reusable graph foundation without arbitrary expression executio
 
 ## Generic revision and assessment engine
 
-Sprint 20 adds `/practice` and `/practice/session/[sessionId]`. Practice sessions are local browser state in `stemforge.practiceSessions.v1`; submitted answers remain canonical V4 progress evidence through the existing `QuestionWorkspace`, answer engine and `saveQuestionAttempt` path. The engine supports targeted, mixed, needs-work, retry-incorrect and optional timed sessions over available canonical content.
+Sprint 20 adds `/practice` and `/practice/session/[sessionId]`. Practice sessions are local browser state in `stemforge.practiceSessions.v1`; submitted answers remain canonical V5 progress evidence through the existing `QuestionWorkspace`, answer engine and `saveQuestionAttempt` path. The engine supports targeted, mixed, needs-work, retry-incorrect and optional timed sessions over available canonical content. The Practice Session Programme adds coordinated activation, explicit origins, reversible Skip, guided self-assessment evidence, deterministic completion and session-scoped retries without syncing session objects remotely.
 
 `lib/practice/*` owns the versioned session model, eligibility, deterministic selection, storage and summary derivation. It discovers questions through `contentResolver`, pins question version/content revision, excludes archived or unsupported questions, and never stores answer keys, duplicated content, sampled graph arrays, credentials or account identifiers. Session UI does not resume across devices in Sprint 20, but submitted progress still imports/syncs normally. See `STEM_FORGE_REVISION_AND_ASSESSMENT_ENGINE.md`.
 
 ## Current progress source of truth
 
-The LocalStorage key remains `stemforge.localProgress.v1`. Canonical writes use V4:
+The LocalStorage key remains `stemforge.localProgress.v1`. Canonical writes use V5:
 
 ```ts
 {
@@ -73,7 +73,7 @@ Read `STEM_FORGE_STRUCTURAL_ACHIEVEMENTS_AND_MERGING.md`, `STEM_FORGE_PROGRESS_A
 
 ## Deterministic evidence merging
 
-`mergeProgressEvidence` unions V4 attempts, support events, and snapshots. Exact equal IDs deduplicate; different IDs remain distinct. Same-ID conflicts are reported and resolved with an order-independent canonical representation. Output ordering is timestamp then event ID within each evidence type.
+`mergeProgressEvidence` unions V5 attempts, support events, guided self-assessments, and snapshots. Exact equal IDs deduplicate; different IDs remain distinct. Same-ID conflicts are reported and resolved with an order-independent canonical representation. Output ordering is timestamp then event ID within each evidence type.
 
 Focused tests establish immutable, idempotent, commutative, and associative payload merging. Unsupported future payloads are refused rather than downgraded. Merge remains pure and has no LocalStorage, React, network, account, or database dependency.
 
@@ -81,7 +81,7 @@ Focused tests establish immutable, idempotent, commutative, and associative payl
 
 Sprint 12 adds a server-only asynchronous PostgreSQL repository without connecting it to the learner application. `pg` is the runtime driver, `node-pg-migrate` applies committed forward-only migrations, and `embedded-postgres` is a dev-only native PostgreSQL 17 integration harness. The schema stores attempts, support events, snapshots and conflicts as immutable owner-scoped JSONB rows with database receive timestamps and one global receive cursor.
 
-Database triggers reject UPDATE, DELETE and TRUNCATE. Identical retries are idempotent; same-ID/different-payload arrivals preserve the accepted row and append one deduplicated conflict. `lib/remote-evidence/validation.ts` accepts canonical V4 only while retaining `unknown_legacy` and archived/unknown logical references. No API route, authentication, sync or browser import exists.
+Database triggers reject UPDATE, DELETE and TRUNCATE. Identical retries are idempotent; same-ID/different-payload arrivals preserve the accepted row and append one deduplicated conflict. `lib/remote-evidence/validation.ts` accepts canonical V5 only while retaining `unknown_legacy` and archived/unknown logical references.
 
 Read `STEM_FORGE_REMOTE_EVIDENCE_FOUNDATION.md` before authentication or remote transport work. `STEMFORGE_DATABASE_URL` is runtime-only; migration/test URLs are separate. Missing database configuration affects only explicit remote repository invocation. LocalStorage remains the complete active learner runtime.
 
@@ -141,7 +141,7 @@ The Sprint 13 checkpoint verified 158 unit/integration tests, a 28-route product
 
 ## Sprint 14 confirmed import
 
-The authenticated account page now detects canonical browser evidence after hydration and shows a neutral summary. Import is never automatic: the learner reviews and confirms before `POST /api/progress/import` sends a strict V4 envelope. The route bounds raw and canonical sizes, requires configured same-origin JSON, resolves the owner only from the verified session, and returns minimum per-event committed classifications.
+The authenticated account page now detects canonical browser evidence after hydration and shows a neutral summary. Import is never automatic: the learner reviews and confirms before `POST /api/progress/import` sends a strict V5 envelope. The route bounds raw and canonical sizes, requires configured same-origin JSON, resolves the owner only from the verified session, and returns minimum per-event committed classifications.
 
 Accepted account evidence remains append-only. Identical retries return the original trusted receive cursor/time, same-ID semantic conflicts remain in `evidence_conflicts`, and unexpected SQL failure rolls back the valid batch. Four `NOT VALID` owner foreign keys enforce real application owners for new rows while preserving historical pre-authentication evidence.
 
@@ -153,11 +153,11 @@ The completed Sprint 14 gate verifies 174 unit/integration tests, a 33-route pro
 
 ## Sprint 15 incremental synchronization
 
-Sprint 15 introduces `stemforge.progressSync.v1`, explicit browser/account association, incremental durable push and owner-scoped exclusive-cursor pull. Local progress remains the active runtime and all learning writes finish before any network work. Pull uses deterministic V4 union inside a Web Lock or IndexedDB lease and advances its account-bound cursor only after local save and verification. Sign-out pauses association; account changes require new confirmation; browser reset cannot imply remote deletion.
+Sprint 15 introduces `stemforge.progressSync.v1`, explicit browser/account association, incremental durable push and owner-scoped exclusive-cursor pull. Local progress remains the active runtime and all learning writes finish before any network work. Pull uses deterministic V5 union inside a Web Lock or IndexedDB lease and advances its account-bound cursor only after local save and verification. Sign-out pauses association; account changes require new confirmation; browser reset cannot imply remote deletion.
 
 ## Sprint 16 account data and shared-device safety
 
-Sprint 16 adds `stemforge.evidenceProvenance.v1` beside canonical V4 evidence. New records are conservatively classified as local anonymous, local associated, remote pull or legacy unknown without changing stable identity or storing account identity. Existing evidence becomes unknown rather than being guessed. Pull saves provenance before advancing a cursor.
+Sprint 16 adds `stemforge.evidenceProvenance.v1` beside canonical V5 evidence. New records are conservatively classified as local anonymous, local associated, remote pull or legacy unknown without changing stable identity or storing account identity. Existing evidence becomes unknown rather than being guessed. Pull saves provenance before advancing a cursor.
 
 The account page now owns explicit sync recovery, shared-device warnings, three separate browser-data scopes and two safe sign-out outcomes. Same-account remembered consent may resume; a different fingerprint stops transport and requires confirmation. Destructive actions suspend and await in-flight sync, use the established coordinated local transaction, verify writes and broadcast. Session 401s enter an auth-required state without losing evidence or creating retry storms.
 

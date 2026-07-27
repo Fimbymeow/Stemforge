@@ -167,7 +167,7 @@ Production builds run content validation before Next.js compiles the application
 
 Canonical content now includes conservative version/revision and active/archive lifecycle metadata. Learner-facing selectors exclude archived records, while explicit historical lookup remains available for future admin/history work. Run `pnpm run test:content-version` for the focused regression suite and see `STEM_FORGE_CONTENT_VERSION_ARCHITECTURE.md` for the identity map and migration boundary.
 
-Local progress now uses payload V4. Attempts, support events, and structural achievement snapshots have stable event IDs. V3 and older progress migrates conservatively with deterministic IDs and no invented snapshots. Current-version readiness stays separate from immutable historical stage/path achievement. See `STEM_FORGE_STRUCTURAL_ACHIEVEMENTS_AND_MERGING.md`.
+Local progress now uses payload V5. Attempts, support events, guided Practice self-assessments, and structural achievement snapshots have stable event IDs. V4 and older progress migrates conservatively with deterministic IDs, an empty self-assessment stream, and no invented snapshots. Guided confidence remains separate from correctness/mastery, and current-version readiness stays separate from immutable historical stage/path achievement. See `STEM_FORGE_PROGRESS_ARCHITECTURE.md`.
 
 ## Testing Priorities
 

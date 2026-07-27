@@ -30,7 +30,7 @@ test("sync context exposes only an opaque account fingerprint after trusted reso
 });
 
 test("sync push reuses durable trusted append classifications", async () => {
-  const evidence = { version: 4 as const, data: { attempts: [attempt()], supportEvents: [], achievementSnapshots: [] } };
+  const evidence = { version: 5 as const, data: { attempts: [attempt()], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [] } };
   const result = await pushEvidenceForTrustedOwner(evidence, async () => ({ authenticated: true, ownerId }), async (resolvedOwner) => {
     assert.equal(resolvedOwner, ownerId);
     return { accepted: [{ kind: "attempt", eventId: evidence.data.attempts[0].eventId, receiveCursor: "1", receivedAt }], duplicates: [], conflicts: [], rejected: [] };

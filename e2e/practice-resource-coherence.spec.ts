@@ -27,14 +27,16 @@ test("Quick Practice starts one deterministic untimed session without creating a
   expect(seriousBrowserErrors).toEqual([]);
 });
 
-test("an active session is resumed instead of replaced", async ({ page }) => {
+test("Quick Practice never overwrites an active session and can resume it explicitly", async ({ page }) => {
   await page.goto("/practice");
   await page.getByTestId("quick-practice-action").click();
   await expect(page).toHaveURL(/\/practice\/session\//);
   const sessionUrl = new URL(page.url()).pathname;
   await page.goto("/practice");
-  await expect(page.getByTestId("quick-practice-action")).toContainText("Resume Practice");
   await page.getByTestId("quick-practice-action").click();
+  const conflict = page.getByRole("dialog", { name: "You already have active practice" });
+  await expect(conflict).toBeVisible();
+  await conflict.getByRole("button", { name: "Resume current session" }).click();
   await expect(page).toHaveURL(new RegExp(`${escapeRegExp(sessionUrl)}$`));
   const activeCount = await page.evaluate((key) => {
     const store = JSON.parse(localStorage.getItem(key)!);
@@ -106,6 +108,9 @@ test("keyboard users can move from a resource into practice and reach the summar
   const finish = page.getByRole("button", { name: "Finish session" });
   await finish.focus();
   await finish.press("Enter");
+  const confirmation = page.getByRole("dialog", { name: "Finish this session?" });
+  await expect(confirmation).toBeVisible();
+  await confirmation.getByRole("button", { name: "Finish session" }).press("Enter");
   await expect(page.getByRole("heading", { name: "Practice summary" })).toBeVisible();
   const retry = page.getByRole("button", { name: "Retry incorrect" });
   await retry.focus();

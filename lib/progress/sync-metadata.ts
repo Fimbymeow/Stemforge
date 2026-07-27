@@ -148,14 +148,16 @@ export function mergeProgressSyncPushResponse(
 
 export function evidenceRecordDigest(
   payload: ProgressPayload,
-  kind: "attempt" | "support_event" | "achievement_snapshot",
+  kind: "attempt" | "support_event" | "guided_self_assessment" | "achievement_snapshot",
   eventId: string,
 ) {
   const value = kind === "attempt"
     ? payload.data.attempts.find((item) => item.eventId === eventId)
     : kind === "support_event"
       ? payload.data.supportEvents.find((item) => item.eventId === eventId)
-      : payload.data.achievementSnapshots.find((item) => item.snapshotId === eventId);
+      : kind === "guided_self_assessment"
+        ? payload.data.guidedSelfAssessments.find((item) => item.eventId === eventId)
+        : payload.data.achievementSnapshots.find((item) => item.snapshotId === eventId);
   if (!value) return null;
   const source = stableStringify(value);
   let left = 0x811c9dc5;
@@ -187,7 +189,7 @@ export function mergeProgressSyncPullResponse(metadata: ProgressSyncMetadata, re
 
 export function pendingProgressSyncEvidence(payload: ProgressPayload, metadata: ProgressSyncMetadata, fingerprint: string): ProgressPayload {
   const account = metadata.accounts[fingerprint] ?? createDefaultProgressSyncAccount();
-  const pending = (kind: "attempt" | "support_event" | "achievement_snapshot", eventId: string) => {
+  const pending = (kind: "attempt" | "support_event" | "guided_self_assessment" | "achievement_snapshot", eventId: string) => {
     const reference = evidenceReference(kind, eventId);
     const rejection = account.permanentlyRejected[reference];
     const rejectedDigest = rejection?.recordDigest;
@@ -195,10 +197,11 @@ export function pendingProgressSyncEvidence(payload: ProgressPayload, metadata: 
     return !account.acknowledged[reference] && (!rejection || rejectedDigest !== currentDigest);
   };
   return {
-    version: 4,
+    version: 5,
     data: {
       attempts: payload.data.attempts.filter((item) => pending("attempt", item.eventId)),
       supportEvents: payload.data.supportEvents.filter((item) => pending("support_event", item.eventId)),
+      guidedSelfAssessments: payload.data.guidedSelfAssessments.filter((item) => pending("guided_self_assessment", item.eventId)),
       achievementSnapshots: payload.data.achievementSnapshots.filter((item) => pending("achievement_snapshot", item.snapshotId)),
     },
   };
@@ -292,7 +295,7 @@ function addAcknowledged(
 }
 
 function validReference(value: string) {
-  return /^(attempt|support_event|achievement_snapshot):[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/.test(value);
+  return /^(attempt|support_event|guided_self_assessment|achievement_snapshot):[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/.test(value);
 }
 
 function validAcknowledgement(value: unknown): value is ProgressSyncAcknowledgement {

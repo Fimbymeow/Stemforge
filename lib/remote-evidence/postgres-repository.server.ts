@@ -11,16 +11,17 @@ import type {
   RemoteEvidenceRead,
 } from "@/lib/remote-evidence/types";
 import { validateOwnerId, validateRemoteEvidenceBatch } from "@/lib/remote-evidence/validation";
-import type { AchievementSnapshot, ProgressPayload, QuestionAttempt, QuestionSupportEvent } from "@/lib/progress/types";
+import type { AchievementSnapshot, GuidedSelfAssessmentEvent, ProgressPayload, QuestionAttempt, QuestionSupportEvent } from "@/lib/progress/types";
 import { PostgresAccountDataRepository, ownerLock } from "@/lib/account-data/postgres-account-data.server";
 
 const TABLES: Record<RemoteEvidenceKind, string> = {
   attempt: "stemforge_remote.question_attempts",
   support_event: "stemforge_remote.support_events",
+  guided_self_assessment: "stemforge_remote.guided_self_assessments",
   achievement_snapshot: "stemforge_remote.achievement_snapshots",
 };
 
-type EvidenceItem = QuestionAttempt | QuestionSupportEvent | AchievementSnapshot;
+type EvidenceItem = QuestionAttempt | QuestionSupportEvent | GuidedSelfAssessmentEvent | AchievementSnapshot;
 type StoredRow = { payload: EvidenceItem; payload_hash: string; receive_order: string; received_at: Date };
 
 export class PostgresRemoteEvidenceRepository {
@@ -46,6 +47,7 @@ export class PostgresRemoteEvidenceRepository {
         : await account.assertActiveGeneration(client, ownerId, expectedGeneration);
       for (const item of validated.payload.data.attempts) await this.appendOne(client, ownerId, state.generation, "attempt", item, result);
       for (const item of validated.payload.data.supportEvents) await this.appendOne(client, ownerId, state.generation, "support_event", item, result);
+      for (const item of validated.payload.data.guidedSelfAssessments) await this.appendOne(client, ownerId, state.generation, "guided_self_assessment", item, result);
       for (const item of validated.payload.data.achievementSnapshots) await this.appendOne(client, ownerId, state.generation, "achievement_snapshot", item, result);
       await client.query("COMMIT");
       return result;
@@ -69,6 +71,9 @@ export class PostgresRemoteEvidenceRepository {
         SELECT 'support_event'::text, event_id, payload, receive_order, received_at
           FROM stemforge_remote.support_events WHERE owner_id = $1
         UNION ALL
+        SELECT 'guided_self_assessment'::text, event_id, payload, receive_order, received_at
+          FROM stemforge_remote.guided_self_assessments WHERE owner_id = $1
+        UNION ALL
         SELECT 'achievement_snapshot'::text, event_id, payload, receive_order, received_at
           FROM stemforge_remote.achievement_snapshots WHERE owner_id = $1
       ) evidence
@@ -76,11 +81,12 @@ export class PostgresRemoteEvidenceRepository {
       ORDER BY receive_order, evidence_kind, event_id
     `, [ownerId, afterCursor ?? null]);
 
-    const payload: ProgressPayload = { version: 4, data: { attempts: [], supportEvents: [], achievementSnapshots: [] } };
+    const payload: ProgressPayload = { version: 5, data: { attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [] } };
     const records: AcceptedRemoteEvidence[] = [];
     for (const row of query.rows) {
       if (row.evidence_kind === "attempt") payload.data.attempts.push(row.payload as QuestionAttempt);
       else if (row.evidence_kind === "support_event") payload.data.supportEvents.push(row.payload as QuestionSupportEvent);
+      else if (row.evidence_kind === "guided_self_assessment") payload.data.guidedSelfAssessments.push(row.payload as GuidedSelfAssessmentEvent);
       else payload.data.achievementSnapshots.push(row.payload as AchievementSnapshot);
       records.push({ kind: row.evidence_kind, eventId: row.event_id, receiveCursor: row.receive_order, receivedAt: row.received_at.toISOString() });
     }
@@ -106,6 +112,9 @@ export class PostgresRemoteEvidenceRepository {
         UNION ALL
         SELECT 'support_event'::text, event_id, payload, 'accepted'::text, receive_order, received_at
           FROM stemforge_remote.support_events WHERE owner_id = $1 AND account_generation = $4
+        UNION ALL
+        SELECT 'guided_self_assessment'::text, event_id, payload, 'accepted'::text, receive_order, received_at
+          FROM stemforge_remote.guided_self_assessments WHERE owner_id = $1 AND account_generation = $4
         UNION ALL
         SELECT 'achievement_snapshot'::text, event_id, payload, 'accepted'::text, receive_order, received_at
           FROM stemforge_remote.achievement_snapshots WHERE owner_id = $1 AND account_generation = $4
@@ -144,7 +153,7 @@ export class PostgresRemoteEvidenceRepository {
     item: EvidenceItem,
     result: AppendRemoteEvidenceResult,
   ) {
-    const eventId = kind === "achievement_snapshot" ? (item as AchievementSnapshot).snapshotId : (item as QuestionAttempt).eventId;
+    const eventId = kind === "achievement_snapshot" ? (item as AchievementSnapshot).snapshotId : (item as Exclude<EvidenceItem, AchievementSnapshot>).eventId;
     const table = TABLES[kind];
     const inserted = await client.query<StoredRow>(`
       INSERT INTO ${table} (owner_id, event_id, payload, account_generation)

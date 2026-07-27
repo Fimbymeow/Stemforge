@@ -114,6 +114,7 @@ test("a fully-correct practice session is acknowledged without inventing mastery
   await page.getByText("Advanced options", { exact: true }).click();
   await page.getByLabel("Requested questions").fill("2");
   await page.getByRole("button", { name: "Start configured practice" }).click();
+  await expect(page).toHaveURL(/\/practice\/session\//);
   const references = await page.evaluate((key) => {
     const store = JSON.parse(localStorage.getItem(key)!) as PracticeSessionStore;
     return store.sessions[0].questionReferences.map((reference) => reference.questionId);
@@ -128,7 +129,8 @@ test("a fully-correct practice session is acknowledged without inventing mastery
   }
   await page.getByRole("button", { name: /Finish session/i }).click();
 
-  await expect(page.getByTestId("practice-summary-fully-correct")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Practice summary" })).toBeVisible();
+  await expect(page.getByText("All questions were resolved.")).toBeVisible();
   await expect(page.getByTestId("practice-summary-path-completion")).toHaveCount(0);
 });
 

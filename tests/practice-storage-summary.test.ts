@@ -42,7 +42,7 @@ test("practice storage handles empty, malformed, future and completed sessions s
     evidence: evidence(),
     source: createTwoPathFixture(),
   }).session!;
-  savePracticeSessionStore({ schemaVersion: 1, activeSessionId: session.sessionId, sessions: [session] }, storage);
+  savePracticeSessionStore({ schemaVersion: 2, activeSessionId: session.sessionId, sessions: [session] }, storage);
   assert.equal(loadPracticeSessionStore(storage).store.activeSessionId, session.sessionId);
   const updated = updatePracticeSession(session.sessionId, (current) => ({ ...current, status: "completed", completedAt: "2026-07-17T11:00:00.000Z" }), storage);
   assert.equal(updated?.status, "completed");
