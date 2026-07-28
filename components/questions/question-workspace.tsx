@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Check, Eye, FileText, Lightbulb, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Eye, FileText, Info, Lightbulb, TriangleAlert, X } from "lucide-react";
 import { ReportDialog } from "@/components/beta-reports/report-dialog";
 import { AppShell } from "@/components/layout/app-shell";
 import { AppTopbar } from "@/components/layout/app-topbar";
@@ -74,6 +74,7 @@ export function QuestionWorkspace({
   const [feedback, setFeedback] = useState<StudentAnswerFeedback | null>(null);
   const [feedbackSequence, setFeedbackSequence] = useState(0);
   const [submitting, setSubmitting] = useState(false);
+  const [submissionInteractionCompleted, setSubmissionInteractionCompleted] = useState(false);
   const [hintViewed, setHintViewed] = useState(false);
   const [solutionOpenedThisInteraction, setSolutionOpenedThisInteraction] = useState(false);
   const [selfAssessmentSaving, setSelfAssessmentSaving] = useState(false);
@@ -145,6 +146,7 @@ export function QuestionWorkspace({
     setSubmittedAnswer(null);
     setFeedback(null);
     setSubmitting(false);
+    setSubmissionInteractionCompleted(false);
     setHintViewed(false);
     setSolutionOpenedThisInteraction(false);
     setSelfAssessmentSaving(false);
@@ -244,6 +246,7 @@ export function QuestionWorkspace({
     try {
       const marking = markQuestionAnswer(question, answer);
       const classified = classifyAnswerFeedback(question, answer, marking);
+      if (answer.trim()) setSubmissionInteractionCompleted(true);
       if (!classified.shouldRecordAttempt) {
         showFeedback(classified);
         return;
@@ -253,9 +256,12 @@ export function QuestionWorkspace({
         skillPathId: question.skillPathId ?? skillPath?.slug ?? "unknown",
         stageId: question.stageId ?? stage?.id ?? question.stage,
         isCorrect: marking.isCorrect,
+        outcomeKind: marking.outcomeKind as Exclude<typeof marking.outcomeKind, "internal_error">,
+        ...(marking.outcomeReason ? { outcomeReason: marking.outcomeReason } : {}),
+        strategy: marking.strategy,
+        strategyVersion: marking.strategyVersion,
         answer,
         attemptedAt: new Date().toISOString(),
-        hintViewedBeforeSubmission: hintViewed,
         ...(session ? { practiceSessionId: session.practiceSessionId } : {}),
       });
       if (!saved) {
@@ -309,11 +315,13 @@ export function QuestionWorkspace({
     setHintViewed(true);
   }
 
-  async function handleSolutionViewed() {
-    const recorded = await recordWorkedSolutionViewed(supportEventInput());
-    if (!recorded) return;
-    setSolutionOpenedThisInteraction(true);
-    window.requestAnimationFrame(() => solutionHeadingRef.current?.focus());
+    async function handleSolutionViewed() {
+      if (questionProgress.attempted) {
+        const recorded = await recordWorkedSolutionViewed(supportEventInput());
+        if (!recorded && !submissionInteractionCompleted) return;
+      } else if (!submissionInteractionCompleted) return;
+      setSolutionOpenedThisInteraction(true);
+      window.requestAnimationFrame(() => solutionHeadingRef.current?.focus());
   }
 
   function handleRetry() {
@@ -343,6 +351,38 @@ export function QuestionWorkspace({
       : completedWithCurrentSolution
         ? "You used the solution to complete this question. It remains recommended for review."
         : feedback?.message;
+  const feedbackVisualState = isPositiveFeedback
+    ? "positive"
+    : feedback?.category === "incorrect"
+      ? "danger"
+      : feedback?.category === "malformed" || feedback?.category === "empty"
+        ? "warning"
+        : "neutral";
+  const feedbackAccessibleLabel = completedWithCurrentSolution
+    ? "Answer feedback: completed with solution"
+    : feedbackVisualState === "positive"
+      ? usesGuidedMarking ? "Answer feedback: ready to self-check" : "Answer feedback: correct"
+      : feedbackVisualState === "danger"
+        ? "Answer feedback: incorrect"
+        : feedbackVisualState === "warning"
+          ? "Answer feedback: format warning"
+          : feedback?.category === "unmarkable"
+            ? "Answer feedback: not marked"
+            : "Answer feedback: system issue";
+  const feedbackPanelClass = feedbackVisualState === "positive"
+    ? "border-success/30 bg-success-soft"
+    : feedbackVisualState === "danger"
+      ? "border-danger/30 bg-danger-soft"
+      : feedbackVisualState === "warning"
+        ? "border-warning/30 bg-warning-soft"
+        : "border-line bg-paper";
+  const feedbackIconClass = feedbackVisualState === "positive"
+    ? "bg-success"
+    : feedbackVisualState === "danger"
+      ? "bg-danger"
+      : feedbackVisualState === "warning"
+        ? "bg-warning"
+        : "bg-forge";
 
   return (
     <AppShell
@@ -434,14 +474,22 @@ export function QuestionWorkspace({
                 <div
                   id="answer-feedback"
                   data-testid="question-status"
+                  data-feedback-state={feedbackVisualState}
                   role="status"
+                  aria-label={feedbackAccessibleLabel}
                   aria-live="polite"
                   aria-atomic="true"
-                  className={`mt-4 rounded-xl border p-4 ${isPositiveFeedback ? "border-success/30 bg-success-soft" : feedback.isInputError ? "border-forge/25 bg-forge-soft" : "border-danger/30 bg-danger-soft"}`}
+                  className={`mt-4 rounded-xl border p-4 ${feedbackPanelClass}`}
                 >
                   <div className="flex items-start gap-3 max-sm:grid">
-                    <span aria-hidden="true" className={`grid size-9 shrink-0 place-items-center rounded-full text-white ${isPositiveFeedback ? "bg-success" : feedback.isInputError ? "bg-forge" : "bg-danger"}`}>
-                      {isPositiveFeedback ? <Check className="size-6" /> : <X className="size-6" />}
+                    <span aria-hidden="true" className={`grid size-9 shrink-0 place-items-center rounded-full text-white ${feedbackIconClass}`}>
+                      {feedbackVisualState === "positive"
+                        ? <Check className="size-6" />
+                        : feedbackVisualState === "danger"
+                          ? <X className="size-6" />
+                          : feedbackVisualState === "warning"
+                            ? <TriangleAlert className="size-5" />
+                            : <Info className="size-5" />}
                     </span>
                     <div className="min-w-0 flex-1">
                       <h2 ref={feedbackHeadingRef} tabIndex={-1} className="m-0 text-lg font-extrabold outline-none">{feedbackTitle}</h2>
@@ -463,7 +511,13 @@ export function QuestionWorkspace({
                         <button
                           type="button"
                           onClick={handleRetry}
-                          className="mt-3 inline-flex min-h-10 items-center justify-center rounded-lg border border-danger/30 bg-white px-4 text-sm font-extrabold text-danger transition hover:border-danger"
+                          className={`mt-3 inline-flex min-h-10 items-center justify-center rounded-lg border bg-white px-4 text-sm font-extrabold transition ${
+                            feedbackVisualState === "danger"
+                              ? "border-danger/30 text-danger hover:border-danger"
+                              : feedbackVisualState === "warning"
+                                ? "border-warning/30 text-ink hover:border-warning"
+                                : "border-line text-forge hover:border-forge"
+                          }`}
                         >
                           Try again
                         </button>
@@ -515,7 +569,7 @@ export function QuestionWorkspace({
             {supportPresentation.showHintContent ? <div ref={hintContentRef} tabIndex={-1} data-testid="hint-content" className="mt-3 rounded-lg bg-paper p-4 outline-none"><p className="mb-2 text-sm font-extrabold text-forge">Hint</p><MathContent>{question.hint}</MathContent></div> : null}
           </Card> : null}
 
-          {(submitted || questionProgress.attempted) ? (
+          {(submissionInteractionCompleted || questionProgress.attempted) ? (
             <>
               <Card className="p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">

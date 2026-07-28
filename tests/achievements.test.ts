@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { higherMaths } from "../data/higher-maths";
+import { higherMathsDifferentiationQuestions } from "../content/questions/higher-maths/differentiation";
 import {
   appendAchievementTransitions,
   getHistoricalCompletionTimestamp,
@@ -15,13 +16,15 @@ import { attempt, evidence } from "./progress-fixtures";
 const path = higherMaths.courseAreas.flatMap((area) => area.specAreas).flatMap((area) => area.skillPaths ?? []).find((item) => item.slug === "basic-differentiation");
 assert.ok(path);
 const questions = (path.learningStages ?? []).flatMap((stage) => stage.questionIds.map((questionId) => ({ questionId, stageId: stage.id })));
-const context = { subjectId: "higher-maths", courseId: "calculus", skillPath: path,
-  questionVersions: Object.fromEntries(questions.map(({ questionId }) => [questionId, 1])) };
+const questionVersions = Object.fromEntries(higherMathsDifferentiationQuestions.map((question) => [question.id, question.questionVersion]));
+const context = { subjectId: "higher-maths", courseId: "calculus", skillPath: path, questionVersions };
 let id = 0;
 const ids = () => `snapshot_test_${++id}`;
 
 function hintCompleted() {
-  return evidence(questions.map((item, index) => attempt({ ...item, eventId: `a${index}`, sequence: index + 1,
+  return evidence(questions.map((item, index) => attempt({ ...item,
+    versionEvidence: { kind: "known", questionVersion: questionVersions[item.questionId] ?? 1 },
+    eventId: `a${index}`, sequence: index + 1,
     isCorrect: true, answer: "correct", hintViewedBeforeSubmission: true })));
 }
 
@@ -32,13 +35,16 @@ test("upward stage and path transitions append immutable snapshots once", () => 
   assert.equal(completed.achievementSnapshots.filter((item) => item.kind === "stage_completed").length, 3);
 
   const firstStageQuestion = questions[0];
-  const secureEvidence = { ...completed, attempts: [...completed.attempts, attempt({ ...firstStageQuestion, eventId: "upgrade1", sequence: 20,
+  const secureEvidence = { ...completed, attempts: [...completed.attempts, attempt({ ...firstStageQuestion,
+    versionEvidence: { kind: "known", questionVersion: questionVersions[firstStageQuestion.questionId] ?? 1 },
+    eventId: "upgrade1", sequence: 20,
     isCorrect: true, answer: "correct", hintViewedBeforeSubmission: false })] };
   const secure = appendAchievementTransitions(completed, secureEvidence, context, "2026-07-13T11:00:00.000Z", ids);
   assert.ok(secure.achievementSnapshots.some((item) => item.kind === "stage_secure"));
 
   const masteredEvidence = { ...secure, attempts: [...secure.attempts, ...questions.slice(1).map((item, index) => attempt({
-    ...item, eventId: `upgrade${index + 2}`, sequence: 21 + index, isCorrect: true, answer: "correct", hintViewedBeforeSubmission: false,
+    ...item, versionEvidence: { kind: "known", questionVersion: questionVersions[item.questionId] ?? 1 },
+    eventId: `upgrade${index + 2}`, sequence: 21 + index, isCorrect: true, answer: "correct", hintViewedBeforeSubmission: false,
   }))] };
   const mastered = appendAchievementTransitions(secure, masteredEvidence, context, "2026-07-13T12:00:00.000Z", ids);
   assert.ok(mastered.achievementSnapshots.some((item) => item.kind === "stage_mastered"));

@@ -24,6 +24,8 @@ import {
   recordLocalEvidenceProvenance,
   withLocalProgressTransaction,
 } from "@/lib/progress/local-progress-transaction";
+import type { NewAttemptMarkerFields } from "@/lib/progress/attempt-outcomes";
+import { wasHintViewedBeforeSubmission } from "@/lib/progress/hint-evidence";
 
 export type {
   DashboardProgressSummary,
@@ -49,8 +51,7 @@ export type {
   StageProgress,
 } from "@/lib/progress/types";
 
-type SubmissionInput = LegacyQuestionAttempt & {
-  hintViewedBeforeSubmission?: boolean;
+type SubmissionInput = LegacyQuestionAttempt & NewAttemptMarkerFields & {
   practiceSessionId?: string;
 };
 type SupportInput = Omit<LegacyQuestionAttempt, "isCorrect" | "answer"> & {
@@ -122,13 +123,17 @@ export async function saveQuestionAttempt(input: SubmissionInput) {
     const repository = createRepository();
     const before = repository.load().payload;
     const evidence = before.data;
+    const sequence = nextSequence(evidence);
+    const versionEvidence = getVersionEvidenceForQuestion(input.questionId);
     const attempt: QuestionAttempt = {
       ...input,
-      sequence: nextSequence(evidence),
+      sequence,
       isGenuine: true,
-      hintViewedBeforeSubmission: input.hintViewedBeforeSubmission ?? false,
+      hintViewedBeforeSubmission: wasHintViewedBeforeSubmission(
+        evidence, input.questionId, versionEvidence, input.attemptedAt, sequence,
+      ),
       supportKnowledge: "known",
-      versionEvidence: getVersionEvidenceForQuestion(input.questionId),
+      versionEvidence,
       eventId: createEventId("attempt"),
     };
     if (!repository.recordAttempt(attempt, getStructuralContext(input.skillPathId))) return false;

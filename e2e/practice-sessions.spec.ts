@@ -61,6 +61,28 @@ test("question list, reversible Skip and 320px session chrome remain usable with
   expect(geometry).toEqual({ overflow: false, finishVisible: true });
 });
 
+test("Practice Session retains malformed and unmarkable interactions without treating them as incorrect", async ({ page }) => {
+  await page.goto("/practice");
+  await page.getByTestId("quick-practice-action").click();
+  const input = page.getByLabel("Your answer");
+  await input.fill("5x^");
+  await page.getByRole("button", { name: "Submit Answer" }).click();
+  await expect(page.getByTestId("question-status")).toContainText("Answer format could not be read");
+  await page.getByRole("button", { name: "Try again" }).click();
+  await input.fill("y=5x^4");
+  await page.getByRole("button", { name: "Submit Answer" }).click();
+  await expect(page.getByTestId("question-status")).toContainText("This form cannot be checked safely");
+
+  const stored = await readStoredProgress(page) as { data: { attempts: Array<{ outcomeKind: string; practiceSessionId?: string }> } };
+  expect(stored.data.attempts.map((attempt) => attempt.outcomeKind)).toEqual(["malformed", "unmarkable"]);
+  expect(stored.data.attempts.every((attempt) => Boolean(attempt.practiceSessionId))).toBe(true);
+
+  await page.getByRole("button", { name: "Finish session" }).click();
+  await page.getByRole("dialog", { name: "Finish this session?" }).getByRole("button", { name: "Finish session" }).click();
+  await expect(page.getByRole("heading", { name: "Practice summary" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Retry incorrect" })).toHaveCount(0);
+});
+
 test("standalone Question Workspace keeps its footer and writes no session identity", async ({ page }) => {
   await page.goto("/question/hm-calc-diff-basic-f-001");
   await expect(page.getByTestId("practice-session-panel")).toHaveCount(0);
@@ -84,7 +106,7 @@ test("completed-session retry contains exactly that session's incorrect question
     return store.sessions[0].questionReferences.map((reference: { questionId: string }) => reference.questionId) as string[];
   }, PRACTICE_SESSIONS_STORAGE_KEY);
 
-  await page.getByLabel("Your answer").fill("definitely wrong");
+  await page.getByLabel("Your answer").fill("4x^5");
   await page.getByRole("button", { name: "Submit Answer" }).click();
   await expect(page.getByTestId("question-status")).toContainText("Not quite");
   await page.getByTestId("practice-session-panel").getByRole("button", { name: "Next" }).click();

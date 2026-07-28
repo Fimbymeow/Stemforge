@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { higherMaths } from "../data/higher-maths";
+import { higherMathsDifferentiationQuestions } from "../content/questions/higher-maths/differentiation";
 import {
   calculateDashboardSummary,
   calculateSkillPathProgress,
@@ -18,6 +19,7 @@ const skillPath = higherMaths.courseAreas.flatMap((area) => area.specAreas).flat
 assert.ok(skillPath);
 const foundations = skillPath.learningStages?.[0];
 assert.ok(foundations);
+const questionVersions = Object.fromEntries(higherMathsDifferentiationQuestions.map((question) => [question.id, question.questionVersion]));
 
 test("genuine attempt requires non-whitespace submitted input", () => {
   assert.equal(isGenuineAnswer(""), false);
@@ -134,17 +136,26 @@ test("first and latest accuracy remain distinct", () => {
 });
 
 test("all independently correct questions master a stage", () => {
-  const attempts = foundations.questionIds.map((questionId, index) => attempt({ questionId, sequence: index + 1, isCorrect: true, answer: "correct" }));
-  const progress = calculateStageProgress(skillPath, foundations, evidence(attempts));
+  const attempts = foundations.questionIds.map((questionId, index) => attempt({
+    questionId, sequence: index + 1, isCorrect: true, answer: "correct",
+    versionEvidence: { kind: "known", questionVersion: questionVersions[questionId] ?? 1 },
+  }));
+  const progress = calculateStageProgress(skillPath, foundations, evidence(attempts), questionVersions);
   assert.equal(progress.status, "mastered");
   assert.equal(progress.completionPercentage, 100);
   assert.equal(progress.masteryScore, 100);
 });
 
 test("completed-with-solution stage is completed but not secure", () => {
-  const attempts = foundations.questionIds.map((questionId, index) => attempt({ questionId, sequence: index * 2 + 1 }));
-  const events = foundations.questionIds.map((questionId, index) => supportEvent({ questionId, type: "solution_viewed", sequence: index * 2 + 2 }));
-  const progress = calculateStageProgress(skillPath, foundations, evidence(attempts, events));
+  const attempts = foundations.questionIds.map((questionId, index) => attempt({
+    questionId, sequence: index * 2 + 1,
+    versionEvidence: { kind: "known", questionVersion: questionVersions[questionId] ?? 1 },
+  }));
+  const events = foundations.questionIds.map((questionId, index) => supportEvent({
+    questionId, type: "solution_viewed", sequence: index * 2 + 2,
+    versionEvidence: { kind: "known", questionVersion: questionVersions[questionId] ?? 1 },
+  }));
+  const progress = calculateStageProgress(skillPath, foundations, evidence(attempts, events), questionVersions);
   assert.equal(progress.status, "completed");
   assert.equal(progress.masteryScore, 35);
 });

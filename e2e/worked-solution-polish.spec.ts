@@ -12,7 +12,7 @@ test("worked solution supersedes an opened hint and remains authoritative after 
   await openQuestion(page, QUESTION_IDS[0]);
   await expect(page.getByTestId("hint-control")).toBeVisible();
   await expect(page.getByTestId("worked-solution-control")).toHaveCount(0);
-  await submitAnswer(page, "wrong");
+  await submitAnswer(page, "4x^5");
   await expect(page.getByTestId("hint-control")).toBeVisible();
   await expect(page.getByTestId("worked-solution-control")).toBeVisible();
 
@@ -31,7 +31,7 @@ test("worked solution supersedes an opened hint and remains authoritative after 
 test("worked solution directly supersedes the unused hint in Quick Practice", async ({ page }) => {
   await page.goto("/practice");
   await page.getByTestId("quick-practice-action").click();
-  await submitAnswer(page, "wrong");
+  await submitAnswer(page, "4x^5");
   await openWorkedSolution(page);
   await expectSolutionSupersession(page);
   await expect(page.getByTestId("practice-session-panel")).toBeVisible();
@@ -41,7 +41,7 @@ test("worked solution supersession is identical in custom Question Bank practice
   await page.goto("/subjects/higher-maths/question-bank");
   await page.getByLabel("Select Basic differentiation, Foundations, Question 1").check();
   await page.getByRole("button", { name: "Start selected practice" }).click();
-  await submitAnswer(page, "wrong");
+  await submitAnswer(page, "4x^5");
   await openHint(page);
   await openWorkedSolution(page);
   await expectSolutionSupersession(page);
@@ -51,7 +51,7 @@ test("worked solution supersession is identical in custom Question Bank practice
 test("keyboard and mobile users reach a long solution without empty or overflowing support UI", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 568 });
   await openQuestion(page, QUESTION_IDS.at(-1)!);
-  await submitAnswer(page, "wrong");
+  await submitAnswer(page, "0");
   const hint = page.getByTestId("hint-control");
   await hint.focus();
   await hint.press("Enter");

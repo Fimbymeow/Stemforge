@@ -390,7 +390,13 @@ test("owner creation has no remote evidence side effect", async () => {
 test("all four accepted evidence kinds round-trip without payload loss", async () => {
   const owner = await ownerId();
   const source = batch(
-    [attempt({ eventId: "attempt_round_trip", versionEvidence: { kind: "unknown_legacy", questionVersion: null } })],
+    [attempt({
+      eventId: "attempt_round_trip",
+      isCorrect: true,
+      outcomeKind: "graded",
+      strategy: "numeric",
+      strategyVersion: 1,
+    })],
     [supportEvent({ eventId: "support_round_trip" })],
     [snapshot({ snapshotId: "snapshot_round_trip" })],
     [selfAssessment({ eventId: "self_round_trip" })],

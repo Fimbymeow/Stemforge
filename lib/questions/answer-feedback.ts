@@ -2,13 +2,7 @@ import type { Question } from "@/data/types";
 import type { MarkingResult } from "@/lib/answer-engine";
 
 export type AnswerFeedbackCategory =
-  | "empty"
-  | "malformed"
-  | "unsupported_format"
-  | "incorrect"
-  | "correct"
-  | "guided"
-  | "internal_error";
+  | "empty" | "malformed" | "unmarkable" | "incorrect" | "correct" | "guided" | "internal_error";
 
 export type StudentAnswerFeedback = {
   category: AnswerFeedbackCategory;
@@ -21,145 +15,36 @@ export type StudentAnswerFeedback = {
 };
 
 export function classifyAnswerFeedback(
-  question: Pick<Question, "answerType" | "acceptedAnswers">,
+  _question: Pick<Question, "answerType" | "acceptedAnswers">,
   answer: string,
   marking: MarkingResult,
 ): StudentAnswerFeedback {
-  const trimmed = answer.trim();
-  if (!trimmed) {
-    return feedback("empty", "Enter an answer", "Add an answer before submitting.", "neutral", false, true);
+  if (!answer.trim()) return feedback("empty", "Enter an answer", "Add an answer before submitting.", "neutral", false, true);
+  if (marking.outcomeKind === "internal_error") {
+    return feedback("internal_error", "We could not check this answer", "Your answer has not been counted.", "neutral", false, false, "Try submitting again or open the worked solution.");
   }
-
-  if (marking.mode === "guided") {
-    return feedback(
-      "guided",
-      "Ready to self-check",
-      "Compare your work with the solution when you are ready.",
-      "neutral",
-      true,
-      false,
-    );
+  if (marking.outcomeKind === "guided_pending") {
+    return feedback("guided", "Ready to self-check", "Compare your work with the solution when you are ready.", "neutral", true, false);
   }
-
-  if (marking.isCorrect) {
-    return feedback("correct", "Correct", "Your answer matches an accepted answer.", "positive", true, false);
+  if (marking.outcomeKind === "malformed") {
+    return feedback("malformed", "Answer format could not be read", "We could not read this answer yet, so it has not been marked right or wrong.", "constructive", true, true, "Check the notation, then try again.");
   }
-
-  if (marking.reason === "structured_parse_failure") {
-    return feedback(
-      "malformed",
-      "Check the answer format",
-      "We could not read this answer yet.",
-      "constructive",
-      true,
-      true,
-      "Review each required graph or table entry, then try again.",
-    );
+  if (marking.outcomeKind === "unmarkable") {
+    return feedback("unmarkable", "This form cannot be checked safely", "This answer has not been marked right or wrong.", "constructive", true, false, "Enter a supported final-answer form or open the worked solution.");
   }
-
-  const formatIssue = findSafeFormatIssue(question, trimmed);
-  if (formatIssue) return formatIssue;
-
-  return feedback(
-    "incorrect",
-    "Not quite yet",
-    "This answer does not match an accepted result.",
-    "constructive",
-    true,
-    false,
-    "Check the mathematics, use a hint, or compare with the worked solution after this attempt.",
-  );
+  if (marking.isCorrect) return feedback("correct", "Correct", "Your answer matches the marking contract.", "positive", true, false);
+  const title = marking.outcomeReason === "form_wrong" ? "Use the requested answer form"
+    : marking.outcomeReason === "precision_wrong" ? "Check the required precision"
+      : marking.outcomeReason === "unit_wrong" ? "Check the unit"
+        : "Not quite yet";
+  const message = marking.outcomeReason === "value_wrong"
+    ? "This value does not match the expected result."
+    : "The mathematical value is right, but its presentation does not meet the question requirement.";
+  return feedback("incorrect", title, message, "constructive", true, false, "Check the question requirement, use a hint, or compare with the worked solution.");
 }
 
 export function internalAnswerFailureFeedback(): StudentAnswerFeedback {
-  return feedback(
-    "internal_error",
-    "Your answer was not saved",
-    "Something went wrong while saving this attempt. Your answer is still here.",
-    "neutral",
-    false,
-    false,
-    "Try submitting again. This has not been counted as a learner mistake.",
-  );
-}
-
-function findSafeFormatIssue(
-  question: Pick<Question, "answerType" | "acceptedAnswers">,
-  answer: string,
-): StudentAnswerFeedback | null {
-  const grouping = groupingIssue(answer);
-  if (grouping) {
-    return feedback(
-      "malformed",
-      "Check the brackets",
-      "We could not read this answer yet.",
-      "constructive",
-      true,
-      true,
-      grouping,
-    );
-  }
-
-  if (/(?:\^|[+*/=]|sqrt\()\s*$/i.test(answer) || /(?:^|[^\d])-\s*$/.test(answer)) {
-    return feedback(
-      "malformed",
-      "Finish the expression",
-      "This answer looks incomplete.",
-      "constructive",
-      true,
-      true,
-      "Add the missing number, power, or expression before submitting.",
-    );
-  }
-
-  if (answer.includes("=") && !question.acceptedAnswers.some((accepted) => accepted.includes("="))) {
-    return feedback(
-      "unsupported_format",
-      "Enter only the requested result",
-      "The expected answer format does not include an equals sign.",
-      "constructive",
-      true,
-      true,
-      question.answerType === "numerical" ? "Enter the numerical result only." : "Enter the expression only, such as 5x^2.",
-    );
-  }
-
-  if (question.answerType === "numerical" && /[a-z]/i.test(answer) && !question.acceptedAnswers.some((accepted) => /[a-z]/i.test(accepted))) {
-    return feedback(
-      "unsupported_format",
-      "Use numerical notation",
-      "We could not read this as the requested numerical answer.",
-      "constructive",
-      true,
-      true,
-      "Enter numbers and mathematical symbols rather than a sentence.",
-    );
-  }
-
-  if ((question.answerType === "algebraic" || question.answerType === "numerical") && /[^0-9a-z\s+\-*/^().,{}\[\]\u03c0\u221a\u2212\u00b2\u00b3]/i.test(answer)) {
-    return feedback(
-      "unsupported_format",
-      "Use supported notation",
-      "This answer contains notation the marker does not support.",
-      "constructive",
-      true,
-      true,
-      "Use ^ for powers, such as x^2, and * for multiplication when helpful.",
-    );
-  }
-
-  return null;
-}
-
-function groupingIssue(value: string) {
-  const pairs: Record<string, string> = { ")": "(", "]": "[", "}": "{" };
-  const openings = new Set(Object.values(pairs));
-  const stack: string[] = [];
-  for (const character of value) {
-    if (openings.has(character)) stack.push(character);
-    else if (character in pairs && stack.pop() !== pairs[character]) return "Check that brackets close in the same order they open.";
-  }
-  return stack.length ? "Close every bracket before submitting." : null;
+  return feedback("internal_error", "Your answer was not saved", "Something went wrong while saving this attempt. Your answer is still here.", "neutral", false, false, "Try submitting again. This has not been counted as a learner mistake.");
 }
 
 function feedback(
@@ -171,13 +56,5 @@ function feedback(
   isInputError: boolean,
   guidance?: string,
 ): StudentAnswerFeedback {
-  return {
-    category,
-    title,
-    message,
-    ...(guidance ? { guidance } : {}),
-    tone,
-    shouldRecordAttempt,
-    isInputError,
-  };
+  return { category, title, message, ...(guidance ? { guidance } : {}), tone, shouldRecordAttempt, isInputError };
 }

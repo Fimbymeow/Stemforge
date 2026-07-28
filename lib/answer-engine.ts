@@ -1,22 +1,12 @@
 import type { StemForgeQuestion } from "@/data/questions";
-import type { AnswerType, Question } from "@/data/types";
+import type { Question } from "@/data/types";
 import type { StructuredGraphAnswer } from "@/lib/maths/expression-types";
+import { markNumeric } from "@/lib/marking/numeric";
+import { markPolynomial } from "@/lib/marking/polynomial";
+import type { MarkingResult } from "@/lib/marking/types";
 import { validateStructuredGraphAnswer } from "@/lib/questions/graph-answer-validation";
 
-export type MarkingResult = {
-  isCorrect: boolean | null;
-  normalizedStudentAnswer: string;
-  matchedAcceptedAnswer?: string;
-  mode: "automatic" | "guided";
-  reason:
-    | "accepted_match"
-    | "accepted_mismatch"
-    | "guided"
-    | "structured_parse_failure"
-    | "structured_contract_missing"
-    | "structured_match"
-    | "structured_mismatch";
-};
+export type { MarkingResult } from "@/lib/marking/types";
 
 export type LegacyPhysicsDemoAnswerState = {
   isMarkable: false;
@@ -25,12 +15,11 @@ export type LegacyPhysicsDemoAnswerState = {
   displayedUnit: string;
 };
 
-const GUIDED_ANSWER_TYPES = new Set<AnswerType>(["multi_step", "written"]);
-
 export function canSubmitAnswer(answer: string) {
   return answer.trim().length > 0;
 }
 
+/** Compatibility-only legacy normaliser. New strategies must not use it. */
 export function normaliseAnswer(value: string) {
   return value
     .toLowerCase()
@@ -44,73 +33,63 @@ export function normaliseAnswer(value: string) {
     .replace(/\{|\}/g, "");
 }
 
-export function compareAcceptedAnswers(studentAnswer: string, acceptedAnswers: readonly string[]): MarkingResult {
+/** Compatibility-only helper retained for the bounded legacy-collision audit. */
+export function compareAcceptedAnswers(studentAnswer: string, acceptedAnswers: readonly string[]) {
   const normalizedStudentAnswer = normaliseAnswer(studentAnswer);
-  const matchedAcceptedAnswer = acceptedAnswers.find(
-    (acceptedAnswer) => normaliseAnswer(acceptedAnswer) === normalizedStudentAnswer,
-  );
-
-  return {
-    isCorrect: matchedAcceptedAnswer !== undefined,
-    normalizedStudentAnswer,
-    matchedAcceptedAnswer,
-    mode: "automatic",
-    reason: matchedAcceptedAnswer === undefined ? "accepted_mismatch" : "accepted_match",
-  };
+  const matchedAcceptedAnswer = acceptedAnswers.find((acceptedAnswer) => normaliseAnswer(acceptedAnswer) === normalizedStudentAnswer);
+  return { isCorrect: matchedAcceptedAnswer !== undefined, normalizedStudentAnswer, matchedAcceptedAnswer };
 }
 
-export function markQuestionAnswer(question: Pick<Question, "acceptedAnswers" | "answerType">, studentAnswer: string): MarkingResult {
-  if (question.answerType === "graph_structured" || question.answerType === "nature_table") {
-    return markStructuredQuestionAnswer(question as Question, studentAnswer);
+export function markQuestionAnswer(question: Pick<Question, "marking" | "structuredAnswer" | "natureTableConfig">, studentAnswer: string): MarkingResult {
+  try {
+    const contract = question.marking;
+    if (!contract) return internal("numeric", 1, studentAnswer, "marking_contract_missing");
+    if (contract.strategy === "numeric") return markNumeric(contract, studentAnswer);
+    if (contract.strategy === "polynomial_form") return markPolynomial(contract, studentAnswer);
+    if (contract.strategy === "multiple_choice") {
+      const correct = studentAnswer === contract.correctOptionId;
+      return {
+        outcomeKind: "graded", isCorrect: correct, ...(correct ? {} : { outcomeReason: "value_wrong" as const }),
+        normalizedStudentAnswer: studentAnswer, matchedAcceptedAnswer: correct ? contract.correctOptionId : undefined,
+        strategy: contract.strategy, strategyVersion: contract.strategyVersion,
+      };
+    }
+    if (contract.strategy === "guided_self_check") {
+      return { outcomeKind: "guided_pending", isCorrect: null, normalizedStudentAnswer: studentAnswer, strategy: contract.strategy, strategyVersion: contract.strategyVersion };
+    }
+    if (contract.strategy === "structured_graph") return markStructured(question as Question, studentAnswer);
+    return internal("numeric", 1, studentAnswer, "unknown_marking_strategy");
+  } catch {
+    const contract = question.marking;
+    return internal(contract?.strategy ?? "numeric", contract?.strategyVersion ?? 1, studentAnswer, "unexpected_marker_failure");
   }
-  if (GUIDED_ANSWER_TYPES.has(question.answerType)) {
-    return {
-      isCorrect: null,
-      normalizedStudentAnswer: normaliseAnswer(studentAnswer),
-      mode: "guided",
-      reason: "guided",
-    };
-  }
-
-  return compareAcceptedAnswers(studentAnswer, question.acceptedAnswers);
 }
 
-function markStructuredQuestionAnswer(question: Question, studentAnswer: string): MarkingResult {
+function markStructured(question: Question, studentAnswer: string): MarkingResult {
+  const contract = question.marking;
+  if (contract.strategy !== "structured_graph") return internal("structured_graph", 1, studentAnswer, "strategy_contract_mismatch");
   let parsed: StructuredGraphAnswer;
   try {
     parsed = JSON.parse(studentAnswer) as StructuredGraphAnswer;
   } catch {
     return {
-      isCorrect: false,
-      normalizedStudentAnswer: "",
-      mode: "automatic",
-      reason: "structured_parse_failure",
+      outcomeKind: "malformed", isCorrect: null, outcomeReason: "malformed_structured",
+      normalizedStudentAnswer: "", strategy: contract.strategy, strategyVersion: contract.strategyVersion,
     };
   }
-  if (!question.structuredAnswer) {
-    return {
-      isCorrect: false,
-      normalizedStudentAnswer: JSON.stringify(parsed),
-      mode: "automatic",
-      reason: "structured_contract_missing",
-    };
-  }
+  if (!question.structuredAnswer) return internal(contract.strategy, contract.strategyVersion, studentAnswer, "structured_contract_missing");
   const marked = validateStructuredGraphAnswer(question.structuredAnswer, parsed, question.natureTableConfig);
   return {
-    isCorrect: marked.isCorrect,
-    normalizedStudentAnswer: marked.normalizedAnswer,
-    matchedAcceptedAnswer: marked.isCorrect ? "structured-answer" : undefined,
-    mode: "automatic",
-    reason: marked.isCorrect ? "structured_match" : "structured_mismatch",
+    outcomeKind: "graded", isCorrect: marked.isCorrect, ...(marked.isCorrect ? {} : { outcomeReason: "value_wrong" as const }),
+    normalizedStudentAnswer: marked.normalizedAnswer, matchedAcceptedAnswer: marked.isCorrect ? "structured-answer" : undefined,
+    strategy: contract.strategy, strategyVersion: contract.strategyVersion,
   };
 }
 
-// Legacy Physics is a visual demo: its input is read-only and no student answer is evaluated.
+function internal(strategy: MarkingResult["strategy"], strategyVersion: number, input: string, diagnosticReason: string): MarkingResult {
+  return { outcomeKind: "internal_error", isCorrect: null, normalizedStudentAnswer: input, strategy, strategyVersion, diagnosticReason };
+}
+
 export function getLegacyPhysicsDemoAnswerState(question: Pick<StemForgeQuestion, "answer" | "answerUnit">): LegacyPhysicsDemoAnswerState {
-  return {
-    isMarkable: false,
-    isCorrect: null,
-    displayedAnswer: question.answer,
-    displayedUnit: question.answerUnit,
-  };
+  return { isMarkable: false, isCorrect: null, displayedAnswer: question.answer, displayedUnit: question.answerUnit };
 }

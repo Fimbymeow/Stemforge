@@ -25,7 +25,7 @@ test("mobile student can navigate, answer, use support and continue without over
   await expect(page.getByText("Optional keypad")).toBeVisible();
   await expect(page.getByTestId("hint-control")).toBeVisible();
   await expectNoHorizontalOverflow(page);
-  await submitAnswer(page, "wrong");
+  await submitAnswer(page, "4x^5");
   await expect(page.getByTestId("question-status")).toContainText("Not quite");
   await expect(page.getByTestId("worked-solution-control")).toBeVisible();
   await openWorkedSolution(page);

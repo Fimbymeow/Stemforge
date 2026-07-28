@@ -1,317 +1,174 @@
-# STEM Forge Answer Engine
+# STEM Forge Marking Engine
 
-Updated: 11 July 2026  
-Scope: behaviour-preserving extraction and regression harness
+Updated: 28 July 2026
+Scope: Alpha marking for the active learner runtime
 
-## Purpose
+## Runtime boundary
 
-This document records the answer behaviour that STEM Forge has today. Sprint 3 extracted the active comparison rules into pure functions and added regression tests without making marking more permissive or more restrictive.
-
-The current engine is a safe baseline, not the ideal final mathematics engine.
-
-## Current execution boundary
+Every active question declares a versioned `marking` contract. `markQuestionAnswer` is the only runtime dispatcher:
 
 ```text
-student input
--> canSubmitAnswer
--> markQuestionAnswer (pure)
--> MarkingResult
--> existing feedback selection
--> existing saveQuestionAttempt
--> existing LocalStorage/progress derivation
+authored question contract
+-> one pure strategy marker
+-> structured MarkingResult
+-> learner-safe feedback
+-> append-only attempt evidence
+-> progress and Practice Session derivation
 ```
 
-Pure answer functions live in `lib/answer-engine.ts`. They do not access React, DOM APIs, navigation or LocalStorage.
+The marker is independent of React, browser storage, completion and mastery policy. The old
+`normaliseAnswer` and `compareAcceptedAnswers` exports remain only for the bounded migration audit;
+new runtime marking does not use them.
 
-## Structured result
+## Closed Alpha strategy set
 
-Automatically marked and guided answers return:
+Exactly five strategy identifiers are implemented, all at strategy version 1:
+
+- `numeric`
+- `polynomial_form`
+- `multiple_choice`
+- `guided_self_check`
+- `structured_graph`
+
+Content validation rejects unknown or deferred strategy identifiers, any implemented strategy version
+other than 1, answer-type/strategy mismatches, active unit configuration and invalid authored targets.
+
+## Result contract
+
+Every marker returns:
 
 ```ts
 type MarkingResult = {
+  outcomeKind: "graded" | "guided_pending" | "unmarkable" | "malformed" | "internal_error";
   isCorrect: boolean | null;
+  outcomeReason?:
+    | "value_wrong" | "form_wrong" | "precision_wrong" | "unit_wrong"
+    | "malformed_numeric" | "malformed_polynomial" | "malformed_structured"
+    | "expression_not_permitted" | "unsupported_mathematical_form";
   normalizedStudentAnswer: string;
   matchedAcceptedAnswer?: string;
-  mode: "automatic" | "guided";
+  strategy: MarkingStrategy;
+  strategyVersion: number;
+  diagnosticReason?: string;
 };
 ```
 
-`isCorrect: null` means the answer is captured for guided self-check and is not automatically marked.
+A correct graded result has no reason. An incorrect graded result has a learner-safe reason.
+Malformed and unmarkable results use their own closed reasons and `isCorrect: null`.
+`internal_error` is never persisted as an attempt and its diagnostic is not shown to learners.
 
-## Higher Maths marking flow
+## Numeric strategy
+
+The numeric parser accepts literals only:
 
-1. `QuestionWorkspace` renders the active question from `/question/[id]`.
-2. The answer is held as a page-local string.
-3. `canSubmitAnswer` trims only to decide whether submission is allowed.
-4. Blank or whitespace-only input cannot be submitted.
-5. `markQuestionAnswer` selects automatic or guided behaviour from `answerType`.
-6. Automatically marked answers are normalised and compared with every `acceptedAnswers` entry in array order.
-7. The first matching accepted alias is returned in `matchedAcceptedAnswer`.
-8. No match returns `isCorrect: false`.
-9. Written and multi-step types return `isCorrect: null` without interpreting their content.
-10. `QuestionWorkspace` saves that result using the unchanged `saveQuestionAttempt` flow.
-11. Existing feedback, solution, hint, retry and progression UI remains unchanged.
-
-The `correctAnswer` field is not consulted at runtime. The accepted-answer array controls automatic marking. Sprint 2 validation warns if the canonical answer is not included in that array.
-
-## Structured graph and nature-table answers
-
-Sprint 19 adds automatic structured answer types:
-
-- `graph_structured`
-- `nature_table`
+- signed integers and decimals, including `.5`;
+- signed fractions with a non-zero denominator;
+- percentages;
+- scientific notation;
+- Unicode or ASCII minus and a leading plus.
+
+It uses exact reduced rational values backed by `BigInt`; it does not convert learner values to
+floating point. It rejects empty or malformed literals, `5.`, internal whitespace, zero denominators,
+`NaN` and infinity as malformed. Arithmetic, roots, functions, brackets and other expressions are
+unmarkable and are never evaluated. In particular, `1*4`, `1×4` and `1 4` cannot equal `14`.
 
-These still flow through `markQuestionAnswer` and return the same `MarkingResult` shape. The submitted answer string is a stable JSON representation of mathematical answer state, such as interval signs, key points, candidate choices, transformation sequences or nature-table cells. It is not a screenshot, sampled curve, drag path or raw pointer coordinate log.
-
-Validation lives in `lib/questions/graph-answer-validation.ts`; graphable expression support lives in `lib/maths/*`. See `STEM_FORGE_INTERACTIVE_MATHS_GRAPHS_AND_NATURE_TABLES.md`.
+Comparison policies are exact, inclusive absolute tolerance, inclusive relative tolerance,
+decimal-place rounding and significant-figure rounding. Rounding is half away from zero.
+Lexical decimal-place and significant-figure requirements are checked independently from numeric
+equality. Optional presentation policies support integer, fraction, simplified fraction, decimal,
+percentage, decimal places and significant figures. Scientific notation can satisfy a
+significant-figure policy. Fractions never satisfy a significant-figure presentation policy because
+their written numerator and denominator do not declare the precision of the represented value;
+learners must use decimal or scientific notation (or an unambiguous integer) for that requirement.
 
-## Legacy Higher Physics flow
-
-Legacy Physics currently has no student answer engine.
-
-The page:
-
-- pre-fills the canonical answer from `StemForgeQuestion.answer`;
-- makes the input read-only;
-- has a submit button with no submission handler;
-- always displays a correct feedback panel;
-- does not record an attempt;
-- uses hard-coded/demo progress presentation.
-
-`getLegacyPhysicsDemoAnswerState` exposes this state for tests and display without pretending an answer was evaluated:
+Bounds:
 
-```text
-isMarkable: false
-isCorrect: null
-displayedAnswer: canonical Physics answer
-displayedUnit: canonical Physics unit
-```
-
-Therefore Physics has no accepted-answer list, formatting rules, incorrect-result path or progress side effect to consolidate with Higher Maths. An “incorrect Physics answer” remains unmarkable rather than returning false.
+- maximum numeric input length: 256 characters;
+- maximum numeric digits: 128;
+- maximum absolute exponent: 1000.
 
-## Shared utilities
+## Polynomial-form strategy
 
-### `canSubmitAnswer(answer)`
+The polynomial parser supports an already-expanded polynomial in one declared variable. It accepts
+integer, decimal or fractional coefficients, omitted coefficient 1, ordinary or superscript
+non-negative integer powers, term reordering, like-term combination and zero-term removal.
+Coefficients are exact rationals.
 
-Returns true when `answer.trim()` is non-empty. This preserves the old workspace submission guard.
+It deliberately does not expand brackets, multiply expressions, solve equations, compare
+factorisations or identities, accept negative powers, rational expressions, scientific coefficients
+or multiple variables. Unsupported mathematical forms are unmarkable; incomplete polynomial syntax
+is malformed.
 
-### `normaliseAnswer(value)`
+Bounds:
 
-Applies the exact previous Higher Maths normalisation chain:
+- maximum polynomial input length: 512 characters;
+- maximum terms: 64;
+- maximum exponent: 100;
+- maximum coefficient digits: 128.
 
-1. lowercases;
-2. converts Unicode minus `−` to `-`;
-3. converts `π` to `pi`;
-4. converts superscript `²` to `^2`;
-5. converts superscript `³` to `^3`;
-6. converts `×` and `·` to `*`;
-7. removes all whitespace;
-8. removes all `*` characters;
-9. removes `{` and `}`.
+## Compatibility strategies
 
-Order matters. The extracted function retains the original order.
+`multiple_choice` performs exact option-ID comparison. Its `correctOptionId` is the single runtime
+authority; validation requires the legacy `correctAnswer` and `acceptedAnswers` fields to agree with
+it so contradictory authored content cannot enter the runtime. `guided_self_check` preserves the
+existing guided flow and returns `guided_pending`. `structured_graph` preserves structured graph
+marking, but invalid JSON is now `malformed_structured` rather than an incorrect mathematical answer.
 
-### `compareAcceptedAnswers(studentAnswer, acceptedAnswers)`
+## Evidence semantics
 
-Normalises both sides and checks accepted answers in array order. It returns the first matching original accepted-answer string.
+New attempts persist `outcomeKind`, optional `outcomeReason`, `strategy` and `strategyVersion`.
+The V5 payload and database schema are unchanged because these are additive JSON evidence fields.
+Remote exact-key validation accepts only complete, legal metadata and still accepts historical
+attempts without it.
 
-### `markQuestionAnswer(question, studentAnswer)`
+Historical `isCorrect: false` remains graded-incorrect-compatible because its old ambiguity cannot be
+reconstructed honestly. New malformed and unmarkable attempts count as interactions, but do not enter
+first/latest accuracy denominators, incorrect counts, mastery penalties or review recommendations.
+Practice Session status, summaries and selection use the same outcome-aware rules.
 
-- `numerical`, `algebraic` and `multiple_choice`: automatic comparison.
-- `written` and `multi_step`: guided/unmarked result.
+## Hint and worked-solution integrity
 
-## Answer-behaviour inventory
+Hint-before-submission is derived transactionally from durable, same-question and same-version support
+events. It therefore survives refresh, another tab and retries; a component-local boolean is not
+trusted as evidence.
 
-| Form | Status | Current behaviour |
-|---|---|---|
-| Integers | Confirmed supported | Exact normalised string, e.g. `14`. |
-| Negative numbers | Confirmed supported | Exact string; Unicode minus and hyphen-minus are equivalent. |
-| Decimals | Confirmed supported | Exact representation only. `14` is not `14.0`. |
-| Fractions | Question-dependent | Accepted only when that exact fraction form is authored. |
-| Fraction/decimal equivalence | Confirmed unsupported | `1/2` is not `0.5`. |
-| Algebra | Limited support | Exact normalised authored forms only. |
-| Reordered algebra | Confirmed unsupported | `5x^4` is not `x^4*5`. |
-| Expanded/factorised equivalence | Confirmed unsupported | No expression parsing. |
-| Leading/trailing whitespace | Confirmed supported | Removed during normalisation. |
-| Internal whitespace | Confirmed supported | All whitespace is removed. |
-| Capitalisation | Confirmed supported | All text is lowercased. |
-| `*`, `×`, `·` multiplication | Confirmed supported | All become/remain `*`, then are removed. |
-| Powers with `^` | Confirmed supported | Exact text such as `x^4`. |
-| Superscript 2/3 | Confirmed supported | Converted to `^2` and `^3`. |
-| Other superscripts | Confirmed unsupported | For example superscript 4 is not converted. |
-| Curly braces | Confirmed ignored | `{` and `}` are removed globally. |
-| Parentheses/brackets | Exact-string dependent | Retained; `()` and `[]` are not equivalent. |
-| Coordinates/ordered pairs | Exact-string dependent | No structured coordinate parsing; spaces are removed. |
-| Comma spacing | Confirmed supported | Spaces are removed, commas remain. |
-| Units | Confirmed unsupported as metadata | Units are not stripped or separately checked. They only pass if authored inside an accepted string. |
-| Multiple accepted answers | Confirmed supported | Any normalised alias can match; first match is reported. |
-| Multiple answer fields | Confirmed unsupported | No active multiple-field model or UI exists. |
-| Multi-step answers | Guided only | One textarea; returns `isCorrect: null`. |
-| Partially complete multi-step | Guided only | Also returns `null`; no partial correctness. |
-| Empty answer | UI-blocked | Cannot be submitted. The pure comparator itself performs ordinary string comparison. |
-| Leading zeros | Confirmed unsupported as equivalence | `014` is not `14`. |
-| Trailing decimal zeros | Confirmed unsupported as equivalence | `14.0` is not `14`. |
-| Leading plus sign | Confirmed unsupported as equivalence | `+14` is not `14`. |
-| Pi symbol | Confirmed supported | `π` and `pi` normalise identically. |
-| Square root alternatives | Exact-string dependent | No square-root parsing; keypad inserts `sqrt(` as plain text. |
-
-## Examples intentionally rejected
-
-These forms may be mathematically equivalent but remain rejected unless explicitly authored in `acceptedAnswers`:
-
-```text
-Expected: 5x^4
-Rejected: x^4*5
-Rejected: 5x*x*x*x
-
-Expected: 14
-Rejected: 14.0
-Rejected: 014
-Rejected: +14
-
-Expected: 1/2
-Rejected: 0.5
-Rejected: 2/4
-```
-
-Preserving these rejections is intentional in this sprint.
-
-## Accepted-answer ordering and malformed values
-
-- Runtime comparison checks aliases in order and stops at the first normalised match.
-- Duplicate aliases do not change correctness, only which original alias is reported.
-- An empty accepted array always produces false for automatic comparison.
-- The pure comparator assumes string values, matching the TypeScript type.
-- Sprint 2 content validation blocks empty arrays for automatic types and invalid/empty values before build.
-- An empty student answer could technically equal an empty accepted string if the comparator were called directly, but the UI blocks blank submissions and validation blocks such production content.
-
-## Multi-field behaviour
-
-There are no current multi-field question records, input components or field-specific answer arrays.
+Any non-empty completed submission interaction can make the worked solution available in the current
+view, including an internal marker or storage failure. That temporary availability is not durable. A
+later visit makes the solution available only when a genuine attempted interaction was persisted;
+solution-view evidence is recorded only after such an attempt.
 
-The declared `multi_step` answer type uses one textarea. All complete, incomplete, correct-looking and incorrect-looking values return guided `isCorrect: null`. There is no field ordering, missing-field detection, extra-field detection, partial marking or all-or-nothing automatic result.
+Question feedback distinguishes mathematical judgement from recoverable input and system states.
+Only graded-incorrect answers use the red incorrect treatment. Malformed input uses a warning
+treatment, while unmarkable input and internal or persistence failures use a neutral informational
+treatment. Existing focus movement, live-region announcements and retry behaviour remain intact.
 
-Regression tests lock this absence of automatic marking rather than inventing multi-field support.
+## Authored fixtures and versioning
 
-## Progress side effects
+Every active numeric and polynomial contract carries correct, incorrect, malformed and unmarkable
+fixtures. Content validation executes those fixtures against the live dispatcher and also proves every
+legacy accepted answer remains correct.
 
-Sprint 5 changed progress semantics without changing this answer engine:
+All eight Basic Differentiation records use content revision 2. Question versions are bumped only where
+the old multiplication-marker deletion could accept a concretely different mathematical expression:
 
-- a correct genuine submission completes the question;
-- an incorrect genuine submission records an unresolved attempt but does not complete it;
-- deliberately viewing the worked solution after an attempt completes the question;
-- hint and solution support are recorded outside the answer engine;
-- retry history, best outcome, mastery and progression remain owned by the progress system.
+- `hm-calc-diff-basic-f-002`: version 1 to 2 because inputs such as `1*2x^3-4x`,
+  `1×2x^3-4x` and `1 2x^3-4x` collided with `12x^3-4x`;
+- `hm-calc-diff-basic-f-003`: version 1 to 2 because `1*4`, `1×4` and `1·4` collided with `14`;
+- `hm-calc-diff-basic-a-002`: version 1 to 2 because `2*9`, `2×9` and `2·9` collided with `29`.
 
-Focused boundary tests prove that the unchanged marking result is translated into the V2 progress model correctly.
+The other five question versions remain 1. The audit is finite and deterministic, inspects every
+legacy accepted alias for both numeric and polynomial contracts, and is retained in
+`lib/marking/legacy-collision-audit.ts`.
 
-## Protected behaviour
+## Explicitly deferred
 
-Future changes must preserve, or explicitly version and migrate:
+Alpha does not implement units, unit conversion, general arithmetic evaluation, bracket expansion,
+factorisation equivalence, rational expressions, negative powers, multiple variables, equation
+solving, identities, domain reasoning, sampling-based equivalence, symbolic differentiation,
+arbitrary-text or AI marking, generic multipart marking, per-part persisted results, layered evaluator
+escalation or server-authoritative marking.
 
-- exact normalisation order;
-- all currently accepted aliases;
-- all documented current rejections;
-- blank-submission guard;
-- guided `null` results;
-- feedback branching;
-- attempt recording timing;
-- the answer engine remaining independent from completion/mastery policy;
-- progression being based on V2 completion rather than answer submission alone;
-- legacy Physics remaining a demo until deliberately migrated.
+## Legacy Physics
 
-## Known risks
-
-1. Algebraic correctness depends on authors anticipating string aliases.
-2. Decimal and fraction equivalence is absent.
-3. Units are not structurally represented in marking.
-4. Only superscript 2 and 3 are normalised.
-5. Removing all multiplication markers and braces is lexical, not mathematical.
-6. The runtime uses accepted answers rather than `correctAnswer`.
-7. No active multiple-choice content exercises that branch end to end.
-8. No real multiple-field engine exists.
-9. Physics has no real answer submission path.
-
-## Safe future extension points
-
-The pure functions create a controlled path for future changes:
-
-```text
-Question answer type
--> answer-type-specific marker
--> structured MarkingResult
--> unchanged feedback/progress boundary
-```
-
-A future engine can add new markers alongside the current exact comparator while keeping regression fixtures for old behaviour. New behaviour should be opt-in by answer type or schema version rather than silently replacing all questions.
-
-## Recommended route toward mathematical equivalence
-
-1. Agree product rules for numeric tolerance, rounding, fractions, algebra and units.
-2. Add expected accepted/rejected fixtures before implementation.
-3. Introduce a versioned numeric marker first; it is narrower than symbolic algebra.
-4. Keep exact-string marking as a fallback and compatibility mode.
-5. Add a parsed expression representation only when required by real content.
-6. Add algebraic equivalence behind a new explicit marking strategy.
-7. Never allow a new parser to change existing records without a migration report.
-8. Add browser-level submission tests before changing feedback or persistence.
-
-No CAS, parser, tolerance or symbolic library was added in Sprint 3.
-
-## Testing strategy
-
-### Pure answer tests
-
-`tests/answer-engine.test.ts` covers:
-
-- every extracted normalisation rule;
-- every accepted alias on a real Maths question;
-- formatting variants currently accepted;
-- reordered algebra currently rejected;
-- decimal and leading-zero distinctions;
-- fraction string behaviour;
-- negative/Unicode-minus behaviour;
-- coordinates/brackets/units;
-- blank submission boundary;
-- accepted-answer ordering;
-- guided written/multi-step results;
-- legacy Physics demo state.
-
-### Progress boundary tests
-
-`tests/question-submission-boundary.test.ts` confirms correct and incorrect marking results still produce the existing completion, accuracy and next-question behaviour.
-
-### Build decision
-
-Production build continues to run content validation automatically. Answer tests run through the explicit test commands and the full `pnpm test` command. They are not added to every production build because content validation is the deployment gate and the project does not yet have CI; Sprint 4 should establish CI that runs the full suite before deployment.
-
-## Commands
-
-Run answer-engine tests:
-
-```bash
-pnpm run test:answers
-```
-
-Run content tests and answer tests:
-
-```bash
-pnpm test
-```
-
-Run the remaining checks:
-
-```bash
-pnpm run validate-content
-pnpm run typecheck
-pnpm run lint
-pnpm build
-```
-
-## Behaviour statement
-
-No answer acceptance or rejection behaviour changed.
-
-## Practice-session boundary
-
-Sprint 20 practice sessions do not add a second answer engine. Every session question renders through QuestionWorkspace, marks through markQuestionAnswer, and saves through saveQuestionAttempt. Session state stores only references, timing and navigation metadata; canonical attempts remain the source of answer evidence.
+Legacy Physics remains a read-only demo with no learner answer evaluation or attempt side effect.
+`getLegacyPhysicsDemoAnswerState` continues to report that boundary honestly.

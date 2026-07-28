@@ -12,6 +12,10 @@ import type {
   Subject,
   WorkedExample,
 } from "@/data/types";
+import { markQuestionAnswer } from "@/lib/answer-engine";
+import { MARKING_STRATEGIES, type MarkingFixture, type MarkingFixtures } from "@/lib/marking/types";
+import { parseNumericLiteral } from "@/lib/marking/numeric";
+import { parsePolynomial } from "@/lib/marking/polynomial";
 import { validateMathExpression } from "@/lib/maths/expression-core";
 import { getSubjectFamily, getStudentResourceCapabilities } from "@/lib/resource-capabilities";
 
@@ -408,6 +412,122 @@ function validateQuestion(question: Question, location: string, issue: IssueWrit
     }
   }
   validateGraphQuestion(question, location, issue);
+  validateMarkingContract(question, location, issue);
+}
+
+function validateMarkingContract(question: Question, location: string, issue: IssueWriter) {
+  const contract = question.marking;
+  if (!contract || !MARKING_STRATEGIES.includes(contract.strategy)) {
+    issue("error", "invalid-marking-strategy", `Question "${question.id}" must declare one of the five implemented Alpha marking strategies.`, location);
+    return;
+  }
+  if (contract.strategyVersion !== 1) {
+    issue("error", "invalid-marking-strategy-version", `Question "${question.id}" must declare implemented marking strategy version 1.`, location);
+  }
+  if (question.unit?.trim()) {
+    issue("error", "alpha-units-deferred", `Question "${question.id}" cannot declare active unit marking during Alpha.`, location);
+  }
+  const expectedStrategy = question.answerType === "numerical" ? "numeric"
+    : question.answerType === "algebraic" ? "polynomial_form"
+      : question.answerType === "multiple_choice" ? "multiple_choice"
+        : question.answerType === "written" || question.answerType === "multi_step" ? "guided_self_check"
+          : "structured_graph";
+  if (contract.strategy !== expectedStrategy) {
+    issue("error", "marking-answer-type-mismatch", `Question "${question.id}" answer type requires strategy "${expectedStrategy}".`, location);
+    return;
+  }
+  if (contract.strategy === "numeric") {
+    if (parseNumericLiteral(contract.target).status !== "parsed") issue("error", "invalid-numeric-target", `Question "${question.id}" has an invalid numeric target.`, location);
+    const comparison = contract.comparison;
+    if (!comparison || !["exact", "absolute_tolerance", "relative_tolerance", "decimal_places_rounded", "significant_figures_rounded"].includes(comparison.type)) {
+      issue("error", "invalid-numeric-comparison", `Question "${question.id}" has an unsupported numeric comparison policy.`, location);
+      return;
+    }
+    if ((comparison.type === "absolute_tolerance" || comparison.type === "relative_tolerance")) {
+      const amount = parseNumericLiteral(comparison.amount);
+      if (amount.status !== "parsed" || amount.value.numerator < BigInt(0)) issue("error", "invalid-numeric-tolerance", `Question "${question.id}" has an invalid tolerance.`, location);
+      const target = parseNumericLiteral(contract.target);
+      if (comparison.type === "relative_tolerance" && target.status === "parsed" && target.value.numerator === BigInt(0)) {
+        issue("error", "relative-tolerance-zero-target", `Question "${question.id}" cannot use relative tolerance with a zero target.`, location);
+      }
+    }
+    if ((comparison.type === "decimal_places_rounded" && (!Number.isInteger(comparison.places) || comparison.places < 0)) ||
+        (comparison.type === "significant_figures_rounded" && (!Number.isInteger(comparison.figures) || comparison.figures <= 0))) {
+      issue("error", "invalid-numeric-precision", `Question "${question.id}" has an invalid rounded precision.`, location);
+    }
+    if ((comparison.type === "decimal_places_rounded" || comparison.type === "significant_figures_rounded") && contract.presentation) {
+      issue("error", "contradictory-numeric-presentation", `Question "${question.id}" cannot combine rounded comparison and presentation policies.`, location);
+    }
+    if (contract.presentation?.type === "decimal_places" &&
+        (!Number.isInteger(contract.presentation.places) || contract.presentation.places < 0)) {
+      issue("error", "invalid-numeric-presentation", `Question "${question.id}" has an invalid decimal-place presentation policy.`, location);
+    }
+    if (contract.presentation?.type === "significant_figures" &&
+        (!Number.isInteger(contract.presentation.figures) || contract.presentation.figures <= 0)) {
+      issue("error", "invalid-numeric-presentation", `Question "${question.id}" has an invalid significant-figure presentation policy.`, location);
+    }
+    if (contract.presentation &&
+        !["integer", "fraction", "simplified_fraction", "decimal", "percentage", "decimal_places", "significant_figures"].includes(contract.presentation.type)) {
+      issue("error", "invalid-numeric-presentation", `Question "${question.id}" has an unsupported numeric presentation policy.`, location);
+    }
+    validateFixtures(question, contract.fixtures, location, issue);
+  } else if (contract.strategy === "polynomial_form") {
+    if (contract.variable === "e" || !/^[a-z]$/i.test(contract.variable)) issue("error", "invalid-polynomial-variable", `Question "${question.id}" has an invalid polynomial variable.`, location);
+    if (parsePolynomial(contract.target, contract.variable).status !== "parsed") issue("error", "invalid-polynomial-target", `Question "${question.id}" has an invalid polynomial target.`, location);
+    validateFixtures(question, contract.fixtures, location, issue);
+  } else if (contract.strategy === "multiple_choice") {
+    const optionValues = new Set(question.options?.map((option) => option.value) ?? []);
+    if (!contract.correctOptionId || !optionValues.has(contract.correctOptionId)) {
+      issue("error", "invalid-multiple-choice-contract", `Question "${question.id}" marking target is not a declared option value.`, location);
+    }
+    if (question.correctAnswer !== contract.correctOptionId) {
+      issue("error", "contradictory-multiple-choice-authority", `Question "${question.id}" correctAnswer must agree with marking.correctOptionId.`, location);
+    }
+    if (!question.acceptedAnswers.length || question.acceptedAnswers.some((answer) => answer !== contract.correctOptionId)) {
+      issue("error", "contradictory-multiple-choice-authority", `Question "${question.id}" acceptedAnswers must identify only marking.correctOptionId.`, location);
+    }
+  }
+}
+
+function validateFixtures(question: Question, fixtures: MarkingFixtures | undefined, location: string, issue: IssueWriter) {
+  if (!fixtures || typeof fixtures !== "object") {
+    issue("error", "missing-marking-fixtures", `Question "${question.id}" must declare outcome-specific marking fixtures.`, location);
+    return;
+  }
+  const seen = new Set<string>();
+  const expectedBuckets: Array<keyof MarkingFixtures> = ["correct", "incorrect", "malformed", "unmarkable"];
+  for (const unknown of Object.keys(fixtures).filter((key) => !expectedBuckets.includes(key as keyof MarkingFixtures))) {
+    issue("error", "unknown-marking-fixture-bucket", `Question "${question.id}" has unknown marking fixture bucket "${unknown}".`, location);
+  }
+  for (const bucket of expectedBuckets) {
+    const entries = fixtures[bucket];
+    if (!Array.isArray(entries)) {
+      issue("error", "missing-marking-fixture-bucket", `Question "${question.id}" has no ${bucket} marking fixture bucket.`, location);
+      continue;
+    }
+    if (!entries.length) issue("error", "empty-marking-fixture-bucket", `Question "${question.id}" has no ${bucket} marking fixture.`, location);
+    for (const fixture of entries) {
+      if (!fixture || typeof fixture.input !== "string") {
+        issue("error", "invalid-marking-fixture", `Question "${question.id}" has an invalid ${bucket} marking fixture.`, location);
+        continue;
+      }
+      if ((bucket === "correct" && fixture.reason !== undefined) || (bucket !== "correct" && fixture.reason === undefined)) {
+        issue("error", "invalid-marking-fixture-reason", `Question "${question.id}" has an invalid reason contract in its ${bucket} fixtures.`, location);
+      }
+      if (seen.has(fixture.input)) issue("error", "duplicate-marking-fixture", `Question "${question.id}" repeats fixture "${fixture.input}" across outcome buckets.`, location);
+      seen.add(fixture.input);
+      const result = markQuestionAnswer(question, fixture.input);
+      const valid = bucket === "correct" ? result.outcomeKind === "graded" && result.isCorrect === true
+        : bucket === "incorrect" ? result.outcomeKind === "graded" && result.isCorrect === false && result.outcomeReason === fixture.reason
+          : bucket === "malformed" ? result.outcomeKind === "malformed" && result.outcomeReason === fixture.reason
+            : result.outcomeKind === "unmarkable" && result.outcomeReason === fixture.reason;
+      if (!valid) issue("error", "marking-fixture-mismatch", `Question "${question.id}" fixture "${fixture.input}" does not produce its declared ${bucket} outcome.`, location);
+    }
+  }
+  for (const alias of question.acceptedAnswers) {
+    const result = markQuestionAnswer(question, alias);
+    if (result.outcomeKind !== "graded" || result.isCorrect !== true) issue("error", "legacy-alias-regression", `Question "${question.id}" no longer accepts legacy alias "${alias}".`, location);
+  }
 }
 
 function validateGraphQuestion(question: Question, location: string, issue: IssueWriter) {

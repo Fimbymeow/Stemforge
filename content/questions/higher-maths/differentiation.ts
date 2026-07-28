@@ -1,12 +1,41 @@
 ﻿import type { Question } from "@/data/types";
 
 import { ACTIVE_CONTENT_STATUS, INITIAL_CONTENT_REVISION, INITIAL_QUESTION_VERSION } from "@/data/content-metadata";
+import type { MarkingFixtures, NumericMarkingContract, PolynomialMarkingContract } from "@/lib/marking/types";
+
+const MARKING_CONTENT_REVISION = INITIAL_CONTENT_REVISION + 1;
+
+function numericMarking(target: string, unmarkable = "1+1"): NumericMarkingContract {
+  const value = BigInt(target);
+  return {
+    strategy: "numeric",
+    strategyVersion: 1,
+    target,
+    comparison: { type: "exact" },
+    fixtures: {
+      correct: [{ input: target }, { input: `${target}.0` }, { input: `${value * BigInt(2)}/2` }, { input: `${value * BigInt(100)}%` }, { input: `${target}e0` }],
+      incorrect: [{ input: String(value + BigInt(1)), reason: "value_wrong" }],
+      malformed: [{ input: `${target}.`, reason: "malformed_numeric" }],
+      unmarkable: [{ input: unmarkable, reason: "expression_not_permitted" }],
+    },
+  };
+}
+
+function polynomialMarking(target: string, correct: string[]): PolynomialMarkingContract {
+  const fixtures: MarkingFixtures = {
+    correct: correct.map((input) => ({ input })),
+    incorrect: [{ input: target === "5x^4" ? "4x^4" : "12x^3-5x", reason: "value_wrong" }],
+    malformed: [{ input: `${target}+`, reason: "malformed_polynomial" }],
+    unmarkable: [{ input: `y=${target}`, reason: "unsupported_mathematical_form" }],
+  };
+  return { strategy: "polynomial_form", strategyVersion: 1, target, variable: "x", fixtures };
+}
 
 export const higherMathsDifferentiationQuestions: Question[] = [
   {
     id: "hm-calc-diff-basic-f-001",
     questionVersion: INITIAL_QUESTION_VERSION,
-    contentRevision: INITIAL_CONTENT_REVISION,
+    contentRevision: MARKING_CONTENT_REVISION,
     contentStatus: ACTIVE_CONTENT_STATUS,
     subject: "Higher Maths",
     courseArea: "Calculus",
@@ -20,6 +49,7 @@ export const higherMathsDifferentiationQuestions: Question[] = [
     questionText: "Differentiate $f(x)=x^5$.",
     marks: 1,
     answerType: "algebraic",
+    marking: polynomialMarking("5x^4", ["5x^4", "5*x^4", "5x^{4}", "5x^4+0"]),
     correctAnswer: "5x^4",
     acceptedAnswers: ["5x^4", "5*x^4", "5x^{4}"],
     workedSolution: "Use the power rule:\n\n$$\\frac{d}{dx}(x^n)=nx^{n-1}$$\n\nFor $x^5$, $n=5$, so:\n\n$$f'(x)=5x^4$$",
@@ -33,8 +63,8 @@ export const higherMathsDifferentiationQuestions: Question[] = [
   },
   {
     id: "hm-calc-diff-basic-f-002",
-    questionVersion: INITIAL_QUESTION_VERSION,
-    contentRevision: INITIAL_CONTENT_REVISION,
+    questionVersion: INITIAL_QUESTION_VERSION + 1,
+    contentRevision: MARKING_CONTENT_REVISION,
     contentStatus: ACTIVE_CONTENT_STATUS,
     subject: "Higher Maths",
     courseArea: "Calculus",
@@ -48,6 +78,7 @@ export const higherMathsDifferentiationQuestions: Question[] = [
     questionText: "Differentiate $y=3x^4-2x^2+7$.",
     marks: 2,
     answerType: "algebraic",
+    marking: polynomialMarking("12x^3-4x", ["12x^3-4x", "12*x^3-4*x", "12x^{3}-4x", "-4x+12x^3", "6x^3+6x^3-4x"]),
     correctAnswer: "12x^3-4x",
     acceptedAnswers: ["12x^3-4x", "12*x^3-4*x", "12x^{3}-4x"],
     workedSolution: "Differentiate each term separately:\n\n$$\\frac{d}{dx}(3x^4)=12x^3$$\n\n$$\\frac{d}{dx}(-2x^2)=-4x$$\n\nThe derivative of a constant is 0.\n\n$$\\frac{dy}{dx}=12x^3-4x$$",
@@ -61,8 +92,8 @@ export const higherMathsDifferentiationQuestions: Question[] = [
   },
   {
     id: "hm-calc-diff-basic-f-003",
-    questionVersion: INITIAL_QUESTION_VERSION,
-    contentRevision: INITIAL_CONTENT_REVISION,
+    questionVersion: INITIAL_QUESTION_VERSION + 1,
+    contentRevision: MARKING_CONTENT_REVISION,
     contentStatus: ACTIVE_CONTENT_STATUS,
     subject: "Higher Maths",
     courseArea: "Calculus",
@@ -76,6 +107,7 @@ export const higherMathsDifferentiationQuestions: Question[] = [
     questionText: "For $f(x)=x^3+2x$, find $f'(2)$.",
     marks: 2,
     answerType: "numerical",
+    marking: numericMarking("14", "1*4"),
     correctAnswer: "14",
     acceptedAnswers: ["14"],
     workedSolution: "First differentiate:\n\n$$f'(x)=3x^2+2$$\n\nNow substitute $x=2$:\n\n$$f'(2)=3(2)^2+2=12+2=14$$",
@@ -90,7 +122,7 @@ export const higherMathsDifferentiationQuestions: Question[] = [
   {
     id: "hm-calc-diff-basic-a-001",
     questionVersion: INITIAL_QUESTION_VERSION,
-    contentRevision: INITIAL_CONTENT_REVISION,
+    contentRevision: MARKING_CONTENT_REVISION,
     contentStatus: ACTIVE_CONTENT_STATUS,
     subject: "Higher Maths",
     courseArea: "Calculus",
@@ -104,6 +136,7 @@ export const higherMathsDifferentiationQuestions: Question[] = [
     questionText: "The curve has equation $y=2x^3-x^2$. Find the gradient of the curve when $x=1$.",
     marks: 3,
     answerType: "numerical",
+    marking: numericMarking("4"),
     correctAnswer: "4",
     acceptedAnswers: ["4"],
     workedSolution: "Differentiate the equation:\n\n$$\\frac{dy}{dx}=6x^2-2x$$\n\nSubstitute $x=1$:\n\n$$6(1)^2-2(1)=6-2=4$$",
@@ -117,8 +150,8 @@ export const higherMathsDifferentiationQuestions: Question[] = [
   },
   {
     id: "hm-calc-diff-basic-a-002",
-    questionVersion: INITIAL_QUESTION_VERSION,
-    contentRevision: INITIAL_CONTENT_REVISION,
+    questionVersion: INITIAL_QUESTION_VERSION + 1,
+    contentRevision: MARKING_CONTENT_REVISION,
     contentStatus: ACTIVE_CONTENT_STATUS,
     subject: "Higher Maths",
     courseArea: "Calculus",
@@ -132,6 +165,7 @@ export const higherMathsDifferentiationQuestions: Question[] = [
     questionText: "Find the gradient of the tangent to $y=x^4-3x$ at $x=2$.",
     marks: 3,
     answerType: "numerical",
+    marking: numericMarking("29", "2*9"),
     correctAnswer: "29",
     acceptedAnswers: ["29"],
     workedSolution: "Differentiate:\n\n$$\\frac{dy}{dx}=4x^3-3$$\n\nAt $x=2$:\n\n$$4(2)^3-3=32-3=29$$\n\nSo the tangent gradient is 29.",
@@ -146,7 +180,7 @@ export const higherMathsDifferentiationQuestions: Question[] = [
   {
     id: "hm-calc-diff-basic-a-003",
     questionVersion: INITIAL_QUESTION_VERSION,
-    contentRevision: INITIAL_CONTENT_REVISION,
+    contentRevision: MARKING_CONTENT_REVISION,
     contentStatus: ACTIVE_CONTENT_STATUS,
     subject: "Higher Maths",
     courseArea: "Calculus",
@@ -160,6 +194,7 @@ export const higherMathsDifferentiationQuestions: Question[] = [
     questionText: "For $y=x^2-6x+4$, find the $x$-coordinate of the stationary point.",
     marks: 3,
     answerType: "numerical",
+    marking: numericMarking("3"),
     correctAnswer: "3",
     acceptedAnswers: ["3"],
     workedSolution: "Stationary points occur when:\n\n$$\\frac{dy}{dx}=0$$\n\nDifferentiate:\n\n$$\\frac{dy}{dx}=2x-6$$\n\nSet equal to zero:\n\n$$2x-6=0 \\Rightarrow x=3$$",
@@ -174,7 +209,7 @@ export const higherMathsDifferentiationQuestions: Question[] = [
   {
     id: "hm-calc-diff-basic-ppq-001",
     questionVersion: INITIAL_QUESTION_VERSION,
-    contentRevision: INITIAL_CONTENT_REVISION,
+    contentRevision: MARKING_CONTENT_REVISION,
     contentStatus: ACTIVE_CONTENT_STATUS,
     subject: "Higher Maths",
     courseArea: "Calculus",
@@ -188,6 +223,7 @@ export const higherMathsDifferentiationQuestions: Question[] = [
     questionText: "The curve $y=x^3-4x+1$ has a tangent at the point where $x=2$. Find the gradient of this tangent.",
     marks: 3,
     answerType: "numerical",
+    marking: numericMarking("8"),
     correctAnswer: "8",
     acceptedAnswers: ["8"],
     workedSolution: "Differentiate the curve:\n\n$$\\frac{dy}{dx}=3x^2-4$$\n\nSubstitute $x=2$:\n\n$$3(2)^2-4=12-4=8$$\n\nThe gradient of the tangent is 8.",
@@ -202,7 +238,7 @@ export const higherMathsDifferentiationQuestions: Question[] = [
   {
     id: "hm-calc-diff-basic-ppq-002",
     questionVersion: INITIAL_QUESTION_VERSION,
-    contentRevision: INITIAL_CONTENT_REVISION,
+    contentRevision: MARKING_CONTENT_REVISION,
     contentStatus: ACTIVE_CONTENT_STATUS,
     subject: "Higher Maths",
     courseArea: "Calculus",
@@ -216,6 +252,7 @@ export const higherMathsDifferentiationQuestions: Question[] = [
     questionText: "A curve has equation $y=x^3-12x+5$. Find the positive $x$-coordinate of a stationary point.",
     marks: 4,
     answerType: "numerical",
+    marking: numericMarking("2"),
     correctAnswer: "2",
     acceptedAnswers: ["2"],
     workedSolution: "Differentiate:\n\n$$\\frac{dy}{dx}=3x^2-12$$\n\nAt a stationary point:\n\n$$3x^2-12=0$$\n\n$$3x^2=12$$\n\n$$x^2=4$$\n\n$$x=\\pm 2$$\n\nThe positive $x$-coordinate is 2.",

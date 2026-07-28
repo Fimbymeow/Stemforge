@@ -38,10 +38,15 @@ test("feedback preserves existing correctness semantics for accepted, equivalent
     assert.equal(marking.isCorrect, true);
     assert.equal(classifyAnswerFeedback(algebraic, answer, marking).category, "correct");
   }
-  for (const answer of ["x^4*5", "5x*x*x*x", "4x^5", "-2", "1/2"]) {
+  for (const answer of ["4x^5", "-2", "1/2"]) {
     const marking = markQuestionAnswer(algebraic, answer);
     assert.equal(marking.isCorrect, false);
     assert.equal(classifyAnswerFeedback(algebraic, answer, marking).category, "incorrect");
+  }
+  for (const answer of ["x^4*5", "5x*x*x*x"]) {
+    const marking = markQuestionAnswer(algebraic, answer);
+    assert.equal(marking.isCorrect, null);
+    assert.equal(classifyAnswerFeedback(algebraic, answer, marking).category, "unmarkable");
   }
 });
 
@@ -52,42 +57,39 @@ test("empty and whitespace feedback cannot become an attempt", () => {
   }
 });
 
-test("known malformed grouping and incomplete powers receive format feedback without changing non-empty attempt eligibility", () => {
-  for (const answer of ["((5x^4", "5x^", "5x^4)"]) {
+test("broken powers are malformed while unsupported brackets remain honestly unmarkable", () => {
+  for (const answer of ["5x^", "5x^{"]) {
     const result = classifyAnswerFeedback(algebraic, answer, markQuestionAnswer(algebraic, answer));
     assert.equal(result.category, "malformed");
     assert.equal(result.shouldRecordAttempt, true);
     assert.equal(result.isInputError, true);
   }
+  for (const answer of ["((5x^4", "5x^4)"]) {
+    const result = classifyAnswerFeedback(algebraic, answer, markQuestionAnswer(algebraic, answer));
+    assert.equal(result.category, "unmarkable");
+    assert.equal(result.shouldRecordAttempt, true);
+  }
 });
 
 test("unsupported final-answer forms are distinguished only when the authored contract makes that safe", () => {
   const equation = classifyAnswerFeedback(algebraic, "y=5x^4", markQuestionAnswer(algebraic, "y=5x^4"));
-  assert.equal(equation.category, "unsupported_format");
+  assert.equal(equation.category, "unmarkable");
   const sentence = classifyAnswerFeedback(numerical, "fourteen", markQuestionAnswer(numerical, "fourteen"));
-  assert.equal(sentence.category, "unsupported_format");
-  assert.equal(sentence.guidance, "Enter numbers and mathematical symbols rather than a sentence.");
+  assert.equal(sentence.category, "unmarkable");
+  assert.match(sentence.guidance ?? "", /supported final-answer form/i);
 });
 
 test("structured parse failure remains distinct from an incorrect structured answer", () => {
-  const structuredQuestion = { ...algebraic, answerType: "graph_structured" as const };
+  const structuredQuestion = { ...algebraic, answerType: "graph_structured" as const, marking: { strategy: "structured_graph" as const, strategyVersion: 1 as const } };
   const marking = markQuestionAnswer(structuredQuestion, "{not-json");
-  assert.equal(marking.reason, "structured_parse_failure");
+  assert.equal(marking.outcomeKind, "malformed");
   assert.equal(classifyAnswerFeedback(structuredQuestion, "{not-json", marking).category, "malformed");
 });
 
-test("negative values, fractions, powers, and multiple accepted aliases retain deterministic marking", () => {
-  const cases = [
-    { answer: "-2", acceptedAnswers: ["-2"] },
-    { answer: "1/2", acceptedAnswers: ["1/2", "0.5"] },
-    { answer: "x^2", acceptedAnswers: ["x^2", "x*x"] },
-  ];
-  for (const item of cases) {
-    const question = { ...algebraic, acceptedAnswers: item.acceptedAnswers };
-    const marking = markQuestionAnswer(question, item.answer);
-    assert.equal(marking.isCorrect, true);
-    assert.equal(classifyAnswerFeedback(question, item.answer, marking).category, "correct");
-  }
+test("question strategy contracts, not legacy alias mutation, determine marking", () => {
+  const changedAliases = { ...algebraic, acceptedAnswers: ["wrong"] };
+  assert.equal(markQuestionAnswer(changedAliases, "5x^4").isCorrect, true);
+  assert.equal(markQuestionAnswer(changedAliases, "wrong").outcomeKind, "unmarkable");
 });
 
 test("internal failures are not presented as learner mistakes", () => {
@@ -98,9 +100,9 @@ test("internal failures are not presented as learner mistakes", () => {
 });
 
 test("draft keys are canonical and version scoped", () => {
-  assert.equal(createAnswerDraftKey(identity), `${encodeURIComponent(algebraic.id)}:q1:r1`);
+  assert.equal(createAnswerDraftKey(identity), `${encodeURIComponent(algebraic.id)}:q1:r2`);
   assert.notEqual(createAnswerDraftKey(identity), createAnswerDraftKey({ ...identity, questionVersion: 2 }));
-  assert.notEqual(createAnswerDraftKey(identity), createAnswerDraftKey({ ...identity, contentRevision: 2 }));
+  assert.notEqual(createAnswerDraftKey(identity), createAnswerDraftKey({ ...identity, contentRevision: identity.contentRevision + 1 }));
 });
 
 test("drafts round-trip, remain local-only data, and clear explicitly", () => {
@@ -209,7 +211,7 @@ test("legacy Common Mistakes data remains valid source content but is not part o
   assert.match(algebraic.commonMistake, /coefficient 5/i);
   assert.equal(algebraic.id, "hm-calc-diff-basic-f-001");
   assert.equal(algebraic.questionVersion, 1);
-  assert.equal(algebraic.contentRevision, 1);
+  assert.equal(algebraic.contentRevision, 2);
 });
 
 test("stage-relative position uses canonical active stage membership", () => {

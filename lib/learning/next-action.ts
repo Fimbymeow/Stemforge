@@ -2,6 +2,7 @@ import type { CanonicalContentSource } from "@/data/canonical-content";
 import { contentResolver, createContentResolver } from "@/lib/content-resolver";
 import { calculateSkillPathProgress, getQuestionProgressForVersion, selectNextQuestionId } from "@/lib/progress/calculations";
 import type { ProgressEvidence } from "@/lib/progress/types";
+import { isGradedIncorrectAttempt } from "@/lib/progress/attempt-outcomes";
 import type { PracticeSession } from "@/lib/practice/practice-types";
 
 export type LearnerNextActionKind =
@@ -298,7 +299,7 @@ function latestCurrentVersionUnfinishedQuestion(
       occurredAt: attempt.attemptedAt,
       sequence: attempt.sequence,
       version: attempt.versionEvidence,
-      reason: attempt.isCorrect === false
+      reason: isGradedIncorrectAttempt(attempt)
         ? "Return to the question you last attempted and complete it before moving on."
         : "Continue the question you were working on.",
     })),

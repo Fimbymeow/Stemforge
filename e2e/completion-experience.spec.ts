@@ -7,6 +7,7 @@ import {
   PATH_ID,
   QUESTION_ANSWERS,
   QUESTION_IDS,
+  QUESTION_VERSIONS,
   STORAGE_KEY,
   currentAttempt,
   readStoredCelebrations,
@@ -80,7 +81,7 @@ test("ordinary non-final completion keeps normal feedback without a path celebra
 
   await expect(page.getByTestId("question-status")).toContainText("Correct");
   await expect(page.getByTestId("path-completion-panel")).toHaveCount(0);
-  const progress = calculateSkillPathProgress(skillPath, (await readStoredProgress(page) as ProgressPayload).data);
+  const progress = calculateSkillPathProgress(skillPath, (await readStoredProgress(page) as ProgressPayload).data, QUESTION_VERSIONS);
   expect(progress.completedQuestionIds).toHaveLength(7);
   expect(progress.status).toBe("in_progress");
   expect(await readStoredCelebrations(page)).toBeNull();
@@ -118,7 +119,7 @@ test("navigation away and revisit do not replay the transient celebration", asyn
 test("solution-assisted final completion is Completed with Review Recommended", async ({ page }) => {
   await seedStoredProgress(page, solutionCompletedPayload(QUESTION_IDS.slice(0, -1)));
   await openQuestion(page, FINAL_QUESTION_ID);
-  await submitAnswer(page, "wrong");
+  await submitAnswer(page, "0");
   await openWorkedSolution(page);
 
   const panel = page.getByTestId("path-completion-panel");
@@ -134,21 +135,21 @@ test("solution-assisted final completion is Completed with Review Recommended", 
     bestOutcome: "completed_with_solution",
     masteryContribution: 0.35,
   });
-  expect(calculateSkillPathProgress(skillPath, stored.data).status).toBe("completed");
+  expect(calculateSkillPathProgress(skillPath, stored.data, QUESTION_VERSIONS).status).toBe("completed");
   await expect(page.getByTestId("path-completion-primary-action")).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
 });
 
 test("secure completion uses the Secure variant without a Mastered claim", async ({ page }) => {
   await seedStoredProgress(page, v3Payload(attemptsAfterErrors(QUESTION_IDS.slice(0, -1))));
   await openQuestion(page, FINAL_QUESTION_ID);
-  await submitAnswer(page, "wrong");
+  await submitAnswer(page, "0");
   await retryAnswer(page, QUESTION_ANSWERS[FINAL_QUESTION_ID]);
 
   const panel = page.getByTestId("path-completion-panel");
   await expect(panel.getByText("Secure", { exact: true })).toBeVisible();
   await expect(panel).toContainText("8 / 8 completed");
   await expect(panel.getByText("Mastered", { exact: true })).toHaveCount(0);
-  expect(calculateSkillPathProgress(skillPath, (await readStoredProgress(page) as ProgressPayload).data).status).toBe("secure");
+  expect(calculateSkillPathProgress(skillPath, (await readStoredProgress(page) as ProgressPayload).data, QUESTION_VERSIONS).status).toBe("secure");
 
   await page.goto(PATH_ROUTE);
   await expect(page.getByTestId("completed-path-card")).toContainText("Basic differentiation secure");
@@ -160,7 +161,7 @@ test("mastered completion stays consistent across question, dashboard, hub and p
   await openQuestion(page, FINAL_QUESTION_ID);
   await submitAnswer(page, QUESTION_ANSWERS[FINAL_QUESTION_ID]);
   await expect(page.getByTestId("path-completion-panel").getByText("Mastered", { exact: true })).toBeVisible();
-  expect(calculateSkillPathProgress(skillPath, (await readStoredProgress(page) as ProgressPayload).data).status).toBe("mastered");
+  expect(calculateSkillPathProgress(skillPath, (await readStoredProgress(page) as ProgressPayload).data, QUESTION_VERSIONS).status).toBe("mastered");
 
   await page.goto("/dashboard");
   await expect(page.getByTestId("dashboard-progress-summary")).toContainText("8 / 8 completed");
@@ -177,7 +178,7 @@ test("later Completed to Secure improvement uses only the smaller upgrade acknow
   await seedStoredCelebrations(page, celebrationPayload({
     [PATH_ID]: { celebratedAt: acknowledgedAt, lastAcknowledgedStatus: "completed" },
   }));
-  expect(calculateSkillPathProgress(skillPath, (await readStoredProgress(page) as ProgressPayload).data).status).toBe("completed");
+  expect(calculateSkillPathProgress(skillPath, (await readStoredProgress(page) as ProgressPayload).data, QUESTION_VERSIONS).status).toBe("completed");
 
   await openQuestion(page, QUESTION_IDS[6]);
   await submitAnswer(page, QUESTION_ANSWERS[QUESTION_IDS[6]]);
@@ -259,7 +260,7 @@ test("malformed acknowledgement data fails safely and future versions are preser
       const repaired = await readStoredCelebrations(page) as ReturnType<typeof celebrationPayload>;
       expect(repaired.version).toBe(1);
       expect(repaired.data.paths[PATH_ID].lastAcknowledgedStatus).toBe("mastered");
-      expect(calculateSkillPathProgress(skillPath, (await readStoredProgress(page) as ProgressPayload).data).status).toBe("mastered");
+      expect(calculateSkillPathProgress(skillPath, (await readStoredProgress(page) as ProgressPayload).data, QUESTION_VERSIONS).status).toBe("mastered");
     });
   }
 
@@ -270,7 +271,7 @@ test("malformed acknowledgement data fails safely and future versions are preser
   await submitAnswer(page, QUESTION_ANSWERS[FINAL_QUESTION_ID]);
   await expect(page.getByTestId("path-completion-panel")).toHaveCount(0);
   expect(await readStoredCelebrations(page)).toEqual(future);
-  expect(calculateSkillPathProgress(skillPath, (await readStoredProgress(page) as ProgressPayload).data).status).toBe("mastered");
+  expect(calculateSkillPathProgress(skillPath, (await readStoredProgress(page) as ProgressPayload).data, QUESTION_VERSIONS).status).toBe("mastered");
   await page.goto(PATH_ROUTE);
   await expect(page.getByTestId("completed-path-card")).toContainText("Basic differentiation mastered");
   expect(await page.evaluate(({ progressKey, celebrationKey }) => ({

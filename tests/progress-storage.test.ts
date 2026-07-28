@@ -33,6 +33,25 @@ test("save then load preserves V5", () => {
   assert.deepEqual(storage.load().payload, payload);
 });
 
+test("storage round-trip preserves new marker metadata and legacy attempts together", () => {
+  const memory = new MemoryStorage();
+  const storage = new LocalStorageProgressStorage(memory);
+  const marked = attempt({
+    eventId: "attempt_marked",
+    isCorrect: false,
+    outcomeKind: "graded",
+    outcomeReason: "value_wrong",
+    strategy: "numeric",
+    strategyVersion: 1,
+  });
+  const mixed: ProgressPayload = {
+    version: 5,
+    data: { attempts: [attempt({ eventId: "attempt_legacy" }), marked], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [] },
+  };
+  assert.equal(storage.save(mixed), true);
+  assert.deepEqual(storage.load().payload.data.attempts, mixed.data.attempts);
+});
+
 test("storage key remains unchanged", () => {
   assert.equal(PROGRESS_STORAGE_KEY, "stemforge.localProgress.v1");
 });

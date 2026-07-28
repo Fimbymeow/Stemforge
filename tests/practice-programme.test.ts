@@ -201,7 +201,10 @@ test("new session evidence carries exact identity while standalone evidence omit
     isCorrect: false,
     answer: "wrong",
     attemptedAt: "2026-07-27T11:00:00.000Z",
-    hintViewedBeforeSubmission: false,
+    outcomeKind: "graded" as const,
+    outcomeReason: "value_wrong" as const,
+    strategy: "polynomial_form" as const,
+    strategyVersion: 1,
   };
   assert.equal(await saveQuestionAttempt(base), true);
   assert.equal(await saveQuestionAttempt({ ...base, practiceSessionId: "session-evidence", attemptedAt: "2026-07-27T11:01:00.000Z" }), true);

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { higherMaths } from "../data/higher-maths";
+import { higherMathsDifferentiationQuestions } from "../content/questions/higher-maths/differentiation";
 import { deriveLearnerDashboardModel } from "../lib/dashboard-derivations";
 import type { AchievementSnapshot, ProgressEvidence, QuestionAttempt, QuestionSupportEvent } from "../lib/progress/types";
 
@@ -8,6 +9,7 @@ const maybeSkillPath = higherMaths.courseAreas.flatMap((area) => area.specAreas)
 assert.ok(maybeSkillPath);
 const skillPath = maybeSkillPath;
 const questionIds = skillPath.learningStages?.flatMap((stage) => stage.questionIds) ?? [];
+const questionVersions = Object.fromEntries(higherMathsDifferentiationQuestions.map((question) => [question.id, question.questionVersion]));
 assert.ok(questionIds.length > 0);
 
 test("empty learner dashboard recommends a deterministic guest start without fake activity", () => {
@@ -163,7 +165,7 @@ function attempt(questionId: string, sequence: number, overrides: Partial<Questi
     isGenuine: true,
     hintViewedBeforeSubmission: false,
     supportKnowledge: "known",
-    versionEvidence: { kind: "known", questionVersion: 1 },
+    versionEvidence: { kind: "known", questionVersion: questionVersions[questionId] ?? 1 },
     eventId: `dashboard_attempt_${sequence}`,
     ...overrides,
   };

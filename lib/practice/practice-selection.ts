@@ -1,6 +1,7 @@
 import { canonicalContent, type CanonicalContentSource } from "@/data/canonical-content";
 import { getQuestionProgressForVersion } from "@/lib/progress/calculations";
-import type { ProgressEvidence, QuestionAttempt } from "@/lib/progress/types";
+import type { ProgressEvidence } from "@/lib/progress/types";
+import { isGradedAttempt, isGradedIncorrectAttempt } from "@/lib/progress/attempt-outcomes";
 import { discoverEligiblePracticeQuestions } from "@/lib/practice/practice-eligibility";
 import {
   MAX_PRACTICE_QUESTIONS,
@@ -150,14 +151,18 @@ function createSessionSubsetRetry(
 }
 
 function filterForMode(mode: PracticeMode, candidates: EligiblePracticeQuestion[], evidence: ProgressEvidence) {
-  if (mode === "needs_work") {
-    return candidates.filter((item) => {
-      const progress = getQuestionProgressForVersion(item.reference.questionId, item.reference.questionVersion, evidence);
-      return progress.reviewRecommended || (progress.attempted && !progress.completed);
+    if (mode === "needs_work") {
+      return candidates.filter((item) => {
+        const progress = getQuestionProgressForVersion(item.reference.questionId, item.reference.questionVersion, evidence);
+        const latestGraded = latestCurrentGradedAttempt(item, evidence);
+        return progress.reviewRecommended || (Boolean(latestGraded) && !progress.completed);
     });
   }
   if (mode === "retry_incorrect") {
-    return candidates.filter((item) => latestCurrentAttempt(item, evidence)?.isCorrect === false);
+    return candidates.filter((item) => {
+      const attempt = latestCurrentGradedAttempt(item, evidence);
+      return Boolean(attempt && isGradedIncorrectAttempt(attempt));
+    });
   }
   return candidates;
 }
@@ -197,25 +202,27 @@ function prioritySelection(candidates: EligiblePracticeQuestion[], requestedCoun
 
 function scoreQuestion(candidate: EligiblePracticeQuestion, evidence: ProgressEvidence) {
   const progress = getQuestionProgressForVersion(candidate.reference.questionId, candidate.reference.questionVersion, evidence);
-  const latest = latestCurrentAttempt(candidate, evidence);
+  const latest = latestCurrentGradedAttempt(candidate, evidence);
   let score = 0;
-  if (!progress.currentVersionAttempted) score += 1000;
-  if (latest?.isCorrect === false) score += 500;
+  if (!latest) score += 1000;
+  if (latest && isGradedIncorrectAttempt(latest)) score += 500;
   if (progress.reviewRecommended) score += 350;
   if (latest) score -= Math.max(0, Math.floor(Date.parse(latest.attemptedAt) / 86400000) % 300);
   score -= candidate.question.displayOrder ?? 0;
   return score;
 }
 
-function latestCurrentAttempt(candidate: EligiblePracticeQuestion, evidence: ProgressEvidence): QuestionAttempt | undefined {
-  return evidence.attempts
-    .filter((attempt) =>
-      attempt.questionId === candidate.reference.questionId &&
-      attempt.isGenuine &&
-      attempt.versionEvidence.kind === "known" &&
-      attempt.versionEvidence.questionVersion === candidate.reference.questionVersion)
+function latestCurrentGradedAttempt(candidate: EligiblePracticeQuestion, evidence: ProgressEvidence) {
+  const attempt = evidence.attempts
+    .filter((item) =>
+      item.questionId === candidate.reference.questionId &&
+      item.isGenuine &&
+      item.versionEvidence.kind === "known" &&
+      item.versionEvidence.questionVersion === candidate.reference.questionVersion &&
+      isGradedAttempt(item))
     .sort((left, right) => Date.parse(left.attemptedAt) - Date.parse(right.attemptedAt) || left.sequence - right.sequence)
     .at(-1);
+  return attempt;
 }
 
 function normalizeTiming(timing?: PracticeTiming): PracticeTiming {

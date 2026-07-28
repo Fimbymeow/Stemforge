@@ -15,6 +15,7 @@ import {
   type VersionEvidence,
   UNKNOWN_LEGACY_VERSION_EVIDENCE,
 } from "@/lib/progress/types";
+import { hasCompleteMarkerMetadata, isLegalPersistedMarkerMetadata } from "@/lib/marking/types";
 
 export function createDefaultProgressPayload(): ProgressPayload {
   return {
@@ -58,7 +59,18 @@ const isQuestionAttemptV3 = (value: unknown): value is QuestionAttemptV3 =>
 export const isQuestionAttempt = (value: unknown): value is QuestionAttempt =>
   isQuestionAttemptV3(value) &&
   hasText((value as QuestionAttempt).eventId) &&
-  hasOptionalSessionId(value as QuestionAttempt);
+  hasOptionalSessionId(value as QuestionAttempt) &&
+  validMarkerFields(value as QuestionAttempt);
+
+function validMarkerFields(attempt: QuestionAttempt) {
+  if (!hasCompleteMarkerMetadata(attempt)) return true;
+  if (!isLegalPersistedMarkerMetadata(attempt)) return false;
+  if (attempt.outcomeKind === "graded") {
+    return typeof attempt.isCorrect === "boolean" &&
+      (attempt.isCorrect ? attempt.outcomeReason === undefined : attempt.outcomeReason !== undefined);
+  }
+  return attempt.isCorrect === null;
+}
 
 export function isQuestionSupportEventV2(value: unknown): value is QuestionSupportEventV2 {
   if (!value || typeof value !== "object") return false;

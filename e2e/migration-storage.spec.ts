@@ -4,6 +4,7 @@ import { test, expect } from "./fixtures/test";
 import {
   QUESTION_ANSWERS,
   QUESTION_IDS,
+  QUESTION_VERSIONS,
   STORAGE_KEY,
   currentAttempt,
   legacyAttempt,
@@ -29,7 +30,9 @@ test("V1 progress stays visible and continued activity writes V5 safely", async 
     legacyCompleted: true,
     versionEvidence: { kind: "unknown_legacy", questionVersion: null },
   });
-  expect(stored.data.attempts[1]).toMatchObject({ versionEvidence: { kind: "known", questionVersion: 1 } });
+  expect(stored.data.attempts[1]).toMatchObject({
+    versionEvidence: { kind: "known", questionVersion: QUESTION_VERSIONS[QUESTION_IDS[1]] },
+  });
   const legacyState = getQuestionProgress(QUESTION_IDS[0], stored.data);
   expect(legacyState.completed).toBe(true);
   expect(legacyState.correctWithoutSolution).toBe(false);
@@ -92,7 +95,10 @@ test("V2 evidence becomes explicit unknown while a new submission captures known
   let stored = await readStoredProgress(page) as ProgressPayload;
   expect(stored.version).toBe(5);
   expect(stored.data.attempts[0].versionEvidence).toEqual({ kind: "unknown_legacy", questionVersion: null });
-  expect(stored.data.attempts[1].versionEvidence).toEqual({ kind: "known", questionVersion: 1 });
+  expect(stored.data.attempts[1].versionEvidence).toEqual({
+    kind: "known",
+    questionVersion: QUESTION_VERSIONS[QUESTION_IDS[1]],
+  });
 
   await page.reload();
   stored = await readStoredProgress(page) as ProgressPayload;
@@ -117,7 +123,8 @@ test("migrating an already-complete V2 path does not replay the completion celeb
   await seedStoredProgress(page, completedV2);
   await page.goto("/subjects/higher-maths/calculus/differentiation/basic-differentiation");
   await expect(page.getByTestId("path-completion-panel")).toHaveCount(0);
-  await expect(page.getByTestId("version-progress-notice").first()).toContainText("Previous completion is retained");
+  await expect(page.getByText("5 of 8 questions complete")).toBeVisible();
+  await expect(page.locator("header").getByRole("link", { name: "Continue" })).toHaveAttribute("href", `/question/${QUESTION_IDS[1]}`);
 });
 
 test("unsupported future payload remains untouched", async ({ page }) => {

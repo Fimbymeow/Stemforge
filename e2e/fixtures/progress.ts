@@ -38,6 +38,17 @@ export const QUESTION_ANSWERS: Record<(typeof QUESTION_IDS)[number], string> = {
   "hm-calc-diff-basic-ppq-002": "2",
 };
 
+export const QUESTION_VERSIONS: Record<(typeof QUESTION_IDS)[number], number> = {
+  "hm-calc-diff-basic-f-001": 1,
+  "hm-calc-diff-basic-f-002": 2,
+  "hm-calc-diff-basic-f-003": 2,
+  "hm-calc-diff-basic-a-001": 1,
+  "hm-calc-diff-basic-a-002": 2,
+  "hm-calc-diff-basic-a-003": 1,
+  "hm-calc-diff-basic-ppq-001": 1,
+  "hm-calc-diff-basic-ppq-002": 1,
+};
+
 export function stageForQuestion(questionId: string) {
   if (questionId.includes("-ppq-")) return PPQ_STAGE_ID;
   if (questionId.includes("-a-")) return APPLICATION_STAGE_ID;
@@ -60,7 +71,10 @@ export function currentAttempt(
     isGenuine: true,
     hintViewedBeforeSubmission: false,
     supportKnowledge: "known",
-    versionEvidence: { kind: "known", questionVersion: 1 },
+    versionEvidence: {
+      kind: "known",
+      questionVersion: QUESTION_VERSIONS[questionId as keyof typeof QUESTION_VERSIONS] ?? 1,
+    },
     eventId: `attempt_e2e_${sequence}`,
     ...overrides,
   };
@@ -80,7 +94,10 @@ export function supportEvent(
     occurredAt: `2026-07-12T11:${String(sequence).padStart(2, "0")}:00.000Z`,
     sequence,
     afterGenuineAttempt: type === "solution_viewed",
-    versionEvidence: { kind: "known", questionVersion: 1 },
+    versionEvidence: {
+      kind: "known",
+      questionVersion: QUESTION_VERSIONS[questionId as keyof typeof QUESTION_VERSIONS] ?? 1,
+    },
     eventId: `support_e2e_${sequence}`,
     ...overrides,
   };

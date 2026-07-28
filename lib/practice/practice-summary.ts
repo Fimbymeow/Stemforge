@@ -3,6 +3,7 @@ import { resolvePracticeReference } from "@/lib/practice/practice-eligibility";
 import { derivePracticeQuestionStatuses } from "@/lib/practice/practice-question-status";
 import type { PracticeSession } from "@/lib/practice/practice-types";
 import type { ProgressEvidence } from "@/lib/progress/types";
+import { isGradedCorrectAttempt, isGradedIncorrectAttempt } from "@/lib/progress/attempt-outcomes";
 
 export type PracticeSessionSummary = {
   sessionId: string;
@@ -36,8 +37,9 @@ export function derivePracticeSessionSummary(
     return resolved.status === "resolved" ? resolved.context.skillPath.slug : reference.pathId;
   }))];
   const attemptedCount = statuses.filter((status) => status.latestAttempt).length;
-  const correctCount = statuses.filter((status) => status.latestAttempt?.isCorrect === true).length;
-  const incorrectQuestionIds = statuses.filter((status) => status.latestAttempt?.isCorrect === false).map((status) => status.questionId);
+  const correctCount = statuses.filter((status) => status.latestGradedAttempt && isGradedCorrectAttempt(status.latestGradedAttempt)).length;
+  const incorrectQuestionIds = statuses.filter((status) =>
+    status.latestGradedAttempt && isGradedIncorrectAttempt(status.latestGradedAttempt)).map((status) => status.questionId);
   const incorrectCount = incorrectQuestionIds.length;
   const revisitQuestionIds = statuses.filter((status) => status.worthRevisit).map((status) => status.questionId);
   return {

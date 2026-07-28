@@ -22,7 +22,7 @@ test("the question and answer dominate first arrival with accurate stage context
   expect(interaction!.y).toBeLessThan(430);
 });
 
-test("empty stays draft-only while submitted malformed and unsupported answers retain established attempt evidence", async ({ page }) => {
+test("empty stays draft-only while malformed and unmarkable answers retain non-graded evidence", async ({ page }) => {
   await openQuestion(page, QUESTION_IDS[0]);
   const input = page.getByLabel("Your answer");
 
@@ -31,19 +31,57 @@ test("empty stays draft-only while submitted malformed and unsupported answers r
   await expect(input).toBeFocused();
   expect(await readStoredProgress(page)).toBeNull();
 
-  await input.fill("((5x^4");
+  await input.fill("5x^");
   await page.getByRole("button", { name: "Submit Answer" }).click();
-  await expect(page.getByTestId("question-status")).toContainText("Check the brackets");
+  await expect(page.getByTestId("question-status")).toContainText("Answer format could not be read");
+  await expect(page.getByTestId("question-status")).toHaveAttribute("data-feedback-state", "warning");
+  await expect(page.getByTestId("question-status")).toHaveAccessibleName("Answer feedback: format warning");
+  await expect(page.getByRole("button", { name: "Try again" })).not.toHaveClass(/text-danger/);
   await expect(input).toHaveAttribute("aria-invalid", "true");
-  let stored = await readStoredProgress(page) as { data: { attempts: unknown[] } };
+  let stored = await readStoredProgress(page) as { data: { attempts: Array<{ isCorrect: boolean | null; outcomeKind: string }> } };
   expect(stored.data.attempts).toHaveLength(1);
+  expect(stored.data.attempts[0]).toMatchObject({ isCorrect: null, outcomeKind: "malformed" });
 
   await page.getByRole("button", { name: "Try again" }).click();
   await input.fill("y=5x^4");
   await page.getByRole("button", { name: "Submit Answer" }).click();
-  await expect(page.getByTestId("question-status")).toContainText("Enter only the requested result");
-  stored = await readStoredProgress(page) as { data: { attempts: unknown[] } };
+  await expect(page.getByTestId("question-status")).toContainText("This form cannot be checked safely");
+  await expect(page.getByTestId("question-status")).toHaveAttribute("data-feedback-state", "neutral");
+  await expect(page.getByTestId("question-status")).toHaveAccessibleName("Answer feedback: not marked");
+  await expect(page.getByRole("button", { name: "Try again" })).not.toHaveClass(/text-danger/);
+  stored = await readStoredProgress(page) as { data: { attempts: Array<{ isCorrect: boolean | null; outcomeKind: string }> } };
   expect(stored.data.attempts).toHaveLength(2);
+  expect(stored.data.attempts[1]).toMatchObject({ isCorrect: null, outcomeKind: "unmarkable" });
+});
+
+test("safe numeric equivalents pass while legacy multiplication collisions are never correct", async ({ page }) => {
+  await openQuestion(page, QUESTION_IDS[2]);
+  await page.getByLabel("Your answer").fill("28/2");
+  await page.getByRole("button", { name: "Submit Answer" }).click();
+  await expect(page.getByTestId("question-status")).toContainText("Correct");
+  await page.reload();
+  await page.getByLabel("Your answer").fill("1×4");
+  await page.getByRole("button", { name: "Submit Answer" }).click();
+  await expect(page.getByTestId("question-status")).toContainText("This form cannot be checked safely");
+});
+
+test("save failure unlocks the solution for the current view but not after refresh", async ({ page }) => {
+  await page.addInitScript(() => {
+    const original = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (key: string, value: string) {
+      if (key === "stemforge.localProgress.v1") throw new DOMException("blocked", "QuotaExceededError");
+      return original.call(this, key, value);
+    };
+  });
+  await openQuestion(page, QUESTION_IDS[0]);
+  await page.getByLabel("Your answer").fill("5x^4");
+  await page.getByRole("button", { name: "Submit Answer" }).click();
+  await expect(page.getByTestId("question-status")).toContainText("Your answer was not saved");
+  await expect(page.getByTestId("question-status")).toHaveAttribute("data-feedback-state", "neutral");
+  await expect(page.getByTestId("question-status")).toHaveAccessibleName("Answer feedback: system issue");
+  await expect(page.getByTestId("worked-solution-control")).toBeVisible();
+  await page.reload();
+  await expect(page.getByTestId("worked-solution-control")).toHaveCount(0);
 });
 
 test("incorrect submission stays visible, Retry focuses the retained answer, and later correctness replaces the comparison", async ({ page }) => {
@@ -52,6 +90,9 @@ test("incorrect submission stays visible, Retry focuses the retained answer, and
   await input.fill("4x^5");
   await page.getByRole("button", { name: "Submit Answer" }).click();
   await expect(page.getByTestId("question-status")).toContainText("Not quite yet");
+  await expect(page.getByTestId("question-status")).toHaveAttribute("data-feedback-state", "danger");
+  await expect(page.getByTestId("question-status")).toHaveAccessibleName("Answer feedback: incorrect");
+  await expect(page.getByRole("button", { name: "Try again" })).toHaveClass(/text-danger/);
   await expect(page.getByTestId("submitted-answer")).toContainText("4x^5");
   await expect(input).toHaveValue("4x^5");
 
@@ -73,6 +114,17 @@ test("hint language is supportive and its revealed content receives focus", asyn
   await expect(hintPanel).not.toContainText("recorded for mastery");
   await openHint(page);
   await expect(page.getByTestId("hint-content")).toBeFocused();
+});
+
+test("hint evidence survives refresh and still qualifies the later submission as supported", async ({ page }) => {
+  await openQuestion(page, QUESTION_IDS[0]);
+  await openHint(page);
+  await page.reload();
+  await page.getByLabel("Your answer").fill(QUESTION_ANSWERS[QUESTION_IDS[0]]);
+  await page.getByRole("button", { name: "Submit Answer" }).click();
+  await expect(page.getByTestId("question-status")).toContainText("Correct");
+  const stored = await readStoredProgress(page) as { data: { attempts: Array<{ hintViewedBeforeSubmission: boolean }> } };
+  expect(stored.data.attempts[0].hintViewedBeforeSubmission).toBe(true);
 });
 
 test("current unstructured solutions use the safe full fallback after a genuine attempt", async ({ page }) => {

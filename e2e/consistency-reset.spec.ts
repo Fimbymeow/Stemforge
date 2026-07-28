@@ -21,11 +21,11 @@ test("dashboard, Higher Maths hub and path agree for mixed outcomes", async ({ p
   await submitAnswer(page, QUESTION_ANSWERS[QUESTION_IDS[1]]);
 
   await openQuestion(page, QUESTION_IDS[2]);
-  await submitAnswer(page, "wrong");
+  await submitAnswer(page, "0");
   await openWorkedSolution(page);
 
   await openQuestion(page, QUESTION_IDS[3]);
-  await submitAnswer(page, "wrong");
+  await submitAnswer(page, "0");
   await expect(page.getByTestId("next-question-locked")).toBeVisible();
 
   await page.goto("/dashboard");

@@ -12,6 +12,7 @@ import type {
   SkillPathProgress,
   StageProgress,
 } from "@/lib/progress/types";
+import { effectiveAttemptOutcome, isGradedAttempt, isGradedCorrectAttempt, isGradedIncorrectAttempt } from "@/lib/progress/attempt-outcomes";
 
 export const MASTERY_CONTRIBUTIONS: Readonly<Record<QuestionOutcome, number>> = {
   not_attempted: 0,
@@ -92,13 +93,13 @@ export function getQuestionProgressForVersion(
     (event) => event.versionEvidence.kind === "known" && event.versionEvidence.questionVersion < currentVersion,
   );
   const hasUnknown = unknownAttempts.length > 0 || unknownEvents.length > 0;
-  const currentLatest = currentAttempts.at(-1);
-  const compatibleLatest = currentLatest ?? (currentVersion === 1 ? unknownAttempts.at(-1) : undefined);
+  const currentLatest = currentAttempts.filter(isGradedAttempt).at(-1);
+  const compatibleLatest = currentLatest ?? (currentVersion === 1 ? unknownAttempts.filter(isGradedAttempt).at(-1) : undefined);
   const currentSolutionViewed = currentEvents.some((event) => event.type === "solution_viewed" && event.afterGenuineAttempt);
   const historicalSolutionViewed = historicalEvents.some((event) => event.type === "solution_viewed" && event.afterGenuineAttempt);
   const historicalLegacyCompleted = historicalAttempts.some((attempt) => attempt.legacyCompleted === true);
-  const currentVersionCompleted = currentAttempts.some((attempt) => attempt.isCorrect === true) || currentSolutionViewed;
-  const historicalCompleted = historicalAttempts.some((attempt) => attempt.isCorrect === true) || historicalSolutionViewed || historicalLegacyCompleted;
+  const currentVersionCompleted = currentAttempts.some(isGradedCorrectAttempt) || currentSolutionViewed;
+  const historicalCompleted = historicalAttempts.some(isGradedCorrectAttempt) || historicalSolutionViewed || historicalLegacyCompleted;
   // Unknown evidence remains visible for unchanged version-1 content, but it is
   // never promoted to strict current-version mastery evidence.
   const legacyCompatibleCompleted = currentVersion === 1 && hasUnknown && historicalCompleted;
@@ -118,7 +119,7 @@ export function getQuestionProgressForVersion(
     masteryContribution: MASTERY_CONTRIBUTIONS[bestOutcome],
     reviewRecommended: shouldRecommendReview(currentAttempts, currentEvents, bestOutcome) || hasUnknown || olderKnown,
     genuineAttemptCount: currentAttempts.length,
-    incorrectAttemptCount: currentAttempts.filter((attempt) => attempt.isCorrect === false).length,
+    incorrectAttemptCount: currentAttempts.filter(isGradedIncorrectAttempt).length,
     hintViewed: currentEvents.some((event) => event.type === "hint_viewed"),
     solutionViewed: currentSolutionViewed,
     correctWithoutSolution,
@@ -146,12 +147,13 @@ export function deriveBestDemonstratedOutcome(
   events: readonly QuestionSupportEvent[],
 ): QuestionOutcome {
   const genuine = attempts.filter((attempt) => attempt.isGenuine);
+  const graded = genuine.filter(isGradedAttempt);
   const outcomes: QuestionOutcome[] = [];
-  for (const [index, attempt] of genuine.entries()) {
-    if (attempt.isCorrect === true) {
+  for (const [index, attempt] of graded.entries()) {
+    if (isGradedCorrectAttempt(attempt)) {
       if (attempt.supportKnowledge === "unknown_legacy") outcomes.push("legacy_correct_unknown_support");
       else if (attempt.hintViewedBeforeSubmission) outcomes.push("correct_with_hint");
-      else if (genuine.slice(0, index).some((previous) => previous.isCorrect === false)) {
+      else if (graded.slice(0, index).some(isGradedIncorrectAttempt)) {
         outcomes.push("independently_correct_after_error");
       } else outcomes.push("independently_correct_first_attempt");
     }
@@ -160,7 +162,7 @@ export function deriveBestDemonstratedOutcome(
     outcomes.push("completed_with_solution");
   }
   if (genuine.some((attempt) => attempt.legacyCompleted)) outcomes.push("legacy_completed");
-  if (!outcomes.length && genuine.length) outcomes.push("attempted_unresolved");
+  if (!outcomes.length && (graded.length || genuine.some((attempt) => effectiveAttemptOutcome(attempt).legacy))) outcomes.push("attempted_unresolved");
   if (!outcomes.length) return "not_attempted";
   return outcomes.reduce((best, outcome) =>
     MASTERY_CONTRIBUTIONS[outcome] > MASTERY_CONTRIBUTIONS[best] ? outcome : best,
@@ -173,14 +175,15 @@ export function shouldRecommendReview(
   bestOutcome = deriveBestDemonstratedOutcome(attempts, events),
 ) {
   const genuine = attempts.filter((attempt) => attempt.isGenuine);
-  const latest = genuine.at(-1);
+  const graded = genuine.filter(isGradedAttempt);
+  const latest = graded.at(-1);
   return (
     events.some((event) => event.type === "solution_viewed" && event.afterGenuineAttempt) ||
-    genuine.filter((attempt) => attempt.isCorrect === false).length >= 2 ||
+    graded.filter(isGradedIncorrectAttempt).length >= 2 ||
     bestOutcome === "correct_with_hint" ||
     bestOutcome === "legacy_completed" ||
     bestOutcome === "legacy_correct_unknown_support" ||
-    (MASTERY_CONTRIBUTIONS[bestOutcome] >= 0.7 && latest?.isCorrect === false)
+    (MASTERY_CONTRIBUTIONS[bestOutcome] >= 0.7 && Boolean(latest && isGradedIncorrectAttempt(latest)))
   );
 }
 
@@ -194,12 +197,14 @@ export function calculateStageProgress(
   const attempted = states.filter((state) => state.attempted);
   const completed = states.filter((state) => state.completed);
   const latestCorrect = states.filter((state) => state.latestResult === true);
+  const latestGraded = states.filter((state) => state.latestResult !== null);
   const firstAttempts = stage.questionIds
     .map((questionId) => evidence.attempts.find((attempt) =>
       attempt.questionId === questionId &&
       attempt.isGenuine &&
       attempt.versionEvidence.kind === "known" &&
-      attempt.versionEvidence.questionVersion === (questionVersions[questionId] ?? 1),
+      attempt.versionEvidence.questionVersion === (questionVersions[questionId] ?? 1) &&
+      isGradedAttempt(attempt),
     ))
     .filter((attempt): attempt is QuestionAttempt => Boolean(attempt));
   const masteryScore = percentFromRatio(states.reduce((sum, state) => sum + state.masteryContribution, 0), states.length);
@@ -220,8 +225,8 @@ export function calculateStageProgress(
     firstAttemptAccuracyPercentage: firstAttempts.length
       ? percent(firstAttempts.filter((attempt) => attempt.isCorrect === true).length, firstAttempts.length)
       : null,
-    latestAttemptAccuracyPercentage: attempted.length ? percent(latestCorrect.length, attempted.length) : null,
-    accuracyPercentage: attempted.length ? percent(latestCorrect.length, attempted.length) : null,
+    latestAttemptAccuracyPercentage: latestGraded.length ? percent(latestCorrect.length, latestGraded.length) : null,
+    accuracyPercentage: latestGraded.length ? percent(latestCorrect.length, latestGraded.length) : null,
     masteryScore,
     independentPerformancePercentage,
     status: deriveStageStatus({ attemptedCount: attempted.length, completedCount: completed.length, total: states.length, masteryScore, independentPerformancePercentage }),
@@ -265,12 +270,14 @@ export function calculateSkillPathProgress(
   const attempted = states.filter((state) => state.attempted);
   const completed = states.filter((state) => state.completed);
   const latestCorrect = states.filter((state) => state.latestResult === true);
+  const latestGraded = states.filter((state) => state.latestResult !== null);
   const firstAttempts = questionIds
     .map((questionId) => evidence.attempts.find((attempt) =>
       attempt.questionId === questionId &&
       attempt.isGenuine &&
       attempt.versionEvidence.kind === "known" &&
-      attempt.versionEvidence.questionVersion === (questionVersions[questionId] ?? 1),
+      attempt.versionEvidence.questionVersion === (questionVersions[questionId] ?? 1) &&
+      isGradedAttempt(attempt),
     ))
     .filter((attempt): attempt is QuestionAttempt => Boolean(attempt));
   const masteryScore = calculatePathWeightedMastery(stages, stageProgress);
@@ -293,8 +300,8 @@ export function calculateSkillPathProgress(
     firstAttemptAccuracyPercentage: firstAttempts.length
       ? percent(firstAttempts.filter((attempt) => attempt.isCorrect === true).length, firstAttempts.length)
       : null,
-    latestAttemptAccuracyPercentage: attempted.length ? percent(latestCorrect.length, attempted.length) : null,
-    accuracyPercentage: attempted.length ? percent(latestCorrect.length, attempted.length) : null,
+    latestAttemptAccuracyPercentage: latestGraded.length ? percent(latestCorrect.length, latestGraded.length) : null,
+    accuracyPercentage: latestGraded.length ? percent(latestCorrect.length, latestGraded.length) : null,
     masteryScore,
     independentPerformancePercentage,
     status: derivePathStatus({ attemptedCount: attempted.length, allStagesCompleted, masteryScore, independentPerformancePercentage, pastPaperMastery }),

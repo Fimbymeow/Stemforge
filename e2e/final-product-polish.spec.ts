@@ -5,7 +5,7 @@ import { expectNoHorizontalOverflow, openQuestion, submitAnswer } from "./fixtur
 test("beta notice stays in flow beside desktop question feedback and mobile dashboard content", async ({ page, seriousBrowserErrors }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await openQuestion(page, QUESTION_IDS[0]);
-  await submitAnswer(page, "wrong");
+  await submitAnswer(page, "4x^5");
   await expectSeparated(
     page.getByLabel("Private beta notice", { exact: true }),
     page.getByTestId("question-status"),
@@ -35,7 +35,7 @@ test("practice summary retains the app shell and exact-session retry priority", 
   await page.goto("/practice");
   await page.getByTestId("quick-practice-action").click();
   await expect(page).toHaveURL(/\/practice\/session\//);
-  await page.getByLabel("Your answer").fill("wrong");
+  await page.getByLabel("Your answer").fill("4x^5");
   await page.getByRole("button", { name: "Submit Answer" }).click();
   await page.getByRole("button", { name: "Finish session" }).click();
   await page.getByRole("dialog", { name: "Finish this session?" }).getByRole("button", { name: "Finish session" }).click();

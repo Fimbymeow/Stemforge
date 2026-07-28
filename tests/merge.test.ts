@@ -47,6 +47,20 @@ test("support events and snapshots retain distinct IDs and deduplicate exact IDs
   assert.equal(merged.payload.data.achievementSnapshots.length, 2);
 });
 
+test("merge preserves additive marker metadata without changing V5", () => {
+  const marked = attempt({
+    eventId: "marked",
+    isCorrect: null,
+    outcomeKind: "unmarkable",
+    outcomeReason: "unsupported_mathematical_form",
+    strategy: "polynomial_form",
+    strategyVersion: 1,
+  });
+  const merged = mergeProgressEvidence(payload([marked], []), createDefaultProgressPayload()).payload;
+  assert.equal(merged.version, 5);
+  assert.deepEqual(merged.data.attempts[0], marked);
+});
+
 test("merged stronger evidence survives and equal timestamps use IDs for latest ordering", () => {
   const time = "2026-07-13T12:00:00.000Z";
   const left = payload([attempt({ eventId: "a", attemptedAt: time, isCorrect: true, answer: "correct" })], []);

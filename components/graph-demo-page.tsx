@@ -34,6 +34,7 @@ export const graphDemoQuestion: Question = {
   questionText: "For $f(x)=x^3-3x$, complete the nature table using the graph of $f(x)$ and $f'(x)$.",
   marks: 4,
   answerType: "nature_table",
+  marking: { strategy: "structured_graph", strategyVersion: 1 },
   correctAnswer: "structured nature table",
   acceptedAnswers: ["structured-answer"],
   graphConfig: {

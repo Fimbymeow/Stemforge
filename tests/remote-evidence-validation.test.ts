@@ -23,6 +23,28 @@ test("remote validation accepts canonical V5 and unknown legacy version evidence
   assert.deepEqual(result.payload.data.attempts, [unknown]);
 });
 
+test("remote validation accepts legal new outcomes alongside legacy attempts", () => {
+  const graded = attempt({ eventId: "new_graded", isCorrect: true, outcomeKind: "graded", strategy: "numeric", strategyVersion: 1 });
+  const malformed = attempt({ eventId: "new_malformed", isCorrect: null, outcomeKind: "malformed", outcomeReason: "malformed_numeric", strategy: "numeric", strategyVersion: 1 });
+  const unmarkable = attempt({ eventId: "new_unmarkable", isCorrect: null, outcomeKind: "unmarkable", outcomeReason: "expression_not_permitted", strategy: "numeric", strategyVersion: 1 });
+  const guided = attempt({ eventId: "new_guided", isCorrect: null, outcomeKind: "guided_pending", strategy: "guided_self_check", strategyVersion: 1 });
+  const legacy = attempt({ eventId: "legacy" });
+  const result = validateRemoteEvidenceBatch(payload({ attempts: [graded, malformed, unmarkable, guided, legacy], supportEvents: [] }));
+  assert.deepEqual(result.rejected, []);
+  assert.deepEqual(result.payload.data.attempts, [graded, malformed, unmarkable, guided, legacy]);
+});
+
+test("remote validation rejects incomplete metadata, illegal reasons and unknown keys", () => {
+  const missing = attempt({ eventId: "missing", outcomeKind: "graded", isCorrect: true });
+  const illegal = attempt({ eventId: "illegal", outcomeKind: "graded", isCorrect: true, outcomeReason: "value_wrong", strategy: "numeric", strategyVersion: 1 });
+  const futureStrategy = attempt({ eventId: "future_strategy", outcomeKind: "malformed", isCorrect: null, outcomeReason: "malformed_numeric", strategy: "numeric", strategyVersion: 2 });
+  const mismatchedReason = attempt({ eventId: "mismatched_reason", outcomeKind: "malformed", isCorrect: null, outcomeReason: "malformed_numeric", strategy: "polynomial_form", strategyVersion: 1 });
+  const unknown = { ...attempt({ eventId: "unknown" }), surprise: true };
+  const result = validateRemoteEvidenceBatch(payload({ attempts: [missing, illegal, futureStrategy, mismatchedReason, unknown], supportEvents: [] }));
+  assert.equal(result.payload.data.attempts.length, 0);
+  assert.equal(result.rejected.length, 5);
+});
+
 test("remote validation rejects malformed evidence item-by-item without discarding valid siblings", () => {
   const valid = attempt({ eventId: "attempt_valid" });
   const invalid = attempt({ eventId: "bad event id" });

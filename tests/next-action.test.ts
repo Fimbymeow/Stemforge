@@ -156,7 +156,7 @@ function attempt(
     isGenuine: true,
     hintViewedBeforeSubmission: false,
     supportKnowledge: "known",
-    versionEvidence: { kind: "known", questionVersion: 1 },
+    versionEvidence: { kind: "known", questionVersion: context?.question.questionVersion ?? 1 },
     eventId: `next_action_attempt_${sequence}`,
     ...overrides,
   };

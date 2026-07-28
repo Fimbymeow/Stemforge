@@ -37,16 +37,17 @@ test("current whitespace, case, multiplication and brace variants remain accepte
   }
 });
 
-test("mathematically equivalent reordered algebra remains rejected", () => {
-  assert.equal(markQuestionAnswer(powerQuestion, "x^4*5").isCorrect, false);
-  assert.equal(markQuestionAnswer(powerQuestion, "5x*x*x*x").isCorrect, false);
+test("bounded polynomial equivalence refuses unsupported factor order and repeated multiplication", () => {
+  assert.equal(markQuestionAnswer(powerQuestion, "x^4*5").outcomeKind, "unmarkable");
+  assert.equal(markQuestionAnswer(powerQuestion, "5x*x*x*x").outcomeKind, "unmarkable");
 });
 
-test("decimal formatting, leading zeros and leading plus signs are not equivalent", () => {
+test("safe numeric literal equivalents are exact while expressions are unmarkable", () => {
   assert.equal(markQuestionAnswer(numericalQuestion, "14").isCorrect, true);
-  assert.equal(markQuestionAnswer(numericalQuestion, "14.0").isCorrect, false);
-  assert.equal(markQuestionAnswer(numericalQuestion, "014").isCorrect, false);
-  assert.equal(markQuestionAnswer(numericalQuestion, "+14").isCorrect, false);
+  assert.equal(markQuestionAnswer(numericalQuestion, "14.0").isCorrect, true);
+  assert.equal(markQuestionAnswer(numericalQuestion, "014").isCorrect, true);
+  assert.equal(markQuestionAnswer(numericalQuestion, "+14").isCorrect, true);
+  for (const expression of ["1*4", "1×4", "1 4"]) assert.notEqual(markQuestionAnswer(numericalQuestion, expression).isCorrect, true);
 });
 
 test("fractions are exact strings and are not equivalent to decimals", () => {
@@ -80,10 +81,10 @@ test("accepted-answer order only determines which matching alias is reported", (
 });
 
 test("guided written and multi-step answers remain unmarked regardless of completeness", () => {
-  const multiStep = { ...powerQuestion, answerType: "multi_step" as const } satisfies Question;
+  const multiStep = { ...powerQuestion, answerType: "multi_step" as const, marking: { strategy: "guided_self_check" as const, strategyVersion: 1 as const } } satisfies Question;
   assert.equal(markQuestionAnswer(multiStep, "x=1\ny=2").isCorrect, null);
   assert.equal(markQuestionAnswer(multiStep, "x=1").isCorrect, null);
-  assert.equal(markQuestionAnswer({ ...multiStep, answerType: "written" }, "complete explanation").isCorrect, null);
+  assert.equal(markQuestionAnswer(multiStep, "complete explanation").isCorrect, null);
 });
 
 test("legacy Physics remains an unmarkable prefilled demonstration", () => {

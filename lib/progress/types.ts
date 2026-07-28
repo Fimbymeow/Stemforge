@@ -78,6 +78,10 @@ export type ProgressPayloadV3 = {
 export type QuestionAttempt = QuestionAttemptV3 & {
   eventId: string;
   practiceSessionId?: string;
+  outcomeKind?: "graded" | "guided_pending" | "unmarkable" | "malformed";
+  outcomeReason?: import("@/lib/marking/types").MarkerOutcomeReason;
+  strategy?: import("@/lib/marking/types").MarkingStrategy;
+  strategyVersion?: number;
 };
 
 export type QuestionSupportEvent = QuestionSupportEventV3 & {

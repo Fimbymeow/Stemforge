@@ -89,7 +89,7 @@ test("question support remains Notes-only before and after an attempt", async ({
   await page.goto("/question/hm-calc-diff-basic-f-001");
   await expect(page.getByRole("link", { name: "Notes: What differentiation does" })).toBeVisible();
   await expect(page.getByRole("link", { name: /Worked example:/ })).toHaveCount(0);
-  await page.getByLabel("Your answer").fill("wrong");
+  await page.getByLabel("Your answer").fill("4x^5");
   await page.getByRole("button", { name: "Submit Answer" }).click();
   await expect(page.getByRole("link", { name: /Worked example:/ })).toHaveCount(0);
 });
@@ -102,7 +102,7 @@ test("keyboard users can move from a resource into practice and reach the summar
   await practice.press("Enter");
   await page.getByTestId("practice-chooser-quick").press("Enter");
   await expect(page).toHaveURL(/\/practice\/session\//);
-  await page.getByLabel("Your answer").fill("wrong");
+  await page.getByLabel("Your answer").fill("4x^5");
   await page.getByRole("button", { name: "Submit Answer" }).press("Enter");
   await expect(page.getByRole("heading", { name: "Not quite yet" })).toBeFocused();
   const finish = page.getByRole("button", { name: "Finish session" });

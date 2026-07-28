@@ -186,6 +186,7 @@ import type {
   GraphViewport,
   NatureTableConfig,
 } from "@/lib/maths/expression-types";
+import type { QuestionMarkingContract } from "@/lib/marking/types";
 
 export type AnswerType = "multiple_choice" | "numerical" | "algebraic" | "written" | "multi_step" | "graph_structured" | "nature_table";
 
@@ -212,6 +213,7 @@ export type Question = {
   questionText: string;
   marks: number;
   answerType: AnswerType;
+  marking: QuestionMarkingContract;
   correctAnswer: string;
   acceptedAnswers: string[];
   options?: QuestionOption[];

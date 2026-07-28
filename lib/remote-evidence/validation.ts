@@ -136,7 +136,9 @@ const attemptKeys = [
   "questionId", "skillPathId", "stageId", "isCorrect", "answer", "attemptedAt", "sequence", "isGenuine",
   "hintViewedBeforeSubmission", "supportKnowledge", "versionEvidence", "eventId",
 ] as const;
-const attemptOptionalKeys = ["legacyCompleted", "practiceSessionId"] as const;
+const attemptOptionalKeys = [
+  "legacyCompleted", "practiceSessionId", "outcomeKind", "outcomeReason", "strategy", "strategyVersion",
+] as const;
 const supportKeys = [
   "questionId", "skillPathId", "stageId", "type", "occurredAt", "sequence", "afterGenuineAttempt", "versionEvidence", "eventId",
 ] as const;

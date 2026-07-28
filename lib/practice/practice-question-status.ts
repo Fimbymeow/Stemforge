@@ -7,6 +7,7 @@ import type {
   QuestionAttempt,
   QuestionSupportEvent,
 } from "@/lib/progress/types";
+import { effectiveAttemptOutcome, isGradedAttempt, isGradedCorrectAttempt, isGradedIncorrectAttempt } from "@/lib/progress/attempt-outcomes";
 
 export type PracticeQuestionPrimaryStatus = "unanswered" | "attempted" | "complete";
 export type PracticeQuestionStatus = {
@@ -18,6 +19,7 @@ export type PracticeQuestionStatus = {
   awaitingSelfCheck: boolean;
   selfAssessment: GuidedSelfAssessmentEvent["outcome"] | null;
   latestAttempt: QuestionAttempt | null;
+  latestGradedAttempt: QuestionAttempt | null;
   attemptCount: number;
   supportUsed: boolean;
   worthRevisit: boolean;
@@ -48,6 +50,7 @@ export function derivePracticeQuestionStatus(
     item.versionEvidence.kind === "known" &&
     item.versionEvidence.questionVersion === reference.questionVersion);
   const latestAttempt = latest(attempts, (item) => item.attemptedAt);
+  const latestGradedAttempt = latest(attempts.filter(isGradedAttempt), (item) => item.attemptedAt);
   const assessments = evidence.guidedSelfAssessments.filter((item) =>
     item.practiceSessionId === session.sessionId &&
     item.questionId === reference.questionId &&
@@ -63,7 +66,7 @@ export function derivePracticeQuestionStatus(
   const skipped = skippedIds(session).includes(reference.questionId) && !latestAttempt && !latestAssessment;
   const complete = guided
     ? Boolean(latestAttempt && latestAssessment)
-    : latestAttempt?.isCorrect === true;
+    : Boolean(latestGradedAttempt && isGradedCorrectAttempt(latestGradedAttempt));
   const primary: PracticeQuestionPrimaryStatus = complete ? "complete" : latestAttempt ? "attempted" : "unanswered";
   return {
     questionId: reference.questionId,
@@ -74,10 +77,11 @@ export function derivePracticeQuestionStatus(
     awaitingSelfCheck: guided && Boolean(latestAttempt) && !latestAssessment,
     selfAssessment,
     latestAttempt,
+    latestGradedAttempt,
     attemptCount: attempts.length,
     supportUsed,
-    worthRevisit: latestAttempt?.isCorrect === false ||
-      attempts.length > 1 ||
+    worthRevisit: Boolean(latestGradedAttempt && isGradedIncorrectAttempt(latestGradedAttempt)) ||
+      attempts.filter(isGradedAttempt).length > 1 ||
       supportUsed ||
       selfAssessment === "unsure" ||
       selfAssessment === "needs_review" ||
@@ -108,6 +112,8 @@ export function practiceStatusLabel(status: PracticeQuestionStatus) {
   if (status.unavailable) return "Unavailable";
   if (status.awaitingSelfCheck) return "Awaiting self-check";
   if (status.primary === "complete") return status.selfAssessment === "confident" ? "Complete · Confident" : "Complete";
+  if (status.latestAttempt && effectiveAttemptOutcome(status.latestAttempt).kind === "malformed") return "Format not marked";
+  if (status.latestAttempt && effectiveAttemptOutcome(status.latestAttempt).kind === "unmarkable") return "Could not mark";
   if (status.skipped) return "Skipped";
   if (status.primary === "attempted") return "Attempted";
   return "Not answered";

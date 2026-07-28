@@ -85,7 +85,7 @@ test("hint-assisted correct is completed with support and review evidence", asyn
 test("worked solution is gated, completes after an attempt, and unlocks next", async ({ page }) => {
   await openQuestion(page, QUESTION_IDS[0]);
   await expect(page.getByTestId("worked-solution-control")).toHaveCount(0);
-  await submitAnswer(page, "wrong");
+  await submitAnswer(page, "4x^5");
   await openWorkedSolution(page);
   await expect(page.getByTestId("question-status")).toContainText("Completed with solution");
   await expect(page.getByRole("heading", { name: "Worked solution" })).toBeVisible();
@@ -101,7 +101,7 @@ test("worked solution is gated, completes after an attempt, and unlocks next", a
 
 test("incorrect then correct separates first accuracy from latest outcome", async ({ page }) => {
   await openQuestion(page, QUESTION_IDS[0]);
-  await submitAnswer(page, "wrong");
+  await submitAnswer(page, "4x^5");
   await retryAnswer(page, QUESTION_ANSWERS[QUESTION_IDS[0]]);
   const stored = await readStoredProgress(page) as ProgressPayload;
   const state = stateFromStored(stored, QUESTION_IDS[0]);
@@ -116,7 +116,7 @@ test("strong independent result survives a later incorrect review", async ({ pag
   await openQuestion(page, QUESTION_IDS[0]);
   await submitAnswer(page, QUESTION_ANSWERS[QUESTION_IDS[0]]);
   await page.reload();
-  await submitAnswer(page, "wrong");
+  await submitAnswer(page, "4x^5");
   const state = stateFromStored(await readStoredProgress(page), QUESTION_IDS[0]);
   expect(state).toMatchObject({ completed: true, bestOutcome: "independently_correct_first_attempt", latestResult: false, reviewRecommended: true });
   await page.reload();
@@ -125,7 +125,7 @@ test("strong independent result survives a later incorrect review", async ({ pag
 
 test("solution-assisted work can later improve independently without losing history", async ({ page }) => {
   await openQuestion(page, QUESTION_IDS[0]);
-  await submitAnswer(page, "wrong");
+  await submitAnswer(page, "4x^5");
   await openWorkedSolution(page);
   await page.reload();
   await submitAnswer(page, QUESTION_ANSWERS[QUESTION_IDS[0]]);
