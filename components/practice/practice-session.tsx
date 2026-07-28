@@ -37,6 +37,7 @@ import { getPracticeSession } from "@/lib/practice/practice-storage";
 import { derivePracticeSessionSummary } from "@/lib/practice/practice-summary";
 import type { PracticeSession as PracticeSessionModel } from "@/lib/practice/practice-types";
 import type { ProgressEvidence } from "@/lib/progress/types";
+import { recordResolvedReviewTargets } from "@/lib/review/emission";
 
 export function PracticeSession({ sessionId }: { sessionId: string }) {
   const [session, setSession] = useState<PracticeSessionModel | null>(null);
@@ -45,6 +46,7 @@ export function PracticeSession({ sessionId }: { sessionId: string }) {
   const [showFinish, setShowFinish] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [announcement, setAnnouncement] = useState("");
+  const [reviewSaveError, setReviewSaveError] = useState<string | null>(null);
 
   const refresh = useCallback(() => {
     setSession(getPracticeSession(sessionId));
@@ -62,6 +64,18 @@ export function PracticeSession({ sessionId }: { sessionId: string }) {
       window.removeEventListener("storage", refresh);
     };
   }, [refresh]);
+
+  useEffect(() => {
+    if (!session || session.mode !== "review") return;
+    let cancelled = false;
+    void recordResolvedReviewTargets(session).then((result) => {
+      if (cancelled) return;
+      setReviewSaveError(result.status === "write_failed"
+        ? "Your Review result could not be recorded yet. Keep this session and try again."
+        : null);
+    });
+    return () => { cancelled = true; };
+  }, [session, evidence]);
 
   if (!session) {
     return (
@@ -108,6 +122,15 @@ export function PracticeSession({ sessionId }: { sessionId: string }) {
     handleActionResult(await setPracticeQuestionSkipped(session!.sessionId, currentReference.questionId, false));
   }
 
+  async function handleEvidenceRecorded() {
+    await clearCurrentSkip();
+    if (session!.mode !== "review") return;
+    const result = await recordResolvedReviewTargets(session!);
+    setReviewSaveError(result.status === "write_failed"
+      ? "Your answer is saved, but your Review result still needs to be recorded. Try again."
+      : null);
+  }
+
   async function finish(elapsed: number | null = elapsedSeconds(session!)) {
     const result = await completePracticeSession(session!.sessionId, elapsed);
     setShowFinish(false);
@@ -131,6 +154,7 @@ export function PracticeSession({ sessionId }: { sessionId: string }) {
       statuses={statuses}
       currentStatus={currentStatus}
       actionError={actionError}
+      reviewSaveError={reviewSaveError}
       showQuestions={showQuestions}
       onToggleQuestions={() => setShowQuestions((value) => !value)}
       onCloseQuestions={() => setShowQuestions(false)}
@@ -192,7 +216,7 @@ export function PracticeSession({ sessionId }: { sessionId: string }) {
           answerLocked: false,
           returnHref: `/practice/session/${session.sessionId}`,
           currentSelfAssessment: currentStatus.selfAssessment,
-          onEvidenceRecorded: clearCurrentSkip,
+          onEvidenceRecorded: handleEvidenceRecorded,
         }}
       />
       {finishDialog}
@@ -205,6 +229,7 @@ function SessionToolbar({
   statuses,
   currentStatus,
   actionError,
+  reviewSaveError,
   showQuestions,
   onToggleQuestions,
   onCloseQuestions,
@@ -218,6 +243,7 @@ function SessionToolbar({
   statuses: PracticeQuestionStatus[];
   currentStatus: PracticeQuestionStatus;
   actionError: string | null;
+  reviewSaveError: string | null;
   showQuestions: boolean;
   onToggleQuestions: () => void;
   onCloseQuestions: () => void;
@@ -247,6 +273,7 @@ function SessionToolbar({
       </div>
       <span className="sr-only" role="status" aria-live="polite">{announcement}</span>
       {actionError ? <p role="alert" className="mt-2 text-sm font-bold text-danger">{actionError}</p> : null}
+      {reviewSaveError ? <p role="alert" className="mt-2 text-sm font-bold text-danger">{reviewSaveError}</p> : null}
       {showQuestions ? (
         <QuestionListDialog
           session={session}

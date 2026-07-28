@@ -9,6 +9,8 @@ import {
   resolveProgressSyncContext,
 } from "../lib/remote-evidence/authenticated-sync";
 import { createAccountFingerprint } from "../lib/remote-evidence/authenticated-import";
+import type { AchievementSnapshot } from "../lib/progress/types";
+import type { ReviewEvent } from "../lib/review/types";
 
 const ownerId = "owner_12345678901234567890123456789012";
 const fingerprint = createAccountFingerprint(ownerId);
@@ -30,7 +32,7 @@ test("sync context exposes only an opaque account fingerprint after trusted reso
 });
 
 test("sync push reuses durable trusted append classifications", async () => {
-  const evidence = { version: 5 as const, data: { attempts: [attempt()], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [] } };
+  const evidence = { version: 6 as const, data: { attempts: [attempt()], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [] } };
   const result = await pushEvidenceForTrustedOwner(evidence, async () => ({ authenticated: true, ownerId }), async (resolvedOwner) => {
     assert.equal(resolvedOwner, ownerId);
     return { accepted: [{ kind: "attempt", eventId: evidence.data.attempts[0].eventId, receiveCursor: "1", receivedAt }], duplicates: [], conflicts: [], rejected: [] };
@@ -76,6 +78,44 @@ test("pull includes canonical retained conflict evidence without internal hashes
   if (!result.authenticated || result.invalidCursor || result.generationRequired) return;
   assert.equal(result.response.events[0].disposition, "conflict_retained");
   assert.equal(JSON.stringify(result.response).includes("payloadHash"), false);
+});
+
+test("pull validates both existing achievement snapshots and Review events", async () => {
+  const achievement: AchievementSnapshot = {
+    snapshotId: "snapshot_pull",
+    kind: "path_completed",
+    subjectId: "higher-maths",
+    courseId: "calculus",
+    pathId: "basic-differentiation",
+    pathVersion: 1,
+    achievedAt: receivedAt,
+    masteryScore: 70,
+    independentPerformancePercentage: 100,
+    completionCount: 8,
+    totalRequiredCount: 8,
+    source: "derived_current",
+  };
+  const review: ReviewEvent = {
+    eventId: "review_pull",
+    source: { sourceType: "practice_session", sourceId: "review_session_pull" },
+    target: { targetType: "skill", targetId: "basic-differentiation" },
+    targetVersion: { versionType: "skill_path", version: 1 },
+    outcome: "independent_success",
+    occurredAt: receivedAt,
+    sequence: 2,
+    priorEventId: null,
+    schedulerVersion: 1,
+    stageAfter: 0,
+    evidenceRefs: [],
+    questionIds: ["hm-calc-diff-basic-f-001"],
+  };
+  const result = await pullEvidenceForTrustedOwner(null, generation, async () => ({ authenticated: true, ownerId }), async () => ({ records: [
+    { kind: "achievement_snapshot", eventId: achievement.snapshotId, disposition: "accepted", receiveCursor: "8", receivedAt, evidence: achievement },
+    { kind: "review_event", eventId: review.eventId, disposition: "accepted", receiveCursor: "9", receivedAt, evidence: review },
+  ] }));
+  assert.equal(result.authenticated, true);
+  if (!result.authenticated || result.invalidCursor || result.generationRequired) return;
+  assert.deepEqual(result.response.events.map((item) => item.kind), ["achievement_snapshot", "review_event"]);
 });
 
 test("unverified pull never invokes the repository", async () => {

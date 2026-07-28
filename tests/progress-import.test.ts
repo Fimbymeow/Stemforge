@@ -23,7 +23,7 @@ test("empty and exact-category importability are derived only from canonical pro
   assert.equal(inspectLocalProgress(null).status, "empty");
   const inspected = inspectLocalProgress(JSON.stringify(payload()));
   assert.equal(inspected.status, "importable");
-  assert.deepEqual(evidenceSummary(inspected.payload), { attempts: 1, supportEvents: 1, selfAssessments: 0, achievements: 1, total: 3 });
+  assert.deepEqual(evidenceSummary(inspected.payload), { attempts: 1, supportEvents: 1, selfAssessments: 0, achievements: 1, reviewEvents: 0, total: 3 });
   assert.notEqual(PROGRESS_IMPORT_METADATA_KEY, CELEBRATION_STORAGE_KEY);
 });
 
@@ -38,7 +38,7 @@ test("supported legacy evidence migrates in memory with deterministic IDs", () =
   assert.deepEqual(first.payload, second.payload);
 });
 
-test("repaired V5 keeps valid siblings and reports dropped records", () => {
+test("repaired V6 keeps valid siblings and reports dropped records", () => {
   const value = payload();
   const inspected = inspectLocalProgress(JSON.stringify({
     ...value,
@@ -51,17 +51,18 @@ test("repaired V5 keeps valid siblings and reports dropped records", () => {
 
 test("malformed and unsupported future progress are preserved as non-importable states", () => {
   assert.equal(inspectLocalProgress("{broken").status, "invalid");
-  assert.equal(inspectLocalProgress(JSON.stringify({ version: 6, data: {} })).status, "unsupported");
+  assert.equal(inspectLocalProgress(JSON.stringify({ version: 7, data: {} })).status, "unsupported");
 });
 
 test("event count batching retains every category and stable ID", () => {
   const source: ProgressPayload = {
-    version: 5,
+    version: 6,
     data: {
       attempts: Array.from({ length: 501 }, (_, index) => attempt({ eventId: `attempt_${index}` })),
       supportEvents: [supportEvent({ eventId: "support_tail" })],
       guidedSelfAssessments: [selfAssessment({ eventId: "self_tail" })],
       achievementSnapshots: [snapshot()],
+      reviewEvents: [],
     },
   };
   const batches = batchProgressEvidence(source);
@@ -71,11 +72,11 @@ test("event count batching retains every category and stable ID", () => {
 });
 
 test("byte batching splits records and rejects a single oversized record", () => {
-  const source: ProgressPayload = { version: 5, data: {
+  const source: ProgressPayload = { version: 6, data: {
     attempts: [attempt({ eventId: "attempt_a", answer: "x".repeat(200) }), attempt({ eventId: "attempt_b", answer: "y".repeat(200) })],
-    supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [],
+    supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [],
   } };
-  const oneBytes = new TextEncoder().encode(JSON.stringify({ version: 5, data: { attempts: [source.data.attempts[0]], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [] } })).length;
+  const oneBytes = new TextEncoder().encode(JSON.stringify({ version: 6, data: { attempts: [source.data.attempts[0]], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [] } })).length;
   assert.deepEqual(batchProgressEvidence(source, 500, oneBytes + 5).map((item) => item.data.attempts.length), [1, 1]);
   assert.throws(() => batchProgressEvidence(source, 500, 100), /exceeds/);
 });
@@ -137,11 +138,12 @@ function response(overrides: Partial<ProgressImportResponse> = {}): ProgressImpo
 }
 
 function payload(): ProgressPayload {
-  return { version: 5, data: {
+  return { version: 6, data: {
     attempts: [attempt({ eventId: "attempt_import_1" })],
     supportEvents: [supportEvent({ eventId: "support_import_1" })],
     guidedSelfAssessments: [],
     achievementSnapshots: [snapshot()],
+    reviewEvents: [],
   } };
 }
 

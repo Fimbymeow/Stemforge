@@ -1,4 +1,6 @@
-export const CURRENT_PROGRESS_VERSION = 5 as const;
+import type { ReviewEvent } from "@/lib/review/types";
+
+export const CURRENT_PROGRESS_VERSION = 6 as const;
 
 export type LegacyQuestionAttempt = {
   questionId: string;
@@ -138,7 +140,7 @@ export type ProgressPayloadV4 = {
 };
 
 export type ProgressPayloadV5 = {
-  version: typeof CURRENT_PROGRESS_VERSION;
+  version: 5;
   data: {
     attempts: QuestionAttempt[];
     supportEvents: QuestionSupportEvent[];
@@ -147,8 +149,15 @@ export type ProgressPayloadV5 = {
   };
 };
 
-export type ProgressPayload = ProgressPayloadV5;
-export type ProgressEvidence = ProgressPayloadV5["data"];
+export type ProgressPayloadV6 = {
+  version: typeof CURRENT_PROGRESS_VERSION;
+  data: ProgressPayloadV5["data"] & {
+    reviewEvents: ReviewEvent[];
+  };
+};
+
+export type ProgressPayload = ProgressPayloadV6;
+export type ProgressEvidence = ProgressPayloadV6["data"];
 
 export type ProgressLoadStatus =
   | "current"
@@ -161,6 +170,7 @@ export type ProgressLoadStatus =
   | "migrated-v2"
   | "migrated-v3"
   | "migrated-v4"
+  | "migrated-v5"
   | "unavailable"
   | "unsupported-version";
 
@@ -171,6 +181,7 @@ export type ProgressLoadResult = {
   droppedEvents: number;
   droppedSelfAssessments: number;
   droppedSnapshots: number;
+  droppedReviewEvents: number;
 };
 
 export type QuestionOutcome =

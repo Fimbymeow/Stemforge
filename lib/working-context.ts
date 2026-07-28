@@ -4,6 +4,8 @@ import { deriveSkillPathNextAction } from "@/lib/learning/next-action";
 import { calculateSkillPathProgress } from "@/lib/progress/calculations";
 import type { ProgressEvidence, ProgressStatus } from "@/lib/progress/types";
 import type { PracticeSession } from "@/lib/practice/practice-types";
+import { deriveSkillReviewState } from "@/lib/review/derivation";
+import type { ReviewDueReason } from "@/lib/review/types";
 
 export const WORKING_CONTEXT_NOTES_ORIGIN_PREFIX = "stemforge:working-context-notes-origin:";
 
@@ -31,6 +33,7 @@ export type WorkingContextModel = {
   collapsedSummary: string;
   reviewCount: number;
   reviewHref: string | null;
+  reviewReason: ReviewDueReason;
   notesHref: string | null;
   practiceHref: string;
   overviewHref: string;
@@ -59,10 +62,10 @@ export function deriveWorkingContextModel(input: {
   const nextAction = deriveSkillPathNextAction(input);
   const isComplete = progress.totalQuestions > 0
     && progress.completedQuestionIds.length >= progress.totalQuestions;
+  const reviewState = deriveSkillReviewState(context.skillPath, input.evidence);
   const reviewQuestionIds = [...new Set([
-    ...progress.reassessmentRequiredQuestionIds,
-    ...progress.reviewQuestionIds,
-    ...progress.reassessmentRecommendedQuestionIds,
+    ...reviewState.reassessmentQuestionIds,
+    ...reviewState.ordinaryRecoveryQuestionIds,
   ])].filter((questionId) => contentResolver.getQuestionContext(questionId)?.skillPath.slug === input.pathId);
   const activeStage = nextAction.stageId
     ? context.skillPath.learningStages?.find((stage) => stage.id === nextAction.stageId)
@@ -71,13 +74,16 @@ export function deriveWorkingContextModel(input: {
       ) ?? context.skillPath.learningStages?.at(-1);
   const stageName = activeStage?.name ?? "Learning path";
   const practiceHref = workingContextPracticeHref(input.pathId);
-  const reviewHref = reviewQuestionIds[0] ? `/question/${reviewQuestionIds[0]}` : null;
+  const reviewCount = reviewState.due ? 1 : 0;
+  const reviewHref = reviewState.due
+    ? `/practice?review=1&path=${encodeURIComponent(input.pathId)}`
+    : null;
   const primaryHref = isComplete
     ? (reviewHref ?? practiceHref)
     : nextAction.href ?? context.skillPath.href;
   const primaryLabel = isComplete
-    ? (reviewQuestionIds.length > 0
-        ? (reviewQuestionIds.length === 1 ? "Review due question" : `Review ${reviewQuestionIds.length} due questions`)
+    ? (reviewCount > 0
+      ? "Start Review"
         : "Practise this skill")
     : nextAction.kind === "resume_practice"
       ? "Resume practice"
@@ -105,8 +111,9 @@ export function deriveWorkingContextModel(input: {
       ? "All stages complete"
       : `${stageName} · ${stageCompleted} of ${stageTotal} complete`,
     collapsedSummary,
-    reviewCount: reviewQuestionIds.length,
+    reviewCount,
     reviewHref,
+    reviewReason: reviewState.reason,
     notesHref: getActiveRecords(context.skillPath.notes ?? []).length
       ? `/subjects/${context.subject.subjectSlug}/revision-notes`
       : null,
@@ -144,9 +151,9 @@ export function workingContextPracticeHref(pathId: string) {
   return `/practice?path=${encodeURIComponent(pathId)}`;
 }
 
-/** Single source of truth for the rail/hub/overview "Review N question(s) due" label. */
+/** Single source of truth for the rail/hub/overview Review due label. */
 export function formatReviewDueLabel(reviewCount: number): string {
-  return `Review ${reviewCount} question${reviewCount === 1 ? "" : "s"} due`;
+  return `Review ${reviewCount} skill${reviewCount === 1 ? "" : "s"} due`;
 }
 
 export function questionHelpNotesHref(input: {

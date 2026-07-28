@@ -57,7 +57,7 @@ test("browser persistence fails safely when storage is unavailable or full", () 
   assert.equal(loadPracticeSessionStore(unavailable).status, "unavailable");
   assert.deepEqual(readBetaReportReceipts(unavailable), []);
   const full = throwingStorage("set");
-  assert.equal(savePracticeSessionStore({ schemaVersion: 2, activeSessionId: null, sessions: [] }, full), false);
+  assert.equal(savePracticeSessionStore({ schemaVersion: 3, activeSessionId: null, sessions: [] }, full), false);
   assert.equal(recordBetaReportReceipt({
     reportId: "SF-TEST0000001", kind: "feedback", status: "new", pageArea: null,
     source: "guest", createdAt: "2026-07-18T12:00:00.000Z",

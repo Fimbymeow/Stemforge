@@ -73,7 +73,7 @@ test("central activation resolves empty, conflict, resume, replace and repaired 
   const third = session("third", "question_bank_custom", new Date("2026-07-27T10:02:00.000Z"));
   const fourth = session("fourth", "subject_review", new Date("2026-07-27T10:03:00.000Z"));
   storage.setItem("stemforge.practiceSessions.v1", JSON.stringify({
-    schemaVersion: 2,
+    schemaVersion: 3,
     activeSessionId: null,
     sessions: [third, fourth],
   }));
@@ -88,13 +88,13 @@ test("unresolvable active sessions require explicit replacement and changed poin
   const storage = new MemoryStorage();
   const stale = session("stale", "working_context_practice");
   stale.questionReferences[0].questionId = "removed-question";
-  savePracticeSessionStore({ schemaVersion: 2, activeSessionId: stale.sessionId, sessions: [stale] }, storage);
+  savePracticeSessionStore({ schemaVersion: 3, activeSessionId: stale.sessionId, sessions: [stale] }, storage);
   const candidate = session("next", "quick_practice");
   const conflict = await requestPracticeSessionActivation(candidate, storage);
   assert.equal(conflict.status, "conflict");
   assert.equal(conflict.status === "conflict" && conflict.resolvable, false);
   const concurrent = session("concurrent", "configured_practice");
-  savePracticeSessionStore({ schemaVersion: 2, activeSessionId: concurrent.sessionId, sessions: [concurrent] }, storage);
+  savePracticeSessionStore({ schemaVersion: 3, activeSessionId: concurrent.sessionId, sessions: [concurrent] }, storage);
   const result = await replaceActivePracticeSession(candidate, stale.sessionId, storage);
   assert.equal(result.status, "conflict");
   assert.equal(loadPracticeSessionStore(storage).store.activeSessionId, concurrent.sessionId);
@@ -103,7 +103,7 @@ test("unresolvable active sessions require explicit replacement and changed poin
 test("session actions make Skip reversible and completion frozen, idempotent and write-safe", async () => {
   const storage = new MemoryStorage();
   const active = session("actions", "quick_practice");
-  savePracticeSessionStore({ schemaVersion: 2, activeSessionId: active.sessionId, sessions: [active] }, storage);
+  savePracticeSessionStore({ schemaVersion: 3, activeSessionId: active.sessionId, sessions: [active] }, storage);
   const questionId = active.questionReferences[0].questionId;
   assert.equal((await setPracticeQuestionSkipped(active.sessionId, questionId, true, storage)).status, "updated");
   assert.deepEqual(loadPracticeSessionStore(storage).store.sessions[0].skippedQuestionIds, [questionId]);
@@ -119,7 +119,7 @@ test("session actions make Skip reversible and completion frozen, idempotent and
   assert.equal(retry?.parentSessionId, active.sessionId);
 
   const failing = new MemoryStorage();
-  savePracticeSessionStore({ schemaVersion: 2, activeSessionId: active.sessionId, sessions: [active] }, failing);
+  savePracticeSessionStore({ schemaVersion: 3, activeSessionId: active.sessionId, sessions: [active] }, failing);
   failing.throwOnWrite = true;
   assert.equal((await completePracticeSession(active.sessionId, null, failing)).status, "write_failed");
 });
@@ -180,15 +180,19 @@ test("canonical statuses prefer exact session IDs, use legacy time only when abs
 test("all origins remain distinct and destinations are subject generic", () => {
   const origins: PracticeSessionOrigin[] = [
     "question_bank_custom", "subject_review", "quick_practice", "configured_practice",
-    "working_context_practice", "retry_incorrect", "retry_skipped",
+    "working_context_practice", "retry_incorrect", "retry_skipped", "scheduled_review",
   ];
   assert.deepEqual(origins.map(practiceOriginLabel), [
     "Custom practice", "Review practice", "Quick Practice", "Configured practice",
-    "Current Path practice", "Retry incorrect", "Retry skipped",
+    "Current Path practice", "Retry incorrect", "Retry skipped", "Review",
   ]);
   assert.deepEqual(practiceReturnDestination({ origin: "subject_review", subjectId: "another-subject" }), {
     href: "/subjects/another-subject/question-bank",
     label: "Question Bank",
+  });
+  assert.deepEqual(practiceReturnDestination({ origin: "scheduled_review", subjectId: "higher-maths" }), {
+    href: "/practice?review=1",
+    label: "Review",
   });
 });
 

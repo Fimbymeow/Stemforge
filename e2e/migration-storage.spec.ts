@@ -15,7 +15,7 @@ import {
 } from "./fixtures/progress";
 import { openQuestion, submitAnswer } from "./fixtures/student-actions";
 
-test("V1 progress stays visible and continued activity writes V5 safely", async ({ page }) => {
+test("V1 progress stays visible and continued activity writes V6 safely", async ({ page }) => {
   await seedStoredProgress(page, v1Payload([legacyAttempt()]));
   await page.goto("/dashboard");
   await expect(page.getByTestId("dashboard-progress-summary")).toContainText("1 / 8 completed");
@@ -23,7 +23,7 @@ test("V1 progress stays visible and continued activity writes V5 safely", async 
   await openQuestion(page, QUESTION_IDS[1]);
   await submitAnswer(page, QUESTION_ANSWERS[QUESTION_IDS[1]]);
   const stored = await readStoredProgress(page) as ProgressPayload;
-  expect(stored.version).toBe(5);
+  expect(stored.version).toBe(6);
   expect(stored.data.attempts).toHaveLength(2);
   expect(stored.data.attempts[0]).toMatchObject({
     supportKnowledge: "unknown_legacy",
@@ -46,7 +46,7 @@ test("unversioned incorrect-only completion is preserved conservatively", async 
   await openQuestion(page, QUESTION_IDS[1]);
   await submitAnswer(page, QUESTION_ANSWERS[QUESTION_IDS[1]]);
   const stored = await readStoredProgress(page) as ProgressPayload;
-  expect(stored.version).toBe(5);
+  expect(stored.version).toBe(6);
   expect(stored.data.attempts).toHaveLength(2);
   const state = getQuestionProgress(QUESTION_IDS[0], stored.data);
   expect(state).toMatchObject({
@@ -71,7 +71,7 @@ test("malformed JSON and invalid shape render a safe state without a read-time o
   await expect(page.getByTestId("dashboard-progress-summary")).toContainText("0 / 8 completed");
 });
 
-test("partially malformed V2 keeps valid records and repairs into V5 on the next save", async ({ page }) => {
+test("partially malformed V2 keeps valid records and repairs into V6 on the next save", async ({ page }) => {
   const source = v2Payload([currentAttempt(QUESTION_IDS[0], 1)]);
   await seedStoredProgress(page, {
     ...source,
@@ -82,7 +82,7 @@ test("partially malformed V2 keeps valid records and repairs into V5 on the next
   await openQuestion(page, QUESTION_IDS[1]);
   await submitAnswer(page, QUESTION_ANSWERS[QUESTION_IDS[1]]);
   const stored = await readStoredProgress(page) as ProgressPayload;
-  expect(stored.version).toBe(5);
+  expect(stored.version).toBe(6);
   expect(stored.data.attempts).toHaveLength(2);
   expect(stored.data.supportEvents).toEqual([]);
 });
@@ -93,7 +93,7 @@ test("V2 evidence becomes explicit unknown while a new submission captures known
   await submitAnswer(page, QUESTION_ANSWERS[QUESTION_IDS[1]]);
 
   let stored = await readStoredProgress(page) as ProgressPayload;
-  expect(stored.version).toBe(5);
+  expect(stored.version).toBe(6);
   expect(stored.data.attempts[0].versionEvidence).toEqual({ kind: "unknown_legacy", questionVersion: null });
   expect(stored.data.attempts[1].versionEvidence).toEqual({
     kind: "known",
@@ -102,7 +102,7 @@ test("V2 evidence becomes explicit unknown while a new submission captures known
 
   await page.reload();
   stored = await readStoredProgress(page) as ProgressPayload;
-  expect(stored.version).toBe(5);
+  expect(stored.version).toBe(6);
   expect(stored.data.attempts).toHaveLength(2);
 });
 

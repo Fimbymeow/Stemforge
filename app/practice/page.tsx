@@ -8,5 +8,6 @@ export default async function PracticePage({
 }) {
   const query = await searchParams;
   const path = Array.isArray(query.path) ? query.path[0] : query.path;
-  return <PracticeSetup workingContextPathId={parseWorkingContextPathId(path)} />;
+  const review = Array.isArray(query.review) ? query.review[0] : query.review;
+  return <PracticeSetup workingContextPathId={parseWorkingContextPathId(path)} reviewMode={review === "1"} />;
 }

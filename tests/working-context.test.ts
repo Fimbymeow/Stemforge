@@ -44,55 +44,48 @@ test("stage completion advances deterministically and reports the real stage cou
 });
 
 test("completed content offers path-scoped practice", () => {
+  const recent = new Date(Date.now() - 60_000);
   const model = deriveWorkingContextModel({
     pathId,
-    evidence: evidence(questionIds.map((id, index) => attempt(id, index + 1, true))),
+    evidence: evidence(questionIds.map((id, index) => attempt(id, index + 1, true, {
+      attemptedAt: new Date(recent.getTime() + index * 1_000).toISOString(),
+    }))),
   })!;
   assert.equal(model.isComplete, true);
   assert.equal(model.primaryLabel, "Practise this skill");
   assert.equal(model.primaryHref, "/practice?path=basic-differentiation");
 });
 
-test("review is shown only when existing evidence genuinely recommends it", () => {
-  const attempts = questionIds.map((id, index) => attempt(id, index + 1, true, {
-    hintViewedBeforeSubmission: index === 0,
-  }));
+test("scheduled Review is shown only after an eligible skill reaches its due time", () => {
+  const attempts = questionIds.map((id, index) => attempt(id, index + 1, true));
   const model = deriveWorkingContextModel({ pathId, evidence: evidence(attempts) })!;
   assert.equal(model.reviewCount, 1);
-  assert.equal(model.reviewHref, `/question/${questionIds[0]}`);
+  assert.equal(model.reviewHref, `/practice?review=1&path=${pathId}`);
+  assert.equal(model.reviewReason, "due_after_time");
 });
 
 test("formatReviewDueLabel pluralises the noun, not the verb, and never touches other counts", () => {
-  assert.equal(formatReviewDueLabel(1), "Review 1 question due");
-  assert.equal(formatReviewDueLabel(2), "Review 2 questions due");
-  assert.equal(formatReviewDueLabel(0), "Review 0 questions due");
+  assert.equal(formatReviewDueLabel(1), "Review 1 skill due");
+  assert.equal(formatReviewDueLabel(2), "Review 2 skills due");
+  assert.equal(formatReviewDueLabel(0), "Review 0 skills due");
 });
 
-test("completed skill with one genuine review due prioritises reviewing it over generic practice", () => {
-  const attempts = questionIds.map((id, index) => attempt(id, index + 1, true, {
-    hintViewedBeforeSubmission: index === 0,
-  }));
+test("completed skill with scheduled Review due prioritises the existing Review delivery path", () => {
+  const attempts = questionIds.map((id, index) => attempt(id, index + 1, true));
   const model = deriveWorkingContextModel({ pathId, evidence: evidence(attempts) })!;
   assert.equal(model.isComplete, true);
-  assert.equal(model.primaryLabel, "Review due question");
-  assert.equal(model.primaryHref, `/question/${questionIds[0]}`);
+  assert.equal(model.primaryLabel, "Start Review");
+  assert.equal(model.primaryHref, `/practice?review=1&path=${pathId}`);
 });
 
-test("completed skill with multiple genuine reviews due pluralises the primary action honestly", () => {
-  const attempts = questionIds.map((id, index) => attempt(id, index + 1, true, {
-    hintViewedBeforeSubmission: index === 0 || index === 1,
-  }));
-  const model = deriveWorkingContextModel({ pathId, evidence: evidence(attempts) })!;
-  assert.equal(model.reviewCount, 2);
-  assert.equal(model.primaryLabel, "Review 2 due questions");
-  assert.equal(model.primaryHref, `/question/${questionIds[0]}`);
-});
-
-test("stage models expose reviewDue only for the specific stage a genuine review question belongs to", () => {
+test("stage models expose ordinary recovery only for the stage containing the recent incorrect question", () => {
   const foundations = context.skillPath.learningStages![0];
-  const attempts = questionIds.map((id, index) => attempt(id, index + 1, true, {
-    hintViewedBeforeSubmission: index === 0,
-  }));
+  const attempts = [
+    ...questionIds.map((id, index) => attempt(id, index + 1, true)),
+    attempt(questionIds[0], questionIds.length + 1, false, {
+      attemptedAt: "2026-07-25T10:00:00.000Z",
+    }),
+  ];
   const model = deriveWorkingContextModel({ pathId, evidence: evidence(attempts) })!;
   const foundationsStage = model.stages.find((stage) => stage.id === foundations.id)!;
   const otherStages = model.stages.filter((stage) => stage.id !== foundations.id);
@@ -121,11 +114,11 @@ test("production helpers contain path and question context without activation fl
 });
 
 function emptyEvidence(): ProgressEvidence {
-  return { attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [] };
+  return { attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [] };
 }
 
 function evidence(attempts: QuestionAttempt[]): ProgressEvidence {
-  return { attempts, supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [] };
+  return { attempts, supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [] };
 }
 
 function attempt(questionId: string, sequence: number, isCorrect: boolean, overrides: Partial<QuestionAttempt> = {}): QuestionAttempt {

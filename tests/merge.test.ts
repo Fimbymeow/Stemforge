@@ -7,7 +7,7 @@ import type { AchievementSnapshot, ProgressPayload } from "../lib/progress/types
 import { attempt, selfAssessment, supportEvent } from "./progress-fixtures";
 
 const payload = (attempts = [attempt()], supportEvents = [supportEvent()], achievementSnapshots: AchievementSnapshot[] = []): ProgressPayload =>
-  ({ version: 5, data: { attempts, supportEvents, guidedSelfAssessments: [], achievementSnapshots } });
+  ({ version: 6, data: { attempts, supportEvents, guidedSelfAssessments: [], achievementSnapshots, reviewEvents: [] } });
 const snapshot = (overrides: Partial<AchievementSnapshot> = {}): AchievementSnapshot => ({
   snapshotId: "snapshot_1", kind: "path_completed", subjectId: "higher-maths", courseId: "calculus",
   pathId: "basic-differentiation", pathVersion: 1, achievedAt: "2026-07-13T12:00:00.000Z", masteryScore: 70,
@@ -47,7 +47,7 @@ test("support events and snapshots retain distinct IDs and deduplicate exact IDs
   assert.equal(merged.payload.data.achievementSnapshots.length, 2);
 });
 
-test("merge preserves additive marker metadata without changing V5", () => {
+test("merge preserves additive marker metadata in V6", () => {
   const marked = attempt({
     eventId: "marked",
     isCorrect: null,
@@ -57,7 +57,7 @@ test("merge preserves additive marker metadata without changing V5", () => {
     strategyVersion: 1,
   });
   const merged = mergeProgressEvidence(payload([marked], []), createDefaultProgressPayload()).payload;
-  assert.equal(merged.version, 5);
+  assert.equal(merged.version, 6);
   assert.deepEqual(merged.data.attempts[0], marked);
 });
 

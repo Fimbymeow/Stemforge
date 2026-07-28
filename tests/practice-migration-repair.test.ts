@@ -15,7 +15,7 @@ import {
 } from "../lib/practice/practice-types";
 import { isPracticeSession, isPracticeSessionStore } from "../lib/practice/practice-validation";
 
-test("fresh v2 sessions and stores validate strictly", () => {
+test("fresh v3 sessions and stores validate strictly", () => {
   const session = sessionFixture();
   assert.equal(isPracticeSession(session), true);
   assert.equal(isPracticeSessionStore(storeFixture([session], session.sessionId)), true);
@@ -33,7 +33,7 @@ test("fresh v2 sessions and stores validate strictly", () => {
   }), true);
 });
 
-test("v1 migration preserves legacy fields and derives only defensible v2 foundations", () => {
+test("v1 migration preserves legacy fields and derives only defensible current foundations", () => {
   const current = sessionFixture({ origin: "configured_practice" });
   const legacy = legacySession(current);
   const decoded = decodePracticeSessionStore({ schemaVersion: 1, activeSessionId: legacy.sessionId, sessions: [legacy] });
@@ -41,7 +41,7 @@ test("v1 migration preserves legacy fields and derives only defensible v2 founda
   assert.equal(decoded.changed, true);
   assert(decoded.issues.some((issue) => issue.code === "legacy_store_migrated"));
   const migrated = decoded.store.sessions[0];
-  assert.equal(migrated.schemaVersion, 2);
+  assert.equal(migrated.schemaVersion, 3);
   assert.equal(migrated.subjectId, current.questionReferences[0].subjectId);
   assert.equal(migrated.origin, "configured_practice");
   assert.deepEqual(migrated.skippedQuestionIds, []);
@@ -122,7 +122,7 @@ test("decoding fails closed by version and isolates malformed sibling sessions",
   assert.equal(decodePracticeSessionStore({ schemaVersion: 99, activeSessionId: null, sessions: [] }), null);
 
   const canonicalWithInvalidSibling = decodePracticeSessionStore({
-    schemaVersion: 2,
+    schemaVersion: 3,
     activeSessionId: valid.sessionId,
     sessions: [valid, { ...valid, sessionId: "invalid-origin", origin: "future_origin" }],
   });
@@ -158,7 +158,7 @@ test("loads are read-only while explicit saves persist canonical migration and p
 
   assert.equal(savePracticeSessionStore(loaded.store, storage), true);
   assert.equal(storage.writeCount, 1);
-  assert.equal(JSON.parse(storage.getItem(PRACTICE_SESSIONS_STORAGE_KEY)!).schemaVersion, 2);
+  assert.equal(JSON.parse(storage.getItem(PRACTICE_SESSIONS_STORAGE_KEY)!).schemaVersion, 3);
   assert.equal(storage.getItem("stemforge.progress.v4"), "evidence-marker");
 });
 
@@ -245,6 +245,11 @@ function legacySession(session: PracticeSession) {
 function storeFixture(
   sessions: unknown[],
   activeSessionId: string | null,
+): { schemaVersion: 3; activeSessionId: string | null; sessions: unknown[] };
+function storeFixture(
+  sessions: unknown[],
+  activeSessionId: string | null,
+  schemaVersion: 2,
 ): { schemaVersion: 2; activeSessionId: string | null; sessions: unknown[] };
 function storeFixture(
   sessions: unknown[],
@@ -254,7 +259,7 @@ function storeFixture(
 function storeFixture(
   sessions: unknown[],
   activeSessionId: string | null,
-  schemaVersion: 1 | 2 = 2,
+  schemaVersion: 1 | 2 | 3 = 3,
 ) {
   return { schemaVersion, activeSessionId, sessions };
 }

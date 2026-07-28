@@ -1,5 +1,6 @@
 import { createDefaultProgressPayload } from "@/lib/progress/payload";
 import type { AchievementSnapshot, GuidedSelfAssessmentEvent, ProgressPayload, QuestionAttempt, QuestionSupportEvent } from "@/lib/progress/types";
+import type { ReviewEvent } from "@/lib/review/types";
 import {
   MAX_REMOTE_EVIDENCE_BATCH_BYTES,
   MAX_REMOTE_EVIDENCE_BATCH_ITEMS,
@@ -9,7 +10,8 @@ type EvidenceRecord =
   | { kind: "attempt"; value: QuestionAttempt }
   | { kind: "support_event"; value: QuestionSupportEvent }
   | { kind: "guided_self_assessment"; value: GuidedSelfAssessmentEvent }
-  | { kind: "achievement_snapshot"; value: AchievementSnapshot };
+  | { kind: "achievement_snapshot"; value: AchievementSnapshot }
+  | { kind: "review_event"; value: ReviewEvent };
 
 export function batchProgressEvidence(
   payload: ProgressPayload,
@@ -24,6 +26,7 @@ export function batchProgressEvidence(
     ...payload.data.supportEvents.map((value) => ({ kind: "support_event" as const, value })),
     ...payload.data.guidedSelfAssessments.map((value) => ({ kind: "guided_self_assessment" as const, value })),
     ...payload.data.achievementSnapshots.map((value) => ({ kind: "achievement_snapshot" as const, value })),
+    ...payload.data.reviewEvents.map((value) => ({ kind: "review_event" as const, value })),
   ];
   const batches: ProgressPayload[] = [];
   let current = createDefaultProgressPayload();
@@ -46,7 +49,7 @@ export function batchProgressEvidence(
 
 export function countEvidence(payload: ProgressPayload) {
   return payload.data.attempts.length + payload.data.supportEvents.length +
-    payload.data.guidedSelfAssessments.length + payload.data.achievementSnapshots.length;
+    payload.data.guidedSelfAssessments.length + payload.data.achievementSnapshots.length + payload.data.reviewEvents.length;
 }
 
 function append(payload: ProgressPayload, record: EvidenceRecord): ProgressPayload {
@@ -54,7 +57,8 @@ function append(payload: ProgressPayload, record: EvidenceRecord): ProgressPaylo
   if (record.kind === "attempt") next.data.attempts.push(record.value);
   else if (record.kind === "support_event") next.data.supportEvents.push(record.value);
   else if (record.kind === "guided_self_assessment") next.data.guidedSelfAssessments.push(record.value);
-  else next.data.achievementSnapshots.push(record.value);
+  else if (record.kind === "achievement_snapshot") next.data.achievementSnapshots.push(record.value);
+  else next.data.reviewEvents.push(record.value);
   return next;
 }
 

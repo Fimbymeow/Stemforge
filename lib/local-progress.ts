@@ -39,6 +39,7 @@ export type {
   ProgressPayloadV3,
   ProgressPayloadV4,
   ProgressPayloadV5,
+  ProgressPayloadV6,
   ProgressStatus,
   QuestionAttempt,
   QuestionOutcome,
@@ -50,6 +51,7 @@ export type {
   SkillPathProgress,
   StageProgress,
 } from "@/lib/progress/types";
+import type { ReviewEvent } from "@/lib/review/types";
 
 type SubmissionInput = LegacyQuestionAttempt & NewAttemptMarkerFields & {
   practiceSessionId?: string;
@@ -67,7 +69,7 @@ function readEvidence(): ProgressEvidence {
 }
 
 function emptyEvidence(): ProgressEvidence {
-  return { attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [] };
+  return { attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [] };
 }
 
 function dispatchProgressUpdate() {
@@ -80,6 +82,7 @@ function nextSequence(evidence: ProgressEvidence) {
     ...evidence.attempts.map((item) => item.sequence),
     ...evidence.supportEvents.map((item) => item.sequence),
     ...evidence.guidedSelfAssessments.map((item) => item.sequence),
+    ...evidence.reviewEvents.map((item) => item.sequence),
   ) + 1;
 }
 
@@ -210,6 +213,19 @@ export async function recordGuidedSelfAssessment(input: {
       versionEvidence: getVersionEvidenceForQuestion(input.questionId),
       eventId: createEventId("self_assessment"),
     });
+    if (saved) {
+      try { recordLocalEvidenceProvenance(before, repository.load().payload); } catch { /* Preserve local-first learning. */ }
+      dispatchProgressUpdate();
+    }
+    return saved;
+  });
+}
+
+export async function recordReviewEvent(event: ReviewEvent) {
+  return withLocalProgressTransaction(() => {
+    const repository = createRepository();
+    const before = repository.load().payload;
+    const saved = repository.recordReviewEvent(event);
     if (saved) {
       try { recordLocalEvidenceProvenance(before, repository.load().payload); } catch { /* Preserve local-first learning. */ }
       dispatchProgressUpdate();

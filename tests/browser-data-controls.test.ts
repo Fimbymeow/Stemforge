@@ -39,7 +39,7 @@ test("removing association metadata never removes canonical evidence or provenan
 
 test("clear-all state has an exact empty progress and metadata scope", () => {
   const result = clearAllBrowserProgressState();
-  assert.deepEqual(result.payload.data, { attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [] });
+  assert.deepEqual(result.payload.data, { attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [] });
   assert.deepEqual(result.provenance.records, {});
   assert.deepEqual(result.sync.accounts, {});
   assert.deepEqual(result.imported.accounts, {});
@@ -83,7 +83,7 @@ test("remote erasure reconciliation removes acknowledged account copies and pres
 });
 
 function browserState(): BrowserProgressDataState {
-  const payload = { version: 5 as const, data: {
+  const payload = { version: 6 as const, data: {
     attempts: [
       attempt({ eventId: "anonymous" }),
       attempt({ eventId: "associated", attemptedAt: "2026-07-12T10:02:00.000Z" }),
@@ -93,6 +93,7 @@ function browserState(): BrowserProgressDataState {
     supportEvents: [supportEvent({ eventId: "pulled" })],
     guidedSelfAssessments: [],
     achievementSnapshots: [],
+    reviewEvents: [],
   } };
   let provenance = createDefaultEvidenceProvenance();
   provenance = assignEvidenceProvenance(provenance, payload, ["attempt:anonymous"], "local_anonymous", null);

@@ -9,7 +9,11 @@ import {
   type PracticeSessionRepairResult,
   type PracticeSessionStoreCandidate,
 } from "@/lib/practice/practice-repair";
-import { isLegacyPracticeSession } from "@/lib/practice/practice-validation";
+import {
+  isLegacyPracticeSession,
+  isPracticeSession,
+  isVersionTwoPracticeSession,
+} from "@/lib/practice/practice-validation";
 
 type LegacyPracticeSession = Omit<
   PracticeSession,
@@ -25,6 +29,29 @@ export function decodePracticeSessionStore(value: unknown): PracticeSessionRepai
   if (!isStoreEnvelope(value)) return null;
   if (value.schemaVersion === PRACTICE_SESSION_SCHEMA_VERSION) {
     return repairPracticeSessionStore(value as PracticeSessionStoreCandidate);
+  }
+  if (value.schemaVersion === 2) {
+    const migrationIssues: PracticeSessionRepairIssue[] = [{ code: "legacy_store_migrated" }];
+    const migratedSessions = value.sessions.flatMap((entry, index) => {
+      const migrated = migrateVersionTwoPracticeSession(entry);
+      if (migrated) return [migrated];
+      migrationIssues.push({
+        code: "invalid_session_dropped",
+        sessionId: readSessionId(entry),
+        index,
+      });
+      return [];
+    });
+    const repaired = repairPracticeSessionStore({
+      schemaVersion: PRACTICE_SESSION_SCHEMA_VERSION,
+      activeSessionId: value.activeSessionId,
+      sessions: migratedSessions,
+    });
+    return {
+      store: repaired.store,
+      changed: true,
+      issues: [...migrationIssues, ...repaired.issues],
+    };
   }
   if (value.schemaVersion !== 1) return null;
 
@@ -59,6 +86,15 @@ export function decodePracticeSessionStore(value: unknown): PracticeSessionRepai
     changed: true,
     issues: [...migrationIssues, ...repaired.issues],
   };
+}
+
+export function migrateVersionTwoPracticeSession(value: unknown): PracticeSession | null {
+  if (!isVersionTwoPracticeSession(value)) return null;
+  const candidate = {
+    ...(value as Omit<PracticeSession, "schemaVersion" | "reviewTargets">),
+    schemaVersion: PRACTICE_SESSION_SCHEMA_VERSION,
+  } satisfies PracticeSession;
+  return isPracticeSession(candidate) ? candidate : null;
 }
 
 export function migrateLegacyPracticeSession(value: unknown): PracticeSession | null {

@@ -23,7 +23,7 @@ test("targeted practice discovers synthetic future paths without engine changes 
     now: new Date("2026-07-17T10:00:00.000Z"),
   });
   assert.equal(result.session?.questionReferences.length, 3);
-  assert.equal(result.session?.schemaVersion, 2);
+  assert.equal(result.session?.schemaVersion, 3);
   assert.equal(result.session?.origin, "configured_practice");
   assert.equal(result.session?.subjectId, fixtureIds.subjectSlug);
   assert.equal(isPracticeSession(result.session), true);

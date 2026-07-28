@@ -11,11 +11,11 @@ import { assertSafeTestDatabaseUrl } from "../scripts/database/safety";
 import { attempt, selfAssessment, supportEvent } from "./progress-fixtures";
 
 const payload = (overrides: Record<string, unknown> = {}) => ({
-  version: 5,
-  data: { attempts: [attempt()], supportEvents: [supportEvent()], guidedSelfAssessments: [], achievementSnapshots: [], ...overrides },
+  version: 6,
+  data: { attempts: [attempt()], supportEvents: [supportEvent()], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [], ...overrides },
 });
 
-test("remote validation accepts canonical V5 and unknown legacy version evidence", () => {
+test("remote validation accepts canonical V6 and unknown legacy version evidence", () => {
   const unknown = attempt({ eventId: "migrated_attempt_0_deadbeef", versionEvidence: { kind: "unknown_legacy", questionVersion: null }, legacyCompleted: true });
   const result = validateRemoteEvidenceBatch(payload({ attempts: [unknown] }));
   assert.equal(result.fatal, false);

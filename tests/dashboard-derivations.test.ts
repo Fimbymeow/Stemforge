@@ -128,7 +128,7 @@ function evidence(
   supportEvents: QuestionSupportEvent[] = [],
   achievementSnapshots: AchievementSnapshot[] = [],
 ): ProgressEvidence {
-  return { attempts, supportEvents, guidedSelfAssessments: [], achievementSnapshots };
+  return { attempts, supportEvents, guidedSelfAssessments: [], achievementSnapshots, reviewEvents: [] };
 }
 
 function achievementSnapshot(kind: AchievementSnapshot["kind"], overrides: Partial<AchievementSnapshot> & { snapshotId: string }): AchievementSnapshot {

@@ -8,6 +8,7 @@ const ORIGIN_LABELS: Record<PracticeSessionOrigin, string> = {
   working_context_practice: "Current Path practice",
   retry_incorrect: "Retry incorrect",
   retry_skipped: "Retry skipped",
+  scheduled_review: "Review",
 };
 
 export function practiceOriginLabel(origin: PracticeSessionOrigin) {
@@ -21,6 +22,7 @@ export function practiceReturnDestination(session: Pick<PracticeSession, "origin
       label: "Question Bank",
     };
   }
+  if (session.origin === "scheduled_review") return { href: "/practice?review=1", label: "Review" };
   return { href: "/practice", label: "Practice" };
 }
 

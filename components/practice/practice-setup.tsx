@@ -14,14 +14,22 @@ import { createPracticeSessionSelection } from "@/lib/practice/practice-selectio
 import { derivePracticeSetupVisibility, deriveVisiblePracticeModes } from "@/lib/practice/practice-setup";
 import type { PracticeMode, PracticeTiming } from "@/lib/practice/practice-types";
 import { useHasMounted } from "@/lib/use-mounted";
+import { createReviewSessionSelection } from "@/lib/review/selection";
 
 const modeCopy: Record<Exclude<PracticeMode, "retry_incorrect">, { title: string; detail: string }> = {
   targeted: { title: "Path practice", detail: "Practise available questions from one path." },
   mixed: { title: "Mixed practice", detail: "Balance questions across multiple available paths." },
   needs_work: { title: "Needs Review", detail: "Revisit unfinished and review-recommended questions from your earlier work." },
+  review: { title: "Review", detail: "Complete due scheduled Review through a focused Practice Session." },
 };
 
-export function PracticeSetup({ workingContextPathId }: { workingContextPathId?: string | null }) {
+export function PracticeSetup({
+  workingContextPathId,
+  reviewMode = false,
+}: {
+  workingContextPathId?: string | null;
+  reviewMode?: boolean;
+}) {
   const activation = usePracticeActivation();
   const hasMounted = useHasMounted();
   const evidence = hasMounted ? getProgressEvidence() : getEmptyProgressEvidence();
@@ -67,6 +75,10 @@ export function PracticeSetup({ workingContextPathId }: { workingContextPathId?:
     timing: timing(timed, timeLimitMinutes),
     now: new Date("2026-01-01T00:00:00.000Z"),
   });
+  const reviewPreview = createReviewSessionSelection({
+    evidence,
+    targetPathId: workingContextPathId ?? undefined,
+  });
 
   function startConfiguredSession() {
     const result = createPracticeSessionSelection({
@@ -81,6 +93,55 @@ export function PracticeSetup({ workingContextPathId }: { workingContextPathId?:
     });
     if (!result.session) return;
     void activation.begin(result.session);
+  }
+
+  function startReviewSession() {
+    const result = createReviewSessionSelection({
+      evidence: getProgressEvidence(),
+      targetPathId: workingContextPathId ?? undefined,
+    });
+    if (result.session) void activation.begin(result.session);
+  }
+
+  if (reviewMode) {
+    const dueCount = reviewPreview.dueStates.filter((state) => state.due).length;
+    const reason = reviewPreview.dueStates.find((state) => state.due)?.reason;
+    return (
+      <AppShell demo active="Practice" className="py-8 max-xl:pt-5" workingContextPathId={workingContextPathId}>
+        <div className="mx-auto grid max-w-[760px] gap-5">
+          <header>
+            <p className="font-mono text-xs font-extrabold uppercase text-forge">Review</p>
+            <h1 className="mt-2 text-[34px] font-extrabold leading-none">Review what is due</h1>
+            <p className="mt-3 text-muted">A short scheduled Review uses the same trusted question workspace as Practice.</p>
+          </header>
+          <Card className="border-forge/30 bg-gradient-to-br from-forge/10 to-white p-5" data-testid="review-launch-card">
+            {reviewPreview.session ? (
+              <>
+                <p className="text-sm font-extrabold text-forge">{dueCount} skill{dueCount === 1 ? "" : "s"} due</p>
+                <h2 className="mt-1 text-xl font-extrabold">
+                  {reviewPreview.session.questionReferences.length} question{reviewPreview.session.questionReferences.length === 1 ? "" : "s"} ready
+                </h2>
+                <p className="mt-2 text-sm text-muted">{reviewReasonCopy(reason)}</p>
+                {reviewPreview.remainingDueCount > 0 ? (
+                  <p className="mt-2 text-sm font-bold text-muted">{reviewPreview.remainingDueCount} more due skill{reviewPreview.remainingDueCount === 1 ? "" : "s"} will remain for the next Review.</p>
+                ) : null}
+                <button type="button" onClick={startReviewSession} disabled={activation.busy} className="mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-forge px-5 font-extrabold text-white max-sm:w-full">
+                  Start Review <ArrowRight className="size-5" />
+                </button>
+              </>
+            ) : (
+              <>
+                <h2 className="text-xl font-extrabold">Nothing is due right now</h2>
+                <p className="mt-2 text-muted">Keep learning or practising. Review will appear here when a completed skill is ready to revisit.</p>
+              </>
+            )}
+            {activation.error ? <p role="alert" className="mt-3 text-sm font-bold text-danger">{activation.error}</p> : null}
+          </Card>
+          <Link href={workingContextPathId ? `/practice?path=${encodeURIComponent(workingContextPathId)}` : "/practice"} className="text-sm font-bold text-forge">Back to Practice</Link>
+        </div>
+        {activation.activationUi}
+      </AppShell>
+    );
   }
 
   return (
@@ -200,4 +261,10 @@ export function PracticeSetup({ workingContextPathId }: { workingContextPathId?:
 
 function timing(timed: boolean, minutes: number): PracticeTiming {
   return timed ? { type: "timed", timeLimitSeconds: Math.max(60, Math.min(10800, Math.floor(minutes * 60))), elapsedSeconds: 0 } : { type: "untimed" };
+}
+
+function reviewReasonCopy(reason: ReturnType<typeof createReviewSessionSelection>["dueStates"][number]["reason"] | undefined) {
+  if (reason === "recently_incorrect") return "This Review is due because of a recent incorrect answer.";
+  if (reason === "content_changed") return "This Review is due because the learning content changed.";
+  return "This skill is due after time away from it.";
 }

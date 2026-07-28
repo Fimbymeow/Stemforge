@@ -13,6 +13,7 @@ import type {
   StageProgress,
 } from "@/lib/progress/types";
 import { effectiveAttemptOutcome, isGradedAttempt, isGradedCorrectAttempt, isGradedIncorrectAttempt } from "@/lib/progress/attempt-outcomes";
+import type { ReviewEvent } from "@/lib/review/types";
 
 export const MASTERY_CONTRIBUTIONS: Readonly<Record<QuestionOutcome, number>> = {
   not_attempted: 0,
@@ -52,6 +53,18 @@ export function recordGuidedSelfAssessment(
   };
 }
 
+export function recordReviewEvent(payload: ProgressPayload, event: ReviewEvent): ProgressPayload {
+  const existing = payload.data.reviewEvents.find((item) => item.eventId === event.eventId);
+  if (existing) return payload;
+  return {
+    ...payload,
+    data: {
+      ...payload.data,
+      reviewEvents: [...payload.data.reviewEvents, structuredClone(event)],
+    },
+  };
+}
+
 export function resetPathProgress(payload: ProgressPayload, skillPathId: string): ProgressPayload {
   return {
     ...payload,
@@ -60,6 +73,8 @@ export function resetPathProgress(payload: ProgressPayload, skillPathId: string)
       supportEvents: payload.data.supportEvents.filter((event) => event.skillPathId !== skillPathId),
       guidedSelfAssessments: payload.data.guidedSelfAssessments.filter((event) => event.skillPathId !== skillPathId),
       achievementSnapshots: payload.data.achievementSnapshots,
+      reviewEvents: payload.data.reviewEvents.filter((event) =>
+        !(event.target.targetType === "skill" && event.target.targetId === skillPathId)),
     },
   };
 }

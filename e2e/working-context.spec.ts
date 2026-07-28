@@ -68,7 +68,7 @@ test("stage transition is deterministic and stage rows remain directly explorabl
 });
 
 test("completed overview keeps its acknowledgement card but renders exactly one primary action", async ({ page }) => {
-  await seedStoredProgress(page, v3Payload(QUESTION_IDS.map((id, index) => currentAttempt(id, index + 1))));
+  await seedStoredProgress(page, v3Payload(recentCompletion()));
   await page.goto(overview);
   const card = page.getByTestId("completed-path-card");
   await expect(card).toBeVisible();
@@ -99,15 +99,13 @@ test("completed overview's secondary action jumps to the stage list instead of r
 });
 
 test("completed overview with genuine review due shows one review-aware primary action, not a duplicate CTA", async ({ page }) => {
-  await seedStoredProgress(page, v3Payload(
-    QUESTION_IDS.map((id, index) => currentAttempt(id, index + 1, { hintViewedBeforeSubmission: index === 0 })),
-  ));
+  await seedStoredProgress(page, v3Payload(QUESTION_IDS.map((id, index) => currentAttempt(id, index + 1))));
   await page.goto(overview);
   await expect(page.getByTestId("completed-path-card")).toBeVisible();
-  const primaryActions = page.getByRole("link", { name: /Review due question|Practise this skill/ });
+  const primaryActions = page.getByRole("link", { name: /Start Review|Practise this skill/ });
   await expect(primaryActions).toHaveCount(1);
-  await expect(primaryActions).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
-  await expect(page.getByRole("link", { name: "Review Foundations" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
+  await expect(primaryActions).toHaveAttribute("href", "/practice?review=1&path=basic-differentiation");
+  await expect(page.getByRole("link", { name: "Revisit Foundations" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
 });
 
 test("hub skill title has a visible resting underline and Current Path rows are affordant at rest", async ({ page }) => {
@@ -150,36 +148,32 @@ test("feedback control never intersects overview content at 1366x768, including 
   expect(dockBox && backBox && backBox.y + backBox.height <= dockBox.y).toBeTruthy();
 });
 
-test("genuine review evidence exposes one contextual re-attempt and no fake queue", async ({ page }) => {
-  await seedStoredProgress(page, v3Payload(
-    QUESTION_IDS.map((id, index) => currentAttempt(id, index + 1, { hintViewedBeforeSubmission: index === 0 })),
-  ));
-  await page.goto(`/question/${QUESTION_IDS[7]}`);
-  await page.getByRole("button", { name: "Current Path: Basic differentiation" }).click();
-  const panel = page.getByTestId("working-context-desktop-panel");
-  await expect(panel.getByRole("link", { name: "Review 1 question due" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
-  await page.goto(hub);
-  await expect(page.getByTestId("working-context-hub").getByRole("link", { name: "Review 1 question due" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
-
+test("scheduled Review exposes one contextual Practice Session entry and a recent completion stays calm", async ({ page }) => {
   await seedStoredProgress(page, v3Payload(QUESTION_IDS.map((id, index) => currentAttempt(id, index + 1))));
   await page.goto(`/question/${QUESTION_IDS[7]}`);
   await page.getByRole("button", { name: "Current Path: Basic differentiation" }).click();
-  await expect(page.getByTestId("working-context-desktop-panel").getByText(/question due/)).toHaveCount(0);
-});
+  const panel = page.getByTestId("working-context-desktop-panel");
+  await expect(panel.getByRole("link", { name: "Review 1 skill due" })).toHaveAttribute("href", "/practice?review=1&path=basic-differentiation");
+  await page.goto(hub);
+  await expect(page.getByTestId("working-context-hub").getByRole("link", { name: "Review 1 skill due" })).toHaveAttribute("href", "/practice?review=1&path=basic-differentiation");
 
-test("review count pluralises correctly wherever the rail/hub/overview show it", async ({ page }) => {
-  await seedStoredProgress(page, v3Payload(
-    QUESTION_IDS.map((id, index) => currentAttempt(id, index + 1, { hintViewedBeforeSubmission: index === 0 || index === 3 })),
-  ));
+  await seedStoredProgress(page, v3Payload(recentCompletion()));
   await page.goto(`/question/${QUESTION_IDS[7]}`);
   await page.getByRole("button", { name: "Current Path: Basic differentiation" }).click();
-  await expect(page.getByTestId("working-context-desktop-panel").getByRole("link", { name: "Review 2 questions due" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
+  await expect(page.getByTestId("working-context-desktop-panel").getByText(/skill due/)).toHaveCount(0);
+});
+
+test("scheduled Review count and destination stay coherent across rail, hub and overview", async ({ page }) => {
+  await seedStoredProgress(page, v3Payload(QUESTION_IDS.map((id, index) => currentAttempt(id, index + 1))));
+  await page.goto(`/question/${QUESTION_IDS[7]}`);
+  await page.getByRole("button", { name: "Current Path: Basic differentiation" }).click();
+  await expect(page.getByTestId("working-context-desktop-panel").getByRole("link", { name: "Review 1 skill due" })).toHaveAttribute("href", "/practice?review=1&path=basic-differentiation");
 
   await page.goto(hub);
-  await expect(page.getByTestId("working-context-hub").getByRole("link", { name: "Review 2 questions due" })).toBeVisible();
+  await expect(page.getByTestId("working-context-hub").getByRole("link", { name: "Review 1 skill due" })).toBeVisible();
 
   await page.goto(overview);
-  await expect(page.getByRole("link", { name: "Review 2 questions due" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Review 1 skill due" })).toBeVisible();
 });
 
 test("question-to-Notes continuity returns to the exact production question URL", async ({ page }) => {
@@ -243,3 +237,10 @@ test("working routes remain production URLs and unavailable paths still return 4
   const unavailable = await page.goto("/subjects/higher-maths/calculus/differentiation/chain-rule");
   expect(unavailable?.status()).toBe(404);
 });
+
+function recentCompletion() {
+  const start = Date.now() - 60_000;
+  return QUESTION_IDS.map((id, index) => currentAttempt(id, index + 1, {
+    attemptedAt: new Date(start + index * 1_000).toISOString(),
+  }));
+}

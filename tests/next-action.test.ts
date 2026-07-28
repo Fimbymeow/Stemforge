@@ -131,11 +131,11 @@ test("empty and invalid catalogue conditions return an explicit unavailable resu
 });
 
 function emptyEvidence(): ProgressEvidence {
-  return { attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [] };
+  return { attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [] };
 }
 
 function evidence(attempts: QuestionAttempt[] = [], supportEvents: QuestionSupportEvent[] = []): ProgressEvidence {
-  return { attempts, supportEvents, guidedSelfAssessments: [], achievementSnapshots: [] };
+  return { attempts, supportEvents, guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [] };
 }
 
 function attempt(
@@ -181,7 +181,7 @@ function support(questionId: string, sequence: number, overrides: Partial<Questi
 function activeSession(): PracticeSession {
   const context = resolver.getQuestionContext(questionIds[0])!;
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     sessionId: "next-action-active-session",
     origin: "configured_practice",
     subjectId: context.subject.subjectSlug,

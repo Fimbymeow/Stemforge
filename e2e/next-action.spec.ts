@@ -97,7 +97,7 @@ test("stage completion advances to the next recommended stage without hard-locki
   await expect(page.getByRole("link", { name: "Revisit Foundations" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
 });
 
-test("completed guided content recommends practice and never locked inventory", async ({ page }) => {
+test("completed guided content recommends due Review before practice and never locked inventory", async ({ page }) => {
   await seedStoredProgress(page, v3Payload(QUESTION_IDS.map((id, index) => currentAttempt(id, index + 1))));
 
   for (const route of ["/dashboard"]) {
@@ -107,7 +107,7 @@ test("completed guided content recommends practice and never locked inventory", 
   }
   for (const route of [HUB_ROUTE, PATH_ROUTE]) {
     await page.goto(route);
-    await expectPrimaryAction(page, "Practise this skill", "/practice?path=basic-differentiation");
+    await expectPrimaryAction(page, "Start Review", "/practice?review=1&path=basic-differentiation");
   }
   await page.goto("/subjects");
   await expectHigherMathsCourseAccess(page);

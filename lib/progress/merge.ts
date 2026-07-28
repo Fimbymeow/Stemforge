@@ -2,7 +2,7 @@ import { stableStringify } from "@/lib/progress/event-identity";
 import { migrateProgressPayload } from "@/lib/progress/payload";
 import type { AchievementSnapshot, ProgressPayload, QuestionAttempt, QuestionSupportEvent } from "@/lib/progress/types";
 
-export type EvidenceRecordType = "attempt" | "support_event" | "guided_self_assessment" | "achievement_snapshot";
+export type EvidenceRecordType = "attempt" | "support_event" | "guided_self_assessment" | "achievement_snapshot" | "review_event";
 export type EvidenceConflict = {
   type: "same_id_conflict" | "malformed_evidence_dropped" | "unsupported_payload_version";
   recordType?: EvidenceRecordType;
@@ -17,9 +17,10 @@ export function mergeProgressEvidence(left: ProgressPayload, right: ProgressPayl
   const supportEvents = mergeRecords(left.data.supportEvents, right.data.supportEvents, "support_event", (item) => item.eventId, (item) => item.occurredAt);
   const guidedSelfAssessments = mergeRecords(left.data.guidedSelfAssessments, right.data.guidedSelfAssessments, "guided_self_assessment", (item) => item.eventId, (item) => item.occurredAt);
   const achievementSnapshots = mergeRecords(left.data.achievementSnapshots, right.data.achievementSnapshots, "achievement_snapshot", (item) => item.snapshotId, (item) => item.achievedAt);
+  const reviewEvents = mergeRecords(left.data.reviewEvents, right.data.reviewEvents, "review_event", (item) => item.eventId, (item) => item.occurredAt);
   return {
-    payload: { version: 5, data: { attempts: attempts.records, supportEvents: supportEvents.records, guidedSelfAssessments: guidedSelfAssessments.records, achievementSnapshots: achievementSnapshots.records } },
-    conflicts: [...attempts.conflicts, ...supportEvents.conflicts, ...guidedSelfAssessments.conflicts, ...achievementSnapshots.conflicts],
+    payload: { version: 6, data: { attempts: attempts.records, supportEvents: supportEvents.records, guidedSelfAssessments: guidedSelfAssessments.records, achievementSnapshots: achievementSnapshots.records, reviewEvents: reviewEvents.records } },
+    conflicts: [...attempts.conflicts, ...supportEvents.conflicts, ...guidedSelfAssessments.conflicts, ...achievementSnapshots.conflicts, ...reviewEvents.conflicts],
   };
 }
 
@@ -76,6 +77,7 @@ function migrationConflicts(result: ReturnType<typeof migrateProgressPayload>, s
   const counts: Array<[EvidenceRecordType, number]> = [
     ["attempt", result.droppedAttempts], ["support_event", result.droppedEvents],
     ["guided_self_assessment", result.droppedSelfAssessments], ["achievement_snapshot", result.droppedSnapshots],
+    ["review_event", result.droppedReviewEvents],
   ];
   for (const [recordType, count] of counts) if (count) conflicts.push({ type: "malformed_evidence_dropped", recordType, detail: `${side} payload dropped ${count} malformed ${recordType} record(s).` });
   return conflicts;

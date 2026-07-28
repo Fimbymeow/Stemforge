@@ -7,6 +7,8 @@ import {
 import type { AchievementSnapshot, GuidedSelfAssessmentEvent, ProgressPayload, QuestionAttempt, QuestionSupportEvent } from "@/lib/progress/types";
 import type { ProgressImportResponse } from "@/lib/progress/import-protocol";
 import type { RemoteEvidenceKind } from "@/lib/remote-evidence/types";
+import type { ReviewEvent } from "@/lib/review/types";
+import { isReviewEvent } from "@/lib/review/validation";
 
 export const PROGRESS_SYNC_PROTOCOL_VERSION = 1 as const;
 export const PROGRESS_SYNC_METADATA_KEY = "stemforge.progressSync.v1";
@@ -41,7 +43,7 @@ export type ProgressSyncPushEnvelope = {
 
 export type ProgressSyncPushResponse = ProgressImportResponse;
 
-export type ProgressSyncEvidence = QuestionAttempt | QuestionSupportEvent | GuidedSelfAssessmentEvent | AchievementSnapshot;
+export type ProgressSyncEvidence = QuestionAttempt | QuestionSupportEvent | GuidedSelfAssessmentEvent | AchievementSnapshot | ReviewEvent;
 
 export type ProgressSyncPulledEvent = {
   kind: RemoteEvidenceKind;
@@ -106,12 +108,13 @@ export function isProgressSyncExpectedStateResponse(value: unknown): value is Pr
 }
 
 export function progressSyncEventsToPayload(events: readonly ProgressSyncPulledEvent[]): ProgressPayload {
-  const payload: ProgressPayload = { version: 5, data: { attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [] } };
+  const payload: ProgressPayload = { version: 6, data: { attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [] } };
   for (const event of events) {
     if (event.kind === "attempt") payload.data.attempts.push(event.evidence as QuestionAttempt);
     else if (event.kind === "support_event") payload.data.supportEvents.push(event.evidence as QuestionSupportEvent);
     else if (event.kind === "guided_self_assessment") payload.data.guidedSelfAssessments.push(event.evidence as GuidedSelfAssessmentEvent);
-    else payload.data.achievementSnapshots.push(event.evidence as AchievementSnapshot);
+    else if (event.kind === "achievement_snapshot") payload.data.achievementSnapshots.push(event.evidence as AchievementSnapshot);
+    else payload.data.reviewEvents.push(event.evidence as ReviewEvent);
   }
   return payload;
 }
@@ -136,7 +139,8 @@ function isPulledEvent(value: unknown): value is ProgressSyncPulledEvent {
   if (event.kind === "attempt") return isQuestionAttempt(event.evidence) && event.evidence.eventId === event.eventId;
   if (event.kind === "support_event") return isQuestionSupportEvent(event.evidence) && event.evidence.eventId === event.eventId;
   if (event.kind === "guided_self_assessment") return isGuidedSelfAssessmentEvent(event.evidence) && event.evidence.eventId === event.eventId;
-  return isAchievementSnapshot(event.evidence) && event.evidence.snapshotId === event.eventId;
+  if (event.kind === "achievement_snapshot") return isAchievementSnapshot(event.evidence) && event.evidence.snapshotId === event.eventId;
+  return isReviewEvent(event.evidence, true) && event.evidence.eventId === event.eventId;
 }
 
 function isSkippedEvent(value: unknown) {
@@ -148,7 +152,8 @@ function isSkippedEvent(value: unknown) {
 }
 
 function isKind(value: unknown): value is RemoteEvidenceKind {
-  return value === "attempt" || value === "support_event" || value === "guided_self_assessment" || value === "achievement_snapshot";
+  return value === "attempt" || value === "support_event" || value === "guided_self_assessment" ||
+    value === "achievement_snapshot" || value === "review_event";
 }
 
 function isReceiveCursor(value: unknown): value is string {

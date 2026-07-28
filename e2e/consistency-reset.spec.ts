@@ -59,7 +59,7 @@ test("path reset clears only Basic differentiation and remains valid after refre
   await expect(page.getByTestId("path-mastery-status")).toContainText("Not Started");
   await expect(page.getByRole("navigation", { name: "Main" })).toBeVisible();
   let stored = await readStoredProgress(page) as ProgressPayload;
-  expect(stored.version).toBe(5);
+  expect(stored.version).toBe(6);
   expect(stored.data.attempts).toHaveLength(1);
   expect(stored.data.attempts[0].skillPathId).toBe("other-path");
   expect(stored.data.supportEvents).toHaveLength(1);

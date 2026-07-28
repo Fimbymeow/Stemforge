@@ -93,6 +93,7 @@ export function applyProgressSyncPullPage(response: ProgressSyncPullResponse) {
       ...verified.payload.data.supportEvents.map((item) => `support_event:${item.eventId}`),
       ...verified.payload.data.guidedSelfAssessments.map((item) => `guided_self_assessment:${item.eventId}`),
       ...verified.payload.data.achievementSnapshots.map((item) => `achievement_snapshot:${item.snapshotId}`),
+      ...verified.payload.data.reviewEvents.map((item) => `review_event:${item.eventId}`),
     ]);
     for (const reference of expected) if (!present.has(reference)) throw new Error("Synchronized evidence was not durably stored.");
 

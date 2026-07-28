@@ -12,6 +12,8 @@ import type {
   QuestionSupportEvent,
 } from "@/lib/progress/types";
 import type { RejectedRemoteEvidence, RemoteEvidenceKind } from "@/lib/remote-evidence/types";
+import type { ReviewEvent } from "@/lib/review/types";
+import { isReviewEvent, safeId } from "@/lib/review/validation";
 
 export const MAX_REMOTE_EVIDENCE_BATCH_ITEMS = 500;
 export const MAX_REMOTE_EVIDENCE_BATCH_BYTES = 1_000_000;
@@ -30,19 +32,21 @@ export function validateOwnerId(ownerId: unknown): ownerId is string {
 }
 
 export function validateRemoteEvidenceBatch(value: unknown): ValidatedRemoteEvidenceBatch {
-  const empty = (): ProgressPayload => ({ version: 5, data: { attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [] } });
-  if (!value || typeof value !== "object") return fatal(empty(), "A canonical V5 evidence payload is required.");
+  const empty = (): ProgressPayload => ({ version: 6, data: { attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [] } });
+  if (!value || typeof value !== "object") return fatal(empty(), "A canonical V6 evidence payload is required.");
   const candidate = value as { version?: unknown; data?: unknown };
-  if (!hasExactKeys(candidate, ["version", "data"])) return fatal(empty(), "Only canonical V5 payload fields are accepted.");
-  if (candidate.version !== 5) return fatal(empty(), "Only canonical V5 evidence payloads are accepted.");
-  if (!candidate.data || typeof candidate.data !== "object") return fatal(empty(), "The V5 data object is required.");
-  const data = candidate.data as { attempts?: unknown; supportEvents?: unknown; guidedSelfAssessments?: unknown; achievementSnapshots?: unknown };
-  if (!hasExactKeys(data, ["attempts", "supportEvents", "guidedSelfAssessments", "achievementSnapshots"])) return fatal(empty(), "Only canonical V5 data fields are accepted.");
+  if (!hasExactKeys(candidate, ["version", "data"])) return fatal(empty(), "Only canonical V6 payload fields are accepted.");
+  if (candidate.version !== 6) return fatal(empty(), "Only canonical V6 evidence payloads are accepted.");
+  if (!candidate.data || typeof candidate.data !== "object") return fatal(empty(), "The V6 data object is required.");
+  const data = candidate.data as { attempts?: unknown; supportEvents?: unknown; guidedSelfAssessments?: unknown; achievementSnapshots?: unknown; reviewEvents?: unknown };
+  if (!hasExactKeys(data, ["attempts", "supportEvents", "guidedSelfAssessments", "achievementSnapshots", "reviewEvents"])) return fatal(empty(), "Only canonical V6 data fields are accepted.");
   if (!Array.isArray(data.attempts) || !Array.isArray(data.supportEvents) ||
-      !Array.isArray(data.guidedSelfAssessments) || !Array.isArray(data.achievementSnapshots)) {
-    return fatal(empty(), "V5 attempts, supportEvents, guidedSelfAssessments and achievementSnapshots arrays are required.");
+      !Array.isArray(data.guidedSelfAssessments) || !Array.isArray(data.achievementSnapshots) ||
+      !Array.isArray(data.reviewEvents)) {
+    return fatal(empty(), "V6 evidence arrays are required.");
   }
-  const total = data.attempts.length + data.supportEvents.length + data.guidedSelfAssessments.length + data.achievementSnapshots.length;
+  const total = data.attempts.length + data.supportEvents.length + data.guidedSelfAssessments.length +
+    data.achievementSnapshots.length + data.reviewEvents.length;
   if (total > MAX_REMOTE_EVIDENCE_BATCH_ITEMS) return fatal(empty(), `Evidence batches may contain at most ${MAX_REMOTE_EVIDENCE_BATCH_ITEMS} records.`);
   let bytes: number;
   try { bytes = new TextEncoder().encode(JSON.stringify(value)).length; } catch { return fatal(empty(), "Evidence payload must be JSON serializable."); }
@@ -53,7 +57,8 @@ export function validateRemoteEvidenceBatch(value: unknown): ValidatedRemoteEvid
   const supportEvents = data.supportEvents.filter((item): item is QuestionSupportEvent => validateItem(item, "support_event", rejected));
   const guidedSelfAssessments = data.guidedSelfAssessments.filter((item): item is GuidedSelfAssessmentEvent => validateItem(item, "guided_self_assessment", rejected));
   const achievementSnapshots = data.achievementSnapshots.filter((item): item is AchievementSnapshot => validateItem(item, "achievement_snapshot", rejected));
-  return { payload: { version: 5, data: { attempts, supportEvents, guidedSelfAssessments, achievementSnapshots } }, rejected, fatal: false };
+  const reviewEvents = data.reviewEvents.filter((item): item is ReviewEvent => validateItem(item, "review_event", rejected));
+  return { payload: { version: 6, data: { attempts, supportEvents, guidedSelfAssessments, achievementSnapshots, reviewEvents } }, rejected, fatal: false };
 }
 
 function validateItem(value: unknown, kind: RemoteEvidenceKind, rejected: RejectedRemoteEvidence[]) {
@@ -77,16 +82,32 @@ function validateItem(value: unknown, kind: RemoteEvidenceKind, rejected: Reject
       : !validSelfAssessmentFields(value)
         ? "Guided self-assessment contains an unsafe ID or timestamp."
         : null;
-  } else {
+  } else if (kind === "achievement_snapshot") {
     reason = !isAchievementSnapshot(value) || !hasExactKeys(value, snapshotKeys, snapshotOptionalKeys)
       ? "Invalid canonical achievement snapshot."
       : !validSnapshotFields(value)
         ? "Achievement snapshot contains an unsafe ID."
         : null;
+  } else {
+    reason = !isReviewEvent(value, true)
+      ? "Invalid canonical Review event."
+      : !validReviewFields(value)
+        ? "Review event contains an unsafe ID or timestamp."
+        : null;
   }
   if (!reason) return true;
   rejected.push({ kind, eventId, reason });
   return false;
+}
+
+function validReviewFields(value: ReviewEvent) {
+  return safeId(value.eventId) &&
+    safeId(value.source.sourceId) &&
+    safeId(value.target.targetId) &&
+    (value.priorEventId === null || safeId(value.priorEventId)) &&
+    value.questionIds.every(safeId) &&
+    value.evidenceRefs.every((reference) => safeId(reference.eventId)) &&
+    isIsoTimestamp(value.occurredAt);
 }
 
 function validCommonAttemptFields(value: QuestionAttempt) {

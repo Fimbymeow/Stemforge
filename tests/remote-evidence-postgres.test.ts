@@ -25,6 +25,7 @@ import { runRemoteEvidenceMigrations } from "../scripts/database/migration-runne
 import { assertSafeTestDatabaseUrl } from "../scripts/database/safety";
 import { attempt, selfAssessment, supportEvent } from "./progress-fixtures";
 import type { AchievementSnapshot, GuidedSelfAssessmentEvent, ProgressPayload } from "../lib/progress/types";
+import type { ReviewEvent } from "../lib/review/types";
 
 let postgres: EmbeddedPostgres;
 let pool: Pool;
@@ -78,7 +79,7 @@ test("clean migrations create the append-only evidence schema", async () => {
     WHERE table_schema = 'stemforge_remote' ORDER BY table_name
   `);
   assert.deepEqual(result.rows.map((row) => row.table_name), [
-    "achievement_snapshots", "evidence_conflicts", "guided_self_assessments", "question_attempts", "support_events",
+    "achievement_snapshots", "evidence_conflicts", "guided_self_assessments", "question_attempts", "review_events", "support_events",
   ]);
 });
 
@@ -293,6 +294,10 @@ test("all four remote owner foreign keys are present, not yet validated and enfo
     "INSERT INTO stemforge_remote.achievement_snapshots (owner_id, event_id, payload) VALUES ($1, 'invalid_owner_snapshot', '{}'::jsonb)",
     [invalidOwner],
   ), /foreign key/i);
+  await assert.rejects(pool.query(
+    "INSERT INTO stemforge_remote.review_events (owner_id, event_id, payload) VALUES ($1, 'invalid_owner_review', '{}'::jsonb)",
+    [invalidOwner],
+  ), /foreign key/i);
   await assert.rejects(pool.query(`
     INSERT INTO stemforge_remote.evidence_conflicts
       (owner_id, evidence_kind, event_id, accepted_payload_hash, incoming_payload)
@@ -387,7 +392,7 @@ test("owner creation has no remote evidence side effect", async () => {
   assert.equal(await evidenceRowCount(), before);
 });
 
-test("all four accepted evidence kinds round-trip without payload loss", async () => {
+test("all five accepted evidence kinds round-trip without payload loss", async () => {
   const owner = await ownerId();
   const source = batch(
     [attempt({
@@ -400,9 +405,10 @@ test("all four accepted evidence kinds round-trip without payload loss", async (
     [supportEvent({ eventId: "support_round_trip" })],
     [snapshot({ snapshotId: "snapshot_round_trip" })],
     [selfAssessment({ eventId: "self_round_trip" })],
+    [reviewEvent({ eventId: "review_round_trip" })],
   );
   const appended = await repository.append(owner, source);
-  assert.equal(appended.accepted.length, 4);
+  assert.equal(appended.accepted.length, 5);
   assert.deepEqual(appended.rejected, []);
   const stored = await repository.read(owner);
   assert.deepEqual(stored.payload, source);
@@ -563,6 +569,20 @@ test("database triggers reject truncation and reads remain deterministic", async
   assert.deepEqual(first.payload.data.attempts.map((item) => item.eventId), ["attempt_order_b", "attempt_order_a"]);
 });
 
+test("Review evidence is append-only for update, delete and truncate", async () => {
+  const owner = await ownerId();
+  await repository.append(owner, batch([], [], [], [], [reviewEvent({ eventId: "review_append_only" })]));
+  await assert.rejects(
+    pool.query("UPDATE stemforge_remote.review_events SET event_id = 'changed' WHERE owner_id = $1", [owner]),
+    /append-only/i,
+  );
+  await assert.rejects(
+    pool.query("DELETE FROM stemforge_remote.review_events WHERE owner_id = $1", [owner]),
+    /append-only/i,
+  );
+  await assert.rejects(pool.query("TRUNCATE stemforge_remote.review_events"), /append-only/i);
+});
+
 test("account generations fence appends and reads after owner state creation", async () => {
   const owner = await ownerId();
   const state = await accountDataRepository.readState(owner);
@@ -603,6 +623,7 @@ test("processing erasure hard-deletes retained evidence and advances generation"
     [supportEvent({ eventId: "support_erasure_delete" })],
     [snapshot({ snapshotId: "snapshot_erasure_delete" })],
     [selfAssessment({ eventId: "self_erasure_delete" })],
+    [reviewEvent({ eventId: "review_erasure_delete" })],
   ), "1");
   await repository.append(owner, batch([conflict]), "1");
 
@@ -617,7 +638,7 @@ test("processing erasure hard-deletes retained evidence and advances generation"
   const completed = await accountDataRepository.latestRequest(owner);
   const state = await accountDataRepository.readState(owner);
   assert.equal(completed?.status, "completed");
-  assert.deepEqual(completed?.deletedCounts, { attempts: 1, supportEvents: 1, guidedSelfAssessments: 1, achievementSnapshots: 1, conflicts: 1 });
+  assert.deepEqual(completed?.deletedCounts, { attempts: 1, supportEvents: 1, guidedSelfAssessments: 1, achievementSnapshots: 1, reviewEvents: 1, conflicts: 1 });
   assert.equal(state.status, "active");
   assert.equal(state.generation, "2");
   assert.equal(await evidenceRowCountForOwner(owner), "0");
@@ -637,8 +658,27 @@ function batch(
   supportEvents = [] as ReturnType<typeof supportEvent>[],
   achievementSnapshots = [] as AchievementSnapshot[],
   guidedSelfAssessments = [] as GuidedSelfAssessmentEvent[],
+  reviewEvents = [] as ReviewEvent[],
 ): ProgressPayload {
-  return { version: 5, data: { attempts, supportEvents, guidedSelfAssessments, achievementSnapshots } };
+  return { version: 6, data: { attempts, supportEvents, guidedSelfAssessments, achievementSnapshots, reviewEvents } };
+}
+
+function reviewEvent(overrides: Partial<ReviewEvent> = {}): ReviewEvent {
+  return {
+    eventId: "review_database_1",
+    source: { sourceType: "practice_session", sourceId: "review_session_database" },
+    target: { targetType: "skill", targetId: "basic-differentiation" },
+    targetVersion: { versionType: "skill_path", version: 1 },
+    outcome: "independent_success",
+    occurredAt: "2026-07-14T10:10:00.000Z",
+    sequence: 5,
+    priorEventId: null,
+    schedulerVersion: 1,
+    stageAfter: 0,
+    evidenceRefs: [{ evidenceKind: "attempt", eventId: "attempt_round_trip" }],
+    questionIds: ["hm-calc-diff-basic-f-001"],
+    ...overrides,
+  };
 }
 
 function snapshot(overrides: Partial<AchievementSnapshot> = {}): AchievementSnapshot {
@@ -719,6 +759,7 @@ async function evidenceRowCount() {
       (SELECT count(*) FROM stemforge_remote.support_events) +
       (SELECT count(*) FROM stemforge_remote.guided_self_assessments) +
       (SELECT count(*) FROM stemforge_remote.achievement_snapshots) +
+      (SELECT count(*) FROM stemforge_remote.review_events) +
       (SELECT count(*) FROM stemforge_remote.evidence_conflicts)
     )::text AS count
   `);
@@ -732,6 +773,7 @@ async function evidenceRowCountForOwner(owner: string) {
       (SELECT count(*) FROM stemforge_remote.support_events WHERE owner_id = $1) +
       (SELECT count(*) FROM stemforge_remote.guided_self_assessments WHERE owner_id = $1) +
       (SELECT count(*) FROM stemforge_remote.achievement_snapshots WHERE owner_id = $1) +
+      (SELECT count(*) FROM stemforge_remote.review_events WHERE owner_id = $1) +
       (SELECT count(*) FROM stemforge_remote.evidence_conflicts WHERE owner_id = $1)
     )::text AS count
   `, [owner]);

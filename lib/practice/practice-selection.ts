@@ -17,6 +17,14 @@ import {
 export function createPracticeSessionSelection(
   input: PracticeSelectionInput & { evidence: ProgressEvidence; source?: CanonicalContentSource },
 ): PracticeSelectionResult {
+  if (input.mode === "review") {
+    return {
+      session: null,
+      eligibleQuestions: [],
+      excludedByReason: {},
+      shortageReason: "Scheduled Review sessions use the dedicated Review selector.",
+    };
+  }
   const source = input.source ?? canonicalContent;
   const now = input.now ?? new Date();
   const requestedCount = clampQuestionCount(input.requestedCount);

@@ -175,11 +175,12 @@ test("malformed and future sync metadata fail closed", () => {
 });
 
 function payload(): ProgressPayload {
-  return { version: 5, data: {
+  return { version: 6, data: {
     attempts: [attempt({ eventId: "attempt_sync" })],
     supportEvents: [supportEvent({ eventId: "support_sync" })],
     guidedSelfAssessments: [],
     achievementSnapshots: [],
+    reviewEvents: [],
   } };
 }
 

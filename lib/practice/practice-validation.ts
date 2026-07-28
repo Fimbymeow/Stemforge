@@ -8,8 +8,9 @@ import {
   type PracticeSessionOrigin,
   type PracticeSessionStore,
 } from "@/lib/practice/practice-types";
+import { isReviewTargetAssignment } from "@/lib/review/validation";
 
-const PRACTICE_MODES = ["targeted", "mixed", "needs_work", "retry_incorrect"] as const;
+const PRACTICE_MODES = ["targeted", "mixed", "needs_work", "retry_incorrect", "review"] as const;
 const PRACTICE_STATUSES = ["active", "completed", "abandoned"] as const;
 const PRACTICE_ORIGINS = [
   "question_bank_custom",
@@ -19,6 +20,7 @@ const PRACTICE_ORIGINS = [
   "working_context_practice",
   "retry_incorrect",
   "retry_skipped",
+  "scheduled_review",
 ] as const satisfies readonly PracticeSessionOrigin[];
 
 export function isPracticeSession(value: unknown): value is PracticeSession {
@@ -31,11 +33,16 @@ export function isPracticeSession(value: unknown): value is PracticeSession {
     (session.parentSessionId === undefined || isNonEmptyString(session.parentSessionId)) &&
     isCanonicalQuestionIdArray(session.skippedQuestionIds, questionIds) &&
     (session.finalSkippedQuestionIds === undefined ||
-      isCanonicalQuestionIdArray(session.finalSkippedQuestionIds, questionIds));
+      isCanonicalQuestionIdArray(session.finalSkippedQuestionIds, questionIds)) &&
+    validReviewMetadata(session, questionIds);
 }
 
 export function isLegacyPracticeSession(value: unknown): value is Record<string, unknown> {
   return isPracticeSessionBase(value, 1);
+}
+
+export function isVersionTwoPracticeSession(value: unknown): value is Record<string, unknown> {
+  return isPracticeSessionBase(value, 2);
 }
 
 export function isPracticeSessionStore(value: unknown): value is PracticeSessionStore {
@@ -73,8 +80,39 @@ export function serializePracticeSession(session: PracticeSession) {
     ...(session.finalSkippedQuestionIds === undefined ? {} : {
       finalSkippedQuestionIds: [...session.finalSkippedQuestionIds],
     }),
+    ...(session.reviewTargets === undefined ? {} : {
+      reviewTargets: session.reviewTargets.map((assignment) => ({
+        target: { ...assignment.target },
+        questionIds: [...assignment.questionIds],
+      })),
+    }),
   };
   return JSON.stringify(stable);
+}
+
+function validReviewMetadata(session: PracticeSession, questionIds: ReadonlySet<string>) {
+  if (session.mode !== "review") {
+    return session.origin !== "scheduled_review" && session.reviewTargets === undefined;
+  }
+  if (session.origin !== "scheduled_review" ||
+      !Array.isArray(session.reviewTargets) ||
+      session.reviewTargets.length < 1 ||
+      session.questionReferences.length > 12) return false;
+  const targets = new Set<string>();
+  const assigned = new Set<string>();
+  for (const assignment of session.reviewTargets) {
+    if (!isReviewTargetAssignment(assignment) ||
+        targets.has(assignment.target.targetId) ||
+        assignment.questionIds.some((questionId) =>
+          !questionIds.has(questionId) || assigned.has(questionId))) return false;
+    targets.add(assignment.target.targetId);
+    assignment.questionIds.forEach((questionId) => assigned.add(questionId));
+  }
+  return assigned.size === questionIds.size &&
+    session.reviewTargets.every((assignment) =>
+      assignment.questionIds.every((questionId) =>
+        session.questionReferences.some((reference) =>
+          reference.questionId === questionId && reference.pathId === assignment.target.targetId)));
 }
 
 function isPracticeSessionBase(value: unknown, schemaVersion: number) {

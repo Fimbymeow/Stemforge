@@ -1,13 +1,14 @@
 import type { Question, SkillPath } from "@/data/types";
 import type { ResolvedQuestionContext, ResolvedSkillPath } from "@/lib/content-resolver";
+import type { ReviewTargetAssignment } from "@/lib/review/types";
 
-export const PRACTICE_SESSION_SCHEMA_VERSION = 2 as const;
+export const PRACTICE_SESSION_SCHEMA_VERSION = 3 as const;
 export const PRACTICE_SESSIONS_STORAGE_KEY = "stemforge.practiceSessions.v1";
 export const MAX_PRACTICE_QUESTIONS = 500;
 export const MAX_PRACTICE_HISTORY = 20;
 export const MAX_TIME_LIMIT_SECONDS = 3 * 60 * 60;
 
-export type PracticeMode = "targeted" | "mixed" | "needs_work" | "retry_incorrect";
+export type PracticeMode = "targeted" | "mixed" | "needs_work" | "retry_incorrect" | "review";
 export type PracticeSessionStatus = "active" | "completed" | "abandoned";
 export type PracticeSessionOrigin =
   | "question_bank_custom"
@@ -16,7 +17,8 @@ export type PracticeSessionOrigin =
   | "configured_practice"
   | "working_context_practice"
   | "retry_incorrect"
-  | "retry_skipped";
+  | "retry_skipped"
+  | "scheduled_review";
 export type PracticeTiming = { type: "untimed" } | { type: "timed"; timeLimitSeconds: number; elapsedSeconds: number };
 
 export type PracticeQuestionReference = {
@@ -60,6 +62,7 @@ export type PracticeSession = {
   selectionMetadata: PracticeSelectionMetadata;
   skippedQuestionIds: string[];
   finalSkippedQuestionIds?: string[];
+  reviewTargets?: ReviewTargetAssignment[];
 };
 
 export type PracticeSessionStore = {

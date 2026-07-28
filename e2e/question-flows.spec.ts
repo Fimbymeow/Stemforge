@@ -48,7 +48,7 @@ test("independent first-attempt correctness persists and unlocks progression", a
   await expect(page.getByTestId("question-status")).toContainText("Correct");
   await expect(page.getByTestId("next-question-action")).toHaveAttribute("href", `/question/${QUESTION_IDS[1]}`);
   const storedAfterSubmission = await readStoredProgress(page) as ProgressPayload;
-  expect(storedAfterSubmission.version).toBe(5);
+  expect(storedAfterSubmission.version).toBe(6);
   expect(storedAfterSubmission.data.attempts[0].eventId).toMatch(/^attempt_/);
   expect(storedAfterSubmission.data.attempts[0].versionEvidence).toEqual({ kind: "known", questionVersion: 1 });
   let state = stateFromStored(storedAfterSubmission, QUESTION_IDS[0]);
