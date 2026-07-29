@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { higherMathsDifferentiationQuestions } from "../content/questions/higher-maths/differentiation";
+import { higherMathsDifferentiationQuestions } from "../content/questions/higher-maths/basic-differentiation";
 import { markQuestionAnswer } from "../lib/answer-engine";
 import { auditLegacyAcceptedAnswerCollisions, auditLegacyNumericCollisions } from "../lib/marking/legacy-collision-audit";
 import { markNumeric, NUMERIC_DIGIT_LIMIT, NUMERIC_EXPONENT_LIMIT, NUMERIC_INPUT_MAX_LENGTH } from "../lib/marking/numeric";

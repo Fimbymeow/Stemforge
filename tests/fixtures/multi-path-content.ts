@@ -1,4 +1,4 @@
-import { higherMathsDifferentiationQuestions } from "../../content/questions/higher-maths/differentiation";
+import { higherMathsDifferentiationQuestions } from "../../content/questions/higher-maths/basic-differentiation";
 import { higherMaths, higherMathsCalculusStrandIds } from "../../data/higher-maths";
 import type { LearningStage, Question, SkillPath, Subject } from "../../data/types";
 import type { CanonicalContentSource } from "../../data/canonical-content";

@@ -1,0 +1,11 @@
+{
+  "bankId": "hm-calc-diff-basic",
+  "sourceBankVersion": "1",
+  "targetSkillPathSlug": "basic-differentiation",
+  "stageNameToStageId": {
+    "Foundations": "basic-diff-stage-foundations",
+    "Applications": "basic-diff-stage-applications",
+    "Past Paper-style Questions": "basic-diff-stage-past-paper-style"
+  },
+  "runMode": "includes_authorised_edits"
+}

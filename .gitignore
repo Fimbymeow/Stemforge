@@ -16,3 +16,5 @@ test-results-hardening
 playwright-import-real-report
 test-results-import-real
 blob-report
+content-import/previews/
+content-import/.apply-state/

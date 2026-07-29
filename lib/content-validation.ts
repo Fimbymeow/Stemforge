@@ -738,7 +738,7 @@ function validateParentLifecycle(
 }
 
 function questionLocation(question: Question) {
-  return question.subject === "Higher Maths" ? `content/questions/higher-maths/differentiation.ts#${question.id}` : `content/questions#${question.id}`;
+  return question.subject === "Higher Maths" ? `content/questions/higher-maths/basic-differentiation.ts#${question.id}` : `content/questions#${question.id}`;
 }
 
 function findDuplicates(values: string[]) {

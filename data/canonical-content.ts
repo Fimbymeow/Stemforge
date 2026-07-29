@@ -1,4 +1,4 @@
-import { higherMathsDifferentiationQuestions } from "@/content/questions/higher-maths/differentiation";
+import { higherMathsDifferentiationQuestions } from "@/content/questions/higher-maths/basic-differentiation";
 import { higherMaths } from "@/data/higher-maths";
 import { higherPhysics } from "@/data/higher-physics";
 import type { Question, Subject } from "@/data/types";

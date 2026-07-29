@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { higherMathsDifferentiationQuestions } from "../content/questions/higher-maths/differentiation";
+import { higherMathsDifferentiationQuestions } from "../content/questions/higher-maths/basic-differentiation";
 import { higherMaths } from "../data/higher-maths";
 import type { Question, Subject } from "../data/types";
 import { validateContent } from "../lib/content-validation";

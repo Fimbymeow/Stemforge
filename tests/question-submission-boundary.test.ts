@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { higherMathsDifferentiationQuestions } from "../content/questions/higher-maths/differentiation";
+import { higherMathsDifferentiationQuestions } from "../content/questions/higher-maths/basic-differentiation";
 import { higherMaths } from "../data/higher-maths";
 import { markQuestionAnswer } from "../lib/answer-engine";
 import { getQuestionProgress, calculateSkillPathProgress, selectNextQuestionId } from "../lib/progress/calculations";

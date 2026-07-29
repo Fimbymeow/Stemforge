@@ -6,7 +6,7 @@ import {
   ANSWER_DRAFT_SCHEMA_VERSION,
   createAnswerDraftKey,
 } from "../lib/questions/answer-drafts";
-import { higherMathsDifferentiationQuestions } from "../content/questions/higher-maths/differentiation";
+import { higherMathsDifferentiationQuestions } from "../content/questions/higher-maths/basic-differentiation";
 
 const firstQuestion = higherMathsDifferentiationQuestions[0];
 
