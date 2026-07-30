@@ -2,9 +2,11 @@
 
 ## Release status
 
-Sprint 24 confirms Vercel as the existing provider and `main` as the production branch. The stable public alias is `https://stemforge-6an8.vercel.app`. Sprint 23 commit `e958a7824bce860f0ca0a5b5a791366247ed8296` deployed successfully and serves STEM Forge guest routes over HTTPS with the expected security headers.
+Vercel is the existing provider and `main` is the production branch. The stable public alias is `https://stemforge-6an8.vercel.app`. HEAD `526a378f136b76f60684d3204f11f5effea4f019` deployed successfully and serves STEM Forge guest routes over HTTPS with the expected security headers; `GET /api/health` confirms `buildCommit` matches this HEAD.
 
-This is **not yet a complete authenticated production deployment**. The sanitized readiness response reports authentication disabled and the database not configured. The current operator session has no Vercel dashboard access, so production variables cannot be configured here. `https://stemforge.app` belongs to a different application and must not be canonical. Two other Git-linked Vercel projects named `stemforge` and `tuition` also receive deployments but have unrelated public aliases; review and disconnect them manually if obsolete.
+**Production readiness is now confirmed live.** `GET /api/health/ready` returns `{"status":"ready","checks":{"application":"ok","configuration":"ok","authentication":"ok","database":"ok","migration":"ok","reporting":"ok"}}`. Root cause of the prior block: `STEMFORGE_DATABASE_URL` held stale/incorrect Supabase Transaction Pooler credentials; it was replaced with the current pooler URL and production was redeployed. The non-destructive `pnpm run test:production:smoke` suite has passed against the production origin. `https://stemforge.app` still belongs to a different application and must not be treated as canonical. Two other Git-linked Vercel projects named `stemforge` and `tuition` also receive deployments but have unrelated public aliases; review and disconnect them manually if obsolete.
+
+Not yet separately confirmed: the credentialed authenticated smoke pass described below (real sign-in, refresh, owner mapping, account, one synthetic attempt, sync, one synthetic report, ordinary-user internal denial, authorised internal access). Run and record that pass before relying on the authenticated/account journey for anything beyond the readiness-gate evidence above.
 
 ## Provider and runtime contract
 
@@ -130,20 +132,20 @@ Production CSP excludes `unsafe-eval`; inline scripts/styles remain the document
 - [ ] Canonical HTTPS origin and exact Supabase Site/redirect URLs confirmed.
 - [ ] Production Supabase project, SSL, restricted runtime role and migration role confirmed.
 - [ ] Migration status current through `1753266400000_beta_report_triage`.
-- [ ] Liveness 200; readiness 200 with every bounded category `ok`.
-- [ ] Chromium, Firefox and WebKit production smoke pass without CSP/asset/browser errors.
-- [ ] Dedicated authenticated smoke and ordinary-user internal denial pass.
+- [x] Liveness 200; readiness 200 with every bounded category `ok`. Confirmed live against `https://stemforge-6an8.vercel.app` during Programme 6 Phase 1 and independently reconfirmed since.
+- [x] Chromium, Firefox and WebKit production smoke pass without CSP/asset/browser errors. `pnpm run test:production:smoke` reported passing against the production origin.
+- [ ] Dedicated authenticated smoke and ordinary-user internal denial pass. **Still outstanding** — distinct from the non-destructive smoke above; run before relying on the authenticated/account journey for Alpha.
 - [ ] Authorised internal access verified only when intentionally enabled.
 - [ ] Logs checked safely; rollback target and environment snapshot recorded.
 
 ## Manual actions remaining
 
-1. Sign in to the Vercel team owning `stemforge-6an8` and configure production values.
-2. Confirm the correct production/private-beta Supabase project and connections.
-3. Configure exact Supabase Site URL and redirect URLs.
-4. Check migration status, apply only confirmed pending migrations, and check again.
-5. Redeploy Sprint 24 and require `/api/health/ready` to return 200.
-6. Run three-browser and dedicated authenticated production smoke.
-7. Review and disconnect the duplicate `stemforge` and `tuition` Vercel Git projects if obsolete.
+1. ~~Sign in to the Vercel team owning `stemforge-6an8` and configure production values.~~ Done — `STEMFORGE_DATABASE_URL` corrected to the current Supabase Transaction Pooler connection string.
+2. ~~Confirm the correct production/private-beta Supabase project and connections.~~ Done — confirmed reachable; `database`, `migration` and `reporting` all report `ok`.
+3. Configure exact Supabase Site URL and redirect URLs. *(Not independently re-verified this pass; `authentication: "ok"` in the readiness response certifies configuration shape only, not the exact redirect-URL allowlist.)*
+4. ~~Check migration status, apply only confirmed pending migrations, and check again.~~ Done — readiness reports `migration: "ok"`.
+5. ~~Redeploy and require `/api/health/ready` to return 200.~~ Done — confirmed live during Programme 6 Phase 1 and independently reconfirmed since.
+6. Run three-browser production smoke — done (`pnpm run test:production:smoke` passed). **Dedicated authenticated production smoke is still outstanding.**
+7. Review and disconnect the duplicate `stemforge` and `tuition` Vercel Git projects if obsolete. *(Not verified this pass.)*
 
-Until those actions pass, report Sprint 24 as code complete with a manual deployment/environment block. Do not start Sprint 25 before production readiness and authenticated smoke are genuinely green.
+Production readiness and non-destructive smoke are genuinely green as of HEAD `526a378f136b76f60684d3204f11f5effea4f019`. The remaining gate before relying on the authenticated/account journey for Alpha is item 6's credentialed pass and item 3's redirect-URL confirmation.

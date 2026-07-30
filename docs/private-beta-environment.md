@@ -8,7 +8,7 @@ Required when applying database migrations:
 
 - `STEMFORGE_DATABASE_MIGRATION_URL`
 
-The Sprint 21 `stemforge_operations.beta_reports` migration has been applied to the configured development Supabase database. Production reporting persistence is available when the runtime database URL points to a database with the same migration history.
+The Sprint 21 `stemforge_operations.beta_reports` migration has been applied to the configured development Supabase database. Production reporting persistence requires the runtime database URL to point to a database with the same migration history — confirmed live via `GET /api/health/ready`, which now reports `reporting: "ok"` against the production origin (root cause of an earlier `"unavailable"` reading: a stale `STEMFORGE_DATABASE_URL` pooler credential, since corrected).
 
 Optional for account-aware ownership:
 

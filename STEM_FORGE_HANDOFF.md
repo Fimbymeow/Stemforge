@@ -1,7 +1,7 @@
 # STEM Forge Conversation Handoff
 
-Last updated: 19 July 2026
-Current checkpoint: Sprint 24 production release readiness (see `STEM_FORGE_PRODUCTION_DEPLOYMENT_AND_RELEASE_VERIFICATION.md`)
+Last updated: 30 July 2026
+Current checkpoint: Programme 6, Alpha Preparation and Real Learner Validation — production release readiness is confirmed (see `STEM_FORGE_PRODUCTION_DEPLOYMENT_AND_RELEASE_VERIFICATION.md`); the Alpha audit, hypotheses and facilitator package are in `STEM_FORGE_ALPHA_READINESS.md` and `docs/alpha-facilitator-briefing.md`
 
 This is the durable starting point for a new Codex conversation. Inspect the repository before editing. Preserve unfamiliar Finlay, Claude, or Codex changes and never reset a dirty tree without explicit approval.
 
@@ -236,4 +236,6 @@ Do not begin Sprint 11 without tester evidence.
 
 The owner must first verify the public deployment is accessible without login/protection, record the tested build/commit, provide the feedback template to testers, and review the collected feedback against `STEM_FORGE_PRIVATE_BETA_READINESS.md`.
 
-Sprint 24 confirms the existing Vercel `stemforge-6an8` project and stable `https://stemforge-6an8.vercel.app` alias. The public Sprint 23 commit is reachable, but sanitized readiness shows authentication disabled and database not configured. Vercel dashboard access was unavailable to the Codex session, so production environment/Supabase configuration, confirmed production migration status, authenticated smoke and final ready state remain manual blocks. Do not claim an authenticated production release until the Sprint 24 runbook is green.
+Sprint 24 confirmed the existing Vercel `stemforge-6an8` project and stable `https://stemforge-6an8.vercel.app` alias, but at that checkpoint sanitized readiness showed authentication disabled and database not configured, and production Supabase configuration remained a manual block.
+
+That block is now resolved. During Programme 6 Phase 1, live sanitized readiness was checked directly against the production origin and returned `authentication: "ok"` with `database`, `migration` and `reporting` all `"unavailable"`. Root cause: Vercel's `STEMFORGE_DATABASE_URL` held stale/incorrect Supabase Transaction Pooler credentials. It was replaced with the current pooler URL and production was redeployed. A repeat live check now returns `{"status":"ready","checks":{"application":"ok","configuration":"ok","authentication":"ok","database":"ok","migration":"ok","reporting":"ok"}}`, with `buildCommit` matching HEAD `526a378f136b`. The non-destructive `pnpm run test:production:smoke` suite has since passed against `https://stemforge-6an8.vercel.app`. A separate credentialed authenticated smoke pass (real sign-in, owner mapping, one synthetic import, one synthetic sync cycle, one synthetic beta report, ordinary-user internal denial) has not yet been recorded — do not claim that step complete until it is genuinely run.

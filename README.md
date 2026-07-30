@@ -2,7 +2,7 @@
 
 Platform performance, accessibility, security, reliability, browser support, and deployment checks are documented in [STEM_FORGE_PERFORMANCE_ACCESSIBILITY_SECURITY_RELIABILITY.md](./STEM_FORGE_PERFORMANCE_ACCESSIBILITY_SECURITY_RELIABILITY.md). Run `pnpm run verify:deployment` for a redacted local readiness dry run and `pnpm run test:e2e:hardening` for the Chromium/Firefox/WebKit critical matrix.
 
-Production provider, environment, migration-status, smoke-test, rollback and release procedures are documented in [STEM_FORGE_PRODUCTION_DEPLOYMENT_AND_RELEASE_VERIFICATION.md](./STEM_FORGE_PRODUCTION_DEPLOYMENT_AND_RELEASE_VERIFICATION.md). The stable release target is `https://stemforge-6an8.vercel.app`; authenticated production remains blocked until its Vercel and Supabase production configuration is completed.
+Production provider, environment, migration-status, smoke-test, rollback and release procedures are documented in [STEM_FORGE_PRODUCTION_DEPLOYMENT_AND_RELEASE_VERIFICATION.md](./STEM_FORGE_PRODUCTION_DEPLOYMENT_AND_RELEASE_VERIFICATION.md). The stable release target is `https://stemforge-6an8.vercel.app`; production readiness (application, configuration, authentication, database, migration and reporting) is confirmed live via `/api/health/ready`, and the non-destructive production smoke suite passes. A separate credentialed authenticated smoke pass remains outstanding — see [STEM_FORGE_ALPHA_READINESS.md](./STEM_FORGE_ALPHA_READINESS.md).
 
 STEM Forge is a calm, structured learning platform for Scottish SQA STEM students. It is currently a private beta with one complete Higher Maths learning path, a generic multi-path content runtime, optional Supabase accounts, explicitly confirmed browser-progress import, opt-in incremental cross-device evidence synchronization, shared-device-safe account data controls, an evidence-driven learner dashboard, interactive maths graphs/nature tables, and a generic local revision/practice-session engine.
 
@@ -181,6 +181,8 @@ Local progress now uses payload V5. Attempts, support events, guided Practice se
 - Public tester URL opens without login or deployment protection.
 
 See `STEM_FORGE_PRIVATE_BETA_READINESS.md` for the verified readiness decision, `docs/private-beta-checklist.md` for the practical session checklist, and `docs/private-beta-feedback-template.md` for reusable tester questions.
+
+Programme 6 (Alpha Preparation and Real Learner Validation) extends this with a facilitated multi-session protocol. See `STEM_FORGE_ALPHA_READINESS.md` for the audit, hypotheses, severity rubric and entry/exit criteria, and `docs/alpha-facilitator-briefing.md` for the full facilitator asset index.
 
 ## Current Limitations
 
