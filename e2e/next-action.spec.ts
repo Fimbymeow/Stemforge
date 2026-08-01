@@ -7,12 +7,12 @@ const PATH_ROUTE = "/subjects/higher-maths/calculus/differentiation/basic-differ
 const HUB_ROUTE = "/subjects/higher-maths";
 const BANK_ROUTE = "/subjects/higher-maths/question-bank";
 
-test("new learner receives the same one-click learning entry across major surfaces", async ({ page, seriousBrowserErrors }) => {
+test("new learner gets calm course access before the one-click learning entry", async ({ page, seriousBrowserErrors }) => {
   await page.goto("/dashboard");
   await expectHigherMathsCourseAccess(page);
-  await expectPrimaryAction(page, "Start learning", `/question/${QUESTION_IDS[0]}`);
-  await page.getByTestId("dashboard-progress-summary").getByRole("link", { name: "Start learning" }).focus();
-  await expect(page.getByTestId("dashboard-progress-summary").getByRole("link", { name: "Start learning" })).toBeFocused();
+  await expect(page.getByTestId("dashboard-progress-summary").getByRole("link", { name: "Start learning" })).toHaveCount(0);
+  await page.getByRole("link", { name: "Open Higher Maths", exact: true }).focus();
+  await expect(page.getByRole("link", { name: "Open Higher Maths", exact: true })).toBeFocused();
 
   await page.goto("/subjects");
   await expectHigherMathsCourseAccess(page);

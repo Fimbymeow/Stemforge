@@ -3,7 +3,7 @@ import { test, expect } from "./fixtures/test";
 test("Higher Maths hub presents four broad areas and prioritises the live path", async ({ page }) => {
   await page.goto("/subjects/higher-maths");
   await expect(page.getByRole("heading", { level: 1, name: "Higher Maths" })).toBeVisible();
-  await expect(page.getByText("Calculus is partially available now. More Higher Maths areas are being added.")).toBeVisible();
+  await expect(page.getByText(/Calculus is available now, with more areas being added/)).toBeVisible();
   await expect(page.getByRole("button", { name: "Algebra and Trigonometry" }).last()).toBeVisible();
   await expect(page.getByRole("button", { name: "Vectors" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Calculus" })).toBeVisible();

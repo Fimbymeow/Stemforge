@@ -99,9 +99,9 @@ function MasteryUpgradeBanner({ skillPathId, status }: { skillPathId: string; st
 
 /**
  * Permanent state for a completed/secure/mastered path. Not a relabelled "Continue" button.
- * `hidePrimaryAction` is set by the canonical Working Context overview, which already renders
- * its own review-aware primary action in the page header — this card's own primary button would
- * otherwise duplicate it a few hundred pixels below. Every other caller keeps the primary action.
+ * `hidePrimaryAction` lets a caller suppress this card's action when it already renders the same
+ * review-aware action nearby. The canonical overview keeps this action because its compact header
+ * no longer duplicates it.
  * `secondaryStagesHref` overrides the "Review a stage" destination for callers that already are
  * the skill-path overview, where linking to `getSkillPathHref(skillPath)` would just reload the
  * page the learner is already on. Callers elsewhere keep the default (navigate to the overview).

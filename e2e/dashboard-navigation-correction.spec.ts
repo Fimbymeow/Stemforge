@@ -24,9 +24,8 @@ test("revised dashboard and subject access remain distinct, ordered and overflow
 
       if (route === "/dashboard") {
         const learn = page.getByTestId("dashboard-progress-summary");
-        const nextLearnAction = learn.getByRole("link", { name: /^(Start learning|Continue|Resume question)$/ });
-        await expect(nextLearnAction).toBeVisible();
-        await expect(nextLearnAction).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
+        await expect(learn.getByText("Recommended next")).toHaveCount(0);
+        await expect(learn.getByRole("link", { name: "Start learning" })).toHaveCount(0);
       } else {
         await expect(page.getByRole("link", { name: /^(Start learning|Continue|Resume question|Resume practice|Review \d+)/ })).toHaveCount(0);
       }
@@ -37,12 +36,23 @@ test("revised dashboard and subject access remain distinct, ordered and overflow
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/dashboard");
   const primary = page.getByRole("link", { name: "Open Higher Maths", exact: true });
-  const secondary = page.getByTestId("dashboard-progress-summary").getByRole("link", { name: /^(Start learning|Continue|Resume question)$/ });
   await primary.focus();
   await expect(primary).toBeFocused();
-  await primary.press("Tab");
-  await expect(secondary).toBeFocused();
   expect(seriousBrowserErrors).toEqual([]);
+});
+
+test("Subjects presents equal course cards without learner recommendations", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/subjects");
+  const maths = page.getByTestId("subject-card-higher-maths");
+  const physics = page.getByTestId("subject-card-higher-physics");
+  const [mathsBox, physicsBox] = await Promise.all([maths.boundingBox(), physics.boundingBox()]);
+  expect(mathsBox).not.toBeNull();
+  expect(physicsBox).not.toBeNull();
+  expect(Math.abs(mathsBox!.width - physicsBox!.width)).toBeLessThan(2);
+  expect(Math.abs(mathsBox!.height - physicsBox!.height)).toBeLessThan(2);
+  await expect(physics.getByText("Coming soon", { exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Resume practice|Review \d+/ })).toHaveCount(0);
 });
 
 test("review and active-practice recommendations never replace course access at narrow width", async ({ page }) => {

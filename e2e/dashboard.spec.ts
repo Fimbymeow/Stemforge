@@ -2,14 +2,14 @@ import { expect, test } from "./fixtures/test";
 import { currentAttempt, QUESTION_IDS, seedStoredProgress, v3Payload } from "./fixtures/progress";
 import { expectNoHorizontalOverflow } from "./fixtures/student-actions";
 
-test("guest learner dashboard hydrates without errors and presents course access before one recommendation", async ({ page, seriousBrowserErrors }) => {
+test("guest learner dashboard hydrates without errors and presents calm course access", async ({ page, seriousBrowserErrors }) => {
   await page.goto("/dashboard");
   await expect(page).toHaveURL(/\/dashboard$/);
 
   const summary = page.getByTestId("dashboard-progress-summary");
-  await expect(summary).toContainText("Start Basic differentiation");
+  await expect(summary.getByText("Recommended next")).toHaveCount(0);
   await expect(summary.getByRole("link", { name: "Open Higher Maths" })).toHaveAttribute("href", "/subjects/higher-maths");
-  await expect(summary.getByRole("link", { name: "Start learning" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
+  await expect(summary.getByRole("link", { name: "Start learning" })).toHaveCount(0);
   await expect(summary).toContainText("0 / 8 completed");
   await expect(page.getByText("Saved on this browser")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Course progress" })).toHaveCount(0);
@@ -33,7 +33,7 @@ test("dashboard updates from stored evidence with compact course context and a r
   await page.goto("/dashboard");
 
   const summary = page.getByTestId("dashboard-progress-summary");
-  await expect(summary).toContainText("Resume Foundations");
+  await expect(summary).toContainText("Current position: Foundations");
   await expect(summary.getByRole("link", { name: "Open Higher Maths" })).toHaveAttribute("href", "/subjects/higher-maths");
   await expect(summary.getByRole("link", { name: "Resume question" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
   await expect(summary).toContainText("1 / 8 completed");

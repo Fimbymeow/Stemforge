@@ -1,94 +1,98 @@
 "use client";
 
-import { useState } from "react";
-import { Card } from "@/components/ui";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { IconNodePath } from "@/components/learning/icon-node-path";
-import { TopicRoadmap } from "@/components/learning/topic-roadmap";
-import type { CourseArea, Subject, Topic } from "@/data/types";
+import type { CourseArea, SkillPath, Subject } from "@/data/types";
+import { getEmptyProgressEvidence, getProgressEvidence, getSkillPathProgress } from "@/lib/local-progress";
+import type { ProgressEvidence, ProgressStatus } from "@/lib/progress/types";
 
-type Level = "unit" | "spec" | "topics";
+function initialStrandIndex(strands: CourseArea[]) {
+  const available = strands.findIndex((strand) => strand.specAreas.some((area) => area.skillPaths?.some((path) => path.isAvailable)));
+  return available >= 0 ? available : 0;
+}
 
-function defaultLevel(units: CourseArea[]): Level {
-  if (units.length > 1) return "unit";
-  if (units[0]?.specAreas[0]?.skillPaths?.some((path) => path.isAvailable)) return "topics";
-  if ((units[0]?.specAreas.length ?? 0) > 1) return "spec";
-  return "topics";
+function topicStatus(path: SkillPath, evidence: ProgressEvidence): string {
+  if (!path.isAvailable) return "Coming soon";
+  const status: ProgressStatus = getSkillPathProgress(path, evidence).status;
+  if (status === "completed" || status === "secure" || status === "mastered") return "Complete";
+  if (status === "in_progress") return "In progress";
+  return "Not started";
 }
 
 export function SubjectRoadmapNavigator({ subject }: { subject: Subject }) {
-  const units = subject.courseAreas;
-  const [unitIndex, setUnitIndex] = useState(0);
-  const [specIndex, setSpecIndex] = useState(0);
-  const [level, setLevel] = useState<Level>(() => defaultLevel(units));
+  const strands = subject.courseAreas;
+  const [strandIndex, setStrandIndex] = useState(() => initialStrandIndex(strands));
+  const [evidence, setEvidence] = useState<ProgressEvidence>(() => getEmptyProgressEvidence());
+  const strand = strands[strandIndex];
 
-  const unit = units[unitIndex];
-  const specAreas: Topic[] = unit?.specAreas ?? [];
-  const specArea = specAreas[specIndex];
+  useEffect(() => {
+    const update = () => setEvidence(getProgressEvidence());
+    update();
+    window.addEventListener("stemforge:local-progress-updated", update);
+    window.addEventListener("stemforge:progress-sync-updated", update);
+    window.addEventListener("storage", update);
+    return () => {
+      window.removeEventListener("stemforge:local-progress-updated", update);
+      window.removeEventListener("stemforge:progress-sync-updated", update);
+      window.removeEventListener("storage", update);
+    };
+  }, []);
 
-  if (!unit || !specArea) return null;
+  const topics = useMemo(
+    () => strand?.specAreas.flatMap((area) => area.skillPaths ?? []) ?? [],
+    [strand],
+  );
 
-  function selectUnit(index: number) {
-    setUnitIndex(index);
-    setSpecIndex(0);
-    const nextUnit = units[index];
-    setLevel((nextUnit?.specAreas.length ?? 0) > 1 ? "spec" : "topics");
-  }
-
-  function selectSpec(index: number) {
-    setSpecIndex(index);
-    setLevel("topics");
-  }
+  if (!strand) return null;
 
   return (
-    <section className="min-w-0 max-w-full">
-      <h2 className="mb-2 text-lg font-extrabold">Roadmap</h2>
-      <nav className="mb-4 flex flex-wrap items-center gap-2 text-sm text-muted" aria-label="Roadmap breadcrumb">
-        <span className="font-bold text-ink">{subject.subjectName}</span>
-        <span>/</span>
-        {units.length > 1 ? (
-          <button type="button" onClick={() => setLevel("unit")} className={`font-bold ${level === "unit" ? "text-forge" : "hover:text-forge"}`}>
-            {unit.name}
-          </button>
-        ) : (
-          <span className="font-bold">{unit.name}</span>
-        )}
-        {level !== "unit" ? (
-          <>
-            <span>/</span>
-            {specAreas.length > 1 ? (
-              <button type="button" onClick={() => setLevel("spec")} className={`font-bold ${level === "spec" ? "text-forge" : "hover:text-forge"}`}>
-                {specArea.name}
-              </button>
-            ) : (
-              <span className="font-bold">{specArea.name}</span>
-            )}
-          </>
-        ) : null}
+    <div className="min-w-0 max-w-full" data-testid="subject-roadmap">
+      <nav aria-label="Course strands">
+        <IconNodePath
+          items={strands.map((item) => ({
+            id: item.slug,
+            label: item.name,
+            available: item.specAreas.some((area) => area.skillPaths?.some((path) => path.isAvailable)),
+          }))}
+          selectedIndex={strandIndex}
+          onSelect={setStrandIndex}
+        />
       </nav>
 
-      <div key={level} className="animate-fade-rise">
-        {level === "unit" ? (
-          <Card className="min-w-0 overflow-hidden p-5">
-            <IconNodePath
-              items={units.map((item) => ({ id: item.slug, label: item.name, available: item.available }))}
-              selectedIndex={unitIndex}
-              onSelect={selectUnit}
-            />
-          </Card>
-        ) : level === "spec" ? (
-          <Card className="min-w-0 overflow-hidden p-5">
-            <IconNodePath
-              items={specAreas.map((item) => ({ id: item.slug, label: item.name, available: item.skillPaths?.some((path) => path.isAvailable) ?? false }))}
-              selectedIndex={specIndex}
-              onSelect={selectSpec}
-            />
-          </Card>
-        ) : specArea.skillPaths?.length ? (
-          <TopicRoadmap skillPaths={specArea.skillPaths} showHeading={false} />
+      <section className="mt-4 overflow-hidden rounded-xl border border-line bg-white" aria-labelledby="selected-strand-title">
+        <div className="border-b border-line px-4 py-3 sm:px-5">
+          <h3 id="selected-strand-title" className="text-base font-extrabold">{strand.name}</h3>
+          <p className="mt-1 text-sm text-muted">Choose a topic to open its learning overview.</p>
+        </div>
+        {topics.length ? (
+          <ul className="divide-y divide-line" aria-label={`${strand.name} topics`}>
+            {topics.map((path) => {
+              const status = topicStatus(path, evidence);
+              return (
+                <li key={path.slug}>
+                  {path.isAvailable ? (
+                    <Link href={path.href} className="flex min-h-14 items-center justify-between gap-4 px-4 py-3 transition hover:bg-forge-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-forge sm:px-5">
+                      <span className="min-w-0 font-extrabold">{path.name}</span>
+                      <span className="flex shrink-0 items-center gap-3 text-sm font-bold text-muted">
+                        {status}<ArrowRight aria-hidden="true" className="size-4 text-forge" />
+                      </span>
+                    </Link>
+                  ) : (
+                    <div className="flex min-h-14 items-center justify-between gap-4 px-4 py-3 sm:px-5">
+                      <span className="min-w-0 font-bold text-muted">{path.name}</span>
+                      <span className="shrink-0 text-sm font-bold text-muted">{status}</span>
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
         ) : (
-          <p className="text-muted">More topics for {specArea.name} are being prepared.</p>
+          <p className="px-4 py-5 text-sm text-muted sm:px-5">Topics for this strand are coming soon.</p>
         )}
-      </div>
-    </section>
+      </section>
+    </div>
   );
 }

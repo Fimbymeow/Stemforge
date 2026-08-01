@@ -10,7 +10,7 @@ export function ReviewEntryCard({ pathId }: { pathId: string }) {
   if (!model) return null;
 
   return (
-    <Card data-testid="review-entry-card" aria-label="Review" className="self-start p-5">
+    <Card data-testid="review-entry-card" aria-label="Review" className="flex h-full flex-col p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-extrabold uppercase tracking-wide text-forge">Review</p>
@@ -20,7 +20,7 @@ export function ReviewEntryCard({ pathId }: { pathId: string }) {
           <RefreshCcw aria-hidden="true" className="size-5" />
         </span>
       </div>
-      <p className="mt-2 text-sm leading-relaxed text-muted">
+      <p className="mt-2 flex-1 text-sm leading-relaxed text-muted">
         {model.reviewHref
           ? `${model.reviewCount} skill is ready to review.`
           : "Nothing is due yet. We’ll surface a review when it will help."}

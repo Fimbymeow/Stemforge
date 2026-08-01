@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, GraduationCap, Lock, Orbit, Sigma } from "lucide-react";
+import { ArrowRight, Clock3, GraduationCap, Orbit, Sigma } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { AppTopbar } from "@/components/layout/app-topbar";
 import { Card } from "@/components/ui";
@@ -39,7 +39,7 @@ export function SubjectsPage({ mode }: { mode: SubjectsMode }) {
         {demo ? (
           <section>
             <h2 className="mb-2 text-lg font-extrabold">Courses</h2>
-            <div className="grid max-w-[760px] grid-cols-2 items-start gap-4 max-md:grid-cols-1">
+            <div className="grid max-w-[920px] auto-rows-fr grid-cols-2 items-stretch gap-4 max-md:grid-cols-1">
               {subjectCatalog.map((subject) => (
                 <SubjectCard key={subject.name} subject={subject} />
               ))}
@@ -60,7 +60,7 @@ function SubjectCard({ subject }: { subject: (typeof subjectCatalog)[number] }) 
   const qualification = getQualificationPresentation(subject.level);
 
   return (
-    <Card className={`p-5 ${subject.available ? "" : "bg-paper/70 shadow-none"}`}>
+    <Card data-testid={`subject-card-${subject.name.toLowerCase().replaceAll(" ", "-")}`} className="flex h-full flex-col p-5">
       <div className="flex items-start justify-between gap-3">
         <span className={`grid size-11 place-items-center rounded-xl ${subject.available ? "bg-forge-soft text-forge" : "bg-[#ebe7df] text-muted"}`}>
           <Icon className="size-5" />
@@ -69,7 +69,7 @@ function SubjectCard({ subject }: { subject: (typeof subjectCatalog)[number] }) 
       </div>
       <p className="mt-4 text-xs font-extrabold uppercase tracking-wide text-muted">{subject.subject}</p>
       <h3 className="mt-1 text-xl font-extrabold">{subject.name}</h3>
-      <p className="mt-2 text-sm leading-relaxed text-muted">{subject.description}</p>
+      <p className="mt-2 flex-1 text-sm leading-relaxed text-muted">{subject.description}</p>
       <p className={`mt-3 text-xs font-bold ${subject.available ? "text-forge" : "text-muted"}`}>{subject.status}</p>
       {subject.available ? (
         <div className="mt-4">
@@ -80,8 +80,8 @@ function SubjectCard({ subject }: { subject: (typeof subjectCatalog)[number] }) 
         </div>
       ) : (
         <span className="mt-4 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg border border-line bg-paper text-sm font-extrabold text-muted">
-          <Lock className="size-4" />
-          Locked
+          <Clock3 className="size-4" />
+          Coming soon
         </span>
       )}
     </Card>

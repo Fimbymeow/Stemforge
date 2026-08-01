@@ -14,6 +14,8 @@ test("Higher Maths orders Learn above aligned Practice and Review cards responsi
   const wide = await cardBoxes(learn, practice, review);
   expect(wide.practice.y).toBeGreaterThanOrEqual(wide.learn.y + wide.learn.height);
   expect(Math.abs(wide.practice.y - wide.review.y)).toBeLessThan(8);
+  expect(Math.abs(wide.practice.width - wide.review.width)).toBeLessThan(2);
+  expect(Math.abs(wide.practice.height - wide.review.height)).toBeLessThan(2);
   await expectNoDocumentOverflow(page);
 
   await page.setViewportSize({ width: 390, height: 844 });
@@ -25,6 +27,19 @@ test("Higher Maths orders Learn above aligned Practice and Review cards responsi
   );
   expect(stacked.practice.y).toBeGreaterThanOrEqual(stacked.learn.y + stacked.learn.height);
   expect(stacked.review.y).toBeGreaterThanOrEqual(stacked.practice.y + stacked.practice.height);
+  await expectNoDocumentOverflow(page);
+});
+
+test("Roadmap keeps strand navigation visible and opens registered available topics", async ({ page }) => {
+  await page.goto("/subjects/higher-maths");
+  const roadmap = page.getByTestId("subject-roadmap");
+  await expect(page.getByRole("heading", { name: "Roadmap", exact: true })).toHaveCount(1);
+  const calculus = roadmap.getByRole("button", { name: "Calculus" });
+  await expect(calculus).toHaveAttribute("aria-pressed", "true");
+  await expect(roadmap.getByRole("link", { name: /Basic differentiation.*Not started/ })).toHaveAttribute("href", "/subjects/higher-maths/calculus/differentiation/basic-differentiation");
+  await roadmap.getByRole("button", { name: "Vectors" }).click();
+  await expect(roadmap.getByRole("button", { name: "Vectors" })).toHaveAttribute("aria-pressed", "true");
+  await expect(roadmap.getByText("Coming soon").first()).toBeVisible();
   await expectNoDocumentOverflow(page);
 });
 

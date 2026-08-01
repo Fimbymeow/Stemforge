@@ -70,12 +70,24 @@ test("stage transition is deterministic and stage rows remain directly explorabl
   await expect(page.locator("article").filter({ hasText: "Exam practice (PPQ)" }).getByRole("link", { name: "Start" })).toHaveAttribute("href", `/question/${QUESTION_IDS[6]}`);
 });
 
+test("overview uses a compact header and equal direct stage cards", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(overview);
+  await expect(page.getByTestId("skill-path-compact-header")).toBeVisible();
+  await expect(page.getByText("Skill overview", { exact: true })).toHaveCount(0);
+  const cards = page.locator("article").filter({ has: page.getByRole("link", { name: /Start|Continue/ }) });
+  const boxes = await Promise.all([0, 1, 2].map((index) => cards.nth(index).boundingBox()));
+  expect(boxes.every(Boolean)).toBe(true);
+  expect(Math.max(...boxes.map((box) => box!.height)) - Math.min(...boxes.map((box) => box!.height))).toBeLessThan(2);
+  await expect(page.getByText("Next stage", { exact: true })).toHaveCount(0);
+});
+
 test("completed overview stays compact and renders exactly one primary action", async ({ page }) => {
   await seedStoredProgress(page, v3Payload(recentCompletion()));
   await page.goto(overview);
   await expect(page.getByTestId("completed-path-card")).toBeVisible();
   await expect(page.getByTestId("skill-path-hero-progress")).toContainText("8 of 8 questions complete");
-  await expect(page.getByRole("link", { name: "Practise this skill", exact: false })).toHaveCount(1);
+  await expect(page.getByTestId("completed-path-card").getByRole("button", { name: "Practise again" })).toHaveCount(1);
   await expect(page.locator("article").filter({ hasText: "Foundations" }).getByRole("link", { name: "Revisit" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
 });
 
@@ -96,7 +108,7 @@ test("completed overview with genuine review due shows one review-aware primary 
   await seedStoredProgress(page, v3Payload(QUESTION_IDS.map((id, index) => currentAttempt(id, index + 1))));
   await page.goto(overview);
   await expect(page.getByTestId("completed-path-card")).toBeVisible();
-  const primaryActions = page.getByRole("link", { name: /Start Review|Practise this skill/ });
+  const primaryActions = page.getByRole("link", { name: "Start Review" });
   await expect(primaryActions).toHaveCount(1);
   await expect(primaryActions).toHaveAttribute("href", "/practice?review=1&path=basic-differentiation");
   await expect(page.locator("article").filter({ hasText: "Foundations" }).getByRole("link", { name: "Revisit" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
@@ -200,7 +212,7 @@ test("dashboard does not duplicate the contextual navigation surface", async ({ 
   await page.evaluate(() => localStorage.clear());
   await page.goto(overview);
   await page.goto("/dashboard");
-  await expect(page.getByTestId("dashboard-progress-summary")).toContainText("Start Basic differentiation");
+  await expect(page.getByTestId("dashboard-progress-summary").getByRole("link", { name: "Start learning" })).toHaveCount(0);
 });
 
 test("mobile Current Path opens a trapped modal and closes with Escape", async ({ page }) => {

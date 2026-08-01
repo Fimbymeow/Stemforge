@@ -54,7 +54,6 @@ export function DashboardLocalProgressSection() {
   ]);
 
   const recommendedPath = model.paths.find((path) => path.skillPathId === recommendation.pathId);
-  const hasLearningActivity = model.course.startedPathCount > 0;
   const meaningfulEvidenceCount = evidence.attempts.length + evidence.achievementSnapshots.length;
 
   return (
@@ -76,34 +75,25 @@ export function DashboardLocalProgressSection() {
             </div>
           </div>
 
-          <div className="mt-5 rounded-xl border border-forge/20 bg-white/80 p-4">
-            <p className="text-xs font-extrabold uppercase tracking-wide text-forge">Recommended next</p>
-            <h3 className="mt-1 text-lg font-extrabold">{recommendation.title}</h3>
-            <p id="dashboard-next-action-reason" className="mt-1 max-w-2xl text-sm leading-relaxed text-muted">{recommendation.reason}</p>
-          </div>
-
-          {hasLearningActivity ? (
-            <div className="mt-4 grid gap-2 border-t border-forge/20 pt-4" data-testid="dashboard-course-progress">
+          <div className="mt-5 grid gap-2 border-t border-forge/20 pt-4" data-testid="dashboard-course-progress">
               <div className="flex flex-wrap items-center justify-between gap-2 text-sm font-bold text-muted">
                 <span>{recommendedPath?.currentStageName ? `Current position: ${recommendedPath.currentStageName}` : "Current Higher Maths progress"}</span>
                 <span>{model.course.completedQuestions} / {model.course.totalQuestions} completed</span>
               </div>
               <ProgressBar value={model.course.completionPercentage} />
-            </div>
-          ) : null}
+          </div>
 
           <div className="mt-5 flex flex-col gap-3 border-t border-forge/20 pt-4 sm:flex-row sm:flex-wrap sm:items-center">
             <Link href={HIGHER_MATHS_HREF} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-forge px-5 text-sm font-extrabold text-white">
               Open Higher Maths
               <ArrowRight className="size-4" />
             </Link>
-            {recommendation.href ? (
-              <Link href={recommendation.href} aria-describedby="dashboard-next-action-reason" className="inline-flex min-h-11 items-center justify-center rounded-lg border border-forge bg-white px-5 text-sm font-extrabold text-forge">
+            {recommendation.href && recommendation.kind !== "start_learning" ? (
+              <Link href={recommendation.href} className="inline-flex min-h-11 items-center justify-center rounded-lg border border-forge bg-white px-5 text-sm font-extrabold text-forge">
                 {recommendation.label}
               </Link>
             ) : null}
             <span className="text-sm font-bold text-muted sm:ml-auto">
-              {!hasLearningActivity ? `${model.course.completedQuestions} / ${model.course.totalQuestions} completed · ` : null}
               {model.sync.label}
             </span>
           </div>

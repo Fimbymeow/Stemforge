@@ -124,7 +124,7 @@ test("migrating an already-complete V2 path does not replay the completion celeb
   await page.goto("/subjects/higher-maths/calculus/differentiation/basic-differentiation");
   await expect(page.getByTestId("path-completion-panel")).toHaveCount(0);
   await expect(page.getByText("5 of 8 questions complete")).toBeVisible();
-  await expect(page.locator("header").getByRole("link", { name: "Continue" })).toHaveAttribute("href", `/question/${QUESTION_IDS[1]}`);
+  await expect(page.locator('[data-recommended="true"]').getByRole("link", { name: "Continue" })).toHaveAttribute("href", `/question/${QUESTION_IDS[1]}`);
 });
 
 test("unsupported future payload remains untouched", async ({ page }) => {
