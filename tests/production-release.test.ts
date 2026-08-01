@@ -1,11 +1,14 @@
 import assert from "node:assert/strict";
+import { readdir } from "node:fs/promises";
+import path from "node:path";
 import test from "node:test";
 import { rootCertificates } from "node:tls";
 import { Client } from "pg";
 import { safeAuthRedirect } from "../lib/auth/redirects";
 import { authOriginMatchesCanonical, canonicalProductionOrigin, parseCanonicalOrigin } from "../lib/operations/canonical-origin";
-import { deploymentIsReady, evaluateDeploymentReadiness } from "../lib/operations/deployment-readiness";
+import { deploymentIsReady, evaluateDeploymentReadiness, LATEST_DATABASE_MIGRATION } from "../lib/operations/deployment-readiness";
 import { compareMigrationStatus } from "../lib/operations/migration-status";
+import { createSafeServerErrorDiagnostic } from "../lib/operations/server-error-diagnostics";
 import {
   createPostgresClientConfig,
   normalizeDatabaseCaCertificate,
@@ -82,6 +85,47 @@ test("migration status fails closed for pending or unexpected schema history", (
     unexpected: ["002_future"],
     current: false,
   });
+});
+
+test("production readiness tracks the latest committed migration", async () => {
+  const migrations = (await readdir(path.resolve(process.cwd(), "migrations")))
+    .filter((name) => /^\d+_[a-z0-9_-]+\.js$/.test(name))
+    .sort();
+  assert.equal(migrations.at(-1)?.startsWith(`${LATEST_DATABASE_MIGRATION}_`), true);
+
+  const expected = migrations.map((name) => name.slice(0, -3));
+  const betaTriageIndex = expected.findIndex((name) => name.startsWith("1753266400000_"));
+  assert.notEqual(betaTriageIndex, -1);
+  const productionBeforeEvidenceExpansion = expected.slice(0, betaTriageIndex + 1);
+  const status = compareMigrationStatus(expected, productionBeforeEvidenceExpansion);
+  assert.equal(status.current, false);
+  assert.deepEqual(status.pending, [
+    "1753352800000_guided-self-assessment-evidence",
+    "1753439200000_review-evidence",
+  ]);
+});
+
+test("server database diagnostics expose bounded metadata without leaking raw errors", () => {
+  const marker = "learner@example.com";
+  const cause = Object.assign(
+    new Error(`password authentication failed for user "${marker}" at postgresql://user:password@database.example/stemforge`),
+    { code: "28P01" },
+  );
+  const diagnostic = createSafeServerErrorDiagnostic(
+    "/api/progress/sync/pull",
+    "pull_remote_evidence",
+    cause,
+  );
+  assert.deepEqual(diagnostic, {
+    route: "/api/progress/sync/pull",
+    operation: "pull_remote_evidence",
+    errorType: "Error",
+    code: "28P01",
+    message: "Database authentication failed.",
+  });
+  assert.equal(JSON.stringify(diagnostic).includes(marker), false);
+  assert.equal(JSON.stringify(diagnostic).includes("password"), false);
+  assert.equal(JSON.stringify(diagnostic).includes("database.example"), false);
 });
 
 test("database CA normalization accepts multiline and escaped-newline PEM", () => {

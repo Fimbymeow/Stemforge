@@ -3,6 +3,7 @@ import "server-only";
 import type { Pool } from "pg";
 import { getAuthFeatureConfiguration } from "@/lib/auth/config";
 import { getInternalOperationsConfigurationStatus } from "@/lib/beta-reports/internal-authorization.server";
+import { LATEST_DATABASE_MIGRATION } from "@/lib/operations/deployment-readiness";
 
 export type InternalHealthState = "healthy" | "degraded" | "unavailable" | "disabled" | "misconfigured";
 
@@ -35,9 +36,9 @@ export async function getInternalHealthSnapshot(pool: Pool): Promise<InternalHea
           AND to_regclass('stemforge_operations.beta_report_audit') IS NOT NULL AS table_ready,
         EXISTS(
           SELECT 1 FROM stemforge_remote_migrations.pgmigrations
-          WHERE name = '1753266400000_beta_report_triage'
+          WHERE name LIKE $1
         ) AS migration_ready
-    `);
+    `, [`${LATEST_DATABASE_MIGRATION}%`]);
     snapshot.database = "healthy";
     snapshot.reportingRepository = result.rows[0].table_ready ? "healthy" : "unavailable";
     snapshot.migration = result.rows[0].migration_ready ? "healthy" : "degraded";

@@ -4,6 +4,7 @@ import { PROGRESS_SYNC_PRIVATE_HEADERS, isProgressSyncBrowserRequest } from "@/l
 import { PROGRESS_SYNC_PROTOCOL_VERSION, type ProgressSyncErrorResponse, type ProgressSyncExpectedStateResponse } from "@/lib/progress/sync-protocol";
 import { pullCurrentProgressSyncEvidence } from "@/lib/remote-evidence/authenticated-sync.server";
 import { AccountDataAccessError } from "@/lib/account-data/types";
+import { logServerOperationError } from "@/lib/operations/server-error-diagnostics";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +23,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(pulled.response, { headers: PROGRESS_SYNC_PRIVATE_HEADERS });
   } catch (cause) {
     if (cause instanceof AccountDataAccessError) return accountDataError(cause);
+    logServerOperationError("/api/progress/sync/pull", "pull_remote_evidence", cause);
     return error(503, "temporarily_unavailable", "Progress could not be synchronized just now. Your browser copy is safe.");
   }
 }

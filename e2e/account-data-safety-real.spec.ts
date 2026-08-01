@@ -26,13 +26,13 @@ test("shared browser keeps or removes account data deliberately without affectin
 
     await signIn(remote);
     await remote.getByRole("button", { name: "Turn on cross-device sync" }).click();
-    await expect(remote.getByTestId("progress-sync-panel")).toContainText("is up to date");
+    await expect(remote.getByTestId("progress-sync-panel")).toContainText("are up to date");
     await openQuestion(remote, QUESTION_IDS[1]);
     await submitAnswer(remote, QUESTION_ANSWERS[QUESTION_IDS[1]]);
     const remoteId = (await ids(remote))[0];
     await remote.goto("/account");
     await remote.getByRole("button", { name: "Sync now" }).click();
-    await expect(remote.getByTestId("progress-sync-panel")).toContainText("is up to date");
+    await expect(remote.getByTestId("progress-sync-panel")).toContainText("are up to date");
 
     await signIn(shared);
     let sharedPushes = 0;
@@ -42,7 +42,7 @@ test("shared browser keeps or removes account data deliberately without affectin
     await expect(shared.getByTestId("progress-sync-panel")).toContainText("Confirm before");
     expect(sharedPushes).toBe(0);
     await shared.getByRole("button", { name: "Turn on cross-device sync" }).click();
-    await expect(shared.getByTestId("progress-sync-panel")).toContainText("is up to date");
+    await expect(shared.getByTestId("progress-sync-panel")).toContainText("are up to date");
     await expect.poll(() => ids(shared)).toEqual(expect.arrayContaining([anonymousId, remoteId]));
     expect(await sourceFor(shared, anonymousId)).toBe("local_anonymous");
     expect(await sourceFor(shared, remoteId)).toBe("remote_pull");
@@ -55,7 +55,7 @@ test("shared browser keeps or removes account data deliberately without affectin
     await expect(shared).not.toHaveURL(/\/account/);
     await expect.poll(() => ids(shared)).toEqual(expect.arrayContaining([anonymousId, remoteId]));
     await signIn(shared);
-    await expect(shared.getByTestId("progress-sync-panel")).toContainText("is up to date");
+    await expect(shared.getByTestId("progress-sync-panel")).toContainText("are up to date");
     await expect(shared.getByRole("button", { name: "Turn on cross-device sync" })).toHaveCount(0);
 
     const beforeExpiry = await shared.evaluate((key) => localStorage.getItem(key), PROGRESS_STORAGE_KEY);
@@ -67,7 +67,7 @@ test("shared browser keeps or removes account data deliberately without affectin
     expect(await shared.evaluate((key) => localStorage.getItem(key), PROGRESS_STORAGE_KEY)).toBe(beforeExpiry);
     await shared.unroute("**/api/progress/sync/pull*");
     await shared.reload();
-    await expect(shared.getByTestId("progress-sync-panel")).toContainText("is up to date");
+    await expect(shared.getByTestId("progress-sync-panel")).toContainText("are up to date");
 
     await shared.getByRole("button", { name: "Remove this account's data from this browser, then sign out" }).click();
     await expect(shared.getByRole("button", { name: "Cancel" }).last()).toBeFocused();
@@ -130,13 +130,13 @@ test("confirmed remote learning-data erasure exports, deletes and reconciles sta
     await seed(pageA, [remoteAttempt]);
     await signIn(pageA);
     await pageA.getByRole("button", { name: "Turn on cross-device sync" }).click();
-    await expect(pageA.getByTestId("progress-sync-panel")).toContainText("is up to date");
+    await expect(pageA.getByTestId("progress-sync-panel")).toContainText("are up to date");
     await expect.poll(() => remoteEventIds(), { timeout: 20_000 }).toContain(remoteAttempt.eventId);
 
     await signIn(pageB);
     await pageB.getByRole("button", { name: "Turn on cross-device sync" }).click();
     await pageB.getByRole("button", { name: "Sync now" }).click();
-    await expect(pageB.getByTestId("progress-sync-panel")).toContainText("is up to date");
+    await expect(pageB.getByTestId("progress-sync-panel")).toContainText("are up to date");
     await expect.poll(() => ids(pageB)).toContain(remoteAttempt.eventId);
     await pageB.getByRole("button", { name: "Pause sync" }).click();
     await expect(pageB.getByTestId("progress-sync-panel")).toContainText("Sync is paused");
@@ -184,7 +184,7 @@ test("confirmed remote learning-data erasure exports, deletes and reconciles sta
     await expect(pageB.getByTestId("account-learning-data")).toContainText("browser's cleanup are complete");
     expect(await ids(pageB)).not.toContain(remoteAttempt.eventId);
     await pageB.getByRole("button", { name: "Turn on cross-device sync" }).click();
-    await expect(pageB.getByTestId("progress-sync-panel")).toContainText("is up to date");
+    await expect(pageB.getByTestId("progress-sync-panel")).toContainText("are up to date");
     const stillEmpty = await pageB.request.post("/api/account-data/export", { headers: { Origin: new URL(pageB.url()).origin }, data: { password } });
     expect(stillEmpty.ok()).toBe(true);
     expect((await stillEmpty.json()).records).toEqual([]);

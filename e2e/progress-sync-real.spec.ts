@@ -14,7 +14,8 @@ test("two authenticated devices converge safely through incremental evidence syn
   const pageA = await contextA.newPage();
   const pageB = await contextB.newPage();
   const errors: string[] = [];
-  watchErrors(pageA, errors);
+  const deliberateOfflineWindow = { active: false };
+  watchErrors(pageA, errors, deliberateOfflineWindow);
   watchErrors(pageB, errors);
   try {
     await seed(pageA, [deviceAEvent]);
@@ -28,18 +29,18 @@ test("two authenticated devices converge safely through incremental evidence syn
     await expect(pageA.getByTestId("progress-sync-panel")).toContainText("Confirm before");
     expect(deviceAPushes).toBe(0);
     await pageA.getByRole("button", { name: "Turn on cross-device sync" }).click();
-    await expect(pageA.getByTestId("progress-sync-panel")).toContainText("is up to date");
+    await expect(pageA.getByTestId("progress-sync-panel")).toContainText("are up to date");
     expect(deviceAPushes).toBeGreaterThan(0);
 
     await seed(pageB, []);
     await signIn(pageB);
     await pageB.getByRole("button", { name: "Turn on cross-device sync" }).click();
-    await expect(pageB.getByTestId("progress-sync-panel")).toContainText("is up to date");
+    await expect(pageB.getByTestId("progress-sync-panel")).toContainText("are up to date");
     await expectIds(pageB, [deviceAEvent.eventId]);
 
     await appendLocal(pageB, deviceBEvent);
     await startSync(pageB);
-    await expect(pageB.getByTestId("progress-sync-panel")).toContainText("is up to date");
+    await expect(pageB.getByTestId("progress-sync-panel")).toContainText("are up to date");
 
     let heldPull = false;
     await pageA.route("**/api/progress/sync/pull*", async (route) => {
@@ -50,7 +51,7 @@ test("two authenticated devices converge safely through incremental evidence syn
       await route.continue();
     });
     await startSync(pageA);
-    await expect(pageA.getByTestId("progress-sync-panel")).toContainText("is up to date");
+    await expect(pageA.getByTestId("progress-sync-panel")).toContainText("are up to date");
     await expectIds(pageA, [deviceAEvent.eventId, deviceBEvent.eventId, concurrentEvent.eventId]);
     await pageA.unroute("**/api/progress/sync/pull*");
 
@@ -62,16 +63,13 @@ test("two authenticated devices converge safely through incremental evidence syn
 
     await appendLocal(pageB, cursorFailureEvent);
     await startSync(pageB);
-    await expect(pageB.getByTestId("progress-sync-panel")).toContainText("is up to date");
+    await expect(pageB.getByTestId("progress-sync-panel")).toContainText("are up to date");
     const cursorBefore = await currentCursor(pageA);
     await pageA.evaluate((metadataKey) => {
       const original = Storage.prototype.setItem;
-      let failOnce = true;
+      (window as typeof window & { __stemforgeOriginalSetItem?: typeof Storage.prototype.setItem }).__stemforgeOriginalSetItem = original;
       Storage.prototype.setItem = function (key: string, value: string) {
-        if (failOnce && key === metadataKey) {
-          failOnce = false;
-          throw new DOMException("Simulated sync metadata persistence failure", "QuotaExceededError");
-        }
+        if (key === metadataKey) throw new DOMException("Simulated sync metadata persistence failure", "QuotaExceededError");
         return original.call(this, key, value);
       };
     }, PROGRESS_SYNC_METADATA_KEY);
@@ -80,16 +78,27 @@ test("two authenticated devices converge safely through incremental evidence syn
     await pageA.getByRole("button", { name: "Pause sync" }).click();
     expect(await currentCursor(pageA)).toBe(cursorBefore);
     await expectIds(pageA, [cursorFailureEvent.eventId]);
+    await pageA.evaluate(() => {
+      const testWindow = window as typeof window & { __stemforgeOriginalSetItem?: typeof Storage.prototype.setItem };
+      if (testWindow.__stemforgeOriginalSetItem) Storage.prototype.setItem = testWindow.__stemforgeOriginalSetItem;
+      delete testWindow.__stemforgeOriginalSetItem;
+    });
     await pageA.getByRole("button", { name: "Resume sync" }).click();
-    await expect(pageA.getByTestId("progress-sync-panel")).toContainText("is up to date");
+    await startSync(pageA);
+    await expect(pageA.getByTestId("progress-sync-panel")).toContainText("are up to date");
     await expect.poll(() => currentCursor(pageA)).not.toBe(cursorBefore);
 
-    await contextA.setOffline(true);
-    await appendLocal(pageA, offlineEvent);
-    await expect(pageA.getByTestId("progress-sync-panel")).toContainText("Offline");
-    await expectIds(pageA, [offlineEvent.eventId]);
-    await contextA.setOffline(false);
-    await expect(pageA.getByTestId("progress-sync-panel")).toContainText("is up to date");
+    deliberateOfflineWindow.active = true;
+    try {
+      await contextA.setOffline(true);
+      await appendLocal(pageA, offlineEvent);
+      await expect(pageA.getByTestId("progress-sync-panel")).toContainText("Offline");
+      await expectIds(pageA, [offlineEvent.eventId]);
+      await contextA.setOffline(false);
+      await expect(pageA.getByTestId("progress-sync-panel")).toContainText("are up to date");
+    } finally {
+      deliberateOfflineWindow.active = false;
+    }
 
     const pushesBeforeDifferentAccount = deviceAPushes;
     await pageA.evaluate((metadataKey) => {
@@ -159,7 +168,15 @@ async function currentCursor(page: import("@playwright/test").Page) {
   }, PROGRESS_SYNC_METADATA_KEY);
 }
 
-function watchErrors(page: import("@playwright/test").Page, errors: string[]) {
+function watchErrors(
+  page: import("@playwright/test").Page,
+  errors: string[],
+  deliberateOfflineWindow?: { active: boolean },
+) {
   page.on("pageerror", (error) => errors.push(`pageerror: ${error.message}`));
-  page.on("console", (message) => { if (message.type() === "error") errors.push(`console: ${message.text()}`); });
+  page.on("console", (message) => {
+    if (message.type() !== "error") return;
+    if (deliberateOfflineWindow?.active && message.text() === "Failed to load resource: net::ERR_INTERNET_DISCONNECTED") return;
+    errors.push(`console: ${message.text()}`);
+  });
 }

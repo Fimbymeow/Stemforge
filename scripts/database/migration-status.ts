@@ -8,7 +8,7 @@ export async function readConfiguredMigrationStatus(environment: NodeJS.ProcessE
   const connectionString = environment.STEMFORGE_DATABASE_MIGRATION_URL;
   if (!connectionString) throw new Error("STEMFORGE_DATABASE_MIGRATION_URL is required for migration status verification.");
   const expected = (await readdir(path.resolve(process.cwd(), "migrations")))
-    .filter((name) => /^\d+_[a-z0-9-]+\.js$/.test(name))
+    .filter((name) => /^\d+_[a-z0-9_-]+\.js$/.test(name))
     .map((name) => name.slice(0, -3))
     .sort();
   const pool = new Pool({
@@ -22,7 +22,12 @@ export async function readConfiguredMigrationStatus(environment: NodeJS.ProcessE
       ? (await pool.query<{ name: string }>("SELECT name FROM stemforge_remote_migrations.pgmigrations ORDER BY run_on, id")).rows.map((row) => row.name)
       : [];
     const ssl = await pool.query<{ active: boolean }>("SELECT EXISTS(SELECT 1 FROM pg_stat_ssl WHERE pid = pg_backend_pid() AND ssl) AS active");
-    return { ...compareMigrationStatus(expected, applied), ssl: ssl.rows[0]?.active === true };
+    return {
+      ...compareMigrationStatus(expected, applied),
+      expected,
+      applied,
+      ssl: ssl.rows[0]?.active === true,
+    };
   } finally {
     await pool.end();
   }
