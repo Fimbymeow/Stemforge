@@ -50,10 +50,10 @@ export function AccountDataControls() {
       <p className="mb-0 mt-2 text-sm leading-relaxed text-muted">Anyone using this browser may be able to see progress stored here.</p>
 
       <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
-        <Metric label="Anonymous progress" value={data.anonymous} />
-        <Metric label="Current account" value={data.currentAccount} />
-        <Metric label="Other accounts" value={data.otherAccounts} />
-        <Metric label="Not linked to an account" value={data.legacyUnknown} />
+        <Metric label="Guest learning" value={data.anonymous} />
+        <Metric label="This account" value={data.currentAccount} />
+        <Metric label="Another account" value={data.otherAccounts} />
+        <Metric label="Older browser learning" value={data.legacyUnknown} />
       </dl>
       {sync.diagnostics.provenanceStatus === "unsupported_future" ? (
         <p className="mb-0 mt-3 rounded-lg border border-warning/30 bg-warning-soft p-3 text-sm">This browser&apos;s data is in a newer format than this version supports. Removal buttons are turned off to avoid losing progress.</p>

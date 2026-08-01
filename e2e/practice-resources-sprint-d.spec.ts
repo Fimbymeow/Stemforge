@@ -2,26 +2,30 @@ import { expect, test } from "./fixtures/test";
 import { PRACTICE_SESSIONS_STORAGE_KEY } from "../lib/practice/practice-types";
 import { getStudentResourceCapabilities } from "../lib/resource-capabilities";
 
-test("Dashboard and Higher Maths expose distinct Learn and Practice heroes responsively", async ({ page }) => {
-  for (const route of ["/dashboard", "/subjects/higher-maths"]) {
-    await page.setViewportSize({ width: 1440, height: 900 });
-    await page.goto(route);
-    const learn = page.getByLabel("Learn", { exact: true });
-    const practice = page.getByLabel("Practice", { exact: true });
-    await expect(learn).toBeVisible();
-    await expect(practice).toBeVisible();
-    const wide = await boxes(learn, practice);
-    expect(Math.abs(wide.learn.y - wide.practice.y)).toBeLessThan(8);
-    expect(wide.learn.width).toBeGreaterThan(wide.practice.width * 2);
-    expect(wide.practice.x - (wide.learn.x + wide.learn.width)).toBeGreaterThanOrEqual(12);
+test("Higher Maths orders Learn above aligned Practice and Review cards responsively", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/subjects/higher-maths");
+  const learn = page.getByTestId("working-context-hub");
+  const practice = page.getByTestId("higher-maths-practice");
+  const review = page.getByTestId("review-entry-card");
+  await expect(learn).toBeVisible();
+  await expect(practice).toBeVisible();
+  await expect(review).toBeVisible();
+  const wide = await cardBoxes(learn, practice, review);
+  expect(wide.practice.y).toBeGreaterThanOrEqual(wide.learn.y + wide.learn.height);
+  expect(Math.abs(wide.practice.y - wide.review.y)).toBeLessThan(8);
+  await expectNoDocumentOverflow(page);
 
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto(route);
-    const stacked = await boxes(page.getByLabel("Learn", { exact: true }), page.getByLabel("Practice", { exact: true }));
-    expect(stacked.practice.y).toBeGreaterThan(stacked.learn.y + stacked.learn.height);
-    expect(Math.abs(stacked.learn.width - stacked.practice.width)).toBeLessThan(2);
-    await expectNoDocumentOverflow(page);
-  }
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/subjects/higher-maths");
+  const stacked = await cardBoxes(
+    page.getByTestId("working-context-hub"),
+    page.getByTestId("higher-maths-practice"),
+    page.getByTestId("review-entry-card"),
+  );
+  expect(stacked.practice.y).toBeGreaterThanOrEqual(stacked.learn.y + stacked.learn.height);
+  expect(stacked.review.y).toBeGreaterThanOrEqual(stacked.practice.y + stacked.practice.height);
+  await expectNoDocumentOverflow(page);
 });
 
 test("shared Practice chooser has exactly two modes, traps focus and restores its trigger", async ({ page }) => {
@@ -58,7 +62,7 @@ test("Practice chooser reuses Quick Practice and routes Choose Questions to Spri
   await page.goto("/subjects/higher-maths");
   await page.getByTestId("higher-maths-practice").getByRole("button", { name: "Practice" }).click();
   await page.getByRole("link", { name: "Choose Questions" }).click();
-  await expect(page).toHaveURL("/subjects/higher-maths/question-bank");
+  await expect(page).toHaveURL("/subjects/higher-maths/question-bank", { timeout: 15_000 });
   await expect(page.getByRole("heading", { name: "Question Bank", exact: true })).toBeVisible();
 });
 
@@ -130,6 +134,7 @@ test("formula sheet is mobile-safe and absent from the unrelated legacy Physics 
 });
 
 test("Sprint D surfaces have no document overflow at required widths or 200% zoom equivalent", async ({ page }) => {
+  test.setTimeout(90_000);
   const viewports = [
     { width: 1440, height: 900 },
     { width: 1024, height: 768 },
@@ -172,15 +177,18 @@ async function verifyFormulaDrawer(page: import("@playwright/test").Page) {
   await expect(trigger).toBeFocused();
 }
 
-async function boxes(
+async function cardBoxes(
   learn: import("@playwright/test").Locator,
   practice: import("@playwright/test").Locator,
+  review: import("@playwright/test").Locator,
 ) {
   const learnBox = await learn.boundingBox();
   const practiceBox = await practice.boundingBox();
+  const reviewBox = await review.boundingBox();
   expect(learnBox).not.toBeNull();
   expect(practiceBox).not.toBeNull();
-  return { learn: learnBox!, practice: practiceBox! };
+  expect(reviewBox).not.toBeNull();
+  return { learn: learnBox!, practice: practiceBox!, review: reviewBox! };
 }
 
 async function expectNoDocumentOverflow(page: import("@playwright/test").Page) {

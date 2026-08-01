@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { mapProviderError, readAuthResultCode } from "../lib/auth/results";
+import { AUTH_RESULT_MESSAGES, mapProviderError, readAuthResultCode } from "../lib/auth/results";
 import { safeAuthRedirect } from "../lib/auth/redirects";
 
 test("auth callback destinations allow only bounded account and learning routes", () => {
@@ -19,4 +19,5 @@ test("provider errors map to restrained learner-safe results", () => {
   assert.equal(mapProviderError("Password should be longer"), "password_invalid");
   assert.equal(mapProviderError("database details that must not leak"), "unexpected");
   assert.equal(readAuthResultCode("not-a-code"), null);
+  assert.equal(AUTH_RESULT_MESSAGES.invalid_credentials, "Check your email and password, then try again.");
 });

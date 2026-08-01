@@ -67,7 +67,7 @@ export function AccountLearningData() {
       const disposition = response.headers.get("content-disposition") ?? "";
       const filename = /filename="([^"]+)"/.exec(disposition)?.[1] ?? "stem-forge-account-data.json";
       const url = URL.createObjectURL(blob); const anchor = document.createElement("a"); anchor.href = url; anchor.download = filename; anchor.click(); URL.revokeObjectURL(url);
-      setPassword(""); setMessage("Your remote learning-data export is ready.");
+      setPassword(""); setMessage("Your account learning-progress export is ready.");
     } catch (error) { setMessage(error instanceof Error ? error.message : "Export failed."); }
     finally { setBusy(false); }
   }
@@ -93,20 +93,20 @@ export function AccountLearningData() {
           <h3 className="m-0 text-base font-extrabold">Export</h3>
           <p className="mb-0 mt-2 text-sm">Download a copy of the learning data stored in your STEM Forge account.</p>
           <label className="mt-3 block text-sm font-bold">Current password<input className={inputClass} ref={request?.status === "awaiting_reauthentication" ? passwordRef : undefined} type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} /></label>
-          <button className={secondaryButton} type="button" disabled={busy || !password} onClick={() => void exportRemote()}>Download remote account learning data</button>
+          <button className={secondaryButton} type="button" disabled={busy || !password} onClick={() => void exportRemote()}>Download account learning progress</button>
           <p className="mb-0 mt-4 text-sm">Download progress and account-related information stored on this browser.</p>
           <button className={secondaryButton} type="button" onClick={() => downloadCurrentBrowserExport(window.localStorage)}>Download this browser&apos;s data</button>
           <p className="mb-0 mt-2 text-xs text-muted">The account export covers the learning progress stored in your account. The browser export contains only this browser&apos;s local data and works without an account.</p>
         </div>
 
         <div className="rounded-lg border border-danger/30 bg-danger-soft p-4">
-          <h3 className="m-0 text-base font-extrabold">Delete learning progress stored in your STEM Forge account.</h3>
-          <p className="mb-0 mt-2 text-sm">This deletes remotely stored attempts, support activity, achievement records and retained progress conflicts. Your login account will remain active.</p>
+          <h3 className="m-0 text-base font-extrabold">Delete account learning progress</h3>
+          <p className="mb-0 mt-2 text-sm">This deletes attempts, help activity, achievements and saved progress conflicts stored in your account. Your login will remain active.</p>
           <p className="mb-0 mt-2 text-sm">Progress created without an account may remain on this browser unless you clear it separately. Offline browsers may need reconciliation.</p>
           <p className="mb-0 mt-2 text-xs">Deleted data may remain in secure backups for up to 30 days before those backups expire. This is a provisional target and may change.</p>
           {!request || request.status === "cancelled" ? <button className={dangerButton} type="button" disabled={busy} onClick={() => void mutate("/api/account-data/erasure", {})}>Start deletion</button> : null}
           {request?.status === "awaiting_reauthentication" ? <div><p className="text-sm font-bold">Confirm your identity again before continuing.</p><button className={dangerButton} disabled={busy || !password} onClick={() => void mutate("/api/account-data/erasure/reauthenticate", { requestId: request.requestId, password })}>Confirm password</button></div> : null}
-          {request?.status === "awaiting_confirmation" ? <div><p className="text-sm">Review: remote learning progress is deleted; the login remains active; offline browsers may need reconciliation; anonymous local progress may remain; processing is irreversible.</p><label className="block text-sm font-bold">Type DELETE MY LEARNING DATA to confirm.<input className={inputClass} value={confirmation} onChange={(event) => setConfirmation(event.target.value)} /></label><button className={dangerButton} disabled={busy || confirmation !== ERASURE_CONFIRMATION_TEXT} onClick={() => void mutate("/api/account-data/erasure/confirm", { requestId: request.requestId, confirmation })}>Schedule deletion</button></div> : null}
+          {request?.status === "awaiting_confirmation" ? <div><p className="text-sm">Your account learning progress will be deleted, but your login will remain active. Offline browsers may need cleanup, guest progress may remain locally, and processing cannot be undone.</p><label className="block text-sm font-bold">Type DELETE MY LEARNING DATA to confirm.<input className={inputClass} value={confirmation} onChange={(event) => setConfirmation(event.target.value)} /></label><button className={dangerButton} disabled={busy || confirmation !== ERASURE_CONFIRMATION_TEXT} onClick={() => void mutate("/api/account-data/erasure/confirm", { requestId: request.requestId, confirmation })}>Schedule deletion</button></div> : null}
           {request?.status === "scheduled" ? <div role="status"><p className="text-sm font-bold">Deletion will begin in 10 minutes. You can cancel until processing starts.</p><p className="text-sm">Approximately {scheduledSeconds} seconds remain. After processing begins, this cannot be undone.</p><button className={secondaryButton} disabled={busy || scheduledSeconds === 0} onClick={() => void mutate("/api/account-data/erasure/cancel", { requestId: request.requestId })}>Cancel deletion</button></div> : null}
           {request?.status === "processing" ? <p role="status" className="text-sm font-bold">Deletion is being processed. Sync is paused on every device.</p> : null}
           {request?.status === "failed_retryable" ? <p role="alert" className="text-sm font-bold">Deletion couldn&apos;t finish safely. Sync remains paused — retry, or contact support.</p> : null}

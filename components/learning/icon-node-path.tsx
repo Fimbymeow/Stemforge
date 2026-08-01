@@ -7,7 +7,7 @@ export type IconNodeItem = { id: string; label: string; available: boolean };
 export function IconNodePath({ items, selectedIndex, onSelect }: { items: IconNodeItem[]; selectedIndex: number; onSelect: (index: number) => void }) {
   return (
     <div className="-mx-1 overflow-x-auto pb-1">
-      <div className="flex min-w-max items-start px-1">
+      <div className="flex w-max min-w-full items-start justify-center px-1">
         {items.map((item, index) => (
           <div key={item.id} className="flex items-start">
             <button

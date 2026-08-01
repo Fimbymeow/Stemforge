@@ -16,7 +16,10 @@ test("fresh learner gets real production entry points with no activation query",
   await expect(card.getByRole("link", { name: "Basic differentiation" })).toHaveAttribute("href", overview);
   await expect(card.getByRole("link", { name: "Start", exact: true })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
   await expect(card.getByRole("link", { name: "Notes" })).toHaveAttribute("href", "/subjects/higher-maths/revision-notes");
-  await expect(card.getByRole("link", { name: "Practice" })).toHaveAttribute("href", "/practice?path=basic-differentiation");
+  await expect(card.getByRole("link", { name: "Overview" })).toHaveAttribute("href", overview);
+  await expect(card.getByRole("link", { name: "Practice" })).toHaveCount(0);
+  await expect(page.getByTestId("higher-maths-practice")).toBeVisible();
+  await expect(page.getByTestId("review-entry-card")).toBeVisible();
   expect(page.url()).not.toContain("workingContext=");
   await card.getByRole("link", { name: "Start", exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`/question/${QUESTION_IDS[0]}$`));
@@ -64,38 +67,29 @@ test("stage transition is deterministic and stage rows remain directly explorabl
   const currentStageCard = page.locator('[data-recommended="true"]');
   await expect(currentStageCard).toContainText("Applications");
   await expect(currentStageCard).toHaveClass(/bg-forge-soft/);
-  await expect(page.getByRole("link", { name: "Start Past Paper-style Questions" })).toHaveAttribute("href", `/question/${QUESTION_IDS[6]}`);
+  await expect(page.locator("article").filter({ hasText: "Exam practice (PPQ)" }).getByRole("link", { name: "Start" })).toHaveAttribute("href", `/question/${QUESTION_IDS[6]}`);
 });
 
-test("completed overview keeps its acknowledgement card but renders exactly one primary action", async ({ page }) => {
+test("completed overview stays compact and renders exactly one primary action", async ({ page }) => {
   await seedStoredProgress(page, v3Payload(recentCompletion()));
   await page.goto(overview);
-  const card = page.getByTestId("completed-path-card");
-  await expect(card).toBeVisible();
-  await expect(card).toContainText("8 / 8 questions");
+  await expect(page.getByTestId("completed-path-card")).toBeVisible();
+  await expect(page.getByTestId("skill-path-hero-progress")).toContainText("8 of 8 questions complete");
   await expect(page.getByRole("link", { name: "Practise this skill", exact: false })).toHaveCount(1);
-  await expect(page.getByRole("link", { name: "Revisit Foundations" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
+  await expect(page.locator("article").filter({ hasText: "Foundations" }).getByRole("link", { name: "Revisit" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
 });
 
-test("completed overview's secondary action jumps to the stage list instead of reloading the same page", async ({ page }) => {
+test("completed overview links its secondary action to the compact stage list", async ({ page }) => {
   await seedStoredProgress(page, v3Payload(QUESTION_IDS.map((id, index) => currentAttempt(id, index + 1))));
   await page.goto(overview);
-  const secondary = page.getByTestId("completed-path-card").getByRole("link", { name: "Review a stage" });
-  await expect(secondary).toHaveAttribute("href", "#stages");
-
   const [ids, duplicateIds] = await page.evaluate(() => {
     const allIds = [...document.querySelectorAll("[id]")].map((el) => el.id);
     return [allIds, allIds.filter((id, i) => allIds.indexOf(id) !== i)];
   });
   expect(ids).toContain("stages");
   expect(duplicateIds).toHaveLength(0);
-
-  await secondary.click();
-  await expect(page).toHaveURL(`${overview}#stages`);
-  await expect(page.getByRole("heading", { name: "Stages", level: 2 })).toBeFocused();
-
-  await page.goBack();
-  await expect(page).toHaveURL(overview);
+  await expect(page.getByRole("heading", { name: "Learning stages", level: 2 })).toBeVisible();
+  await expect(page.getByTestId("completed-path-card").getByRole("link", { name: "Review a stage" })).toHaveAttribute("href", "#stages");
 });
 
 test("completed overview with genuine review due shows one review-aware primary action, not a duplicate CTA", async ({ page }) => {
@@ -105,7 +99,7 @@ test("completed overview with genuine review due shows one review-aware primary 
   const primaryActions = page.getByRole("link", { name: /Start Review|Practise this skill/ });
   await expect(primaryActions).toHaveCount(1);
   await expect(primaryActions).toHaveAttribute("href", "/practice?review=1&path=basic-differentiation");
-  await expect(page.getByRole("link", { name: "Revisit Foundations" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
+  await expect(page.locator("article").filter({ hasText: "Foundations" }).getByRole("link", { name: "Revisit" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
 });
 
 test("hub skill title has a visible resting underline and Current Path rows are affordant at rest", async ({ page }) => {
@@ -155,7 +149,7 @@ test("scheduled Review exposes one contextual Practice Session entry and a recen
   const panel = page.getByTestId("working-context-desktop-panel");
   await expect(panel.getByRole("link", { name: "Review 1 skill due" })).toHaveAttribute("href", "/practice?review=1&path=basic-differentiation");
   await page.goto(hub);
-  await expect(page.getByTestId("working-context-hub").getByRole("link", { name: "Review 1 skill due" })).toHaveAttribute("href", "/practice?review=1&path=basic-differentiation");
+  await expect(page.getByTestId("review-entry-card").getByRole("link", { name: "Review now" })).toHaveAttribute("href", "/practice?review=1&path=basic-differentiation");
 
   await seedStoredProgress(page, v3Payload(recentCompletion()));
   await page.goto(`/question/${QUESTION_IDS[7]}`);
@@ -170,7 +164,7 @@ test("scheduled Review count and destination stay coherent across rail, hub and 
   await expect(page.getByTestId("working-context-desktop-panel").getByRole("link", { name: "Review 1 skill due" })).toHaveAttribute("href", "/practice?review=1&path=basic-differentiation");
 
   await page.goto(hub);
-  await expect(page.getByTestId("working-context-hub").getByRole("link", { name: "Review 1 skill due" })).toBeVisible();
+  await expect(page.getByTestId("review-entry-card").getByRole("link", { name: "Review now" })).toBeVisible();
 
   await page.goto(overview);
   await expect(page.getByRole("link", { name: "Review 1 skill due" })).toBeVisible();

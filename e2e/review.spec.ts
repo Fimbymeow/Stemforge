@@ -14,7 +14,9 @@ test("due scheduled Review launches the existing Practice Session without consol
     QUESTION_IDS.map((id, index) => currentAttempt(id, index + 1)),
   ));
   await page.goto("/subjects/higher-maths");
-  await page.getByRole("link", { name: "Review 1 skill due" }).click();
+  const reviewEntry = page.getByTestId("review-entry-card");
+  await expect(reviewEntry).toContainText(/1 skill.*review/i);
+  await reviewEntry.getByRole("link", { name: "Review now" }).click();
   await expect(page).toHaveURL(new RegExp(`${reviewHref.replace(/[?]/g, "\\?")}$`));
   const card = page.getByTestId("review-launch-card");
   await expect(card).toContainText("1 skill due");

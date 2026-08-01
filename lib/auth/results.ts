@@ -19,7 +19,7 @@ export function mapProviderError(message: string | undefined): AuthResultCode {
 
 export const AUTH_RESULT_MESSAGES: Record<AuthResultCode, string> = {
   callback_invalid: "That account link is invalid or has expired. Please request a new email.",
-  invalid_credentials: "The email address or password was not accepted.",
+  invalid_credentials: "Check your email and password, then try again.",
   password_invalid: "Use a password of at least 8 characters.",
   recovery_requested: "If an account exists for that email, a recovery link has been sent.",
   signed_out: "You have been signed out. Progress stored in this browser is unchanged.",

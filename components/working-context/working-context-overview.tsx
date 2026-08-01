@@ -17,7 +17,7 @@ export function WorkingContextOverview({ pathId }: { pathId: string }) {
 
   return (
     <AppShell demo active="Current Path" workingContextPathId={pathId}>
-      <div className="mx-auto grid max-w-[920px] gap-4">
+      <div className="mx-auto grid max-w-[880px] gap-4">
         <nav aria-label="Breadcrumb" className="flex flex-wrap gap-2 text-sm text-muted">
           <Link href={model.higherMathsHref}>Higher Maths</Link><span aria-hidden="true">/</span>
           <span>Calculus</span><span aria-hidden="true">/</span><span>Differentiating functions</span>
@@ -25,7 +25,7 @@ export function WorkingContextOverview({ pathId }: { pathId: string }) {
         <header className="rounded-2xl border border-line bg-white p-5 shadow-card md:p-6">
           <p className="text-xs font-extrabold uppercase tracking-wide text-forge">Skill overview</p>
           <h1 className="mt-2 text-[32px] font-extrabold leading-none">{model.skillName}</h1>
-          <p className="mt-3 max-w-3xl leading-relaxed text-muted">Start with the power rule, constants, sums of powers, and simple derivative evaluation.</p>
+          <p className="mt-3 max-w-3xl leading-relaxed text-muted">Work through Foundations, Applications, then exam practice. Your next useful step stays at the top.</p>
           <div className="mt-5 grid max-w-xl gap-2" data-testid="skill-path-hero-progress">
             <div className="flex flex-wrap justify-between gap-2 text-sm font-bold text-muted">
               <span>{model.completed} of {model.total} questions complete</span><span>{model.progressSummary}</span>
@@ -42,35 +42,39 @@ export function WorkingContextOverview({ pathId }: { pathId: string }) {
 
         {model.isComplete && skillPath ? <LocalRecommendedNextAction skillPath={skillPath} hidePrimaryAction secondaryStagesHref="#stages" /> : null}
 
-        <section aria-labelledby="stages" className="grid gap-2">
-          <h2 id="stages" tabIndex={-1} className="text-xl font-extrabold">Stages</h2>
+        <section aria-labelledby="stages" className="grid gap-3">
+          <div>
+            <h2 id="stages" tabIndex={-1} className="text-xl font-extrabold">Learning stages</h2>
+            <p className="mt-1 text-sm text-muted">A compact route from core ideas to exam-style questions.</p>
+          </div>
+          <div className="grid grid-cols-3 items-start gap-3 max-md:grid-cols-1">
           {model.stages.map((stage) => {
             const isCurrent = stage.name === model.stageName;
             const isStageComplete = stage.total > 0 && stage.completed >= stage.total;
+            const displayName = stage.name === "Past Paper-style Questions" ? "Exam practice (PPQ)" : stage.name;
             const actionLabel = stage.total === 0
               ? null
               : isStageComplete
-                ? (stage.reviewDue ? `Review ${stage.name}` : `Revisit ${stage.name}`)
+                ? (stage.reviewDue ? "Review now" : "Revisit")
                 : isCurrent
                   ? model.primaryLabel
-                  : `Start ${stage.name}`;
+                  : "Start";
             return (
-              <Card key={stage.id} className={`p-4 shadow-none ${isCurrent ? "bg-forge-soft" : ""}`} data-recommended={isCurrent ? "true" : undefined}>
-                <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 max-sm:grid-cols-1">
-                  <div>
-                    <h3 className="font-extrabold">{stage.name}</h3>
-                    <p className="mt-1 text-sm text-muted">{stage.description}</p>
-                    <p className="mt-2 text-sm font-bold text-muted">{stage.completed} / {stage.total} complete</p>
-                  </div>
+              <Card key={stage.id} className={`self-start p-4 shadow-none ${isCurrent ? "border-forge/40 bg-forge-soft" : ""}`} data-recommended={isCurrent ? "true" : undefined}>
+                  <p className="text-xs font-extrabold uppercase tracking-wide text-muted">{isCurrent ? "Current stage" : isStageComplete ? "Complete" : "Next stage"}</p>
+                  <h3 className="mt-1 font-extrabold">{displayName}</h3>
+                  <p className="mt-2 min-h-10 text-sm leading-relaxed text-muted max-md:min-h-0">{stage.description}</p>
+                  <p className="mt-3 text-sm font-bold text-muted">{stage.completed} / {stage.total} complete</p>
+                  <ProgressBar value={stage.total ? (stage.completed / stage.total) * 100 : 0} />
                   {actionLabel ? (
-                    <Link href={stage.href} className="inline-flex min-h-10 items-center justify-center rounded-lg border border-line bg-white px-4 text-sm font-extrabold text-ink">
+                    <Link href={stage.href} className="mt-4 inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-line bg-white px-4 text-sm font-extrabold text-ink">
                       {actionLabel}
                     </Link>
                   ) : null}
-                </div>
               </Card>
             );
           })}
+          </div>
         </section>
         <nav aria-label="Skill resources" className="flex flex-wrap gap-2 rounded-xl border border-line bg-white p-3">
           {model.notesHref ? <Link href={model.notesHref} className="inline-flex min-h-10 items-center rounded-lg px-3 font-bold hover:bg-forge-soft">Notes</Link> : null}

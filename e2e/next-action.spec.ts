@@ -16,16 +16,16 @@ test("new learner receives the same one-click learning entry across major surfac
 
   await page.goto("/subjects");
   await expectHigherMathsCourseAccess(page);
-  await expect(page.getByRole("link", { name: "Start learning" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
+  await expect(page.getByRole("link", { name: "Start learning" })).toHaveCount(0);
 
   await page.goto(HUB_ROUTE);
   await expectPrimaryAction(page, "Start", `/question/${QUESTION_IDS[0]}`);
-  await expect(page.getByRole("link", { name: "View full overview" })).toBeVisible();
+  await expect(page.getByTestId("working-context-hub").getByRole("link", { name: "Overview" })).toBeVisible();
 
   await page.goto(PATH_ROUTE);
   await expectPrimaryAction(page, "Start", `/question/${QUESTION_IDS[0]}`);
   await expect(page.locator('[data-recommended="true"]')).toContainText("Foundations");
-  await expect(page.getByRole("link", { name: "Start Applications" })).toHaveAttribute("href", `/question/${QUESTION_IDS[3]}`);
+  await expect(page.locator("article").filter({ hasText: "Applications" }).getByRole("link", { name: "Start" })).toHaveAttribute("href", `/question/${QUESTION_IDS[3]}`);
 
   await page.goto(BANK_ROUTE);
   await expect(page.getByText("Best next step")).toHaveCount(0);
@@ -50,10 +50,7 @@ test("an incomplete question is resumed consistently instead of opening generic 
 
   await page.goto("/subjects");
   await expectHigherMathsCourseAccess(page);
-  await expectPrimaryAction(page, "Resume question", `/question/${QUESTION_IDS[1]}`);
-  await page.getByRole("link", { name: "Resume question" }).click();
-  await expect(page).toHaveURL(new RegExp(`/question/${QUESTION_IDS[1]}$`));
-  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Resume question" })).toHaveCount(0);
 });
 
 test("a valid unfinished practice session becomes the shared primary action", async ({ page }) => {
@@ -75,7 +72,7 @@ test("a valid unfinished practice session becomes the shared primary action", as
 
   await page.goto("/subjects");
   await expectHigherMathsCourseAccess(page);
-  await expectPrimaryAction(page, "Resume practice", sessionUrl);
+  await expect(page.getByRole("link", { name: "Resume practice" })).toHaveCount(0);
 });
 
 test("stage completion advances to the next recommended stage without hard-locking exploration", async ({ page }) => {
@@ -93,8 +90,8 @@ test("stage completion advances to the next recommended stage without hard-locki
   await expectPrimaryAction(page, "Continue", `/question/${QUESTION_IDS[3]}`);
   const recommended = page.locator('[data-recommended="true"]');
   await expect(recommended).toContainText("Applications");
-  await expect(page.getByRole("link", { name: "Start Past Paper-style Questions" })).toHaveAttribute("href", `/question/${QUESTION_IDS[6]}`);
-  await expect(page.getByRole("link", { name: "Revisit Foundations" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
+  await expect(page.locator("article").filter({ hasText: "Exam practice (PPQ)" }).getByRole("link", { name: "Start" })).toHaveAttribute("href", `/question/${QUESTION_IDS[6]}`);
+  await expect(page.locator("article").filter({ hasText: "Foundations" }).getByRole("link", { name: "Revisit" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
 });
 
 test("completed guided content recommends due Review before practice and never locked inventory", async ({ page }) => {
@@ -111,20 +108,22 @@ test("completed guided content recommends due Review before practice and never l
   }
   await page.goto("/subjects");
   await expectHigherMathsCourseAccess(page);
-  await expectPrimaryAction(page, "Practise again", "/practice");
+  await expect(page.getByRole("link", { name: "Practise again" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Practise again" })).toHaveCount(0);
   await expect(page.getByText("Chain rule", { exact: true })).not.toBeVisible();
 });
 
-test("review recommendation remains secondary to ordinary Higher Maths access", async ({ page }) => {
+test("review recommendation stays on learning surfaces rather than the course catalogue", async ({ page }) => {
   await seedStoredProgress(page, v3Payload(
     QUESTION_IDS.map((id, index) => currentAttempt(id, index + 1, { hintViewedBeforeSubmission: index === 0 })),
   ));
 
-  for (const route of ["/dashboard", "/subjects"]) {
-    await page.goto(route);
-    await expectHigherMathsCourseAccess(page);
-    await expectPrimaryAction(page, "Review 1 question", `/question/${QUESTION_IDS[0]}`);
-  }
+  await page.goto("/dashboard");
+  await expectHigherMathsCourseAccess(page);
+  await expectPrimaryAction(page, "Review 1 question", `/question/${QUESTION_IDS[0]}`);
+  await page.goto("/subjects");
+  await expectHigherMathsCourseAccess(page);
+  await expect(page.getByRole("link", { name: "Review 1 question" })).toHaveCount(0);
 });
 
 test("question completion uses the shared next action and mobile hierarchy stays usable", async ({ page, seriousBrowserErrors }) => {

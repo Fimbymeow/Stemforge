@@ -16,7 +16,7 @@ export function ProgressSyncPanel({ accountFingerprint }: { accountFingerprint: 
         <div>
           <h2 className="m-0 text-lg font-extrabold">Keep progress updated across devices</h2>
           <p className="mb-0 mt-2 text-sm leading-relaxed text-muted">
-            {!ready ? "Checking sync status..." : copyForStatus(sync.status, sync.pendingCount)}
+            {!ready ? "Checking sync status…" : copyForStatus(sync.status, sync.pendingCount)}
           </p>
         </div>
         {ready ? <span className="rounded-full border border-line bg-white px-3 py-1 text-xs font-bold text-muted">{syncStatusLabel(sync.status)}</span> : null}
@@ -29,7 +29,7 @@ export function ProgressSyncPanel({ accountFingerprint }: { accountFingerprint: 
       ) : null}
       {associationRequired && ready ? (
         <p className="mb-0 mt-3 text-sm leading-relaxed text-muted">
-          This is a separate choice from importing. Turning it on sends eligible progress from this browser to your account and brings supported account progress to this browser. Existing progress is retained.
+          This is separate from adding guest progress. Turning it on sends this browser&apos;s recognised progress to your account and brings account progress to this browser. Existing progress is kept.
         </p>
       ) : null}
 
@@ -63,8 +63,8 @@ export function ProgressSyncPanel({ accountFingerprint }: { accountFingerprint: 
 }
 
 function copyForStatus(status: ReturnType<typeof useProgressSync>["status"], pending: number) {
-  if (status === "syncing") return "Syncing your progress... You can keep learning while this happens.";
-  if (status === "caught_up") return "Supported progress on this browser and your account is up to date.";
+  if (status === "syncing") return "Syncing your progress… You can keep learning while this happens.";
+  if (status === "caught_up") return "This browser and your account are up to date.";
   if (status === "pending_upload") return `${pending} change${pending === 1 ? "" : "s"} waiting to sync.`;
   if (status === "offline") return "Offline - progress is still being saved on this browser.";
   if (status === "temporary_error") return "Progress could not sync just now. Your browser progress is safe.";

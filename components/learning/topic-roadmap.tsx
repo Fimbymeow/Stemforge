@@ -1,13 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, BookOpen, LayoutList, Sparkles } from "lucide-react";
 import { Card } from "@/components/ui";
 import { IconNodePath } from "@/components/learning/icon-node-path";
-import { SubjectResourceLinks } from "@/components/learning/subject-resource-links";
 import { getResourceHref, getSubjectForSkillPath } from "@/lib/learning-paths";
-import { getSubjectFamily } from "@/lib/resource-capabilities";
 import type { SkillPath } from "@/data/types";
+
+function stageDisplayName(name: string) {
+  return name === "Past Paper-style Questions" ? "Exam practice (PPQ)" : name;
+}
 
 export function TopicRoadmap({ skillPaths, showHeading = true }: { skillPaths: SkillPath[]; showHeading?: boolean }) {
   const initialIndex = Math.max(
@@ -17,7 +20,6 @@ export function TopicRoadmap({ skillPaths, showHeading = true }: { skillPaths: S
   const [selectedIndex, setSelectedIndex] = useState(initialIndex);
   const selected = skillPaths[selectedIndex];
   const subject = getSubjectForSkillPath(selected);
-  const subjectFamily = getSubjectFamily(subject?.subject ?? "Maths") ?? "mathematics";
 
   return (
     <section className="min-w-0 max-w-full">
@@ -42,17 +44,19 @@ export function TopicRoadmap({ skillPaths, showHeading = true }: { skillPaths: S
           <p className="mt-1 max-w-[56ch] text-sm text-muted">{selected.description}</p>
 
           {selected.isAvailable ? (
-            <div className="mt-4">
-              <SubjectResourceLinks
-                family={subjectFamily}
-                variant="tiles"
-                hrefs={{
-                  notes: getResourceHref("revision-notes", subject?.subjectSlug),
-                  flashcards: getResourceHref("flashcards", subject?.subjectSlug),
-                  practice: "/practice",
-                }}
-              />
-            </div>
+            <nav aria-label={`${selected.name} destinations`} className="mt-4 grid grid-cols-2 gap-2 lg:grid-cols-5 max-sm:grid-cols-1">
+              <Link href={selected.href} className="flex min-h-12 items-center gap-3 rounded-xl border border-line bg-white px-4 text-sm font-extrabold hover:border-forge/40 hover:bg-forge-soft">
+                <LayoutList aria-hidden="true" className="size-4 text-forge" /> Overview
+              </Link>
+              <Link href={getResourceHref("revision-notes", subject?.subjectSlug)} className="flex min-h-12 items-center gap-3 rounded-xl border border-line bg-white px-4 text-sm font-extrabold hover:border-forge/40 hover:bg-forge-soft">
+                <BookOpen aria-hidden="true" className="size-4 text-forge" /> Notes
+              </Link>
+              {(selected.learningStages ?? []).map((stage) => (
+                <Link key={stage.id} href={stage.href ?? (stage.questionIds[0] ? `/question/${stage.questionIds[0]}` : selected.href)} className="flex min-h-12 items-center justify-between gap-3 rounded-xl border border-line bg-white px-4 text-sm font-extrabold hover:border-forge/40 hover:bg-forge-soft">
+                  <span>{stageDisplayName(stage.name)}</span><ArrowRight aria-hidden="true" className="size-4 shrink-0 text-forge" />
+                </Link>
+              ))}
+            </nav>
           ) : (
             <div className="mt-4 flex items-center gap-3 rounded-xl bg-[#f4f1eb] px-4 py-3 text-sm font-semibold text-muted">
               <Sparkles className="size-4 shrink-0" />

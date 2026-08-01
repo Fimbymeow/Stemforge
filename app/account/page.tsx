@@ -44,11 +44,11 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
 
   if (ownerState === "unauthenticated") {
     return (
-      <AccountShell title="Your account" introduction="Sign in to manage your optional STEM Forge account." result={result}>
+      <AccountShell title="Your account" introduction="Sign in to protect progress across devices, or keep learning as a guest." result={result}>
         <div className="mt-5 rounded-xl border border-line bg-paper p-4">
-          <h2 className="m-0 text-lg font-extrabold">Protect progress when you choose</h2>
+          <h2 className="m-0 text-lg font-extrabold">Your browser progress stays yours</h2>
           <p className="mb-0 mt-2 text-sm leading-relaxed text-muted">
-            Guest progress stays on this browser. An account lets you explicitly add it for safekeeping and, as a separate choice, keep supported progress updated across your devices.
+            Guest progress stays on this browser. After signing in, you can choose to add it to your account and separately choose whether to sync across devices.
           </p>
           <p className="mb-0 mt-2 text-sm font-semibold">You can keep learning without an account.</p>
         </div>
@@ -76,7 +76,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
       {accountFingerprint ? (
         <details className="mt-5 rounded-xl border border-line bg-white p-4">
           <summary className="min-h-11 cursor-pointer content-center font-extrabold">More account and data controls</summary>
-          <p className="mt-2 text-sm leading-relaxed text-muted">Export, shared-browser, feedback-history, and deletion controls are available here when you need them.</p>
+          <p className="mt-2 text-sm leading-relaxed text-muted">Export data, manage this browser, view feedback history, or delete account learning progress.</p>
           <AccountDataControls />
           <AccountLearningData />
           <BetaReportReceipts />

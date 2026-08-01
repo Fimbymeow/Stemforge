@@ -6,8 +6,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { AppTopbar } from "@/components/layout/app-topbar";
 import { Card } from "@/components/ui";
 import { subjectCatalog } from "@/data/subjects";
-import { useLearnerNextAction } from "@/components/learning/use-learner-next-action";
-import type { LearnerNextAction } from "@/lib/learning/next-action";
+import { getQualificationPresentation } from "@/lib/qualification-presentation";
 
 type SubjectsMode = "empty" | "demo";
 
@@ -18,7 +17,6 @@ const subjectIcons = {
 
 export function SubjectsPage({ mode }: { mode: SubjectsMode }) {
   const demo = mode === "demo";
-  const nextAction = useLearnerNextAction();
 
   return (
     <AppShell demo={demo} active="Subjects">
@@ -33,20 +31,18 @@ export function SubjectsPage({ mode }: { mode: SubjectsMode }) {
             </span>
             <div>
               <h1 className="m-0 text-[32px] font-extrabold leading-none">Subjects</h1>
-              <p className="mt-2 max-w-3xl text-base leading-relaxed text-muted">Structured Qualifications Scotland learning for Scottish students. Choose a subject to get started.</p>
+              <p className="mt-2 max-w-3xl text-base leading-relaxed text-muted">Choose a subject and qualification. Only courses with published learning are available.</p>
             </div>
           </div>
         </header>
 
         {demo ? (
           <section>
-            <h2 className="mb-2 text-lg font-extrabold">Choose a subject</h2>
-            <div className="grid grid-cols-4 gap-4 max-lg:grid-cols-2 max-md:grid-cols-1">
+            <h2 className="mb-2 text-lg font-extrabold">Courses</h2>
+            <div className="grid max-w-[760px] grid-cols-2 items-start gap-4 max-md:grid-cols-1">
               {subjectCatalog.map((subject) => (
-                <SubjectCard key={subject.name} subject={subject} nextAction={nextAction} />
+                <SubjectCard key={subject.name} subject={subject} />
               ))}
-              <EmptySubjectCard />
-              <EmptySubjectCard />
             </div>
           </section>
         ) : (
@@ -59,36 +55,28 @@ export function SubjectsPage({ mode }: { mode: SubjectsMode }) {
   );
 }
 
-function SubjectCard({ subject, nextAction }: { subject: (typeof subjectCatalog)[number]; nextAction: LearnerNextAction }) {
+function SubjectCard({ subject }: { subject: (typeof subjectCatalog)[number] }) {
   const Icon = subject.name in subjectIcons ? subjectIcons[subject.name as keyof typeof subjectIcons] : GraduationCap;
-  const recommended = subject.name === "Higher Maths" && nextAction.href && nextAction.subjectId === "higher-maths";
+  const qualification = getQualificationPresentation(subject.level);
 
   return (
-    <Card className="p-4">
-      <span className="mb-3 grid size-10 place-items-center rounded-xl bg-forge-soft text-forge">
-        <Icon className="size-5" />
-      </span>
-      <h3 className="m-0 text-lg font-extrabold">
-        {subject.available ? <Link href={subject.href} className="rounded-sm hover:text-forge focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-forge">{subject.name}</Link> : subject.name}
-      </h3>
-      <p className="mt-2 min-h-[54px] text-sm text-muted">{subject.description}</p>
+    <Card className={`p-5 ${subject.available ? "" : "bg-paper/70 shadow-none"}`}>
+      <div className="flex items-start justify-between gap-3">
+        <span className={`grid size-11 place-items-center rounded-xl ${subject.available ? "bg-forge-soft text-forge" : "bg-[#ebe7df] text-muted"}`}>
+          <Icon className="size-5" />
+        </span>
+        <span className={`rounded-full border px-3 py-1 text-xs font-extrabold ${qualification.className}`}>{qualification.label}</span>
+      </div>
+      <p className="mt-4 text-xs font-extrabold uppercase tracking-wide text-muted">{subject.subject}</p>
+      <h3 className="mt-1 text-xl font-extrabold">{subject.name}</h3>
+      <p className="mt-2 text-sm leading-relaxed text-muted">{subject.description}</p>
       <p className={`mt-3 text-xs font-bold ${subject.available ? "text-forge" : "text-muted"}`}>{subject.status}</p>
       {subject.available ? (
-        <div className="mt-4 grid gap-2">
-          <Link href={subject.href} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-forge px-3 text-center text-sm font-extrabold text-white">
+        <div className="mt-4">
+          <Link href={subject.href} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-forge px-4 text-center text-sm font-extrabold text-white">
             {subject.name === "Higher Maths" ? "Open Higher Maths" : "Open subject"}
             <ArrowRight className="size-4" />
           </Link>
-          {recommended ? (
-            <>
-              <p id="subjects-higher-maths-recommendation" className="mt-1 text-xs font-bold leading-relaxed text-muted">
-                Recommended next: {nextAction.title}
-              </p>
-              <Link href={nextAction.href!} aria-describedby="subjects-higher-maths-recommendation" className="inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-forge bg-white px-3 text-center text-sm font-extrabold text-forge">
-                {nextAction.label}
-              </Link>
-            </>
-          ) : null}
         </div>
       ) : (
         <span className="mt-4 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg border border-line bg-paper text-sm font-extrabold text-muted">
@@ -96,19 +84,6 @@ function SubjectCard({ subject, nextAction }: { subject: (typeof subjectCatalog)
           Locked
         </span>
       )}
-    </Card>
-  );
-}
-
-function EmptySubjectCard() {
-  return (
-    <Card className="grid place-items-center border-dashed p-4 text-center opacity-70">
-      <div>
-        <span className="mx-auto mb-3 grid size-10 place-items-center rounded-xl bg-[#f4f1eb] text-muted">
-          <GraduationCap className="size-5" />
-        </span>
-        <p className="text-sm font-bold text-muted">More subjects coming soon</p>
-      </div>
     </Card>
   );
 }

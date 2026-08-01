@@ -48,7 +48,7 @@ test("sign-in and sign-up preserve a safe learning return with accessible mobile
 
   await page.goto(`/account/sign-in?result=invalid_credentials&next=${encodeURIComponent(destination)}`);
   const error = page.locator("#account-result");
-  await expect(error).toHaveText("The email address or password was not accepted.");
+  await expect(error).toHaveText("Check your email and password, then try again.");
   await expect(error).toBeFocused();
 
   await page.goto("/account/forgot-password");

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { UserRound } from "lucide-react";
 import { Card } from "@/components/ui";
 import { AUTH_RESULT_MESSAGES, readAuthResultCode } from "@/lib/auth/results";
 import { CurrentBrowserExportButton } from "@/components/account/account-learning-data";
@@ -19,16 +20,21 @@ export function AccountShell({
 }) {
   const code = readAuthResultCode(result);
   return (
-    <FocusedProductShell>
+    <FocusedProductShell maxWidth="max-w-2xl">
       <Card className="p-6 sm:p-9">
-        <h1 className="m-0 text-3xl font-extrabold">{title}</h1>
-        <p className="mt-3 leading-relaxed text-muted">{introduction}</p>
+        <header className="flex items-start gap-4">
+          <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-forge-soft text-forge"><UserRound aria-hidden="true" className="size-6" /></span>
+          <div>
+            <h1 className="m-0 text-3xl font-extrabold">{title}</h1>
+            <p className="mt-2 leading-relaxed text-muted">{introduction}</p>
+          </div>
+        </header>
         {code ? <AccountResultMessage code={code} message={AUTH_RESULT_MESSAGES[code]} /> : null}
         {children}
       </Card>
       <p className="mt-6 text-center text-sm leading-relaxed text-muted">
-        Accounts are optional and learning works without one. Signing in never uploads browser progress automatically.
-        Adding this browser&apos;s progress to your account, and keeping progress updated across devices, are separate choices you make yourself.
+        Accounts are optional. Signing in does not upload this browser&apos;s progress automatically.
+        Adding browser progress and turning on cross-device sync are separate choices.
       </p>
     </FocusedProductShell>
   );

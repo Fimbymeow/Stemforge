@@ -18,20 +18,18 @@ test("revised dashboard and subject access remain distinct, ordered and overflow
       await page.goto(route);
       await expect(page.locator("main")).toHaveCount(1);
       await expect(page.getByRole("navigation", { name: "Main" })).toBeVisible();
-      const primary = page.getByRole("link", { name: "Open Higher Maths", exact: true });
-      const secondary = page.getByRole("link", { name: "Start learning", exact: true });
-      await expect(primary).toBeVisible();
-      await expect(secondary).toBeVisible();
-      await expect(primary).toHaveAttribute("href", "/subjects/higher-maths");
-      await expect(secondary).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
-      const primaryBox = await primary.boundingBox();
-      const secondaryBox = await secondary.boundingBox();
-      expect(primaryBox).not.toBeNull();
-      expect(secondaryBox).not.toBeNull();
-      expect(primaryBox!.height).toBeGreaterThanOrEqual(44);
-      expect(secondaryBox!.height).toBeGreaterThanOrEqual(44);
-      expect(await primary.evaluate((element) => getComputedStyle(element).backgroundColor))
-        .not.toBe(await secondary.evaluate((element) => getComputedStyle(element).backgroundColor));
+      const courseAccess = page.getByRole("link", { name: "Open Higher Maths", exact: true });
+      await expect(courseAccess).toBeVisible();
+      await expect(courseAccess).toHaveAttribute("href", "/subjects/higher-maths");
+
+      if (route === "/dashboard") {
+        const learn = page.getByTestId("dashboard-progress-summary");
+        const nextLearnAction = learn.getByRole("link", { name: /^(Start learning|Continue|Resume question)$/ });
+        await expect(nextLearnAction).toBeVisible();
+        await expect(nextLearnAction).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
+      } else {
+        await expect(page.getByRole("link", { name: /^(Start learning|Continue|Resume question|Resume practice|Review \d+)/ })).toHaveCount(0);
+      }
       await expectNoHorizontalOverflow(page);
     }
   }
@@ -39,7 +37,7 @@ test("revised dashboard and subject access remain distinct, ordered and overflow
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/dashboard");
   const primary = page.getByRole("link", { name: "Open Higher Maths", exact: true });
-  const secondary = page.getByRole("link", { name: "Start learning", exact: true });
+  const secondary = page.getByTestId("dashboard-progress-summary").getByRole("link", { name: /^(Start learning|Continue|Resume question)$/ });
   await primary.focus();
   await expect(primary).toBeFocused();
   await primary.press("Tab");
@@ -62,10 +60,14 @@ test("review and active-practice recommendations never replace course access at 
   await expect(page).toHaveURL(/\/practice\/session\//);
   const sessionPath = new URL(page.url()).pathname;
 
-  for (const route of ["/dashboard", "/subjects"]) {
-    await page.goto(route);
-    await expect(page.getByRole("link", { name: "Open Higher Maths", exact: true })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Resume practice", exact: true })).toHaveAttribute("href", sessionPath);
-    await expectNoHorizontalOverflow(page);
-  }
+  await page.goto("/dashboard");
+  await expect(page.getByRole("link", { name: "Open Higher Maths", exact: true })).toBeVisible();
+  await expect(page.getByTestId("dashboard-progress-summary").getByRole("link", { name: "Resume practice", exact: true })).toHaveAttribute("href", sessionPath);
+  await expectNoHorizontalOverflow(page);
+
+  await page.goto("/subjects");
+  await expect(page.getByRole("link", { name: "Open Higher Maths", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Resume practice", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: /Review \d+/ })).toHaveCount(0);
+  await expectNoHorizontalOverflow(page);
 });
