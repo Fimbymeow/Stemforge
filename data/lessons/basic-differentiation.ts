@@ -105,13 +105,6 @@ const blocks: LessonBlock[] = [
     explanation: "The value 14 is the gradient of the curve when $x=2$.",
   },
   {
-    blockId: "basic-diff-exam-tip",
-    type: "callout",
-    semantic: "exam_tip",
-    title: "Exam tip",
-    content: "When a question asks for a gradient, show the derivative before substituting the $x$-value. This makes your method clear and helps avoid using the original function by mistake.",
-  },
-  {
     blockId: "basic-diff-self-check",
     type: "self_check",
     title: "Quick self-check",
@@ -125,7 +118,7 @@ export const basicDifferentiationLesson: LessonDocument = {
   lessonId: "basic-differentiation-lesson",
   skillPathId: "basic-differentiation",
   schemaVersion: LESSON_SCHEMA_VERSION,
-  contentRevision: INITIAL_CONTENT_REVISION,
+  contentRevision: INITIAL_CONTENT_REVISION + 1,
   contentStatus: "active",
   title: "Basic differentiation",
   objective: "Understand the derivative as a gradient function, apply the power rule to polynomials, and evaluate a derivative at a point.",
@@ -145,6 +138,5 @@ export const basicDifferentiationLesson: LessonDocument = {
   closure: {
     recap: "Differentiation produces a gradient function. Apply the power rule term by term, remove constants, and substitute into the derivative when a gradient at a point is required.",
     foundationsHref: "/question/hm-calc-diff-basic-f-001",
-    confidencePrompt: "Could you explain the power rule and use it without looking back?",
   },
 };

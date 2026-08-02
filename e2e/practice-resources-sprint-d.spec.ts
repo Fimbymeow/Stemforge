@@ -36,9 +36,16 @@ test("Roadmap keeps strand navigation visible and opens registered available top
   await expect(page.getByRole("heading", { name: "Roadmap", exact: true })).toHaveCount(1);
   const calculus = roadmap.getByRole("button", { name: "Calculus" });
   await expect(calculus).toHaveAttribute("aria-pressed", "true");
+  await expect(calculus).toHaveAttribute("aria-current", "true");
+  const selectedIcon = calculus.locator("[data-roadmap-node-icon]");
+  await expect(selectedIcon).toHaveCSS("background-color", "rgb(36, 95, 145)");
+  await expect(selectedIcon).toHaveCSS("color", "rgb(255, 255, 255)");
+  await expect(calculus.locator("span").last()).toHaveCSS("font-weight", "800");
   await expect(roadmap.getByRole("link", { name: /Basic differentiation.*Not started/ })).toHaveAttribute("href", "/subjects/higher-maths/calculus/differentiation/basic-differentiation");
   await roadmap.getByRole("button", { name: "Vectors" }).click();
   await expect(roadmap.getByRole("button", { name: "Vectors" })).toHaveAttribute("aria-pressed", "true");
+  await expect(roadmap.getByRole("button", { name: "Vectors" })).toHaveAttribute("aria-current", "true");
+  await expect(calculus).not.toHaveAttribute("aria-current", "true");
   await expect(roadmap.getByText("Coming soon").first()).toBeVisible();
   await expectNoDocumentOverflow(page);
 });

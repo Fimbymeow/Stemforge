@@ -25,6 +25,8 @@ test("native Basic Differentiation lesson is valid, ordered and explicitly close
   assert.equal(basicDifferentiationLesson.schemaVersion, 1);
   assert.equal(basicDifferentiationLesson.skillPathId, basicPath.slug);
   assert.equal(basicDifferentiationLesson.closure.foundationsHref, "/question/hm-calc-diff-basic-f-001");
+  assert.equal(basicDifferentiationLesson.closure.confidencePrompt, undefined);
+  assert.equal(basicDifferentiationLesson.blocks.some((block) => block.type === "callout" && block.semantic === "exam_tip"), false);
   assert.equal(basicDifferentiationLesson.estimatedReadingMinutes, estimateLessonReadingMinutes(basicDifferentiationLesson.blocks));
 });
 

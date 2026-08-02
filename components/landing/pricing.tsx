@@ -1,4 +1,3 @@
-﻿import { getActiveSkillPathHref } from "@/lib/learning-paths";
 import type { ReactNode } from "react";
 import { ButtonLink, Card } from "@/components/ui";
 
@@ -13,7 +12,7 @@ export function Pricing() {
           label="Free"
           title="Start learning now"
           items={["Learning notes", "Question practice", "Worked solutions", "Progress tracking"]}
-          action={<ButtonLink href={getActiveSkillPathHref()}>Start Learning</ButtonLink>}
+          action={<ButtonLink href="/dashboard">Start Learning</ButtonLink>}
         />
         <PricingCard
           label="Premium"

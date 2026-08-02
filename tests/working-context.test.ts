@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { contentResolver } from "../lib/content-resolver";
 import {
+  deriveLessonContinuationAction,
   deriveWorkingContextModel,
   formatReviewDueLabel,
   parseWorkingContextPathId,
@@ -14,12 +15,45 @@ const pathId = "basic-differentiation";
 const context = contentResolver.getPathContext(pathId)!;
 const questionIds = context.skillPath.learningStages!.flatMap((stage) => stage.questionIds);
 
-test("fresh state starts the first canonical question without writing a pointer", () => {
+test("fresh state starts with Notes while Foundations remains canonical", () => {
   const model = deriveWorkingContextModel({ pathId, evidence: emptyEvidence() })!;
   assert.equal(model.primaryLabel, "Start");
-  assert.equal(model.primaryHref, `/question/${questionIds[0]}`);
+  assert.equal(model.primaryHref, "/subjects/higher-maths/revision-notes");
+  assert.equal(model.stages[0].href, `/question/${questionIds[0]}`);
   assert.equal(model.completed, 0);
   assert.equal(model.reviewHref, null);
+});
+
+test("lesson continuation follows canonical stages and genuine scheduled Review", () => {
+  assert.deepEqual(deriveLessonContinuationAction({ pathId, evidence: emptyEvidence() }), {
+    href: `/question/${questionIds[0]}`,
+    label: "Continue to Foundations",
+  });
+
+  const foundations = context.skillPath.learningStages![0];
+  assert.deepEqual(deriveLessonContinuationAction({
+    pathId,
+    evidence: evidence(foundations.questionIds.map((id, index) => attempt(id, index + 1, true))),
+  }), {
+    href: `/question/${questionIds[3]}`,
+    label: "Continue to Applications",
+  });
+
+  assert.deepEqual(deriveLessonContinuationAction({
+    pathId,
+    evidence: evidence(questionIds.slice(0, 6).map((id, index) => attempt(id, index + 1, true))),
+  }), {
+    href: `/question/${questionIds[6]}`,
+    label: "Continue to Exam practice",
+  });
+
+  assert.deepEqual(deriveLessonContinuationAction({
+    pathId,
+    evidence: evidence(questionIds.map((id, index) => attempt(id, index + 1, true))),
+  }), {
+    href: `/practice?review=1&path=${pathId}`,
+    label: "Start Review",
+  });
 });
 
 test("real incomplete evidence resumes the exact current-version question", () => {

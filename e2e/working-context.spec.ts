@@ -14,7 +14,7 @@ test("fresh learner gets real production entry points with no activation query",
   const card = page.getByTestId("working-context-hub");
   await expect(card).toContainText("Basic differentiation");
   await expect(card.getByRole("link", { name: "Basic differentiation" })).toHaveAttribute("href", overview);
-  await expect(card.getByRole("link", { name: "Start", exact: true })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
+  await expect(card.getByRole("link", { name: "Start", exact: true })).toHaveAttribute("href", "/subjects/higher-maths/revision-notes");
   await expect(card.getByRole("link", { name: "Notes" })).toHaveAttribute("href", "/subjects/higher-maths/revision-notes");
   await expect(card.getByRole("link", { name: "Overview" })).toHaveAttribute("href", overview);
   await expect(card.getByRole("link", { name: "Practice" })).toHaveCount(0);
@@ -22,7 +22,7 @@ test("fresh learner gets real production entry points with no activation query",
   await expect(page.getByTestId("review-entry-card")).toBeVisible();
   expect(page.url()).not.toContain("workingContext=");
   await card.getByRole("link", { name: "Start", exact: true }).click();
-  await expect(page).toHaveURL(new RegExp(`/question/${QUESTION_IDS[0]}$`));
+  await expect(page).toHaveURL(/\/subjects\/higher-maths\/revision-notes$/);
   await page.goBack();
   await expect(page).toHaveURL(new RegExp(`${hub}$`));
 });
@@ -219,6 +219,8 @@ test("mobile Current Path opens a trapped modal and closes with Escape", async (
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(hub);
   await page.getByTestId("working-context-hub").getByRole("link", { name: "Start", exact: true }).click();
+  await expect(page).toHaveURL(/\/subjects\/higher-maths\/revision-notes$/);
+  await page.getByRole("link", { name: "Continue to Foundations" }).click();
   await expect(page).toHaveURL(new RegExp(`/question/${QUESTION_IDS[0]}$`));
   const trigger = page.getByRole("button", { name: "Current Path: Basic differentiation" });
   await trigger.click();

@@ -1,5 +1,5 @@
 import { expect, test } from "./fixtures/test";
-import { QUESTION_IDS } from "./fixtures/progress";
+import { currentAttempt, QUESTION_IDS, seedStoredProgress, v3Payload } from "./fixtures/progress";
 import { expectNoHorizontalOverflow } from "./fixtures/student-actions";
 
 const NOTES_ROUTE = "/subjects/higher-maths/revision-notes";
@@ -14,20 +14,26 @@ test("Basic Differentiation renders as one continuous native lesson with meaning
   await expect(lesson.getByRole("heading", { name: "The power rule" })).toBeVisible();
   await expect(lesson.getByRole("heading", { name: "Gradient at a point", exact: true })).toBeVisible();
   await expect(lesson.getByRole("navigation", { name: "Lesson sections" }).first()).toBeVisible();
+  await expect(lesson.locator('[data-callout-family="core"]')).not.toHaveCount(0);
+  await expect(lesson.locator('[data-callout-family="caution"]')).not.toHaveCount(0);
+  await expect(lesson.getByText("Exam tip", { exact: true })).toHaveCount(0);
+  await expect(page.getByTestId("notes-practice")).toHaveCount(0);
+  await expect(page.getByText(/Future Higher Maths notes/)).toHaveCount(0);
   await expect(lesson.locator("article")).toHaveCount(0);
   await expect(page.getByTestId("lesson-block-diagnostic")).toHaveCount(0);
   expect(seriousBrowserErrors).toEqual([]);
 });
 
-test("worked examples reveal progressively and retain a full-solution escape hatch", async ({ page }) => {
+test("worked examples show every step and final answer without reveal controls", async ({ page }) => {
   await page.goto(NOTES_ROUTE);
   const example = page.locator("#basic-diff-example-polynomial");
   await expect(example.getByText("Differentiate a polynomial", { exact: true })).toBeVisible();
   const steps = example.getByRole("list", { name: "Worked solution steps" }).getByRole("listitem");
-  await expect(steps).toHaveCount(1);
-  await example.getByRole("button", { name: "Show full solution" }).click();
   await expect(steps).toHaveCount(3);
   await expect(example.getByText("Final answer", { exact: true })).toBeVisible();
+  await expect(page.getByTestId("lesson-worked-example")).toHaveCount(3);
+  await expect(page.getByTestId("static-worked-solution")).toHaveCount(3);
+  await expect(page.getByRole("button", { name: /Show (next step|full solution)/ })).toHaveCount(0);
 });
 
 test("self-check is optional and Continue to Foundations is never gated", async ({ page }) => {
@@ -40,6 +46,26 @@ test("self-check is optional and Continue to Foundations is never gated", async 
   await expect(selfCheck).toHaveAttribute("open", "");
   await expect(selfCheck.getByText("Answer", { exact: true })).toBeVisible();
   await expect(continueLink).toBeVisible();
+});
+
+test("lesson continuation follows completed stages and due Review", async ({ page }) => {
+  await seedStoredProgress(page, v3Payload(
+    QUESTION_IDS.slice(0, 3).map((id, index) => currentAttempt(id, index + 1)),
+  ));
+  await page.goto(NOTES_ROUTE);
+  await expect(page.getByRole("link", { name: "Continue to Applications" })).toHaveAttribute("href", `/question/${QUESTION_IDS[3]}`);
+
+  await seedStoredProgress(page, v3Payload(
+    QUESTION_IDS.slice(0, 6).map((id, index) => currentAttempt(id, index + 1)),
+  ));
+  await page.goto(NOTES_ROUTE);
+  await expect(page.getByRole("link", { name: "Continue to Exam practice" })).toHaveAttribute("href", `/question/${QUESTION_IDS[6]}`);
+
+  await seedStoredProgress(page, v3Payload(
+    QUESTION_IDS.map((id, index) => currentAttempt(id, index + 1)),
+  ));
+  await page.goto(NOTES_ROUTE);
+  await expect(page.getByRole("link", { name: "Start Review" })).toHaveAttribute("href", "/practice?review=1&path=basic-differentiation");
 });
 
 for (const anchor of [
@@ -83,6 +109,8 @@ test("lesson is mobile-safe, reduced-motion-safe and print exposes collapsed con
   await expect(selfCheck).not.toHaveAttribute("open", "");
   await page.emulateMedia({ media: "print", reducedMotion: "reduce" });
   await expect(selfCheck.locator("[data-collapsible-content]")).toHaveCSS("display", "block");
+  await expect(page.getByTestId("static-worked-solution")).toHaveCount(3);
+  await expect(page.getByTestId("lesson-worked-example").first().getByText("Final answer", { exact: true })).toBeVisible();
 });
 
 test("typography comparison changes only the explicit reading mode", async ({ page }) => {

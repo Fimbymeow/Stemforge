@@ -19,7 +19,7 @@ test("new learner gets calm course access before the one-click learning entry", 
   await expect(page.getByRole("link", { name: "Start learning" })).toHaveCount(0);
 
   await page.goto(HUB_ROUTE);
-  await expectPrimaryAction(page, "Start", `/question/${QUESTION_IDS[0]}`);
+  await expectPrimaryAction(page, "Start", "/subjects/higher-maths/revision-notes");
   await expect(page.getByTestId("working-context-hub").getByRole("link", { name: "Overview" })).toBeVisible();
 
   await page.goto(PATH_ROUTE);

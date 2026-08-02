@@ -1,17 +1,18 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, ChevronDown, Clock3 } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { AppTopbar } from "@/components/layout/app-topbar";
 import { LessonRenderer, type LessonTypography } from "@/components/learning/lesson-renderer";
 import { SubjectResourceLinks } from "@/components/learning/subject-resource-links";
-import { PracticeEntryCard } from "@/components/practice/practice-entry-card";
 import { Card } from "@/components/ui";
-import { getActiveSubject, getActiveSkillPath, getAllSkillPaths, getQuestionContext } from "@/lib/learning-paths";
+import { getActiveSkillPath, getQuestionContext } from "@/lib/learning-paths";
 import { resolveLessonDocument } from "@/lib/lessons/resolver";
-import { WORKING_CONTEXT_NOTES_ORIGIN_PREFIX } from "@/lib/working-context";
+import { getEmptyProgressEvidence, getProgressEvidence } from "@/lib/local-progress";
+import { deriveLessonContinuationAction, WORKING_CONTEXT_NOTES_ORIGIN_PREFIX } from "@/lib/working-context";
 
 export function HigherMathsResourceBrowser({
   returnTo: requestedReturnTo,
@@ -27,10 +28,12 @@ export function HigherMathsResourceBrowser({
   typography?: LessonTypography;
 }) {
   const router = useRouter();
-  const subject = getActiveSubject();
   const skillPath = getActiveSkillPath();
   const lesson = resolveLessonDocument(skillPath);
-  const futurePaths = getAllSkillPaths(subject).filter((path) => !path.isAvailable);
+  const [continuation, setContinuation] = useState(() => deriveLessonContinuationAction({
+    pathId: skillPath.slug,
+    evidence: getEmptyProgressEvidence(),
+  }));
   const returnTo = requestedReturnTo?.startsWith("/") && !requestedReturnTo.startsWith("//") ? requestedReturnTo : null;
   const originQuestionId = questionOrigin?.questionId && /^[a-z0-9-]+$/i.test(questionOrigin.questionId)
     ? questionOrigin.questionId
@@ -44,6 +47,22 @@ export function HigherMathsResourceBrowser({
     && originQuestionNumber > 0
     && questionOrigin?.token,
   );
+
+  useEffect(() => {
+    const update = () => setContinuation(deriveLessonContinuationAction({
+      pathId: skillPath.slug,
+      evidence: getProgressEvidence(),
+    }));
+    update();
+    window.addEventListener("stemforge:local-progress-updated", update);
+    window.addEventListener("stemforge:progress-sync-updated", update);
+    window.addEventListener("storage", update);
+    return () => {
+      window.removeEventListener("stemforge:local-progress-updated", update);
+      window.removeEventListener("stemforge:progress-sync-updated", update);
+      window.removeEventListener("storage", update);
+    };
+  }, [skillPath.slug]);
 
   return (
     <AppShell demo active="Subjects" workingContextPathId={skillPath.slug}>
@@ -81,27 +100,11 @@ export function HigherMathsResourceBrowser({
         />
 
         {lesson ? (
-          <LessonRenderer document={lesson.document} typography={typography} />
+          <LessonRenderer document={lesson.document} typography={typography} continuation={continuation ?? undefined} />
         ) : (
           <Card className="p-6"><h1 className="text-2xl font-extrabold">Notes are being prepared</h1><p className="mt-2 text-muted">There is no published lesson for this path yet.</p></Card>
         )}
 
-        <section aria-labelledby="notes-practice-title" className="max-w-[760px] border-t border-line pt-5">
-          <h2 id="notes-practice-title" className="mb-3 text-lg font-extrabold">Practise this lesson</h2>
-          <PracticeEntryCard preferredPathId={skillPath.slug} testId="notes-practice" />
-        </section>
-
-        {futurePaths.length ? (
-          <details className="group rounded-xl border border-line bg-white">
-            <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-5 py-3 font-bold text-muted">
-              <span className="inline-flex items-center gap-2"><Clock3 aria-hidden="true" className="size-4" />Future Higher Maths notes ({futurePaths.length} paths)</span>
-              <ChevronDown aria-hidden="true" className="size-4 transition group-open:rotate-180" />
-            </summary>
-            <div className="grid gap-2 border-t border-line p-4">
-              {futurePaths.map((path) => <div key={path.slug} className="flex justify-between gap-3 rounded-lg bg-paper px-3 py-2 text-sm"><strong>{path.name}</strong><span className="text-muted">Coming soon</span></div>)}
-            </div>
-          </details>
-        ) : null}
       </div>
     </AppShell>
   );

@@ -1,4 +1,3 @@
-﻿import { getActiveSkillPathHref } from "@/lib/learning-paths";
 import Image from "next/image";
 import { ButtonLink } from "@/components/ui";
 
@@ -15,7 +14,7 @@ export function Hero() {
             Maths Basic differentiation, including guided practice and worked solutions.
           </p>
           <div className="mt-9 flex flex-wrap gap-4 max-lg:justify-center">
-            <ButtonLink href={getActiveSkillPathHref()} size="lg">
+            <ButtonLink href="/dashboard" size="lg">
               Start Learning
             </ButtonLink>
             <ButtonLink href="#features" variant="secondary" size="lg">

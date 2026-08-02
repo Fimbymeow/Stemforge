@@ -46,6 +46,53 @@ export type WorkingContextModel = {
   stages: WorkingContextStageModel[];
 };
 
+export type LessonContinuationAction = {
+  href: string;
+  label: string;
+};
+
+export function deriveLessonContinuationAction(input: {
+  pathId: string;
+  evidence: ProgressEvidence;
+}): LessonContinuationAction | null {
+  const context = contentResolver.getPathContext(input.pathId);
+  if (!context?.skillPath.isAvailable) return null;
+  const stages = context.skillPath.learningStages ?? [];
+  const progress = calculateSkillPathProgress(
+    context.skillPath,
+    input.evidence,
+    contentResolver.getQuestionVersions(),
+  );
+  const isComplete = progress.totalQuestions > 0
+    && progress.completedQuestionIds.length >= progress.totalQuestions;
+
+  if (isComplete) {
+    const reviewState = deriveSkillReviewState(context.skillPath, input.evidence);
+    if (reviewState.due) {
+      return {
+        href: `/practice?review=1&path=${encodeURIComponent(input.pathId)}`,
+        label: "Start Review",
+      };
+    }
+    const foundations = stages[0];
+    return foundations?.questionIds[0]
+      ? { href: `/question/${foundations.questionIds[0]}`, label: "Revisit Foundations" }
+      : null;
+  }
+
+  const nextAction = deriveSkillPathNextAction(input);
+  const stageIndex = stages.findIndex((stage) => stage.id === nextAction.stageId);
+  const stage = stageIndex >= 0 ? stages[stageIndex] : stages[0];
+  const href = nextAction.href ?? (stage?.questionIds[0] ? `/question/${stage.questionIds[0]}` : null);
+  if (!href || !stage) return null;
+  const label = stageIndex === 1
+    ? "Continue to Applications"
+    : stageIndex >= 2
+      ? "Continue to Exam practice"
+      : "Continue to Foundations";
+  return { href, label };
+}
+
 export function deriveWorkingContextModel(input: {
   pathId: string;
   evidence: ProgressEvidence;
@@ -78,7 +125,13 @@ export function deriveWorkingContextModel(input: {
   const reviewHref = reviewState.due
     ? `/practice?review=1&path=${encodeURIComponent(input.pathId)}`
     : null;
-  const primaryHref = isComplete
+  const notesHref = context.skillPath.lessonDocument || getActiveRecords(context.skillPath.notes ?? []).length
+    ? `/subjects/${context.subject.subjectSlug}/revision-notes`
+    : null;
+  const isFreshStart = progress.attemptedCount === 0 && nextAction.kind === "start_learning";
+  const primaryHref = !isComplete && isFreshStart && notesHref
+    ? notesHref
+    : isComplete
     ? (reviewHref ?? practiceHref)
     : nextAction.href ?? context.skillPath.href;
   const primaryLabel = isComplete
@@ -106,7 +159,9 @@ export function deriveWorkingContextModel(input: {
     stageName,
     primaryLabel,
     primaryHref,
-    nextActionReason: nextAction.reason,
+    nextActionReason: isFreshStart
+      ? "Read the lesson first, then continue into Foundations."
+      : nextAction.reason,
     progressSummary: isComplete
       ? "All stages complete"
       : `${stageName} · ${stageCompleted} of ${stageTotal} complete`,
@@ -114,9 +169,7 @@ export function deriveWorkingContextModel(input: {
     reviewCount,
     reviewHref,
     reviewReason: reviewState.reason,
-    notesHref: getActiveRecords(context.skillPath.notes ?? []).length
-      ? `/subjects/${context.subject.subjectSlug}/revision-notes`
-      : null,
+    notesHref,
     practiceHref,
     overviewHref: context.skillPath.href,
     questionBankHref: `/subjects/${context.subject.subjectSlug}/question-bank`,

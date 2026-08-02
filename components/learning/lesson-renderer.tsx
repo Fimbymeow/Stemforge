@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
 import { ArrowRight, BookOpen, CheckCircle2, ChevronDown, Lightbulb, ShieldAlert, Sparkles } from "lucide-react";
 import { MathGraph } from "@/components/maths/math-graph";
 import { MathContent } from "@/components/questions/math-content";
-import { WorkedSolutionContent } from "@/components/questions/worked-solution-content";
 import {
   getLessonBlockHighlightEligibility,
   getLessonBlockPlainText,
@@ -15,8 +14,7 @@ import type { CalloutSemantic, LessonBlock, LessonCalloutBlock, LessonDocument }
 
 export type LessonTypography = "system_sans" | "restrained_serif";
 
-export function LessonRenderer({ document, typography = "system_sans" }: { document: LessonDocument; typography?: LessonTypography }) {
-  const [selfCheckEngaged, setSelfCheckEngaged] = useState(false);
+export function LessonRenderer({ document, typography = "system_sans", continuation }: { document: LessonDocument; typography?: LessonTypography; continuation?: { href: string; label: string } }) {
   const hasContents = (document.sections?.length ?? 0) > 1;
   const environment = process.env.NODE_ENV === "production" ? "production" : process.env.NODE_ENV === "test" ? "test" : "development";
 
@@ -83,7 +81,7 @@ export function LessonRenderer({ document, typography = "system_sans" }: { docum
               if (disposition.action === "calm_fallback") {
                 return <p key={`fallback-${index}`} className="rounded-xl border border-line bg-paper p-4 text-sm font-bold text-muted">Part of this lesson is temporarily unavailable.</p>;
               }
-              return <LessonBlockView key={candidate.blockId} block={candidate} document={document} onSelfCheckEngaged={() => setSelfCheckEngaged(true)} />;
+              return <LessonBlockView key={candidate.blockId} block={candidate} document={document} />;
             })}
           </div>
 
@@ -96,8 +94,8 @@ export function LessonRenderer({ document, typography = "system_sans" }: { docum
                 {document.closure.confidencePrompt ? <p className="mt-3 text-sm font-bold text-ink">{document.closure.confidencePrompt}</p> : null}
               </div>
             </div>
-            <Link href={document.closure.foundationsHref} className={`mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-forge px-5 font-extrabold text-white transition max-sm:w-full ${selfCheckEngaged ? "shadow-card" : ""}`}>
-              Continue to Foundations <ArrowRight aria-hidden="true" className="size-4" />
+            <Link href={continuation?.href ?? document.closure.foundationsHref} className="mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-forge px-5 font-extrabold text-white transition max-sm:w-full">
+              {continuation?.label ?? "Continue to Foundations"} <ArrowRight aria-hidden="true" className="size-4" />
             </Link>
           </footer>
         </div>
@@ -118,7 +116,7 @@ function SectionLinks({ document, className = "" }: { document: LessonDocument; 
   );
 }
 
-function LessonBlockView({ block, document, onSelfCheckEngaged }: { block: LessonBlock; document: LessonDocument; onSelfCheckEngaged: () => void }) {
+function LessonBlockView({ block, document }: { block: LessonBlock; document: LessonDocument }) {
   const eligibility = getLessonBlockHighlightEligibility(block);
   const annotationProps = {
     id: block.blockId,
@@ -130,7 +128,7 @@ function LessonBlockView({ block, document, onSelfCheckEngaged }: { block: Lesso
   };
 
   if (block.type === "heading") {
-    const className = "scroll-mt-24 border-t border-line pt-6 text-2xl font-extrabold first:border-t-0 first:pt-0";
+    const className = "scroll-mt-24 pt-2 text-2xl font-extrabold first:pt-0";
     return block.level === 2
       ? <h2 {...annotationProps} className={className}>{block.text}</h2>
       : <h3 {...annotationProps} className={className}>{block.text}</h3>;
@@ -141,11 +139,23 @@ function LessonBlockView({ block, document, onSelfCheckEngaged }: { block: Lesso
   if (block.type === "callout") return <Callout block={block} annotationProps={annotationProps} />;
   if (block.type === "worked_example") {
     return (
-      <section {...annotationProps} className="scroll-mt-24 rounded-2xl border border-line bg-white p-5 sm:p-6" data-testid="lesson-worked-example">
+      <section {...annotationProps} className="scroll-mt-24 rounded-xl border-l-4 border-forge/55 bg-forge-soft/45 p-5 sm:p-6" data-testid="lesson-worked-example">
         <p className="text-xs font-extrabold uppercase tracking-wide text-forge">Worked example</p>
         <h3 className="mt-1 text-xl font-extrabold">{block.title}</h3>
-        <div className="mt-4 rounded-xl border border-line bg-paper p-4"><MathContent>{block.prompt}</MathContent></div>
-        <div className="mt-5"><WorkedSolutionContent solution={block.steps} finalAnswer={block.finalAnswer} /></div>
+        <div className="mt-3 font-bold"><MathContent>{block.prompt}</MathContent></div>
+        <ol className="mt-5 grid gap-4 border-l border-forge/25 pl-5" aria-label="Worked solution steps" data-testid="static-worked-solution">
+          {block.steps.map((step, index) => (
+            <li key={`${step.title}-${index}`}>
+              <p className="font-mono text-xs font-extrabold uppercase text-forge">Step {index + 1}</p>
+              <h4 className="mt-1 font-extrabold">{step.title}</h4>
+              <div className="mt-1"><MathContent>{step.body}</MathContent></div>
+            </li>
+          ))}
+        </ol>
+        <div className="mt-5 border-t border-forge/20 pt-4">
+          <p className="mb-1 text-sm font-extrabold text-forge">Final answer</p>
+          <MathContent>{block.finalAnswer}</MathContent>
+        </div>
         {block.explanation ? <div className="mt-4 max-w-[70ch] text-sm leading-relaxed text-muted"><MathContent>{block.explanation}</MathContent></div> : null}
         {block.commonMistake ? <p className="mt-3 border-l-2 border-warning pl-3 text-sm font-bold text-muted">{block.commonMistake}</p> : null}
       </section>
@@ -159,7 +169,7 @@ function LessonBlockView({ block, document, onSelfCheckEngaged }: { block: Lesso
     );
   }
   return (
-    <details {...annotationProps} className="group scroll-mt-24 rounded-2xl border border-forge/25 bg-white" onToggle={(event) => { if (event.currentTarget.open) onSelfCheckEngaged(); }} data-testid="lesson-self-check" data-lesson-collapsible>
+    <details {...annotationProps} className="group scroll-mt-24 rounded-2xl border border-forge/25 bg-white" data-testid="lesson-self-check" data-lesson-collapsible>
       <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-5 py-4">
         <span><span className="block text-xs font-extrabold uppercase tracking-wide text-forge">Self-check</span><span className="mt-1 block text-lg font-extrabold">{block.title}</span></span>
         <ChevronDown aria-hidden="true" className="size-5 transition group-open:rotate-180" />

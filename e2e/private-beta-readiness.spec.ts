@@ -14,7 +14,9 @@ test("homepage states the bounded private-beta promise and all primary actions a
   await expect(startLinks).toHaveCount(3);
   await startLinks.first().focus();
   await expect(startLinks.first()).toBeFocused();
-  await expect(startLinks.first()).toHaveAttribute("href", "/subjects/higher-maths/calculus/differentiation/basic-differentiation");
+  await expect(startLinks.first()).toHaveAttribute("href", "/dashboard");
+  await startLinks.first().click();
+  await expect(page).toHaveURL("/dashboard");
 });
 
 test("Higher Physics is clearly unavailable and offers a valid Higher Maths recovery action", async ({ page }) => {

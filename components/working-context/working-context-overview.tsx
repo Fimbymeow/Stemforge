@@ -66,7 +66,7 @@ export function WorkingContextOverview({ pathId }: { pathId: string }) {
                     <ProgressBar value={stage.total ? (stage.completed / stage.total) * 100 : 0} />
                   </div>
                   {actionLabel ? (
-                    <Link href={isCurrent ? model.primaryHref : stage.href} className="mt-4 inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-line bg-white px-4 text-sm font-extrabold text-ink">
+                    <Link href={isCurrent && model.primaryHref !== model.notesHref ? model.primaryHref : stage.href} className="mt-4 inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-line bg-white px-4 text-sm font-extrabold text-ink">
                       {actionLabel}
                     </Link>
                   ) : null}

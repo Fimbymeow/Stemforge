@@ -12,7 +12,8 @@ test("fresh student reaches the Basic differentiation path through the app", asy
   await mathsCard.getByRole("link", { name: "Open Higher Maths" }).click();
   await expect(page).toHaveURL(/\/subjects\/higher-maths$/);
   await page.getByRole("link", { name: "Start", exact: true }).click();
-  await expect(page).toHaveURL(new RegExp(`/question/hm-calc-diff-basic-f-001$`));
+  await expect(page).toHaveURL(/\/subjects\/higher-maths\/revision-notes$/);
+  await expect(page.getByRole("link", { name: "Continue to Foundations" })).toHaveAttribute("href", "/question/hm-calc-diff-basic-f-001");
   await page.getByRole("button", { name: "Current Path: Basic differentiation" }).click();
   await page.getByRole("link", { name: "View full overview" }).click();
   await expect(page.getByRole("heading", { name: "Basic differentiation", level: 1 })).toBeVisible();

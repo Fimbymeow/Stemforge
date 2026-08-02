@@ -1,4 +1,3 @@
-﻿import { getActiveSkillPathHref } from "@/lib/learning-paths";
 import { ButtonLink } from "@/components/ui";
 
 export function FinalCta() {
@@ -7,7 +6,7 @@ export function FinalCta() {
       <h2 className="m-0 max-w-[820px] text-[clamp(44px,7vw,92px)] font-medium leading-[0.96]">
         Ready to Forge Your Potential?
       </h2>
-      <ButtonLink href={getActiveSkillPathHref()} size="lg">
+      <ButtonLink href="/dashboard" size="lg">
         Start Learning
       </ButtonLink>
     </section>
