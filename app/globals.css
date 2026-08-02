@@ -167,6 +167,25 @@ select {
   animation: check-pop 200ms cubic-bezier(0.25, 1, 0.5, 1) 150ms both;
 }
 
+.lesson-reading-serif {
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+@media print {
+  [data-lesson-contents],
+  [data-global-report-dock] {
+    display: none !important;
+  }
+
+  [data-lesson-collapsible] > [data-collapsible-content] {
+    display: block !important;
+  }
+
+  .lesson-article {
+    max-width: none !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

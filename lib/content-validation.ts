@@ -18,6 +18,7 @@ import { parseNumericLiteral } from "@/lib/marking/numeric";
 import { parsePolynomial } from "@/lib/marking/polynomial";
 import { validateMathExpression } from "@/lib/maths/expression-core";
 import { getSubjectFamily, getStudentResourceCapabilities } from "@/lib/resource-capabilities";
+import { validateLessonDocument } from "@/lib/lessons/lesson-document";
 
 export type ContentValidationIssue = {
   severity: "error" | "warning";
@@ -247,6 +248,7 @@ export function validateContent(input: ContentValidationInput): ContentValidatio
           }
 
           validateResources(skillPath, pathLocation, validateId, issue);
+          validateLesson(skillPath, pathLocation, issue);
 
           for (const stage of skillPath.learningStages ?? []) {
             const stageLocation = `${pathLocation}/stage:${stage.id}`;
@@ -605,7 +607,7 @@ function validatePlaceholderHonesty(skillPath: SkillPath, location: string, issu
   if (stages.length > 0 || stages.some((stage) => stage.questionIds.length > 0 || stage.questions > 0)) {
     issue("error", "placeholder-has-learning-stages", `Placeholder "${skillPath.slug}" cannot contain learning stages or question references.`, location);
   }
-  if (countResources(skillPath) > 0) {
+  if (countResources(skillPath) > 0 || skillPath.lessonDocument) {
     issue("error", "placeholder-has-resources", `Placeholder "${skillPath.slug}" cannot expose resources or practice sets.`, location);
   }
   if (skillPath.recommendedAction || (skillPath.sidebarLinks?.length ?? 0) > 0) {
@@ -637,6 +639,21 @@ function validateResources(
     if (kind === "Worked example") validateRequiredText((resource as WorkedExample).finalAnswer, "Worked example final answer", location, issue, "warning");
     if (kind === "Flashcard") validateRequiredText((resource as Flashcard).back, "Flashcard answer", location, issue, "warning");
     if (kind === "Practice set" && (resource as PracticeSet).questionCount <= 0) issue("warning", "empty-practice-set", `Practice set "${resource.id}" has no questions.`, location);
+  }
+}
+
+function validateLesson(skillPath: SkillPath, pathLocation: string, issue: IssueWriter) {
+  if (!skillPath.lessonDocument) return;
+  const location = `${pathLocation}/lesson:${skillPath.lessonDocument.lessonId}`;
+  const result = validateLessonDocument(skillPath.lessonDocument);
+  for (const lessonIssue of result.issues) {
+    issue("error", `lesson-${lessonIssue.code}`, lessonIssue.message, `${location}/${lessonIssue.path}`);
+  }
+  if (skillPath.lessonDocument.skillPathId !== skillPath.slug) {
+    issue("error", "lesson-skill-path-mismatch", `Lesson skillPathId must match owning skill path "${skillPath.slug}".`, location, pathLocation);
+  }
+  if (skillPath.lessonDocument.contentStatus !== skillPath.contentStatus) {
+    issue("error", "lesson-content-status-mismatch", "Lesson contentStatus must match its owning skill path during schema V1.", location, pathLocation);
   }
 }
 

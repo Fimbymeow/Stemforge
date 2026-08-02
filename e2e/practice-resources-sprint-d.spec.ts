@@ -90,9 +90,9 @@ test("Maths exposes Notes and Practice without standalone resource destinations"
   await expect(page.getByRole("link", { name: /Flashcards/i })).toHaveCount(0);
 
   await page.goto("/subjects/higher-maths/revision-notes");
-  await expect(page.getByRole("heading", { name: "Higher Maths Notes" })).toBeVisible();
-  await expect(page.getByText("Method reminder")).toBeVisible();
-  await expect(page.getByText("Worked example", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Basic differentiation", level: 1 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Power rule", exact: true })).toBeVisible();
+  await expect(page.getByText("Worked example", { exact: true }).first()).toBeVisible();
   await expect(page.getByRole("heading", { name: "Differentiate a polynomial" })).toBeVisible();
   await expect(page.getByRole("heading", { name: /Flashcards/i })).toHaveCount(0);
 

@@ -15,6 +15,7 @@ export default async function HigherMathsResourcePage({
         questionNumber: first(query.questionNumber),
         token: first(query.originToken),
       }}
+      typography={first(query.readingStyle) === "serif" ? "restrained_serif" : "system_sans"}
     />
   );
 }

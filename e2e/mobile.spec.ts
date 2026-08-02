@@ -124,7 +124,7 @@ test("mobile Functional Honesty surfaces remain compact, semantic and error-free
 
   await page.goto("/subjects/higher-maths/revision-notes");
   await expect(page.locator("main")).toHaveCount(1);
-  await expect(page.getByRole("heading", { name: "Higher Maths Notes", level: 1 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Basic Differentiation", level: 1 })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Power rule", exact: true })).toBeVisible();
   await expect(page.getByText("Chain rule", { exact: true })).not.toBeVisible();
   await expectNoHorizontalOverflow(page);

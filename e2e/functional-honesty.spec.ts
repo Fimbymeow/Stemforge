@@ -3,7 +3,7 @@ import { expect, test } from "./fixtures/test";
 test("resources, topbar controls and app landmarks are functionally honest", async ({ page }) => {
   await page.goto("/resources");
   await expect(page).toHaveURL(/\/subjects\/higher-maths\/revision-notes$/);
-  await expect(page.getByRole("heading", { name: "Higher Maths Notes", level: 1 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Basic differentiation", level: 1 })).toBeVisible();
 
   await page.goto("/question/demo");
   await expect(page.getByRole("button", { name: "Formula sheet" })).toHaveCount(0);

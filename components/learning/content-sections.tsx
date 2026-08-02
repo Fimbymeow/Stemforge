@@ -1,12 +1,9 @@
 ﻿import Link from "next/link";
 import { Card } from "@/components/ui";
 
-export { FormulaCardView, FormulaCardsSection } from "@/components/learning/formula-cards-section";
 export { FlashcardsPreview as FlashcardPreview, FlashcardsPreview } from "@/components/learning/flashcards-preview";
 export { LearningStageCard, LearningStagesSection } from "@/components/learning/learning-stages-section";
-export { NotesSection as LearnSection, NoteBlockCard, NotesSection } from "@/components/learning/notes-section";
 export { PracticeSetCard, PracticeSetsSection } from "@/components/learning/practice-sets-section";
-export { WorkedExampleCard, WorkedExamplesSection } from "@/components/learning/worked-examples-section";
 
 export function MasterySummary({ completed, total, status }: { completed: number; total: number; status: string }) {
   return (

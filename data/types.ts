@@ -126,6 +126,7 @@ export type SkillPath = {
   flashcards?: Flashcard[];
   practiceSets?: PracticeSet[];
   learningStages?: LearningStage[];
+  lessonDocument?: import("@/lib/lessons/types").LessonDocument;
 };
 
 export type Topic = {

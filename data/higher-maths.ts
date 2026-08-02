@@ -5,6 +5,7 @@ import { higherMathsAlgebraTrigonometryCourseArea } from "@/data/higher-maths/al
 import { higherMathsLinesCirclesSequencesCourseArea } from "@/data/higher-maths/lines-circles-sequences";
 import { createHigherMathsPlaceholder } from "@/data/higher-maths/placeholder";
 import { higherMathsVectorsCourseArea } from "@/data/higher-maths/vectors";
+import { basicDifferentiationLesson } from "@/data/lessons/basic-differentiation";
 
 const basicDifferentiationStageQuestionIds = {
   foundations: ["hm-calc-diff-basic-f-001", "hm-calc-diff-basic-f-002", "hm-calc-diff-basic-f-003"],
@@ -126,6 +127,7 @@ export const higherMaths: Subject = {
               questions: 8,
               progressStatus: "not_started",
               masteryStatus: "Not started",
+              lessonDocument: basicDifferentiationLesson,
               recommendedAction: {
                 title: "Foundations",
                 copy: "Begin with simple powers before moving into applied gradient questions.",
