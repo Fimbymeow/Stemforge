@@ -29,14 +29,15 @@ test("every planned Calculus path resolves to one explicit strand", () => {
     ["chain-rule", higherMathsCalculusStrandIds.differentiatingFunctions],
     ["trigonometric-differentiation", higherMathsCalculusStrandIds.differentiatingFunctions],
     ["stationary-points", higherMathsCalculusStrandIds.investigatingFunctions],
-    ["nature-of-stationary-points", higherMathsCalculusStrandIds.investigatingFunctions],
     ["tangents-and-normals", higherMathsCalculusStrandIds.investigatingFunctions],
     ["optimisation", higherMathsCalculusStrandIds.applyingDifferentialCalculus],
     ["basic-integration", higherMathsCalculusStrandIds.integratingFunctions],
-    ["further-integration", higherMathsCalculusStrandIds.integratingFunctions],
+    ["integration-composite-power", higherMathsCalculusStrandIds.integratingFunctions],
+    ["trigonometric-integration", higherMathsCalculusStrandIds.integratingFunctions],
     ["definite-integrals", higherMathsCalculusStrandIds.definiteIntegrals],
     ["differential-equations", higherMathsCalculusStrandIds.integratingFunctions],
-    ["areas-using-integration", higherMathsCalculusStrandIds.applyingIntegralCalculus],
+    ["area-under-curve", higherMathsCalculusStrandIds.applyingIntegralCalculus],
+    ["area-between-curves", higherMathsCalculusStrandIds.applyingIntegralCalculus],
   ]);
   for (const [pathId, strandId] of expected) assert.equal(resolver.getPathContext(pathId)?.specificationStrand.id, strandId);
 });

@@ -15,15 +15,15 @@ const existingCalculusPaths = [
   ["chain-rule", "differentiation", "/subjects/higher-maths/calculus/differentiation/chain-rule"],
   ["trigonometric-differentiation", "differentiation", "/subjects/higher-maths/calculus/differentiation/trigonometric-differentiation"],
   ["stationary-points", "differentiation", "/subjects/higher-maths/calculus/differentiation/stationary-points"],
-  ["nature-of-stationary-points", "differentiation", "/subjects/higher-maths/calculus/differentiation/nature-of-stationary-points"],
   ["optimisation", "differentiation", "/subjects/higher-maths/calculus/differentiation/optimisation"],
   ["tangents-and-normals", "differentiation", "/subjects/higher-maths/calculus/differentiation/tangents-and-normals"],
-  ["mixed-differentiation-practice", "differentiation", "/subjects/higher-maths/calculus/differentiation/mixed-differentiation-practice"],
   ["basic-integration", "integration", "/subjects/higher-maths/calculus/integration/basic-integration"],
-  ["further-integration", "integration", "/subjects/higher-maths/calculus/integration/further-integration"],
+  ["integration-composite-power", "integration", "/subjects/higher-maths/calculus/integration/integration-composite-power"],
+  ["trigonometric-integration", "integration", "/subjects/higher-maths/calculus/integration/trigonometric-integration"],
   ["definite-integrals", "integration", "/subjects/higher-maths/calculus/integration/definite-integrals"],
   ["differential-equations", "integration", "/subjects/higher-maths/calculus/integration/differential-equations"],
-  ["areas-using-integration", "integration", "/subjects/higher-maths/calculus/integration/areas-using-integration"],
+  ["area-under-curve", "integration", "/subjects/higher-maths/calculus/integration/area-under-curve"],
+  ["area-between-curves", "integration", "/subjects/higher-maths/calculus/integration/area-between-curves"],
 ] as const;
 
 function allPathRecords() {
@@ -51,9 +51,9 @@ test("every path resolves to a strand declared by its own course area", () => {
   }
 });
 
-test("all 50 future paths are honest zero-contribution placeholders", () => {
+test("all 48 future paths are honest zero-contribution placeholders", () => {
   const placeholders = allPathRecords().filter(({ skillPath }) => !skillPath.isAvailable);
-  assert.equal(placeholders.length, 50);
+  assert.equal(placeholders.length, 48);
   for (const { skillPath } of placeholders) {
     assert.notEqual(skillPath.status, "available");
     assert.equal(skillPath.questions, 0);

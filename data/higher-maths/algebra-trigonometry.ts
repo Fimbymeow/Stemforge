@@ -143,9 +143,8 @@ export const higherMathsAlgebraTrigonometryCourseArea: CourseArea = {
       skillPaths: [
         placeholder("functions-and-graphs", "graph-transformations", higherMathsAlgebraTrigonometryStrandIds.identifyingSketchingRelatedFunctions, 2, "Graph transformations", "Identify and sketch functions after single or combined graph transformations."),
         placeholder("functions-and-graphs", "sketching-derivative-graphs", higherMathsAlgebraTrigonometryStrandIds.identifyingSketchingRelatedFunctions, 3, "Sketching derivative graphs", "Sketch the graph of a derivative from the graph of the original function."),
-        placeholder("functions-and-graphs", "inverse-logarithmic-and-exponential-graphs", higherMathsAlgebraTrigonometryStrandIds.identifyingSketchingRelatedFunctions, 4, "Inverse logarithmic and exponential graphs", "Sketch inverse logarithmic and exponential functions."),
         placeholder("functions-and-graphs", "composite-functions", higherMathsAlgebraTrigonometryStrandIds.determiningCompositeInverseFunctions, 1, "Composite functions", "Determine composite functions across algebraic, trigonometric, logarithmic and exponential forms."),
-        placeholder("functions-and-graphs", "inverse-functions-domain-and-range", higherMathsAlgebraTrigonometryStrandIds.determiningCompositeInverseFunctions, 2, "Inverse functions, domain and range", "Determine inverse functions and use domain and range correctly."),
+        placeholder("functions-and-graphs", "inverse-functions-domain-and-range", higherMathsAlgebraTrigonometryStrandIds.determiningCompositeInverseFunctions, 2, "Inverse Functions: Domain, Range and Graphs", "Determine inverse functions, use domain and range correctly, and sketch inverse graphs — including logarithmic and exponential inverses — using reflection in y = x."),
       ],
     },
     {

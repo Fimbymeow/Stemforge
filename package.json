@@ -32,7 +32,7 @@
         "test:practice-resources": "tsx --test tests/practice-resources-sprint-d.test.ts",
         "test:working-context": "tsx --test tests/working-context.test.ts",
         "test:lessons": "tsx --test tests/lesson-document.test.ts",
-        "test:curriculum": "tsx --test tests/curriculum-specification-register.test.ts tests/curriculum-skill-contracts.test.ts tests/curriculum-prerequisite-graph.test.ts tests/curriculum-teaching-sequence.test.ts tests/curriculum-coverage.test.ts tests/curriculum-boundary-review.test.ts tests/question-curriculum-metadata.test.ts",
+        "test:curriculum": "tsx --test tests/curriculum-specification-register.test.ts tests/curriculum-specification-mapping.test.ts tests/curriculum-skill-contracts.test.ts tests/curriculum-prerequisite-graph.test.ts tests/curriculum-teaching-sequence.test.ts tests/curriculum-coverage.test.ts tests/curriculum-boundary-review.test.ts tests/question-curriculum-metadata.test.ts",
         "curriculum-coverage-report": "tsx scripts/curriculum-coverage-report.ts",
         "test:remote-evidence": "tsx --test tests/remote-evidence-validation.test.ts",
         "test:import": "tsx --test tests/progress-import.test.ts tests/authenticated-import.test.ts",

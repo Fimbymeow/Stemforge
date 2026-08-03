@@ -77,12 +77,9 @@ test("the course is not reported complete, because contracts and publication are
   assert.equal(report.courseComplete, false);
 });
 
-test("the four bundled-split proposed skills are correctly reported as absent from the live registry", () => {
+test("after the 51 -> 49 migration, every proposed Calculus skill now has a live registry entry", () => {
   const report = buildReport();
-  assert.deepEqual(
-    [...report.proposedSkillsAbsentFromLiveRegistry].sort(),
-    ["area-between-curves", "area-under-curve", "integration-composite-power", "trigonometric-integration"],
-  );
+  assert.deepEqual(report.proposedSkillsAbsentFromLiveRegistry, []);
 });
 
 test("the human-readable formatter distinguishes verified from provisional and never claims completeness", () => {

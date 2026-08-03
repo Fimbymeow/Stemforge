@@ -49,9 +49,39 @@ export function validateSpecificationCoverageClaim(claim: SpecificationCoverageC
   return finalizeReport(issues);
 }
 
+/**
+ * Structural uniqueness for a SpecificationCoverageClaim set rests on exactly one honest
+ * signal: claimId. A claimId can never be registered twice (checked below), and that is
+ * the only fact this schema can assert about "duplication" without guessing at authorial
+ * intent from free text.
+ *
+ * It is deliberately NOT an error for two distinct claims to share both specPointId and
+ * primarySkillId. A compound specification point can legitimately be split into several
+ * claims for several distinct assessable abilities, and two of those abilities can
+ * legitimately map to the same canonical skill — for example, after a canonical-skill
+ * merge collapses two previously-separate skills into one surviving identity, two claims
+ * that used to target different skills now both target the survivor. This is a real,
+ * current case in the Higher Maths Calculus mapping: claim-stationary-find and
+ * claim-stationary-nature both reference specPointId "hm-calc-stationary-nature-sketching"
+ * and primarySkillId "stationary-points", because "Stationary Points" and "Nature of
+ * Stationary Points" merged into one skill, "Stationary Points and Their Nature", while
+ * remaining two distinct official abilities (finding vs. classifying).
+ *
+ * An earlier version of this function tried to distinguish "genuine duplicate" from
+ * "legitimate parallel claim" by also comparing the claims' summary text. That was
+ * incorrect: summary is free-form prose written for humans, not a stable identifier, and
+ * using it as a pseudo-identifier means two claims with coincidentally similar wording
+ * could be wrongly flagged, while two genuinely duplicated claims with slightly reworded
+ * summaries would wrongly pass. The schema has no field beyond claimId that can honestly
+ * distinguish a duplicate from a deliberate split, so no such check is made here — dedupe
+ * is enforced by claimId uniqueness alone; correctness of which abilities may share a
+ * skill is a matter for curriculum review, not mechanical validation.
+ */
 export function validateSpecificationCoverageClaims(
   claims: SpecificationCoverageClaim[],
   points: SpecificationPoint[],
+  /** Every valid canonical skill ID a claim's primarySkillId or reinforcedBySkillIds may reference. */
+  knownSkillIds: Set<string>,
 ): CurriculumValidationReport {
   const { issue, issues } = createIssueCollector();
   claims.forEach((claim) => issues.push(...validateSpecificationCoverageClaim(claim).issues));
@@ -66,19 +96,16 @@ export function validateSpecificationCoverageClaims(
     }
   });
 
-  // "Duplicate primary ownership": two distinct claims naming the exact same specPointId
-  // AND the exact same primarySkillId are a literal duplicate, not a legitimate split
-  // into distinct abilities (the shared-specPointId, different-primarySkillId case is
-  // the intended, valid way to split one specification point into several claims).
-  const seenPointAndPrimary = new Map<string, string>();
   claims.forEach((claim) => {
-    const key = `${claim.specPointId}::${claim.primarySkillId}`;
-    const existing = seenPointAndPrimary.get(key);
-    if (existing) {
-      issue("error", "duplicate-primary-ownership", `Claims "${existing}" and "${claim.claimId}" both claim primary ownership of "${claim.specPointId}" by "${claim.primarySkillId}".`, `curriculum/coverage-claim/${claim.claimId}`);
-    } else {
-      seenPointAndPrimary.set(key, claim.claimId);
+    const location = `curriculum/coverage-claim/${claim.claimId}`;
+    if (isValidId(claim.primarySkillId) && !knownSkillIds.has(claim.primarySkillId)) {
+      issue("error", "unknown-primary-skill", `Claim "${claim.claimId}" primarySkillId "${claim.primarySkillId}" is not a known canonical skill.`, location);
     }
+    (claim.reinforcedBySkillIds ?? []).forEach((skillId, index) => {
+      if (isValidId(skillId) && !knownSkillIds.has(skillId)) {
+        issue("error", "unknown-reinforcement-skill", `Claim "${claim.claimId}" reinforcedBySkillIds[${index}] "${skillId}" is not a known canonical skill.`, location);
+      }
+    });
   });
 
   return finalizeReport(issues);
