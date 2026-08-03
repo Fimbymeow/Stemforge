@@ -1874,6 +1874,7 @@ answerFields:
       - 10*(2x+1)^4
       - 10(2x + 1)^4
       - dy/dx=10(2x+1)^4
+    assessed: false
 
   - id: gradient
     label: Gradient at x = 1
@@ -1881,9 +1882,7 @@ answerFields:
     correctAnswer: 810
     acceptedAnswers:
       - 810
-      - m=810
-      - gradient=810
-      - gradient = 810
+    assessed: true
 ```
 
 Hint:  
@@ -1947,6 +1946,7 @@ answerFields:
       - 6*x*(x^2+2)^2
       - 6x(x^2 + 2)^2
       - dy/dx=6x(x^2+2)^2
+    assessed: false
 
   - id: gradient
     label: Gradient at x = 2
@@ -1954,9 +1954,7 @@ answerFields:
     correctAnswer: 432
     acceptedAnswers:
       - 432
-      - m=432
-      - gradient=432
-      - gradient = 432
+    assessed: true
 ```
 
 Hint:  
@@ -2137,6 +2135,7 @@ answerFields:
       - 4*x*(x^2+5)
       - 4x(x^2 + 5)
       - f'(x)=4x(x^2+5)
+    assessed: false
 
   - id: f_prime_3
     label: f'(3)
@@ -2144,8 +2143,7 @@ answerFields:
     correctAnswer: 168
     acceptedAnswers:
       - 168
-      - f'(3)=168
-      - f'(3) = 168
+    assessed: true
 ```
 
 Hint:  
@@ -2212,6 +2210,7 @@ answerFields:
       - 8*(2x+3)^3
       - 8(2x + 3)^3
       - f'(x)=8(2x+3)^3
+    assessed: false
 
   - id: gradient_equation
     label: Gradient equation
@@ -2222,6 +2221,7 @@ answerFields:
       - 8*(2x+3)^3=8
       - (2x+3)^3=1
       - 2x+3=1
+    assessed: false
 
   - id: x_value
     label: x-value
@@ -2229,8 +2229,7 @@ answerFields:
     correctAnswer: -1
     acceptedAnswers:
       - -1
-      - x=-1
-      - x = -1
+    assessed: true
 ```
 
 Hint:  
@@ -2306,6 +2305,7 @@ answerFields:
       - 6*x*(x^2+1)^2
       - 6x(x^2 + 1)^2
       - f'(x)=6x(x^2+1)^2
+    assessed: false
 
   - id: substituted_equation
     label: Substituted equation
@@ -2315,6 +2315,7 @@ answerFields:
       - 6x(x^2+1)^2=300
       - 6*x*(x^2+1)^2=300
       - x(x^2+1)^2=50
+    assessed: false
 
   - id: x_value
     label: Positive x-value
@@ -2322,8 +2323,7 @@ answerFields:
     correctAnswer: 2
     acceptedAnswers:
       - 2
-      - x=2
-      - x = 2
+    assessed: true
 ```
 
 Hint:  
@@ -2397,6 +2397,7 @@ answerFields:
       - 3k(kx + 1)^2
       - dy/dx=3k(kx+1)^2
       - dy/dx = 3k(kx + 1)^2
+    assessed: false
 
   - id: gradient_equation
     label: Gradient equation at x = 1
@@ -2406,6 +2407,7 @@ answerFields:
       - 3k(k+1)^2=54
       - 3*k*(k+1)^2=54
       - 3k(k + 1)^2 = 54
+    assessed: false
 
   - id: coefficient
     label: Value of k
@@ -2413,8 +2415,7 @@ answerFields:
     correctAnswer: 2
     acceptedAnswers:
       - 2
-      - k=2
-      - k = 2
+    assessed: true
 ```
 
 Hint:  

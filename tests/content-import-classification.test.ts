@@ -294,12 +294,12 @@ test("A009 has canonical 1 with no unsupported aliases and is ready", () => {
   assert.deepEqual(classification.blockers, []);
 });
 
-test("the completed Chain Rule repair batch produces exactly 5 ready / 3 convertible / 37 blocked, with zero unsupported_intended_alias blockers anywhere", () => {
+test("the completed Chain Rule repair batches produce exactly 5 ready / 9 convertible / 31 blocked, with zero unsupported_intended_alias blockers anywhere", () => {
   const bank = loadBank("chain-rule-v6.md");
   const classifications = auditBankAssessment(bank);
   const counts = { ready: 0, convertible: 0, blocked: 0 };
   for (const c of classifications) counts[c.status as "ready" | "convertible" | "blocked"] += 1;
-  assert.deepEqual(counts, { ready: 5, convertible: 3, blocked: 37 });
+  assert.deepEqual(counts, { ready: 5, convertible: 9, blocked: 31 });
   assert.equal(bank.questions.length, 45);
   assert.ok(!classifications.some((c) => c.blockers.some((b) => b.code === "unsupported_intended_alias")));
 
@@ -316,6 +316,12 @@ test("the completed Chain Rule repair batch produces exactly 5 ready / 3 convert
     "hm-calc-diff-chain-f-001",
     "hm-calc-diff-chain-f-002",
     "hm-calc-diff-chain-f-010",
+    "hm-calc-diff-chain-ppq-015",
+    "hm-calc-diff-chain-ppq-016",
+    "hm-calc-diff-chain-ppq-018",
+    "hm-calc-diff-chain-ppq-019",
+    "hm-calc-diff-chain-ppq-020",
+    "hm-calc-diff-chain-ppq-021",
   ]);
 
   const bySection = { Foundations: 0, Applications: 0, "Past Paper-style Questions": 0 };
@@ -324,7 +330,56 @@ test("the completed Chain Rule repair batch produces exactly 5 ready / 3 convert
     const q = bank.questions.find((item) => item.id === c.questionId)!;
     bySection[q.declaredStage as keyof typeof bySection] += 1;
   }
-  assert.deepEqual(bySection, { Foundations: 7, Applications: 5, "Past Paper-style Questions": 25 });
+  assert.deepEqual(bySection, { Foundations: 7, Applications: 5, "Past Paper-style Questions": 19 });
+});
+
+test("the six repaired multi-field PPQs each declare exactly one assessed field matching their learner-facing final answer", () => {
+  const bank = loadBank("chain-rule-v6.md");
+  const expectedAssessed: Record<string, { assessedId: string; correctAnswer: string; scaffoldingIds: string[] }> = {
+    "hm-calc-diff-chain-ppq-015": { assessedId: "gradient", correctAnswer: "810", scaffoldingIds: ["derivative"] },
+    "hm-calc-diff-chain-ppq-016": { assessedId: "gradient", correctAnswer: "432", scaffoldingIds: ["derivative"] },
+    "hm-calc-diff-chain-ppq-018": { assessedId: "f_prime_3", correctAnswer: "168", scaffoldingIds: ["derivative"] },
+    "hm-calc-diff-chain-ppq-019": { assessedId: "x_value", correctAnswer: "-1", scaffoldingIds: ["derivative", "gradient_equation"] },
+    "hm-calc-diff-chain-ppq-020": { assessedId: "x_value", correctAnswer: "2", scaffoldingIds: ["derivative", "substituted_equation"] },
+    "hm-calc-diff-chain-ppq-021": { assessedId: "coefficient", correctAnswer: "2", scaffoldingIds: ["derivative", "gradient_equation"] },
+  };
+  for (const [id, expected] of Object.entries(expectedAssessed)) {
+    const question = bank.questions.find((item) => item.id === id)!;
+    const assessed = question.answerCandidates.filter((candidate) => candidate.assessed === true);
+    const scaffolding = question.answerCandidates.filter((candidate) => candidate.assessed === false);
+    assert.equal(assessed.length, 1, id);
+    assert.equal(assessed[0].id, expected.assessedId, id);
+    assert.equal(assessed[0].correctAnswer, expected.correctAnswer, id);
+    assert.deepEqual(assessed[0].acceptedAnswers, [expected.correctAnswer], id);
+    assert.deepEqual(scaffolding.map((candidate) => candidate.id).sort(), expected.scaffoldingIds.sort(), id);
+    assert.equal(assessed.length + scaffolding.length, question.answerCandidates.length, id);
+
+    const classification = auditBankAssessment(bank).find((item) => item.questionId === id)!;
+    assert.ok(!classification.blockers.some((b) => b.code === "undeclared_multi_field_assessment"), id);
+    assert.notEqual(classification.status, "blocked", id);
+    assert.ok(classification.conversions.includes("explicit_scaffolding_field_drop"), id);
+  }
+});
+
+test("the six excluded multi-field PPQs remain untouched and still emit undeclared_multi_field_assessment", () => {
+  const bank = loadBank("chain-rule-v6.md");
+  const classifications = auditBankAssessment(bank);
+  for (const id of [
+    "hm-calc-diff-chain-ppq-012",
+    "hm-calc-diff-chain-ppq-017",
+    "hm-calc-diff-chain-ppq-022",
+    "hm-calc-diff-chain-ppq-023",
+    "hm-calc-diff-chain-ppq-024",
+    "hm-calc-diff-chain-ppq-025",
+  ]) {
+    const classification = classifications.find((item) => item.questionId === id)!;
+    assert.equal(classification.status, "blocked", id);
+    assert.ok(classification.blockers.some((b) => b.code === "undeclared_multi_field_assessment"), id);
+    const question = bank.questions.find((item) => item.id === id)!;
+    assert.ok(question.answerCandidates.every((candidate) => candidate.assessed === undefined), id);
+  }
+  const undeclaredCount = classifications.filter((c) => c.blockers.some((b) => b.code === "undeclared_multi_field_assessment")).length;
+  assert.equal(undeclaredCount, 6);
 });
 
 function candidate(answer: string, type: string, id = "answer"): ImportAnswerCandidate {
