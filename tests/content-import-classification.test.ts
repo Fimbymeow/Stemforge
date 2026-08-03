@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import { auditBankAssessment, classifyBank, compareQuestion } from "@/lib/content-import/classification";
 import { createImportRegistry, parseAndValidateBankConfiguration } from "@/lib/content-import/configuration";
 import type { BankImportConfiguration, ImportAnswerCandidate, RequiredCapability } from "@/lib/content-import/types";
 import {
+  BANK_DIRECTORY,
   basicConfigurationText,
   canonicalContent,
   loadBank,
@@ -223,6 +225,106 @@ test("collision impacts derive only executable and semantically sufficient versi
   const crossPath = structuredClone(existing);
   crossPath.skillPathId = "chain-rule";
   assert.deepEqual(compareQuestion(existing, crossPath).availableVersionDecisions, []);
+});
+
+// ---- Chain Rule safe authoring repair batch ----
+
+test("the live Chain Rule draft no longer uses the incorrect 'Answer fields for import:' label", () => {
+  const source = readFileSync(`${BANK_DIRECTORY}/chain-rule-v6.md`, "utf8");
+  assert.equal((source.match(/Answer fields for import:/g) ?? []).length, 0);
+  assert.equal((source.match(/^Answer fields:\s*$/gm) ?? []).length, 26);
+});
+
+test("the live Chain Rule draft still parses to exactly 45 questions across the same three stages", () => {
+  const bank = loadBank("chain-rule-v6.md");
+  assert.equal(bank.questions.length, 45);
+  const byStage = new Map<string, number>();
+  for (const question of bank.questions) {
+    byStage.set(question.declaredStage, (byStage.get(question.declaredStage) ?? 0) + 1);
+  }
+  assert.equal(byStage.get("Foundations"), 10);
+  assert.equal(byStage.get("Applications"), 10);
+  assert.equal(byStage.get("Past Paper-style Questions"), 25);
+});
+
+test("the repair batch did not change any Chain Rule question ID", () => {
+  const bank = loadBank("chain-rule-v6.md");
+  const ids = bank.questions.map((question) => question.id);
+  assert.ok(ids.includes("hm-calc-diff-chain-f-001"));
+  assert.ok(ids.includes("hm-calc-diff-chain-f-010"));
+  assert.ok(ids.includes("hm-calc-diff-chain-a-001"));
+  assert.ok(ids.includes("hm-calc-diff-chain-a-010"));
+  assert.ok(ids.includes("hm-calc-diff-chain-ppq-001"));
+  assert.ok(ids.includes("hm-calc-diff-chain-ppq-025"));
+  assert.equal(new Set(ids).size, 45);
+});
+
+test("F010, A001, A003 and A008 no longer emit unsupported_intended_alias after alias cleanup", () => {
+  const bank = loadBank("chain-rule-v6.md");
+  const classifications = auditBankAssessment(bank);
+  for (const id of [
+    "hm-calc-diff-chain-f-010",
+    "hm-calc-diff-chain-a-001",
+    "hm-calc-diff-chain-a-003",
+    "hm-calc-diff-chain-a-008",
+  ]) {
+    const classification = classifications.find((item) => item.questionId === id)!;
+    assert.ok(!classification.blockers.some((b) => b.code === "unsupported_intended_alias"), id);
+    assert.notEqual(classification.status, "blocked", id);
+  }
+});
+
+test("A005 has canonical 5/6 with no unsupported aliases and is ready", () => {
+  const bank = loadBank("chain-rule-v6.md");
+  const question = bank.questions.find((item) => item.id === "hm-calc-diff-chain-a-005")!;
+  assert.equal(question.answerCandidates[0].correctAnswer, "5/6");
+  assert.deepEqual(question.answerCandidates[0].acceptedAnswers, ["5/6"]);
+  const classification = auditBankAssessment(bank).find((item) => item.questionId === "hm-calc-diff-chain-a-005")!;
+  assert.equal(classification.status, "ready");
+  assert.deepEqual(classification.blockers, []);
+});
+
+test("A009 has canonical 1 with no unsupported aliases and is ready", () => {
+  const bank = loadBank("chain-rule-v6.md");
+  const question = bank.questions.find((item) => item.id === "hm-calc-diff-chain-a-009")!;
+  assert.equal(question.answerCandidates[0].correctAnswer, "1");
+  assert.deepEqual(question.answerCandidates[0].acceptedAnswers, ["1"]);
+  const classification = auditBankAssessment(bank).find((item) => item.questionId === "hm-calc-diff-chain-a-009")!;
+  assert.equal(classification.status, "ready");
+  assert.deepEqual(classification.blockers, []);
+});
+
+test("the completed Chain Rule repair batch produces exactly 5 ready / 3 convertible / 37 blocked, with zero unsupported_intended_alias blockers anywhere", () => {
+  const bank = loadBank("chain-rule-v6.md");
+  const classifications = auditBankAssessment(bank);
+  const counts = { ready: 0, convertible: 0, blocked: 0 };
+  for (const c of classifications) counts[c.status as "ready" | "convertible" | "blocked"] += 1;
+  assert.deepEqual(counts, { ready: 5, convertible: 3, blocked: 37 });
+  assert.equal(bank.questions.length, 45);
+  assert.ok(!classifications.some((c) => c.blockers.some((b) => b.code === "unsupported_intended_alias")));
+
+  const readyIds = classifications.filter((c) => c.status === "ready").map((c) => c.questionId).sort();
+  assert.deepEqual(readyIds, [
+    "hm-calc-diff-chain-a-001",
+    "hm-calc-diff-chain-a-003",
+    "hm-calc-diff-chain-a-005",
+    "hm-calc-diff-chain-a-008",
+    "hm-calc-diff-chain-a-009",
+  ]);
+  const convertibleIds = classifications.filter((c) => c.status === "convertible").map((c) => c.questionId).sort();
+  assert.deepEqual(convertibleIds, [
+    "hm-calc-diff-chain-f-001",
+    "hm-calc-diff-chain-f-002",
+    "hm-calc-diff-chain-f-010",
+  ]);
+
+  const bySection = { Foundations: 0, Applications: 0, "Past Paper-style Questions": 0 };
+  for (const c of classifications) {
+    if (c.status !== "blocked") continue;
+    const q = bank.questions.find((item) => item.id === c.questionId)!;
+    bySection[q.declaredStage as keyof typeof bySection] += 1;
+  }
+  assert.deepEqual(bySection, { Foundations: 7, Applications: 5, "Past Paper-style Questions": 25 });
 });
 
 function candidate(answer: string, type: string, id = "answer"): ImportAnswerCandidate {

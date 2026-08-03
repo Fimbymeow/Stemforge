@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
+import { sha256 } from "../lib/content-import/canonical";
 import { higherMaths } from "../data/higher-maths";
 import { validateContent } from "../lib/content-validation";
 import { canonicalContent } from "../data/canonical-content";
@@ -459,6 +461,24 @@ test("real Chain Rule source evidence resolves the actual draft's declared quest
   assert.equal(byKind.get("foundations")?.discoveredQuestionCount, 10);
   assert.equal(byKind.get("applications")?.discoveredQuestionCount, 10);
   assert.equal(byKind.get("pastPaperPractice")?.discoveredQuestionCount, 25);
+});
+
+test("the Chain Rule manifest's declared source hash matches the live draft's actual content hash", () => {
+  const bytes = readFileSync("content-drafts/higher-maths/calculus/chain-rule-v6.md");
+  const actualHash = sha256(bytes);
+  for (const source of chainRulePackage.sources) {
+    if (source.kind === "notes") continue;
+    assert.equal(source.expectedSourceHash, actualHash, source.kind);
+  }
+});
+
+test("after the source hash update, the package report no longer treats the draft as stale", () => {
+  const validation = validateSkillPackageManifest(chainRulePackage, knownHigherMathsRefs);
+  const evidence = resolveSkillPackageEvidence(chainRulePackage);
+  const readiness = deriveSkillPackageReadiness(chainRulePackage, validation, evidence);
+  const codes = readiness.blockers.map((blocker) => blocker.code);
+  assert.ok(!codes.includes("source-reference-stale"), "the manifest hash should match the freshly edited draft");
+  assert.equal(readiness.readyForImport, false, "genuine marking/config blockers remain regardless of staleness");
 });
 
 // ---- Non-regression ----

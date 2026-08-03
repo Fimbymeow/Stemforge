@@ -489,9 +489,6 @@ B. I and III only
 
 Accepted answers:
 - B
-- I and III
-- 1 and 3
-- I, III
 
 Hint:  
 Look for a function inside another function, usually brackets raised to a power.
@@ -530,8 +527,6 @@ Correct answer:
 
 Accepted answers:
 - 1000
-- gradient = 1000
-- m=1000
 
 Hint:  
 Differentiate first, then substitute \(x=1\) into \(\frac{dy}{dx}\).
@@ -628,9 +623,6 @@ Correct answer:
 
 Accepted answers:
 - 3528
-- dy/dx=3528
-- gradient = 3528
-- m=3528
 
 Hint:  
 Keep the coefficient 3 at the front, then differentiate the bracket using the chain rule.
@@ -719,15 +711,10 @@ Question:
 For \(y=\sqrt{5x+4}\), calculate \(\frac{dy}{dx}\) when \(x=1\).
 
 Correct answer:  
-\[
-\frac{5}{6}
-\]
+5/6
 
 Accepted answers:
 - 5/6
-- dy/dx=5/6
-- gradient = 5/6
-- m=5/6
 
 Hint:  
 Rewrite the square root as \((5x+4)^{1/2}\).
@@ -865,9 +852,6 @@ Correct answer:
 
 Accepted answers:
 - 216
-- gradient = 216
-- m=216
-- dy/dx=216
 
 Hint:  
 Differentiate the bracket \(x^2-2x+6\), then substitute \(x=2\).
@@ -905,14 +889,10 @@ Question:
 For \(y=(2x+1)^3\), determine the positive value of \(x\) for which the gradient of the curve is 54.
 
 Correct answer:  
-\[
-x=1
-\]
+1
 
 Accepted answers:
 - 1
-- x=1
-- x = 1
 
 Hint:  
 Find \(\frac{dy}{dx}\), set it equal to 54, then solve for \(x\).
@@ -976,7 +956,7 @@ Accepted answers:
 - 6x-y-5=0
 - y-1=6(x-1)
 
-Answer fields for import:
+Answer fields:
 ```yaml
 answerFields:
   - id: tangent-equation
@@ -1047,7 +1027,7 @@ Correct answer:
 \frac{dy}{dx}=15(3x+2)^4
 \]
 
-Answer fields for import:
+Answer fields:
 ```yaml
 answerFields:
   - id: derivative
@@ -1104,7 +1084,7 @@ Correct answer:
 \frac{dy}{dx}=24(4x-1)^5
 \]
 
-Answer fields for import:
+Answer fields:
 ```yaml
 answerFields:
   - id: derivative
@@ -1161,7 +1141,7 @@ Correct answer:
 \frac{dy}{dx}=-8(7-2x)^3
 \]
 
-Answer fields for import:
+Answer fields:
 ```yaml
 answerFields:
   - id: derivative
@@ -1218,7 +1198,7 @@ Correct answer:
 \frac{dy}{dx}=-15(5-3x)^4
 \]
 
-Answer fields for import:
+Answer fields:
 ```yaml
 answerFields:
   - id: derivative
@@ -1275,7 +1255,7 @@ Correct answer:
 \frac{dy}{dx}=12x(x^2+4)^5
 \]
 
-Answer fields for import:
+Answer fields:
 ```yaml
 answerFields:
   - id: derivative
@@ -1332,7 +1312,7 @@ Correct answer:
 \frac{dy}{dx}=20x(2x^2-3)^4
 \]
 
-Answer fields for import:
+Answer fields:
 ```yaml
 answerFields:
   - id: derivative
@@ -1389,7 +1369,7 @@ Correct answer:
 \frac{dy}{dx}=4(2x+3)(x^2+3x+1)^3
 \]
 
-Answer fields for import:
+Answer fields:
 ```yaml
 answerFields:
   - id: derivative
@@ -1446,7 +1426,7 @@ Correct answer:
 \frac{dy}{dx}=-10x(6-x^2)^4
 \]
 
-Answer fields for import:
+Answer fields:
 ```yaml
 answerFields:
   - id: derivative
@@ -1503,7 +1483,7 @@ Correct answer:
 \frac{dy}{dx}=24(2x+5)^3
 \]
 
-Answer fields for import:
+Answer fields:
 ```yaml
 answerFields:
   - id: derivative
@@ -1564,7 +1544,7 @@ Correct answer:
 \frac{dy}{dx}=20x(x^2-1)^4
 \]
 
-Answer fields for import:
+Answer fields:
 ```yaml
 answerFields:
   - id: derivative
@@ -1621,7 +1601,7 @@ Correct answer:
 \frac{dy}{dx}=12(3x+1)^3+10x
 \]
 
-Answer fields for import:
+Answer fields:
 ```yaml
 answerFields:
   - id: derivative
@@ -1687,7 +1667,7 @@ or
 \frac{dy}{dx}=\frac{5}{2\sqrt{5x+4}}.
 \]
 
-Answer fields for import:
+Answer fields:
 ```yaml
 answerFields:
   - id: rewritten_form
@@ -1763,7 +1743,7 @@ or
 \frac{dy}{dx}=\frac{1}{\sqrt{2x-1}}.
 \]
 
-Answer fields for import:
+Answer fields:
 ```yaml
 answerFields:
   - id: derivative
@@ -1824,7 +1804,7 @@ or
 \frac{dy}{dx}=-\frac{2}{(x+3)^3}.
 \]
 
-Answer fields for import:
+Answer fields:
 ```yaml
 answerFields:
   - id: derivative
@@ -1882,7 +1862,7 @@ Correct answer:
 810
 \]
 
-Answer fields for import:
+Answer fields:
 ```yaml
 answerFields:
   - id: derivative
@@ -1955,7 +1935,7 @@ Correct answer:
 432
 \]
 
-Answer fields for import:
+Answer fields:
 ```yaml
 answerFields:
   - id: derivative
@@ -2036,7 +2016,7 @@ Gradient of \(C_1\): \(108\)
 Gradient of \(C_2\): \(12\)  
 \(C_1\) has the greater gradient at \(x=1\).
 
-Answer fields for import:
+Answer fields:
 ```yaml
 answerFields:
   - id: c1_derivative
@@ -2145,7 +2125,7 @@ Correct answer:
 168
 \]
 
-Answer fields for import:
+Answer fields:
 ```yaml
 answerFields:
   - id: derivative
@@ -2220,7 +2200,7 @@ Correct answer:
 x=-1
 \]
 
-Answer fields for import:
+Answer fields:
 ```yaml
 answerFields:
   - id: derivative
@@ -2314,7 +2294,7 @@ Correct answer:
 x=2
 \]
 
-Answer fields for import:
+Answer fields:
 ```yaml
 answerFields:
   - id: derivative
@@ -2404,7 +2384,7 @@ Correct answer:
 k=2
 \]
 
-Answer fields for import:
+Answer fields:
 ```yaml
 answerFields:
   - id: derivative
@@ -2498,7 +2478,7 @@ Correct answer:
 y=54x-27
 \]
 
-Answer fields for import:
+Answer fields:
 ```yaml
 answerFields:
   - id: derivative
@@ -2603,7 +2583,7 @@ Correct answer:
 y=56x-63
 \]
 
-Answer fields for import:
+Answer fields:
 ```yaml
 answerFields:
   - id: derivative
@@ -2708,7 +2688,7 @@ Correct answer:
 y=\frac{2}{5}x+3
 \]
 
-Answer fields for import:
+Answer fields:
 ```yaml
 answerFields:
   - id: rewritten_form
@@ -2841,7 +2821,7 @@ Correct answer:
 y=24x-32
 \]
 
-Answer fields for import:
+Answer fields:
 ```yaml
 answerFields:
   - id: derivative
