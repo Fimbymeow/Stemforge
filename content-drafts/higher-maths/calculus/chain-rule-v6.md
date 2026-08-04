@@ -142,15 +142,12 @@ Question:
 Differentiate \(y=(3x+2)^5\) with respect to \(x\).
 
 Correct answer:  
-\[
-\frac{dy}{dx}=15(3x+2)^4
-\]
+15(3x+2)^4
 
 Accepted answers:
 - 15(3x+2)^4
 - 15*(3x+2)^4
 - 15(3x + 2)^4
-- dy/dx=15(3x+2)^4
 
 Hint:  
 Bring down the outside power, then multiply by the derivative of \(3x+2\).
@@ -193,15 +190,12 @@ Question:
 Differentiate \(y=(5x-4)^3\) with respect to \(x\).
 
 Correct answer:  
-\[
-\frac{dy}{dx}=15(5x-4)^2
-\]
+15(5x-4)^2
 
 Accepted answers:
 - 15(5x-4)^2
 - 15*(5x-4)^2
 - 15(5x - 4)^2
-- dy/dx=15(5x-4)^2
 
 Hint:  
 After applying the power rule to the bracket, multiply by the derivative of \(5x-4\).
@@ -237,15 +231,12 @@ Question:
 Differentiate \(y=2(4x+1)^6\) with respect to \(x\).
 
 Correct answer:  
-\[
-\frac{dy}{dx}=48(4x+1)^5
-\]
+48(4x+1)^5
 
 Accepted answers:
 - 48(4x+1)^5
 - 48*(4x+1)^5
 - 48(4x + 1)^5
-- dy/dx=48(4x+1)^5
 
 Hint:  
 Keep the 2 at the front, then apply the chain rule to \((4x+1)^6\).
@@ -285,15 +276,12 @@ Question:
 Differentiate \(y=(x^2+4)^5\) with respect to \(x\).
 
 Correct answer:  
-\[
-\frac{dy}{dx}=10x(x^2+4)^4
-\]
+10x(x^2+4)^4
 
 Accepted answers:
 - 10x(x^2+4)^4
 - 10*x*(x^2+4)^4
 - 10x(x^2 + 4)^4
-- dy/dx=10x(x^2+4)^4
 
 Hint:  
 The derivative of the bracket \(x^2+4\) is \(2x\).
@@ -329,15 +317,12 @@ Question:
 Differentiate \(y=(3x^2-2)^4\) with respect to \(x\).
 
 Correct answer:  
-\[
-\frac{dy}{dx}=24x(3x^2-2)^3
-\]
+24x(3x^2-2)^3
 
 Accepted answers:
 - 24x(3x^2-2)^3
 - 24*x*(3x^2-2)^3
 - 24x(3x^2 - 2)^3
-- dy/dx=24x(3x^2-2)^3
 
 Hint:  
 Differentiate the bracket \(3x^2-2\) after applying the outside power.
@@ -570,21 +555,13 @@ Question:
 Differentiate \(y=(x^2+4x)^5\) with respect to \(x\).
 
 Correct answer:  
-\[
-\frac{dy}{dx}=5(2x+4)(x^2+4x)^4
-\]
-or
-\[
-\frac{dy}{dx}=10(x+2)(x^2+4x)^4
-\]
+5(2x+4)(x^2+4x)^4
 
 Accepted answers:
 - 5(2x+4)(x^2+4x)^4
 - 5*(2x+4)*(x^2+4x)^4
 - 10(x+2)(x^2+4x)^4
 - 10*(x+2)*(x^2+4x)^4
-- dy/dx=5(2x+4)(x^2+4x)^4
-- dy/dx=10(x+2)(x^2+4x)^4
 
 Hint:  
 The derivative of the bracket is \(2x+4\), not just \(2x\).
@@ -972,8 +949,6 @@ answerFields:
       - -8(7-2x)^3
       - -8*(7-2x)^3
       - -8(7 - 2x)^3
-      - dy/dx=-8(7-2x)^3
-      - dy/dx = -8(7 - 2x)^3
 ```
 
 Hint:  
@@ -1029,8 +1004,6 @@ answerFields:
       - -15(5-3x)^4
       - -15*(5-3x)^4
       - -15(5 - 3x)^4
-      - dy/dx=-15(5-3x)^4
-      - dy/dx = -15(5 - 3x)^4
 ```
 
 Hint:  
@@ -1087,7 +1060,6 @@ answerFields:
       - 4*(2x+3)*(x^2+3x+1)^3
       - 4(2x + 3)(x^2 + 3x + 1)^3
       - (8x+12)(x^2+3x+1)^3
-      - dy/dx=4(2x+3)(x^2+3x+1)^3
 ```
 
 Hint:  
@@ -1143,8 +1115,6 @@ answerFields:
       - -10x(6-x^2)^4
       - -10*x*(6-x^2)^4
       - -10x(6 - x^2)^4
-      - dy/dx=-10x(6-x^2)^4
-      - dy/dx = -10x(6 - x^2)^4
 ```
 
 Hint:  
@@ -1200,8 +1170,6 @@ answerFields:
       - 20x(x^2-1)^4
       - 20*x*(x^2-1)^4
       - 20x(x^2 - 1)^4
-      - dy/dx=20x(x^2-1)^4
-      - dy/dx = 20x(x^2 - 1)^4
 ```
 
 Hint:  
@@ -1258,8 +1226,6 @@ answerFields:
       - 12*(3x+1)^3+10x
       - 12(3x + 1)^3 + 10x
       - 10x+12(3x+1)^3
-      - dy/dx=12(3x+1)^3+10x
-      - dy/dx = 12(3x + 1)^3 + 10x
 ```
 
 Hint:  

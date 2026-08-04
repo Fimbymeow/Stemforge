@@ -360,40 +360,39 @@ test("A009 has canonical 1 with no unsupported aliases and is ready", () => {
   assert.deepEqual(classification.blockers, []);
 });
 
-test("the post-migration Chain Rule draft produces exactly 5 ready / 9 convertible / 20 blocked", () => {
+test("the post-authoring-repair Chain Rule draft produces exactly 17 ready / 9 convertible / 8 blocked", () => {
   const bank = loadBank("chain-rule-v6.md");
   const classifications = auditBankAssessment(bank);
   const counts = { ready: 0, convertible: 0, blocked: 0 };
   for (const c of classifications) counts[c.status as "ready" | "convertible" | "blocked"] += 1;
-  assert.deepEqual(counts, { ready: 5, convertible: 9, blocked: 20 });
+  assert.deepEqual(counts, { ready: 17, convertible: 9, blocked: 8 });
   assert.equal(bank.questions.length, 34);
 
-  // The composite_algebraic_equivalence V1 marker now parses these six already-bare PPQ answers,
-  // but it deliberately does not strip a "dy/dx=" prefix (that repair is a separate authoring
-  // task, not part of V1 — see the V1 implementation report). Their declared "dy/dx=..." aliases
-  // therefore fail to grade, and the architecture's "never prune a declared alias" policy keeps
-  // these six blocked via unsupported_intended_alias instead of unsupported_marker_target. No
-  // other question acquires this blocker.
-  const aliasBlockedIds = classifications
-    .filter((c) => c.blockers.some((b) => b.code === "unsupported_intended_alias"))
-    .map((c) => c.questionId)
-    .sort();
-  assert.deepEqual(aliasBlockedIds, [
+  // The 12 V1-capable questions (6 whose canonical answer was promoted from a "dy/dx=" equation
+  // form to the already-authored bare expression, and 6 already-bare PPQ answers that only had
+  // "dy/dx=" *aliases* removed) now carry zero blockers of any kind, including
+  // unsupported_intended_alias — the alias list contains only bare-expression forms.
+  assert.ok(!classifications.some((c) => c.blockers.some((b) => b.code === "unsupported_intended_alias")));
+
+  const readyIds = classifications.filter((c) => c.status === "ready").map((c) => c.questionId).sort();
+  assert.deepEqual(readyIds, [
+    "hm-calc-diff-chain-a-001",
+    "hm-calc-diff-chain-a-002",
+    "hm-calc-diff-chain-a-003",
+    "hm-calc-diff-chain-a-005",
+    "hm-calc-diff-chain-a-008",
+    "hm-calc-diff-chain-a-009",
+    "hm-calc-diff-chain-f-003",
+    "hm-calc-diff-chain-f-004",
+    "hm-calc-diff-chain-f-005",
+    "hm-calc-diff-chain-f-006",
+    "hm-calc-diff-chain-f-007",
     "hm-calc-diff-chain-ppq-003",
     "hm-calc-diff-chain-ppq-004",
     "hm-calc-diff-chain-ppq-007",
     "hm-calc-diff-chain-ppq-008",
     "hm-calc-diff-chain-ppq-010",
     "hm-calc-diff-chain-ppq-011",
-  ]);
-
-  const readyIds = classifications.filter((c) => c.status === "ready").map((c) => c.questionId).sort();
-  assert.deepEqual(readyIds, [
-    "hm-calc-diff-chain-a-001",
-    "hm-calc-diff-chain-a-003",
-    "hm-calc-diff-chain-a-005",
-    "hm-calc-diff-chain-a-008",
-    "hm-calc-diff-chain-a-009",
   ]);
   const convertibleIds = classifications.filter((c) => c.status === "convertible").map((c) => c.questionId).sort();
   assert.deepEqual(convertibleIds, [
@@ -407,6 +406,17 @@ test("the post-migration Chain Rule draft produces exactly 5 ready / 9 convertib
     "hm-calc-diff-chain-ppq-020",
     "hm-calc-diff-chain-ppq-021",
   ]);
+  const blockedIds = classifications.filter((c) => c.status === "blocked").map((c) => c.questionId).sort();
+  assert.deepEqual(blockedIds, [
+    "hm-calc-diff-chain-a-004",
+    "hm-calc-diff-chain-a-006",
+    "hm-calc-diff-chain-a-007",
+    "hm-calc-diff-chain-f-008",
+    "hm-calc-diff-chain-f-009",
+    "hm-calc-diff-chain-ppq-012",
+    "hm-calc-diff-chain-ppq-014",
+    "hm-calc-diff-chain-ppq-017",
+  ]);
 
   const bySection = { Foundations: 0, Applications: 0, "Past Paper-style Questions": 0 };
   for (const c of classifications) {
@@ -414,7 +424,53 @@ test("the post-migration Chain Rule draft produces exactly 5 ready / 9 convertib
     const q = bank.questions.find((item) => item.id === c.questionId)!;
     bySection[q.declaredStage as keyof typeof bySection] += 1;
   }
-  assert.deepEqual(bySection, { Foundations: 7, Applications: 4, "Past Paper-style Questions": 9 });
+  assert.deepEqual(bySection, { Foundations: 2, Applications: 3, "Past Paper-style Questions": 3 });
+});
+
+test("all 12 V1-repaired questions reach composite_algebraic_equivalence with every declared alias grading correct and no dy/dx= alias remaining", () => {
+  const bank = loadBank("chain-rule-v6.md");
+  const classifications = auditBankAssessment(bank);
+  const byId = new Map(bank.questions.map((q) => [q.id, q]));
+  const targetIds = [
+    "hm-calc-diff-chain-f-003", "hm-calc-diff-chain-f-004", "hm-calc-diff-chain-f-005",
+    "hm-calc-diff-chain-f-006", "hm-calc-diff-chain-f-007", "hm-calc-diff-chain-a-002",
+    "hm-calc-diff-chain-ppq-003", "hm-calc-diff-chain-ppq-004", "hm-calc-diff-chain-ppq-007",
+    "hm-calc-diff-chain-ppq-008", "hm-calc-diff-chain-ppq-010", "hm-calc-diff-chain-ppq-011",
+  ];
+  for (const id of targetIds) {
+    const classification = classifications.find((c) => c.questionId === id)!;
+    assert.equal(classification.status, "ready", id);
+    assert.deepEqual(classification.blockers, [], id);
+    assert.equal(classification.markerCompatibility?.strategy, "composite_algebraic_equivalence", id);
+    assert.equal(classification.markerCompatibility?.targetOutcome, "graded", id);
+    assert.ok(classification.markerCompatibility?.aliasOutcomes.every((outcome) => outcome.isCorrect === true), id);
+
+    const question = byId.get(id)!;
+    const candidate = question.answerCandidates[0];
+    assert.ok(!candidate.correctAnswer.includes("dy/dx"), `${id} correctAnswer`);
+    assert.ok(candidate.acceptedAnswers.every((answer) => !answer.includes("dy/dx")), `${id} acceptedAnswers`);
+  }
+});
+
+test("the six V2 and two multi-field Chain Rule questions remain untouched and blocked for their original reasons", () => {
+  const bank = loadBank("chain-rule-v6.md");
+  const classifications = auditBankAssessment(bank);
+  const byId = new Map(classifications.map((c) => [c.questionId, c]));
+
+  for (const id of ["hm-calc-diff-chain-f-008", "hm-calc-diff-chain-f-009", "hm-calc-diff-chain-a-004", "hm-calc-diff-chain-a-006", "hm-calc-diff-chain-a-007"]) {
+    const classification = byId.get(id)!;
+    assert.equal(classification.status, "blocked", id);
+    assert.deepEqual(classification.blockers.map((b) => b.code), ["requires_equation_form_answer"], id);
+  }
+  const ppq014 = byId.get("hm-calc-diff-chain-ppq-014")!;
+  assert.equal(ppq014.status, "blocked");
+  assert.deepEqual(ppq014.blockers.map((b) => b.code), ["unsupported_marker_target"]);
+
+  for (const id of ["hm-calc-diff-chain-ppq-012", "hm-calc-diff-chain-ppq-017"]) {
+    const classification = byId.get(id)!;
+    assert.equal(classification.status, "blocked", id);
+    assert.deepEqual(classification.blockers.map((b) => b.code), ["undeclared_multi_field_assessment"], id);
+  }
 });
 
 test("the new Tangents draft's five migrated questions are honestly reported: all remain blocked by equation-form / multi-field marking limitations", () => {
