@@ -1,10 +1,10 @@
 import type { CanonicalSkillContract } from "@/lib/curriculum/skill-contracts";
 
 /**
- * Minimum required Phase 1 contracts (Basic Differentiation, Trigonometric Differentiation,
- * Chain Rule). Every other skill in the proposed Calculus map is referenced by a coverage
- * claim (see calculus-coverage-claims.ts) but does not yet have a contract — this is
- * reported, not hidden, by lib/curriculum/coverage.ts's skillContractsMissing field.
+ * Four authored contracts (Basic Differentiation, Trigonometric Differentiation, Chain
+ * Rule, Tangents). Every other skill in the proposed Calculus map is referenced by a
+ * coverage claim (see calculus-coverage-claims.ts) but does not yet have a contract — this
+ * is reported, not hidden, by lib/curriculum/coverage.ts's skillContractsMissing field.
  */
 
 /**
@@ -163,8 +163,90 @@ export const chainRuleContract: CanonicalSkillContract = {
   contentStatus: "active",
 };
 
+/**
+ * Tangents' technical slug ("tangents-and-normals") is legacy — the live skill map has
+ * already renamed its learner-facing display to "Tangents" only. This contract does not
+ * restore normals to scope: the source-verified specification register statement
+ * (hm-calc-tangent, SQA May 2023 spec p6) is explicit that "the official wording names
+ * only the tangent — normal-line work is not listed anywhere in this document as a
+ * Calculus assessable statement." The slug must never be read as authorisation to teach
+ * normals; only the objective below (and its exclusion of normals) is authoritative.
+ *
+ * Chain Rule (and, for trigonometric composites, Trigonometric Differentiation) is a
+ * genuine dependency for some Tangents questions — but only some, since many tangent
+ * questions apply to plain polynomial curves that need nothing beyond Basic
+ * Differentiation. This is a production-policy statement, not a universal prerequisite: it
+ * does not belong in prerequisiteSkillIds, and it must never become a prerequisite-graph
+ * edge (hard or soft) — see the comment on higherMathematicsCalculusPrerequisites in
+ * calculus-prerequisites.ts. It belongs entirely to the future Tangents skill package's
+ * questionLevelRequirements (SkillPackageQuestionLevelRequirement,
+ * lib/curriculum/skill-package.ts), mirroring chainRuleContract's own identical policy above
+ * and chain-rule-package.ts's existing, working declaration for its own trigonometric-
+ * composite dependency:
+ *   { triggerDescription: "...", requiredSkillId: "chain-rule" }
+ *   { triggerDescription: "...", requiredSkillId: "trigonometric-differentiation" }
+ * — one entry each for composite-curve and trigonometric-curve Tangents questions, both
+ * where a trigonometric composite genuinely needs both. That declaration is validated only
+ * against known skill IDs; it is never itself a route lock, and it only attaches to actual
+ * questions later through QuestionCurriculumMetadata.requiredSkillIds on the specific
+ * questions that need it (future authoring work, out of this contract's scope). No such
+ * package exists yet — this contract does not create one.
+ */
+export const tangentsAndNormalsContract: CanonicalSkillContract = {
+  skillPathId: "tangents-and-normals",
+  name: "Tangents",
+  learningObjective: "Find the gradient of a curve at a specified point using an already-known differentiation method, and use it to find the equation of the tangent to the curve at that point.",
+  boundaries: {
+    includes: [
+      "the gradient of a curve at a specified point, found using an already-unlocked differentiation method",
+      "the equation of the tangent to a curve at a specified point",
+      "tangent questions on composite curves, only where the required differentiation method is already a separate, unlocked skill",
+    ],
+    excludes: [
+      "normals — not an assessable statement in the official specification (verified, May 2023 spec, p6)",
+      "teaching Basic Differentiation",
+      "teaching Chain Rule",
+      "teaching Trigonometric Differentiation",
+      "stationary-point identification or classification",
+      "optimisation",
+      "implicit differentiation",
+      "coordinate-geometry line problems not derived from a curve's gradient",
+    ],
+  },
+  prerequisiteSkillIds: ["basic-differentiation"],
+  unlocksSkillIds: [],
+  permittedIngredients: [
+    "any curve whose derivative is reachable via an already-unlocked differentiation skill",
+    "a specified x-value identifying the point of contact",
+    "line-equation forms (y = mx + c, point-gradient, general form)",
+  ],
+  forbiddenIngredients: [
+    "normal-line requests",
+    "stationary-point requests",
+    "differentiation methods not yet unlocked by the learner, without a declared question-level requirement",
+    "optimisation framing",
+  ],
+  typicalMisconceptions: [
+    "Using the function value at the point as the gradient, instead of the derivative there.",
+    "Differentiating correctly but evaluating the derivative at the wrong x-value.",
+    "Using the gradient value as a coordinate when forming the point of contact.",
+    "Forgetting to find the y-coordinate of the point of contact before forming the line equation.",
+    "Substituting the point and gradient into the line equation incorrectly.",
+    "Sign or rearrangement errors when simplifying the final tangent equation.",
+    "Treating the derivative expression itself as the final answer, rather than using it to construct the tangent equation.",
+  ],
+  pastPaperPatternFamilyIds: [],
+  autoMarkingRequirements: [
+    "Equation-form / line-equation marking capability for the tangent-equation deliverable — not yet available in the live marking engine.",
+    "Numeric marking strategy for gradient and point-of-contact sub-steps — already supported.",
+  ],
+  contractRevision: 1,
+  contentStatus: "active",
+};
+
 export const higherMathematicsCalculusSkillContracts: CanonicalSkillContract[] = [
   basicDifferentiationContract,
   trigonometricDifferentiationContract,
   chainRuleContract,
+  tangentsAndNormalsContract,
 ];

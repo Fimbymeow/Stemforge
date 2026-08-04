@@ -42,12 +42,12 @@ test("the report is verified, never authoritative while provisional points remai
   assert.equal(report.authoritativeSourceStatus, "verified");
 });
 
-test("seventeen canonical skills are represented, and exactly the three authored ones have contracts", () => {
+test("seventeen canonical skills are represented, and exactly the four authored ones have contracts", () => {
   const report = buildReport();
   assert.equal(report.canonicalSkillsRepresented.length, 17);
-  assert.equal(report.skillContractsPresent.length, 3);
-  assert.deepEqual(report.skillContractsPresent, ["basic-differentiation", "chain-rule", "trigonometric-differentiation"]);
-  assert.equal(report.skillContractsMissing.length, 14);
+  assert.equal(report.skillContractsPresent.length, 4);
+  assert.deepEqual(report.skillContractsPresent, ["basic-differentiation", "chain-rule", "tangents-and-normals", "trigonometric-differentiation"]);
+  assert.equal(report.skillContractsMissing.length, 13);
 });
 
 test("no prerequisite contract is missing, and the prerequisite graph and recommended sequence are both valid", () => {
@@ -67,7 +67,7 @@ test("only Basic Differentiation is published, and it is correctly reported as s
 
 test("curriculum-mapping completeness and published-product completeness are reported separately, never blended", () => {
   const report = buildReport();
-  assert.equal(report.curriculumMappingCompleteness.defined, 3);
+  assert.equal(report.curriculumMappingCompleteness.defined, 4);
   assert.equal(report.publishedProductCompleteness.published, 1);
   assert.notEqual(report.curriculumMappingCompleteness.defined, report.publishedProductCompleteness.published);
 });
