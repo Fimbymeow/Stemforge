@@ -17,7 +17,13 @@ import type {
   MarkerCompatibilityCheck,
   RequiredCapability,
 } from "@/lib/content-import/types";
-import type { MarkingFixtures, NumericMarkingContract, PolynomialMarkingContract, QuestionMarkingContract } from "@/lib/marking/types";
+import type {
+  CompositeAlgebraicEquivalenceMarkingContract,
+  MarkingFixtures,
+  NumericMarkingContract,
+  PolynomialMarkingContract,
+  QuestionMarkingContract,
+} from "@/lib/marking/types";
 
 export function classifyBank(
   bank: ContentBankIR,
@@ -186,8 +192,10 @@ function analyseMarkability(question: ImportQuestionIR, candidate: ImportAnswerC
   } else {
     const numeric = numericContract(correctAnswer, candidate.acceptedAnswers.map(normalizeMarkerLexeme));
     const polynomial = polynomialContract(correctAnswer, candidate.acceptedAnswers.map(normalizeMarkerLexeme));
+    const composite = compositeAlgebraicContract(correctAnswer, candidate.acceptedAnswers.map(normalizeMarkerLexeme));
     if (numeric && markQuestionAnswer({ marking: numeric }, correctAnswer).outcomeKind === "graded") contract = numeric;
     else if (polynomial && markQuestionAnswer({ marking: polynomial }, correctAnswer).outcomeKind === "graded") contract = polynomial;
+    else if (composite && markQuestionAnswer({ marking: composite }, correctAnswer).outcomeKind === "graded") contract = composite;
     else {
       const requiredCapability = inferUnsupportedAlgebraCapability(correctAnswer);
       blockers.push({
@@ -336,6 +344,11 @@ function numericContract(target: string, accepted: string[]): NumericMarkingCont
 function polynomialContract(target: string, accepted: string[]): PolynomialMarkingContract | undefined {
   if (!/[a-z]/i.test(target)) return undefined;
   return { strategy: "polynomial_form", strategyVersion: 1, target, variable: inferVariable(target), fixtures: fixtures(unique([target, ...accepted])) };
+}
+
+function compositeAlgebraicContract(target: string, accepted: string[]): CompositeAlgebraicEquivalenceMarkingContract | undefined {
+  if (!/[a-z]/i.test(target) || /=/.test(target)) return undefined;
+  return { strategy: "composite_algebraic_equivalence", strategyVersion: 1, target, variable: inferVariable(target), fixtures: fixtures(unique([target, ...accepted])) };
 }
 
 function fixtures(correct: string[]): MarkingFixtures {

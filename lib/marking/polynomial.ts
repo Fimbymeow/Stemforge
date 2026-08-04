@@ -8,8 +8,8 @@ export const POLYNOMIAL_COEFFICIENT_DIGIT_LIMIT = 128;
 const ZERO = BigInt(0);
 const ONE = BigInt(1);
 
-type Polynomial = Map<number, Rational>;
-type ParseResult = { status: "parsed"; value: Polynomial; normalized: string } | { status: "malformed" | "unmarkable"; normalized: string };
+export type Polynomial = Map<number, Rational>;
+export type ParseResult = { status: "parsed"; value: Polynomial; normalized: string } | { status: "malformed" | "unmarkable"; normalized: string };
 
 export function markPolynomial(contract: PolynomialMarkingContract, input: string): MarkingResult {
   const parsed = parsePolynomial(input, contract.variable);
@@ -80,22 +80,51 @@ function parseTerm(body: string, variable: string): { status: "parsed"; coeffici
   return { status: "parsed", coefficient: parsed.value, exponent: 0 };
 }
 
-function add(left: Rational, right: Rational): Rational {
+export function add(left: Rational, right: Rational): Rational {
   const numerator = left.numerator * right.denominator + right.numerator * left.denominator;
   const denominator = left.denominator * right.denominator;
   const divisor = gcd(abs(numerator), denominator);
   return { numerator: numerator / divisor, denominator: denominator / divisor };
 }
-function equalPolynomial(left: Polynomial, right: Polynomial) {
+export function equalPolynomial(left: Polynomial, right: Polynomial) {
   if (left.size !== right.size) return false;
   return [...left].every(([power, coefficient]) => {
     const other = right.get(power);
     return other?.numerator === coefficient.numerator && other.denominator === coefficient.denominator;
   });
 }
-function canonical(value: Polynomial, variable: string) {
+export function canonical(value: Polynomial, variable: string) {
   return [...value.entries()].sort(([a], [b]) => b - a).map(([power, coefficient]) =>
     `${coefficient.numerator}/${coefficient.denominator}:${variable}^${power}`).join("|") || "0";
+}
+
+/** Exact polynomial multiplication, reused by the composite-algebraic-equivalence marker to expand bracket powers. */
+export function multiplyPolynomial(left: Polynomial, right: Polynomial): Polynomial {
+  const result: Polynomial = new Map();
+  for (const [leftPower, leftCoefficient] of left) {
+    for (const [rightPower, rightCoefficient] of right) {
+      const power = leftPower + rightPower;
+      const product = multiplyRational(leftCoefficient, rightCoefficient);
+      const previous = result.get(power) ?? { numerator: ZERO, denominator: ONE };
+      result.set(power, add(previous, product));
+    }
+  }
+  for (const [power, coefficient] of result) if (coefficient.numerator === ZERO) result.delete(power);
+  return result;
+}
+
+/** Exact polynomial exponentiation by repeated multiplication. Callers must bound `exponent` before calling. */
+export function exponentiatePolynomial(base: Polynomial, exponent: number): Polynomial {
+  let result: Polynomial = new Map([[0, { numerator: ONE, denominator: ONE }]]);
+  for (let count = 0; count < exponent; count += 1) result = multiplyPolynomial(result, base);
+  return result;
+}
+
+function multiplyRational(left: Rational, right: Rational): Rational {
+  const numerator = left.numerator * right.numerator;
+  const denominator = left.denominator * right.denominator;
+  const divisor = gcd(abs(numerator), denominator);
+  return { numerator: numerator / divisor, denominator: denominator / divisor };
 }
 function abs(value: bigint) { return value < ZERO ? -value : value; }
 function gcd(left: bigint, right: bigint): bigint { while (right) [left, right] = [right, left % right]; return left || ONE; }

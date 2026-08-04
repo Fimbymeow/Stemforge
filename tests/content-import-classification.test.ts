@@ -105,7 +105,7 @@ test("live marker oracle supports flat polynomials and exact numeric fractions",
 
 test("unsupported composite, equation, coordinate, interval and integration forms block with exact capabilities", () => {
   const fixtures: Array<[string, string, RequiredCapability]> = [
-    ["15(3x+2)^4", "algebraic", "composite_algebraic_equivalence"],
+    ["-12(4x+5)^(-4)", "algebraic", "composite_algebraic_equivalence"],
     ["x(30-2x)", "algebraic", "composite_algebraic_equivalence"],
     ["2x^2+2000/x", "algebraic", "composite_algebraic_equivalence"],
     ["x^-2", "algebraic", "composite_algebraic_equivalence"],
@@ -121,6 +121,45 @@ test("unsupported composite, equation, coordinate, interval and integration form
     const classification = auditBankAssessment(syntheticBank(questionIR({ answerCandidates: [candidate(answer, type)] })))[0];
     assert.equal(classification.status, "blocked", answer);
     assert.ok(classification.blockers.some((item) => item.requiredCapability === capability), answer);
+  }
+});
+
+test("a supported V1 composite-algebraic target reaches ready or convertible with every declared alias checked", () => {
+  const supported = auditBankAssessment(syntheticBank(questionIR({
+    answerCandidates: [{ ...candidate("15(3x+2)^4", "algebraic"), acceptedAnswers: ["15(3x+2)^4", "15*(3x+2)^4", "15(3x + 2)^4"] }],
+  })))[0];
+  assert.notEqual(supported.status, "blocked");
+  assert.equal(supported.markerCompatibility?.strategy, "composite_algebraic_equivalence");
+  assert.equal(supported.markerCompatibility?.targetOutcome, "graded");
+  assert.ok(supported.markerCompatibility?.aliasOutcomes.every((outcome) => outcome.isCorrect === true));
+
+  const badAlias = auditBankAssessment(syntheticBank(questionIR({
+    answerCandidates: [{ ...candidate("15(3x+2)^4", "algebraic"), acceptedAnswers: ["15(3x+2)^4", "dy/dx=15(3x+2)^4"] }],
+  })))[0];
+  assert.equal(badAlias.status, "blocked");
+  assert.ok(badAlias.blockers.some((item) => item.code === "unsupported_intended_alias"));
+});
+
+test("a V2-shaped (negative or fractional bracket power) target remains blocked, not silently accepted by V1", () => {
+  for (const answer of ["-12(4x+5)^(-4)", "-12/(4x+5)^4", "(5x+4)^(-1/2)", "7/(2sqrt(7x-3))"]) {
+    const classification = auditBankAssessment(syntheticBank(questionIR({ answerCandidates: [candidate(answer, "algebraic")] })))[0];
+    assert.equal(classification.status, "blocked", answer);
+    assert.ok(classification.blockers.some((item) => item.code === "unsupported_marker_target"), answer);
+  }
+});
+
+test("an equation-form target is never silently routed into composite-algebraic expression marking", () => {
+  const classification = auditBankAssessment(syntheticBank(questionIR({
+    answerCandidates: [candidate("dy/dx=15(3x+2)^4", "algebraic")],
+  })))[0];
+  assert.equal(classification.status, "blocked");
+  assert.deepEqual(classification.blockers.map((item) => item.code), ["requires_equation_form_answer"]);
+});
+
+test("nested and multi-bracket-power composites remain blocked rather than partially matched", () => {
+  for (const answer of ["(x+1)^2(x-1)^3", "((x+1)^2+1)^3", "10x(x^2+4)(x+2)^(-4)"]) {
+    const classification = auditBankAssessment(syntheticBank(questionIR({ answerCandidates: [candidate(answer, "algebraic")] })))[0];
+    assert.equal(classification.status, "blocked", answer);
   }
 });
 
@@ -321,14 +360,32 @@ test("A009 has canonical 1 with no unsupported aliases and is ready", () => {
   assert.deepEqual(classification.blockers, []);
 });
 
-test("the post-migration Chain Rule draft produces exactly 5 ready / 9 convertible / 20 blocked, with zero unsupported_intended_alias blockers anywhere", () => {
+test("the post-migration Chain Rule draft produces exactly 5 ready / 9 convertible / 20 blocked", () => {
   const bank = loadBank("chain-rule-v6.md");
   const classifications = auditBankAssessment(bank);
   const counts = { ready: 0, convertible: 0, blocked: 0 };
   for (const c of classifications) counts[c.status as "ready" | "convertible" | "blocked"] += 1;
   assert.deepEqual(counts, { ready: 5, convertible: 9, blocked: 20 });
   assert.equal(bank.questions.length, 34);
-  assert.ok(!classifications.some((c) => c.blockers.some((b) => b.code === "unsupported_intended_alias")));
+
+  // The composite_algebraic_equivalence V1 marker now parses these six already-bare PPQ answers,
+  // but it deliberately does not strip a "dy/dx=" prefix (that repair is a separate authoring
+  // task, not part of V1 — see the V1 implementation report). Their declared "dy/dx=..." aliases
+  // therefore fail to grade, and the architecture's "never prune a declared alias" policy keeps
+  // these six blocked via unsupported_intended_alias instead of unsupported_marker_target. No
+  // other question acquires this blocker.
+  const aliasBlockedIds = classifications
+    .filter((c) => c.blockers.some((b) => b.code === "unsupported_intended_alias"))
+    .map((c) => c.questionId)
+    .sort();
+  assert.deepEqual(aliasBlockedIds, [
+    "hm-calc-diff-chain-ppq-003",
+    "hm-calc-diff-chain-ppq-004",
+    "hm-calc-diff-chain-ppq-007",
+    "hm-calc-diff-chain-ppq-008",
+    "hm-calc-diff-chain-ppq-010",
+    "hm-calc-diff-chain-ppq-011",
+  ]);
 
   const readyIds = classifications.filter((c) => c.status === "ready").map((c) => c.questionId).sort();
   assert.deepEqual(readyIds, [

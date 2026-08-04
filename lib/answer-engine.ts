@@ -1,6 +1,7 @@
 import type { StemForgeQuestion } from "@/data/questions";
 import type { Question } from "@/data/types";
 import type { StructuredGraphAnswer } from "@/lib/maths/expression-types";
+import { markCompositeAlgebraicEquivalence } from "@/lib/marking/composite-algebraic";
 import { markNumeric } from "@/lib/marking/numeric";
 import { markPolynomial } from "@/lib/marking/polynomial";
 import type { MarkingResult } from "@/lib/marking/types";
@@ -46,6 +47,7 @@ export function markQuestionAnswer(question: Pick<Question, "marking" | "structu
     if (!contract) return internal("numeric", 1, studentAnswer, "marking_contract_missing");
     if (contract.strategy === "numeric") return markNumeric(contract, studentAnswer);
     if (contract.strategy === "polynomial_form") return markPolynomial(contract, studentAnswer);
+    if (contract.strategy === "composite_algebraic_equivalence") return markCompositeAlgebraicEquivalence(contract, studentAnswer);
     if (contract.strategy === "multiple_choice") {
       const correct = studentAnswer === contract.correctOptionId;
       return {
