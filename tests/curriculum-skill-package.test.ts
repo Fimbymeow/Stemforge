@@ -6,7 +6,8 @@ import { higherMaths } from "../data/higher-maths";
 import { validateContent } from "../lib/content-validation";
 import { canonicalContent } from "../data/canonical-content";
 import { chainRulePackage } from "../data/curriculum/higher-mathematics/chain-rule-package";
-import { chainRuleContract, higherMathematicsCalculusSkillContracts } from "../data/curriculum/higher-mathematics/calculus-skill-contracts";
+import { tangentsPackage } from "../data/curriculum/higher-mathematics/tangents-package";
+import { chainRuleContract, tangentsAndNormalsContract, higherMathematicsCalculusSkillContracts } from "../data/curriculum/higher-mathematics/calculus-skill-contracts";
 import { higherMathematicsCalculusCoverageClaims } from "../data/curriculum/higher-mathematics/calculus-coverage-claims";
 import { higherMathematicsCalculusPrerequisites } from "../data/curriculum/higher-mathematics/calculus-prerequisites";
 import { proposedCalculusSkillPathIds } from "../data/curriculum/higher-mathematics/calculus-skill-map";
@@ -459,8 +460,8 @@ test("real Chain Rule source evidence resolves the actual draft's declared quest
   assert.equal(byKind.get("notes")?.exists, false);
   assert.equal(byKind.get("foundations")?.exists, true);
   assert.equal(byKind.get("foundations")?.discoveredQuestionCount, 10);
-  assert.equal(byKind.get("applications")?.discoveredQuestionCount, 10);
-  assert.equal(byKind.get("pastPaperPractice")?.discoveredQuestionCount, 25);
+  assert.equal(byKind.get("applications")?.discoveredQuestionCount, 9);
+  assert.equal(byKind.get("pastPaperPractice")?.discoveredQuestionCount, 15);
 });
 
 test("the Chain Rule manifest's declared source hash matches the live draft's actual content hash", () => {
@@ -479,6 +480,98 @@ test("after the source hash update, the package report no longer treats the draf
   const codes = readiness.blockers.map((blocker) => blocker.code);
   assert.ok(!codes.includes("source-reference-stale"), "the manifest hash should match the freshly edited draft");
   assert.equal(readiness.readyForImport, false, "genuine marking/config blockers remain regardless of staleness");
+});
+
+// ---- Real Tangents package (post-migration) ----
+
+test("the real Tangents package references the tangents-and-normals canonical skill", () => {
+  assert.equal(tangentsPackage.skillPathId, "tangents-and-normals");
+  assert.equal(tangentsPackage.courseId, "higher-maths");
+});
+
+test("the real Tangents package's hard prerequisite is exactly basic-differentiation", () => {
+  assert.deepEqual(tangentsPackage.hardPrerequisiteSkillIds, ["basic-differentiation"]);
+});
+
+test("Chain Rule is not declared as a universal hard prerequisite of Tangents", () => {
+  assert.ok(!tangentsPackage.hardPrerequisiteSkillIds.includes("chain-rule"));
+});
+
+test("the Chain Rule dependency is represented as a question-level requirement, not a skill-level one", () => {
+  const rule = tangentsPackage.questionLevelRequirements.find((entry) => entry.requiredSkillId === "chain-rule");
+  assert.ok(rule, "expected a question-level requirement rule targeting chain-rule");
+  assert.ok(rule!.triggerDescription.toLowerCase().includes("chain rule"));
+});
+
+test("no Trigonometric Differentiation question-level requirement exists — none of the five current questions is a trigonometric composite", () => {
+  assert.ok(!tangentsPackage.questionLevelRequirements.some((entry) => entry.requiredSkillId === "trigonometric-differentiation"));
+});
+
+test("no universal or conditional Chain Rule prerequisite-graph edge of any strength exists for Tangents", () => {
+  const tangentsEdges = higherMathematicsCalculusPrerequisites.filter((edge) => edge.skillPathId === "tangents-and-normals");
+  assert.equal(tangentsEdges.length, 1);
+  assert.equal(tangentsEdges[0].requiresSkillPathId, "basic-differentiation");
+  assert.equal(tangentsEdges[0].strength, "hard");
+});
+
+test("the real Tangents package references the existing tangentsAndNormalsContract rather than duplicating it", () => {
+  assert.equal(tangentsPackage.contractSkillPathId, tangentsAndNormalsContract.skillPathId);
+  assert.ok(!("boundaries" in tangentsPackage), "the manifest must never embed the contract's own fields");
+});
+
+test("the real Tangents manifest validates cleanly against real Higher Maths curriculum references", () => {
+  const report = validateSkillPackageManifest(tangentsPackage, knownHigherMathsRefs);
+  assert.deepEqual(report.errors, []);
+});
+
+test("Tangents declares no Foundations and no Notes source — both are genuinely absent, not omitted by mistake", () => {
+  const kinds = tangentsPackage.sources.map((source) => source.kind).sort();
+  assert.deepEqual(kinds, ["applications", "pastPaperPractice"]);
+});
+
+test("real Tangents source evidence resolves the actual migrated draft's declared question counts", () => {
+  const evidence = resolveSkillPackageEvidence(tangentsPackage);
+  const byKind = new Map(evidence.sources.map((source) => [source.kind, source]));
+  assert.equal(byKind.get("applications")?.exists, true);
+  assert.equal(byKind.get("applications")?.discoveredQuestionCount, 1);
+  assert.equal(byKind.get("pastPaperPractice")?.exists, true);
+  assert.equal(byKind.get("pastPaperPractice")?.discoveredQuestionCount, 4);
+});
+
+test("the Tangents manifest's declared source hash matches the live migrated draft's actual content hash", () => {
+  const bytes = readFileSync("content-drafts/higher-maths/calculus/tangents-and-normals-v1.md");
+  const actualHash = sha256(bytes);
+  for (const source of tangentsPackage.sources) {
+    assert.equal(source.expectedSourceHash, actualHash, source.kind);
+  }
+});
+
+test("Tangents is not ready for import or publication, and reports its real blockers honestly", () => {
+  const validation = validateSkillPackageManifest(tangentsPackage, knownHigherMathsRefs);
+  const evidence = resolveSkillPackageEvidence(tangentsPackage);
+  const readiness = deriveSkillPackageReadiness(tangentsPackage, validation, evidence);
+
+  assert.equal(readiness.structurallyComplete, true);
+  assert.equal(readiness.readyForImport, false);
+  assert.equal(readiness.readyForPublication, false);
+
+  const codes = readiness.blockers.map((blocker) => blocker.code);
+  assert.ok(codes.includes("missing-foundations-source"), "no Foundations-tier Tangents content is authored yet");
+  assert.ok(codes.includes("missing-notes-source"), "no Tangents Notes/LessonDocument exists yet");
+  assert.ok(codes.includes("unsupported-marking-capability"), "the live marker cannot currently import any of the five migrated questions");
+  assert.ok(codes.includes("import-config-missing"), "no tangents-and-normals-v1.import.json exists");
+  assert.ok(!codes.includes("source-reference-stale"), "the manifest hash matches the freshly written draft");
+});
+
+test("Tangents' equation-form blockers are the real, honestly-reported ones — not forced to match any expectation", () => {
+  const evidence = resolveSkillPackageEvidence(tangentsPackage);
+  const applications = evidence.sources.find((source) => source.kind === "applications")!;
+  const ppq = evidence.sources.find((source) => source.kind === "pastPaperPractice")!;
+  const applicationsCapabilities = applications.unsupportedMarkingCapabilities.map((entry) => entry.requiredCapability ?? entry.code);
+  const ppqCapabilities = new Set(ppq.unsupportedMarkingCapabilities.map((entry) => entry.requiredCapability ?? entry.code));
+  assert.deepEqual(applicationsCapabilities, ["equation_form_answer"], "A001's single-field tangent equation is blocked by equation-form marking, exactly as the migration spec predicted");
+  assert.deepEqual(ppqCapabilities, new Set(["structured_multi_field_answer"]));
+  assert.equal(ppq.unsupportedMarkingCapabilities.length, 4, "all four migrated PPQ questions remain blocked by undeclared multi-field assessment, unchanged by this migration");
 });
 
 // ---- Non-regression ----

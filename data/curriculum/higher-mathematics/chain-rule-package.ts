@@ -13,6 +13,17 @@ import type { SkillPackageManifest } from "@/lib/curriculum/skill-package";
  *   is confined to trig-composite questions, recorded here as a question-level requirement.
  * - excluded from scope: Product Rule, Quotient Rule, Implicit Differentiation,
  *   Optimisation, stationary-point classification.
+ *
+ * Repartition (Chain Rule → Tangents migration): a-010, ppq-022, ppq-023, ppq-024 and
+ * ppq-025 moved unchanged to the new Tangents package (tangents-package.ts) — their
+ * assessed deliverable is a tangent-line equation, which Tangents owns, not Chain Rule.
+ * ppq-001, ppq-002, ppq-005, ppq-006, ppq-009 and ppq-013 were removed outright: ppq-001
+ * duplicated Foundations f-003 verbatim, and the other five duplicated an existing
+ * Foundations shape closely enough (same inner-function type, same reasoning steps, same
+ * misconception target) to add no distinct coverage. Every expectedShapes/
+ * expectedMisconceptions evidenceNote below was re-reviewed against the retained 34
+ * questions; entries citing a removed/moved question were updated to their remaining real
+ * witnesses, never left referencing content that no longer exists in this source.
  */
 export const chainRulePackage: SkillPackageManifest = {
   packageSchemaVersion: 1,
@@ -41,21 +52,21 @@ export const chainRulePackage: SkillPackageManifest = {
       sourcePath: "content-drafts/higher-maths/calculus/chain-rule-v6.md",
       declaredStageName: "Foundations",
       expectedQuestionCount: 10,
-      expectedSourceHash: "cdbdc00ae9d02b774ec050a11a6805774aad6becf19805077209b255c4c34eba",
+      expectedSourceHash: "4a98fe2d448539030f3450f0a988ca9ec681cc00425c73051486c85d1287d058",
     },
     {
       kind: "applications",
       sourcePath: "content-drafts/higher-maths/calculus/chain-rule-v6.md",
       declaredStageName: "Applications",
-      expectedQuestionCount: 10,
-      expectedSourceHash: "cdbdc00ae9d02b774ec050a11a6805774aad6becf19805077209b255c4c34eba",
+      expectedQuestionCount: 9,
+      expectedSourceHash: "4a98fe2d448539030f3450f0a988ca9ec681cc00425c73051486c85d1287d058",
     },
     {
       kind: "pastPaperPractice",
       sourcePath: "content-drafts/higher-maths/calculus/chain-rule-v6.md",
       declaredStageName: "Past Paper-style Questions",
-      expectedQuestionCount: 25,
-      expectedSourceHash: "cdbdc00ae9d02b774ec050a11a6805774aad6becf19805077209b255c4c34eba",
+      expectedQuestionCount: 15,
+      expectedSourceHash: "4a98fe2d448539030f3450f0a988ca9ec681cc00425c73051486c85d1287d058",
     },
   ],
 
@@ -71,21 +82,21 @@ export const chainRulePackage: SkillPackageManifest = {
       description: "Direct differentiation of a linear bracket raised to a power, e.g. (ax+b)^n.",
       required: true,
       observedInSource: true,
-      evidenceNote: "F003, F004, PPQ001-004, PPQ009-011 and others.",
+      evidenceNote: "F003, F004, PPQ003, PPQ004, PPQ010, PPQ011 and others. (PPQ001, PPQ002 and PPQ009 were removed as Foundations duplicates — see the repartition note above.)",
     },
     {
       shapeId: "coefficient-inner-gradient",
       description: "Chain rule questions combining an outer constant coefficient with the inner-function gradient.",
       required: true,
       observedInSource: true,
-      evidenceNote: "F005, A003, PPQ009, PPQ010, PPQ021.",
+      evidenceNote: "F005, A003, PPQ010, PPQ021. (PPQ009, which also showed this shape, was removed as a Foundations duplicate.)",
     },
     {
       shapeId: "fractional-negative-outer-power",
       description: "Chain rule applied to negative or fractional outer powers, including square-root rewrites.",
       required: true,
       observedInSource: true,
-      evidenceNote: "F008, F009, A004, A006, A007, PPQ012-014.",
+      evidenceNote: "F008, F009, A004, A006, A007, PPQ012, PPQ014. (PPQ013, which also showed this shape, was removed as a Foundations duplicate.)",
     },
     {
       shapeId: "gradient-evaluation",
@@ -113,7 +124,7 @@ export const chainRulePackage: SkillPackageManifest = {
       description: "Multi-step original exam-style applications (tangent equations, gradient-condition solving, curve comparisons) within the contract boundary.",
       required: true,
       observedInSource: true,
-      evidenceNote: "A009, A010, PPQ017, PPQ019-025.",
+      evidenceNote: "A009, PPQ017, PPQ019, PPQ020, PPQ021. (A010 and the tangent-equation PPQs, formerly PPQ022-025, moved to the Tangents package — see tangents-package.ts.)",
     },
   ],
 
@@ -144,7 +155,7 @@ export const chainRulePackage: SkillPackageManifest = {
       description: "Dropping or mishandling an outer constant coefficient.",
       required: true,
       observedInSource: true,
-      evidenceNote: "Common-mistake notes on F005, A003, PPQ009, PPQ021.",
+      evidenceNote: "Common-mistake notes on F005, A003, PPQ021. (PPQ009, which also showed this misconception, was removed as a Foundations duplicate.)",
     },
     {
       misconceptionId: "composite-as-simple-power-rule",

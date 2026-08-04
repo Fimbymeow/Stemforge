@@ -1,4 +1,5 @@
 import { chainRulePackage } from "@/data/curriculum/higher-mathematics/chain-rule-package";
+import { tangentsPackage } from "@/data/curriculum/higher-mathematics/tangents-package";
 import { higherMathematicsCalculusCoverageClaims } from "@/data/curriculum/higher-mathematics/calculus-coverage-claims";
 import { higherMathematicsCalculusPrerequisites } from "@/data/curriculum/higher-mathematics/calculus-prerequisites";
 import { higherMathematicsCalculusSkillContracts } from "@/data/curriculum/higher-mathematics/calculus-skill-contracts";
@@ -19,11 +20,12 @@ import {
  * logic in lib/curriculum/skill-package.ts. It performs no writes, no preview/approval/apply,
  * and does not import or publish anything.
  *
- * Usage: pnpm run skill-package-report [-- <skillPathId>]  (defaults to chain-rule, the
- * only manifest currently authored).
+ * Usage: pnpm run skill-package-report [-- <skillPathId>]  (defaults to chain-rule; also
+ * accepts tangents-and-normals).
  */
 const PACKAGES: Record<string, SkillPackageManifest> = {
   "chain-rule": chainRulePackage,
+  "tangents-and-normals": tangentsPackage,
 };
 
 function main() {

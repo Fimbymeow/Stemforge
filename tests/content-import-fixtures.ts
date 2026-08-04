@@ -6,10 +6,11 @@ import { parseMarkdownBank } from "@/lib/content-import/parser";
 export const BANK_DIRECTORY = "content-drafts/higher-maths/calculus";
 export const BANKS = [
   ["basic-differentiation-v1.md", 50, "e7fa953b578aac1d3511d478035762324aecc8cf0d654d0fc4bc979d4da845bf"],
-  ["chain-rule-v6.md", 45, "cdbdc00ae9d02b774ec050a11a6805774aad6becf19805077209b255c4c34eba"],
+  ["chain-rule-v6.md", 34, "4a98fe2d448539030f3450f0a988ca9ec681cc00425c73051486c85d1287d058"],
   ["stationary-points-v2.md", 43, "d59be41090a888698fad4ce3ea2d15f67f3614bb267b2b3ecfefe9b2308ad53a"],
   ["optimisation-v1.md", 14, "097edffe69b37fad6b8147617c2e5d1a141aef5dc91a9ebd5c667d13ea17792b"],
   ["basic-integration-v1.md", 20, "288d3d25181abc641e322acb7a8f30b7f0df0a0646f970d36aebd7c160230fcd"],
+  ["tangents-and-normals-v1.md", 5, "75f6461459f398bc5c3bb8c7dfbf53a4c93327d87c2f1f5ff8839505db9b050e"],
 ] as const;
 
 export function loadBank(name: string) {

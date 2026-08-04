@@ -232,31 +232,58 @@ test("collision impacts derive only executable and semantically sufficient versi
 test("the live Chain Rule draft no longer uses the incorrect 'Answer fields for import:' label", () => {
   const source = readFileSync(`${BANK_DIRECTORY}/chain-rule-v6.md`, "utf8");
   assert.equal((source.match(/Answer fields for import:/g) ?? []).length, 0);
-  assert.equal((source.match(/^Answer fields:\s*$/gm) ?? []).length, 26);
+  assert.equal((source.match(/^Answer fields:\s*$/gm) ?? []).length, 15);
 });
 
-test("the live Chain Rule draft still parses to exactly 45 questions across the same three stages", () => {
+test("the post-migration Chain Rule draft parses to exactly 34 questions across the same three stages", () => {
   const bank = loadBank("chain-rule-v6.md");
-  assert.equal(bank.questions.length, 45);
+  assert.equal(bank.questions.length, 34);
   const byStage = new Map<string, number>();
   for (const question of bank.questions) {
     byStage.set(question.declaredStage, (byStage.get(question.declaredStage) ?? 0) + 1);
   }
   assert.equal(byStage.get("Foundations"), 10);
-  assert.equal(byStage.get("Applications"), 10);
-  assert.equal(byStage.get("Past Paper-style Questions"), 25);
+  assert.equal(byStage.get("Applications"), 9);
+  assert.equal(byStage.get("Past Paper-style Questions"), 15);
 });
 
-test("the repair batch did not change any Chain Rule question ID", () => {
+test("the five moved-to-Tangents and six removed-as-duplicate IDs no longer exist in Chain Rule; every retained ID is stable", () => {
   const bank = loadBank("chain-rule-v6.md");
   const ids = bank.questions.map((question) => question.id);
+  for (const movedOrRemovedId of [
+    "hm-calc-diff-chain-a-010",
+    "hm-calc-diff-chain-ppq-001",
+    "hm-calc-diff-chain-ppq-002",
+    "hm-calc-diff-chain-ppq-005",
+    "hm-calc-diff-chain-ppq-006",
+    "hm-calc-diff-chain-ppq-009",
+    "hm-calc-diff-chain-ppq-013",
+    "hm-calc-diff-chain-ppq-022",
+    "hm-calc-diff-chain-ppq-023",
+    "hm-calc-diff-chain-ppq-024",
+    "hm-calc-diff-chain-ppq-025",
+  ]) {
+    assert.ok(!ids.includes(movedOrRemovedId), movedOrRemovedId);
+  }
   assert.ok(ids.includes("hm-calc-diff-chain-f-001"));
   assert.ok(ids.includes("hm-calc-diff-chain-f-010"));
   assert.ok(ids.includes("hm-calc-diff-chain-a-001"));
-  assert.ok(ids.includes("hm-calc-diff-chain-a-010"));
-  assert.ok(ids.includes("hm-calc-diff-chain-ppq-001"));
-  assert.ok(ids.includes("hm-calc-diff-chain-ppq-025"));
-  assert.equal(new Set(ids).size, 45);
+  assert.ok(ids.includes("hm-calc-diff-chain-a-009"));
+  assert.ok(ids.includes("hm-calc-diff-chain-ppq-010"), "ppq-010 is retained for now, per the migration decision");
+  assert.ok(ids.includes("hm-calc-diff-chain-ppq-021"));
+  assert.equal(new Set(ids).size, 34);
+});
+
+test("the migrated Tangents questions exist under clean, new IDs, unrelated to their old Chain Rule identities", () => {
+  const bank = loadBank("tangents-and-normals-v1.md");
+  const ids = bank.questions.map((question) => question.id);
+  assert.deepEqual(ids, [
+    "hm-calc-tangent-a-001",
+    "hm-calc-tangent-ppq-001",
+    "hm-calc-tangent-ppq-002",
+    "hm-calc-tangent-ppq-003",
+    "hm-calc-tangent-ppq-004",
+  ]);
 });
 
 test("F010, A001, A003 and A008 no longer emit unsupported_intended_alias after alias cleanup", () => {
@@ -294,13 +321,13 @@ test("A009 has canonical 1 with no unsupported aliases and is ready", () => {
   assert.deepEqual(classification.blockers, []);
 });
 
-test("the completed Chain Rule repair batches produce exactly 5 ready / 9 convertible / 31 blocked, with zero unsupported_intended_alias blockers anywhere", () => {
+test("the post-migration Chain Rule draft produces exactly 5 ready / 9 convertible / 20 blocked, with zero unsupported_intended_alias blockers anywhere", () => {
   const bank = loadBank("chain-rule-v6.md");
   const classifications = auditBankAssessment(bank);
   const counts = { ready: 0, convertible: 0, blocked: 0 };
   for (const c of classifications) counts[c.status as "ready" | "convertible" | "blocked"] += 1;
-  assert.deepEqual(counts, { ready: 5, convertible: 9, blocked: 31 });
-  assert.equal(bank.questions.length, 45);
+  assert.deepEqual(counts, { ready: 5, convertible: 9, blocked: 20 });
+  assert.equal(bank.questions.length, 34);
   assert.ok(!classifications.some((c) => c.blockers.some((b) => b.code === "unsupported_intended_alias")));
 
   const readyIds = classifications.filter((c) => c.status === "ready").map((c) => c.questionId).sort();
@@ -330,7 +357,22 @@ test("the completed Chain Rule repair batches produce exactly 5 ready / 9 conver
     const q = bank.questions.find((item) => item.id === c.questionId)!;
     bySection[q.declaredStage as keyof typeof bySection] += 1;
   }
-  assert.deepEqual(bySection, { Foundations: 7, Applications: 5, "Past Paper-style Questions": 19 });
+  assert.deepEqual(bySection, { Foundations: 7, Applications: 4, "Past Paper-style Questions": 9 });
+});
+
+test("the new Tangents draft's five migrated questions are honestly reported: all remain blocked by equation-form / multi-field marking limitations", () => {
+  const bank = loadBank("tangents-and-normals-v1.md");
+  const classifications = auditBankAssessment(bank);
+  assert.equal(bank.questions.length, 5);
+  assert.ok(classifications.every((c) => c.status === "blocked"), "no marking metadata was changed by this migration, so nothing became ready or convertible");
+
+  const a001 = classifications.find((c) => c.questionId === "hm-calc-tangent-a-001")!;
+  assert.deepEqual(a001.blockers.map((b) => b.code), ["requires_equation_form_answer"]);
+
+  for (const id of ["hm-calc-tangent-ppq-001", "hm-calc-tangent-ppq-002", "hm-calc-tangent-ppq-003", "hm-calc-tangent-ppq-004"]) {
+    const classification = classifications.find((c) => c.questionId === id)!;
+    assert.deepEqual(classification.blockers.map((b) => b.code), ["undeclared_multi_field_assessment"], id);
+  }
 });
 
 test("the six repaired multi-field PPQs each declare exactly one assessed field matching their learner-facing final answer", () => {
@@ -361,17 +403,10 @@ test("the six repaired multi-field PPQs each declare exactly one assessed field 
   }
 });
 
-test("the six excluded multi-field PPQs remain untouched and still emit undeclared_multi_field_assessment", () => {
+test("the two remaining excluded multi-field PPQs remain untouched and still emit undeclared_multi_field_assessment — the other four moved to Tangents", () => {
   const bank = loadBank("chain-rule-v6.md");
   const classifications = auditBankAssessment(bank);
-  for (const id of [
-    "hm-calc-diff-chain-ppq-012",
-    "hm-calc-diff-chain-ppq-017",
-    "hm-calc-diff-chain-ppq-022",
-    "hm-calc-diff-chain-ppq-023",
-    "hm-calc-diff-chain-ppq-024",
-    "hm-calc-diff-chain-ppq-025",
-  ]) {
+  for (const id of ["hm-calc-diff-chain-ppq-012", "hm-calc-diff-chain-ppq-017"]) {
     const classification = classifications.find((item) => item.questionId === id)!;
     assert.equal(classification.status, "blocked", id);
     assert.ok(classification.blockers.some((b) => b.code === "undeclared_multi_field_assessment"), id);
@@ -379,7 +414,7 @@ test("the six excluded multi-field PPQs remain untouched and still emit undeclar
     assert.ok(question.answerCandidates.every((candidate) => candidate.assessed === undefined), id);
   }
   const undeclaredCount = classifications.filter((c) => c.blockers.some((b) => b.code === "undeclared_multi_field_assessment")).length;
-  assert.equal(undeclaredCount, 6);
+  assert.equal(undeclaredCount, 2);
 });
 
 function candidate(answer: string, type: string, id = "answer"): ImportAnswerCandidate {

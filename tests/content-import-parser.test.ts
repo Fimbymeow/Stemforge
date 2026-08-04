@@ -5,7 +5,7 @@ import { MAX_IMPORT_SOURCE_BYTES } from "@/lib/content-import/types";
 import { parseAnswerFieldsYaml, parseMarkdownBank } from "@/lib/content-import/parser";
 import { BANKS, BANK_DIRECTORY, loadBank } from "@/tests/content-import-fixtures";
 
-test("all five byte-identical banks parse their exact authoritative 172-question total", () => {
+test("all six byte-identical banks parse their exact authoritative 166-question total", () => {
   let total = 0;
   for (const [name, expectedCount, expectedHash] of BANKS) {
     const bank = loadBank(name);
@@ -14,7 +14,7 @@ test("all five byte-identical banks parse their exact authoritative 172-question
     assert.equal(bank.diagnostics.filter((item) => item.severity === "error").length, 0, name);
     total += bank.questions.length;
   }
-  assert.equal(total, 172);
+  assert.equal(total, 166);
 });
 
 test("both real answer declaration shapes and both heading depths are preserved", () => {
@@ -23,7 +23,13 @@ test("both real answer declaration shapes and both heading depths are preserved"
   assert.equal(basic.questions[0].answerDeclarationShape, "yaml_answer_fields");
   assert.equal(chain.questions[0].answerDeclarationShape, "bare_correct_answer");
   assert.equal(basic.questions[0].sourceLineRange.start, 37);
-  assert.equal(chain.questions[0].sourceLineRange.start, 37);
+  assert.equal(chain.questions[0].sourceLineRange.start, 42);
+});
+
+test("the migrated Tangents bank uses the same structured answer-field shape as the questions it was copied from", () => {
+  const tangents = loadBank("tangents-and-normals-v1.md");
+  assert.equal(tangents.questions[0].answerDeclarationShape, "yaml_answer_fields");
+  assert.equal(tangents.questions[0].id, "hm-calc-tangent-a-001");
 });
 
 test("skim and QA summary copies never duplicate questions", () => {
