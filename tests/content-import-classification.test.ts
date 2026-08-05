@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { markQuestionAnswer } from "@/lib/answer-engine";
 import { auditBankAssessment, classifyBank, compareQuestion } from "@/lib/content-import/classification";
 import { createImportRegistry, parseAndValidateBankConfiguration } from "@/lib/content-import/configuration";
 import type { BankImportConfiguration, ImportAnswerCandidate, RequiredCapability } from "@/lib/content-import/types";
@@ -105,7 +106,7 @@ test("live marker oracle supports flat polynomials and exact numeric fractions",
 
 test("unsupported composite, equation, coordinate, interval and integration forms block with exact capabilities", () => {
   const fixtures: Array<[string, string, RequiredCapability]> = [
-    ["-12(4x+5)^(-4)", "algebraic", "composite_algebraic_equivalence"],
+    ["(x+1)^(1/3)", "algebraic", "composite_algebraic_equivalence"],
     ["x(30-2x)", "algebraic", "composite_algebraic_equivalence"],
     ["2x^2+2000/x", "algebraic", "composite_algebraic_equivalence"],
     ["x^-2", "algebraic", "composite_algebraic_equivalence"],
@@ -140,8 +141,46 @@ test("a supported V1 composite-algebraic target reaches ready or convertible wit
   assert.ok(badAlias.blockers.some((item) => item.code === "unsupported_intended_alias"));
 });
 
-test("a V2-shaped (negative or fractional bracket power) target remains blocked, not silently accepted by V1", () => {
+test("a V2-shaped target infers strategy version 2, reaches ready or convertible, and every reciprocal/radical alias grades correct", () => {
   for (const answer of ["-12(4x+5)^(-4)", "-12/(4x+5)^4", "(5x+4)^(-1/2)", "7/(2sqrt(7x-3))"]) {
+    const classification = auditBankAssessment(syntheticBank(questionIR({
+      answerCandidates: [{ ...candidate(answer, "algebraic"), acceptedAnswers: [answer] }],
+    })))[0];
+    assert.notEqual(classification.status, "blocked", answer);
+    assert.equal(classification.markerCompatibility?.strategy, "composite_algebraic_equivalence", answer);
+    assert.equal(classification.markerCompatibility?.strategyVersion, 2, answer);
+  }
+
+  const reciprocalAliases = auditBankAssessment(syntheticBank(questionIR({
+    answerCandidates: [{
+      ...candidate("-6x(x^2+1)^(-4)", "algebraic"),
+      acceptedAnswers: ["-6x(x^2+1)^(-4)", "-6*x*(x^2+1)^(-4)", "-6x/(x^2+1)^4", "-6*x/(x^2+1)^4"],
+    }],
+  })))[0];
+  assert.notEqual(reciprocalAliases.status, "blocked");
+  assert.ok(reciprocalAliases.markerCompatibility?.aliasOutcomes.every((outcome) => outcome.isCorrect === true));
+
+  const radicalAliases = auditBankAssessment(syntheticBank(questionIR({
+    answerCandidates: [{
+      ...candidate("(5/2)(5x+4)^(-1/2)", "algebraic"),
+      acceptedAnswers: ["(5/2)(5x+4)^(-1/2)", "5/2(5x+4)^(-1/2)", "5/(2sqrt(5x+4))", "5/(2*sqrt(5x+4))"],
+    }],
+  })))[0];
+  assert.notEqual(radicalAliases.status, "blocked");
+  assert.ok(radicalAliases.markerCompatibility?.aliasOutcomes.every((outcome) => outcome.isCorrect === true));
+});
+
+test("a V1-shaped target still infers strategy version 1, not 2, once V2 exists", () => {
+  const classification = auditBankAssessment(syntheticBank(questionIR({
+    answerCandidates: [{ ...candidate("15(3x+2)^4", "algebraic"), acceptedAnswers: ["15(3x+2)^4", "15*(3x+2)^4"] }],
+  })))[0];
+  assert.notEqual(classification.status, "blocked");
+  assert.equal(classification.markerCompatibility?.strategy, "composite_algebraic_equivalence");
+  assert.equal(classification.markerCompatibility?.strategyVersion, 1);
+});
+
+test("fractional exponents other than +-1/2 remain unsupported under V2", () => {
+  for (const answer of ["(x+1)^(1/3)", "(x+1)^(2/3)", "(x+1)^(-1/3)"]) {
     const classification = auditBankAssessment(syntheticBank(questionIR({ answerCandidates: [candidate(answer, "algebraic")] })))[0];
     assert.equal(classification.status, "blocked", answer);
     assert.ok(classification.blockers.some((item) => item.code === "unsupported_marker_target"), answer);
@@ -360,18 +399,16 @@ test("A009 has canonical 1 with no unsupported aliases and is ready", () => {
   assert.deepEqual(classification.blockers, []);
 });
 
-test("the post-authoring-repair Chain Rule draft produces exactly 17 ready / 9 convertible / 8 blocked", () => {
+test("the post-V2-authoring-cleanup Chain Rule draft produces exactly 23 ready / 10 convertible / 1 blocked", () => {
   const bank = loadBank("chain-rule-v6.md");
   const classifications = auditBankAssessment(bank);
   const counts = { ready: 0, convertible: 0, blocked: 0 };
   for (const c of classifications) counts[c.status as "ready" | "convertible" | "blocked"] += 1;
-  assert.deepEqual(counts, { ready: 17, convertible: 9, blocked: 8 });
+  assert.deepEqual(counts, { ready: 23, convertible: 10, blocked: 1 });
   assert.equal(bank.questions.length, 34);
 
-  // The 12 V1-capable questions (6 whose canonical answer was promoted from a "dy/dx=" equation
-  // form to the already-authored bare expression, and 6 already-bare PPQ answers that only had
-  // "dy/dx=" *aliases* removed) now carry zero blockers of any kind, including
-  // unsupported_intended_alias — the alias list contains only bare-expression forms.
+  // The 12 V1-capable and 7 V2-capable questions now carry zero blockers of any kind, including
+  // unsupported_intended_alias — every declared alias list contains only bare-expression forms.
   assert.ok(!classifications.some((c) => c.blockers.some((b) => b.code === "unsupported_intended_alias")));
 
   const readyIds = classifications.filter((c) => c.status === "ready").map((c) => c.questionId).sort();
@@ -379,7 +416,10 @@ test("the post-authoring-repair Chain Rule draft produces exactly 17 ready / 9 c
     "hm-calc-diff-chain-a-001",
     "hm-calc-diff-chain-a-002",
     "hm-calc-diff-chain-a-003",
+    "hm-calc-diff-chain-a-004",
     "hm-calc-diff-chain-a-005",
+    "hm-calc-diff-chain-a-006",
+    "hm-calc-diff-chain-a-007",
     "hm-calc-diff-chain-a-008",
     "hm-calc-diff-chain-a-009",
     "hm-calc-diff-chain-f-003",
@@ -387,18 +427,22 @@ test("the post-authoring-repair Chain Rule draft produces exactly 17 ready / 9 c
     "hm-calc-diff-chain-f-005",
     "hm-calc-diff-chain-f-006",
     "hm-calc-diff-chain-f-007",
+    "hm-calc-diff-chain-f-008",
+    "hm-calc-diff-chain-f-009",
     "hm-calc-diff-chain-ppq-003",
     "hm-calc-diff-chain-ppq-004",
     "hm-calc-diff-chain-ppq-007",
     "hm-calc-diff-chain-ppq-008",
     "hm-calc-diff-chain-ppq-010",
     "hm-calc-diff-chain-ppq-011",
+    "hm-calc-diff-chain-ppq-014",
   ]);
   const convertibleIds = classifications.filter((c) => c.status === "convertible").map((c) => c.questionId).sort();
   assert.deepEqual(convertibleIds, [
     "hm-calc-diff-chain-f-001",
     "hm-calc-diff-chain-f-002",
     "hm-calc-diff-chain-f-010",
+    "hm-calc-diff-chain-ppq-012",
     "hm-calc-diff-chain-ppq-015",
     "hm-calc-diff-chain-ppq-016",
     "hm-calc-diff-chain-ppq-018",
@@ -407,16 +451,7 @@ test("the post-authoring-repair Chain Rule draft produces exactly 17 ready / 9 c
     "hm-calc-diff-chain-ppq-021",
   ]);
   const blockedIds = classifications.filter((c) => c.status === "blocked").map((c) => c.questionId).sort();
-  assert.deepEqual(blockedIds, [
-    "hm-calc-diff-chain-a-004",
-    "hm-calc-diff-chain-a-006",
-    "hm-calc-diff-chain-a-007",
-    "hm-calc-diff-chain-f-008",
-    "hm-calc-diff-chain-f-009",
-    "hm-calc-diff-chain-ppq-012",
-    "hm-calc-diff-chain-ppq-014",
-    "hm-calc-diff-chain-ppq-017",
-  ]);
+  assert.deepEqual(blockedIds, ["hm-calc-diff-chain-ppq-017"]);
 
   const bySection = { Foundations: 0, Applications: 0, "Past Paper-style Questions": 0 };
   for (const c of classifications) {
@@ -424,7 +459,7 @@ test("the post-authoring-repair Chain Rule draft produces exactly 17 ready / 9 c
     const q = bank.questions.find((item) => item.id === c.questionId)!;
     bySection[q.declaredStage as keyof typeof bySection] += 1;
   }
-  assert.deepEqual(bySection, { Foundations: 2, Applications: 3, "Past Paper-style Questions": 3 });
+  assert.deepEqual(bySection, { Foundations: 0, Applications: 0, "Past Paper-style Questions": 1 });
 });
 
 test("all 12 V1-repaired questions reach composite_algebraic_equivalence with every declared alias grading correct and no dy/dx= alias remaining", () => {
@@ -452,42 +487,42 @@ test("all 12 V1-repaired questions reach composite_algebraic_equivalence with ev
   }
 });
 
-test("the six genuinely V2 Chain Rule questions remain blocked by equation-form or composite-algebraic-equivalence capability", () => {
+test("real Chain Rule V2 regression: all seven V2 target questions reach ready or convertible with strategy version 2, every real alias grading correct, and a plausible wrong answer grading incorrect", () => {
   const bank = loadBank("chain-rule-v6.md");
   const classifications = auditBankAssessment(bank);
   const byId = new Map(classifications.map((c) => [c.questionId, c]));
 
-  for (const id of ["hm-calc-diff-chain-f-008", "hm-calc-diff-chain-f-009", "hm-calc-diff-chain-a-004", "hm-calc-diff-chain-a-006", "hm-calc-diff-chain-a-007"]) {
-    const classification = byId.get(id)!;
-    assert.equal(classification.status, "blocked", id);
-    assert.deepEqual(classification.blockers.map((b) => b.code), ["requires_equation_form_answer"], id);
-  }
-  for (const id of ["hm-calc-diff-chain-ppq-012", "hm-calc-diff-chain-ppq-014"]) {
-    const classification = byId.get(id)!;
-    assert.equal(classification.status, "blocked", id);
-    assert.deepEqual(classification.blockers.map((b) => b.code), ["unsupported_marker_target"], id);
-    assert.deepEqual(classification.blockers.map((b) => b.requiredCapability), ["composite_algebraic_equivalence"], id);
-  }
-});
+  const cases: Array<{ id: string; correctAnswer: string; aliases: string[]; wrong: string; candidateId?: string }> = [
+    { id: "hm-calc-diff-chain-f-008", correctAnswer: "(2x+7)^(-1/2)", aliases: ["(2x+7)^(-1/2)", "(2x + 7)^(-1/2)", "1/sqrt(2x+7)", "1/sqrt(2x + 7)"], wrong: "(2x+9)^(-1/2)" },
+    { id: "hm-calc-diff-chain-f-009", correctAnswer: "-6x(x^2+1)^(-4)", aliases: ["-6x(x^2+1)^(-4)", "-6*x*(x^2+1)^(-4)", "-6x(x^2 + 1)^(-4)", "-6x/(x^2+1)^4", "-6*x/(x^2+1)^4"], wrong: "-6x(x^2+1)^(-3)" },
+    { id: "hm-calc-diff-chain-a-004", correctAnswer: "-12/(3x-2)^5", aliases: ["-12/(3x-2)^5", "-12/(3x - 2)^5"], wrong: "12/(3x-2)^5" },
+    { id: "hm-calc-diff-chain-a-006", correctAnswer: "7/(2sqrt(7x-3))", aliases: ["7/(2sqrt(7x-3))", "7/(2*sqrt(7x-3))", "(7/2)(7x-3)^(-1/2)", "7/2*(7x-3)^(-1/2)"], wrong: "7/(2sqrt(7x-5))" },
+    { id: "hm-calc-diff-chain-a-007", correctAnswer: "-12/(4x+5)^4", aliases: ["-12/(4x+5)^4", "-12/(4x + 5)^4", "-12(4x+5)^(-4)", "-12*(4x+5)^(-4)"], wrong: "12/(4x+5)^4" },
+    { id: "hm-calc-diff-chain-ppq-012", correctAnswer: "(5/2)(5x+4)^(-1/2)", aliases: ["(5/2)(5x+4)^(-1/2)", "5/2(5x+4)^(-1/2)", "5/(2sqrt(5x+4))", "5/(2sqrt(5x + 4))", "5/(2*sqrt(5x+4))"], wrong: "(5/2)(5x+6)^(-1/2)", candidateId: "derivative" },
+    { id: "hm-calc-diff-chain-ppq-014", correctAnswer: "-2(x+3)^(-3)", aliases: ["-2(x+3)^(-3)", "-2*(x+3)^(-3)", "-2(x + 3)^(-3)", "-2/(x+3)^3", "-2/((x+3)^3)"], wrong: "2(x+3)^(-3)" },
+  ];
 
-test("ppq-012's metadata correction removes undeclared_multi_field_assessment and honestly reveals the real V2 gap on its derivative field", () => {
-  const bank = loadBank("chain-rule-v6.md");
-  const question = bank.questions.find((item) => item.id === "hm-calc-diff-chain-ppq-012")!;
-  const rewrittenForm = question.answerCandidates.find((candidate) => candidate.id === "rewritten_form")!;
-  const derivative = question.answerCandidates.find((candidate) => candidate.id === "derivative")!;
-  assert.equal(rewrittenForm.assessed, false);
-  assert.equal(derivative.assessed, true);
-  // No mathematical value changed by the metadata correction.
-  assert.equal(rewrittenForm.correctAnswer, "(5x+4)^(1/2)");
-  assert.equal(derivative.correctAnswer, "(5/2)(5x+4)^(-1/2)");
+  for (const { id, correctAnswer, aliases, wrong, candidateId } of cases) {
+    const classification = byId.get(id)!;
+    assert.notEqual(classification.status, "blocked", id);
+    assert.deepEqual(classification.blockers, [], id);
+    assert.equal(classification.markerCompatibility?.strategy, "composite_algebraic_equivalence", id);
+    assert.equal(classification.markerCompatibility?.strategyVersion, 2, id);
+    assert.equal(classification.markerCompatibility?.targetOutcome, "graded", id);
+    assert.ok(classification.markerCompatibility?.aliasOutcomes.every((outcome) => outcome.isCorrect === true), id);
+    assert.deepEqual(classification.markerCompatibility?.aliasOutcomes.map((outcome) => outcome.answer).sort(), [...aliases].sort(), id);
 
-  const classification = auditBankAssessment(bank).find((item) => item.questionId === "hm-calc-diff-chain-ppq-012")!;
-  assert.ok(!classification.blockers.some((b) => b.code === "undeclared_multi_field_assessment"));
-  assert.ok(classification.conversions.includes("explicit_scaffolding_field_drop"));
-  assert.equal(classification.status, "blocked");
-  assert.deepEqual(classification.blockers.map((b) => b.code), ["unsupported_marker_target"]);
-  assert.equal(classification.blockers[0].requiredCapability, "composite_algebraic_equivalence");
-  assert.equal(classification.blockers[0].candidateId, "derivative");
+    const question = bank.questions.find((item) => item.id === id)!;
+    const candidate = candidateId ? question.answerCandidates.find((item) => item.id === candidateId)! : question.answerCandidates[0];
+    assert.equal(candidate.correctAnswer, correctAnswer, id);
+    assert.ok(!candidate.correctAnswer.includes("dy/dx"), `${id} correctAnswer`);
+    assert.ok(candidate.acceptedAnswers.every((answer) => !answer.includes("dy/dx")), `${id} acceptedAnswers`);
+
+    const contract = { strategy: "composite_algebraic_equivalence" as const, strategyVersion: 2 as const, target: correctAnswer, variable: "x", fixtures: { correct: [], incorrect: [], malformed: [], unmarkable: [] } };
+    const wrongResult = markQuestionAnswer({ marking: contract }, wrong);
+    assert.equal(wrongResult.outcomeKind, "graded", id);
+    assert.equal(wrongResult.isCorrect, false, id);
+  }
 });
 
 test("ppq-017's metadata correction removes undeclared_multi_field_assessment and honestly reveals a genuinely new capability gap on its comparison field", () => {

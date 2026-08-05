@@ -358,20 +358,13 @@ Question:
 Differentiate \(y=(2x+7)^{1/2}\) with respect to \(x\).
 
 Correct answer:  
-\[
-\frac{dy}{dx}=(2x+7)^{-1/2}
-\]
-or
-\[
-\frac{dy}{dx}=\frac{1}{\sqrt{2x+7}}
-\]
+(2x+7)^(-1/2)
 
 Accepted answers:
 - (2x+7)^(-1/2)
 - (2x + 7)^(-1/2)
 - 1/sqrt(2x+7)
 - 1/sqrt(2x + 7)
-- dy/dx=(2x+7)^(-1/2)
 
 Hint:  
 Use the power \(\frac{1}{2}\), then multiply by the derivative of \(2x+7\).
@@ -411,13 +404,7 @@ Question:
 Differentiate \(y=(x^2+1)^{-3}\) with respect to \(x\).
 
 Correct answer:  
-\[
-\frac{dy}{dx}=-6x(x^2+1)^{-4}
-\]
-or
-\[
-\frac{dy}{dx}=-\frac{6x}{(x^2+1)^4}
-\]
+-6x(x^2+1)^(-4)
 
 Accepted answers:
 - -6x(x^2+1)^(-4)
@@ -425,7 +412,6 @@ Accepted answers:
 - -6x(x^2 + 1)^(-4)
 - -6x/(x^2+1)^4
 - -6*x/(x^2+1)^4
-- dy/dx=-6x(x^2+1)^(-4)
 
 Hint:  
 Bring down the power \(-3\), reduce the power by 1, then multiply by \(2x\).
@@ -645,14 +631,11 @@ Question:
 Differentiate \(y=(3x-2)^{-4}\) with respect to \(x\), giving your answer with positive powers.
 
 Correct answer:  
-\[
-\frac{dy}{dx}=-\frac{12}{(3x-2)^5}
-\]
+-12/(3x-2)^5
 
 Accepted answers:
 - -12/(3x-2)^5
 - -12/(3x - 2)^5
-- dy/dx=-12/(3x-2)^5
 
 Hint:  
 Differentiate first using the negative power, then rewrite the answer as a fraction.
@@ -734,16 +717,13 @@ Question:
 Differentiate \(y=\sqrt{7x-3}\) with respect to \(x\).
 
 Correct answer:  
-\[
-\frac{dy}{dx}=\frac{7}{2\sqrt{7x-3}}
-\]
+7/(2sqrt(7x-3))
 
 Accepted answers:
 - 7/(2sqrt(7x-3))
 - 7/(2*sqrt(7x-3))
 - (7/2)(7x-3)^(-1/2)
 - 7/2*(7x-3)^(-1/2)
-- dy/dx=7/(2sqrt(7x-3))
 
 Hint:  
 Use \(\sqrt{7x-3}=(7x-3)^{1/2}\).
@@ -782,16 +762,13 @@ Question:
 Differentiate \(y=\frac{1}{(4x+5)^3}\) with respect to \(x\).
 
 Correct answer:  
-\[
-\frac{dy}{dx}=-\frac{12}{(4x+5)^4}
-\]
+-12/(4x+5)^4
 
 Accepted answers:
 - -12/(4x+5)^4
 - -12/(4x + 5)^4
 - -12(4x+5)^(-4)
 - -12*(4x+5)^(-4)
-- dy/dx=-12/(4x+5)^4
 
 Hint:  
 Rewrite the function as \((4x+5)^{-3}\).
@@ -1302,7 +1279,6 @@ answerFields:
       - 5/(2sqrt(5x+4))
       - 5/(2sqrt(5x + 4))
       - 5/(2*sqrt(5x+4))
-      - dy/dx=(5/2)(5x+4)^(-1/2)
     assessed: true
 ```
 
@@ -1369,7 +1345,6 @@ answerFields:
       - -2(x + 3)^(-3)
       - -2/(x+3)^3
       - -2/((x+3)^3)
-      - dy/dx=-2(x+3)^(-3)
 ```
 
 Hint:  

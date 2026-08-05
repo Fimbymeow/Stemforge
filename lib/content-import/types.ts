@@ -129,6 +129,7 @@ export type ImportBlocker = {
 
 export type MarkerCompatibilityCheck = {
   strategy?: MarkingStrategy;
+  strategyVersion?: number;
   targetOutcome?: MarkerOutcomeKind;
   aliasOutcomes: Array<{
     answer: string;

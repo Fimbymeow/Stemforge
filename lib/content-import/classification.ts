@@ -231,7 +231,7 @@ function analyseMarkability(question: ImportQuestionIR, candidate: ImportAnswerC
     blockers,
     contract,
     compatibility: {
-      ...(contract ? { strategy: contract.strategy } : {}),
+      ...(contract ? { strategy: contract.strategy, strategyVersion: contract.strategyVersion } : {}),
       ...(targetOutcome ? { targetOutcome } : {}),
       aliasOutcomes,
     },
@@ -348,7 +348,12 @@ function polynomialContract(target: string, accepted: string[]): PolynomialMarki
 
 function compositeAlgebraicContract(target: string, accepted: string[]): CompositeAlgebraicEquivalenceMarkingContract | undefined {
   if (!/[a-z]/i.test(target) || /=/.test(target)) return undefined;
-  return { strategy: "composite_algebraic_equivalence", strategyVersion: 1, target, variable: inferVariable(target), fixtures: fixtures(unique([target, ...accepted])) };
+  const variable = inferVariable(target);
+  const v1: CompositeAlgebraicEquivalenceMarkingContract = { strategy: "composite_algebraic_equivalence", strategyVersion: 1, target, variable, fixtures: fixtures(unique([target, ...accepted])) };
+  if (markQuestionAnswer({ marking: v1 }, target).outcomeKind === "graded") return v1;
+  const v2: CompositeAlgebraicEquivalenceMarkingContract = { strategy: "composite_algebraic_equivalence", strategyVersion: 2, target, variable, fixtures: fixtures(unique([target, ...accepted])) };
+  if (markQuestionAnswer({ marking: v2 }, target).outcomeKind === "graded") return v2;
+  return undefined;
 }
 
 function fixtures(correct: string[]): MarkingFixtures {

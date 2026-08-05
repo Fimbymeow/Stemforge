@@ -68,7 +68,7 @@ export type PolynomialMarkingContract = {
 
 export type CompositeAlgebraicEquivalenceMarkingContract = {
   strategy: "composite_algebraic_equivalence";
-  strategyVersion: 1;
+  strategyVersion: 1 | 2;
   target: string;
   variable: string;
   fixtures: MarkingFixtures;
@@ -113,7 +113,9 @@ export function hasCompleteMarkerMetadata(value: PersistedMarkerMetadata) {
 
 export function isLegalPersistedMarkerMetadata(value: PersistedMarkerMetadata) {
   if (!hasCompleteMarkerMetadata(value)) return true;
-  if (!value.outcomeKind || !value.strategy || value.strategyVersion !== 1) return false;
+  if (!value.outcomeKind || !value.strategy) return false;
+  const allowedVersions: number[] = value.strategy === "composite_algebraic_equivalence" ? [1, 2] : [1];
+  if (value.strategyVersion === undefined || !allowedVersions.includes(value.strategyVersion)) return false;
   if (!MARKING_STRATEGIES.includes(value.strategy)) return false;
   if (value.outcomeKind === "graded") {
     return value.strategy !== "guided_self_check" &&
