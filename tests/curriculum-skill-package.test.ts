@@ -443,7 +443,10 @@ test("real Chain Rule package readiness accurately reflects repository evidence:
   const codes = readiness.blockers.map((blocker) => blocker.code);
   assert.ok(codes.includes("missing-notes-source"), "no Chain Rule Notes/LessonDocument exists yet");
   assert.ok(codes.includes("import-config-missing"), "no chain-rule-v6.import.json exists");
-  assert.ok(codes.includes("uncovered-question-shape"), "the trig-composite shape has no source questions yet");
+  assert.ok(
+    !codes.includes("uncovered-question-shape"),
+    "trig-composite is the only required-but-unobserved shape, and it was corrected to required: false — no uncovered-question-shape blocker should remain",
+  );
   assert.ok(codes.includes("mathematical-qa-incomplete"));
   assert.ok(codes.includes("curriculum-qa-incomplete"));
   assert.ok(codes.includes("originality-audit-incomplete"));
@@ -455,6 +458,79 @@ test("real Chain Rule package readiness accurately reflects repository evidence:
     !codes.includes("unsupported-marking-capability"),
     "all 34 Chain Rule questions are now marker-compatible (closed_vocabulary_text_answer resolves ppq-017's remaining blocker)",
   );
+});
+
+test("trig-composite and its coupled misconception remain declared as legitimate future enrichment, not deleted, with required downgraded to false", () => {
+  const trigCompositeShape = chainRulePackage.expectedShapes.find((shape) => shape.shapeId === "trig-composite");
+  assert.ok(trigCompositeShape, "the trig-composite shape entry must remain declared in the manifest");
+  assert.equal(trigCompositeShape!.required, false);
+  assert.equal(trigCompositeShape!.observedInSource, false);
+
+  const dependencyMisconception = chainRulePackage.expectedMisconceptions.find(
+    (entry) => entry.misconceptionId === "mishandled-trig-composite-dependency",
+  );
+  assert.ok(dependencyMisconception, "the mishandled-trig-composite-dependency entry must remain declared in the manifest");
+  assert.equal(dependencyMisconception!.required, false);
+  assert.equal(dependencyMisconception!.observedInSource, false);
+});
+
+test("the corrected Chain Rule manifest still validates cleanly and still declares exactly 7 shapes and 7 misconceptions", () => {
+  const report = validateSkillPackageManifest(chainRulePackage, knownHigherMathsRefs);
+  assert.deepEqual(report.errors, []);
+  assert.equal(chainRulePackage.expectedShapes.length, 7);
+  assert.equal(chainRulePackage.expectedMisconceptions.length, 7);
+});
+
+test("real Chain Rule package blocker count drops from 10 to 8 after the trig-composite manifest correction, with only the two trig-related blockers removed", () => {
+  const validation = validateSkillPackageManifest(chainRulePackage, knownHigherMathsRefs);
+  const evidence = resolveSkillPackageEvidence(chainRulePackage);
+  const readiness = deriveSkillPackageReadiness(chainRulePackage, validation, evidence);
+
+  assert.equal(readiness.blockers.length, 8);
+
+  const messages = readiness.blockers.map((blocker) => blocker.message);
+  assert.ok(!messages.some((message) => message.includes("trig-composite")), "no remaining blocker should mention trig-composite");
+  assert.ok(
+    !messages.some((message) => message.includes("mishandled-trig-composite-dependency")),
+    "no remaining blocker should mention mishandled-trig-composite-dependency",
+  );
+  assert.ok(
+    messages.some((message) => message.includes("composite-as-simple-power-rule")),
+    "composite-as-simple-power-rule was not touched by this correction and must remain an uncovered-misconception blocker",
+  );
+  assert.ok(
+    messages.some((message) => message.includes("multiplied-by-inner-function")),
+    "multiplied-by-inner-function was not touched by this correction and must remain an uncovered-misconception blocker",
+  );
+
+  const codes = readiness.blockers.map((blocker) => blocker.code);
+  assert.deepEqual(
+    [...codes].sort(),
+    [
+      "curriculum-qa-incomplete",
+      "import-config-missing",
+      "marking-qa-incomplete",
+      "mathematical-qa-incomplete",
+      "missing-notes-source",
+      "originality-audit-incomplete",
+      "uncovered-misconception",
+      "uncovered-misconception",
+    ].sort(),
+  );
+});
+
+test("this manifest correction changed neither the declared source hashes nor the QA evidence", () => {
+  for (const source of chainRulePackage.sources) {
+    if (source.kind === "notes") continue;
+    assert.equal(source.expectedSourceHash, "b86736d97716de10c0cbd44e51a064954cf4131e19d44f48a35b774e365c6294", source.kind);
+  }
+  assert.deepEqual(chainRulePackage.qaEvidence, {
+    mathematicalQaComplete: false,
+    curriculumQaComplete: false,
+    originalityAuditComplete: false,
+    markingQaComplete: false,
+    note: "chain-rule-v6.md contains informal inline \"QA note:\" author remarks (wording/mark corrections) but no structured, repository-level QA or approval record exists for this draft.",
+  });
 });
 
 test("real Chain Rule source evidence resolves the actual draft's declared question counts", () => {

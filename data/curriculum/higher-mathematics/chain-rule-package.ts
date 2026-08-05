@@ -115,9 +115,9 @@ export const chainRulePackage: SkillPackageManifest = {
     {
       shapeId: "trig-composite",
       description: "Chain rule applied to trigonometric composites; carries a question-level Trigonometric Differentiation requirement.",
-      required: true,
+      required: false,
       observedInSource: false,
-      evidenceNote: "chain-rule-v6.md's own header states patterns are \"deliberately excluded from this Chain Rule bank: trig Chain rule, stationary points, closed intervals, optimisation, integration, and normal lines.\" No trig-composite question exists in the current draft.",
+      evidenceNote: "No retained question in chain-rule-v6.md uses a trigonometric composite (its own header states patterns are \"deliberately excluded from this Chain Rule bank: trig Chain rule, stationary points, closed intervals, optimisation, integration, and normal lines\"). chainRuleContract.boundaries.includes permits this shape only through a question-level Trigonometric Differentiation dependency — it is not required by the verified official Chain Rule coverage statement, which names only composite-function differentiation in general. Deferred until Trigonometric Differentiation has live learner content, or until a later mixed-practice package is produced; its absence does not block the current algebraic Chain Rule package.",
     },
     {
       shapeId: "multi-step-exam-application",
@@ -174,9 +174,9 @@ export const chainRulePackage: SkillPackageManifest = {
     {
       misconceptionId: "mishandled-trig-composite-dependency",
       description: "Mishandling the question-level Trigonometric Differentiation dependency on a trig-composite question.",
-      required: true,
+      required: false,
       observedInSource: false,
-      evidenceNote: "No trig-composite question exists in the source yet — see the trig-composite shape requirement, which is also uncovered.",
+      evidenceNote: "Coupled to the optional \"trig-composite\" shape above: this misconception cannot be exposed by any current retained question, since none uses a trigonometric composite. It should be reconsidered alongside future trig-composite content, not tracked as an independent requirement — it is not required for the current algebraic Chain Rule package.",
     },
   ],
 
