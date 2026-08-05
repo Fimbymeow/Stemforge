@@ -442,7 +442,6 @@ test("real Chain Rule package readiness accurately reflects repository evidence:
 
   const codes = readiness.blockers.map((blocker) => blocker.code);
   assert.ok(codes.includes("missing-notes-source"), "no Chain Rule Notes/LessonDocument exists yet");
-  assert.ok(codes.includes("unsupported-marking-capability"), "the live marker cannot currently import most of chain-rule-v6.md");
   assert.ok(codes.includes("import-config-missing"), "no chain-rule-v6.import.json exists");
   assert.ok(codes.includes("uncovered-question-shape"), "the trig-composite shape has no source questions yet");
   assert.ok(codes.includes("mathematical-qa-incomplete"));
@@ -452,6 +451,10 @@ test("real Chain Rule package readiness accurately reflects repository evidence:
   assert.ok(!codes.includes("missing-foundations-source"), "chain-rule-v6.md's Foundations section does exist");
   assert.ok(!codes.includes("missing-applications-source"), "chain-rule-v6.md's Applications section does exist");
   assert.ok(!codes.includes("missing-ppq-source"), "chain-rule-v6.md's Past Paper-style Questions section does exist");
+  assert.ok(
+    !codes.includes("unsupported-marking-capability"),
+    "all 34 Chain Rule questions are now marker-compatible (closed_vocabulary_text_answer resolves ppq-017's remaining blocker)",
+  );
 });
 
 test("real Chain Rule source evidence resolves the actual draft's declared question counts", () => {

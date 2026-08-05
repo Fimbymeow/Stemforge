@@ -17,7 +17,9 @@ import type {
   MarkerCompatibilityCheck,
   RequiredCapability,
 } from "@/lib/content-import/types";
+import { buildVocabulary } from "@/lib/marking/closed-vocabulary-text";
 import type {
+  ClosedVocabularyTextAnswerMarkingContract,
   CompositeAlgebraicEquivalenceMarkingContract,
   MarkingFixtures,
   NumericMarkingContract,
@@ -167,7 +169,13 @@ function selectAssessedCandidate(question: ImportQuestionIR): {
 function analyseMarkability(question: ImportQuestionIR, candidate: ImportAnswerCandidate) {
   const blockers: ImportBlocker[] = [];
   const capability = detectCapability(question, candidate);
-  if (capability) {
+  // closed_vocabulary_text_answer is the one detected capability with a real, narrowly-scoped
+  // marker behind it — but only for the exact constrained field type the marker was designed
+  // against ("text_short"). A "nature"/"classification" typed field, or any other detected
+  // capability, still blocks immediately exactly as before: this must never widen into inferring
+  // the marker for arbitrary free-text fields merely because they happen to declare aliases.
+  const isNarrowClosedVocabularyField = capability === "closed_vocabulary_text_answer" && candidate.type.toLowerCase() === "text_short";
+  if (capability && !isNarrowClosedVocabularyField) {
     blockers.push({ code: `requires_${capability}`, message: `Answer requires unsupported capability "${capability}".`, requiredCapability: capability, candidateId: candidate.id });
     return { blockers, compatibility: { aliasOutcomes: [] } as MarkerCompatibilityCheck, correctAnswer: candidate.correctAnswer, lexicallyNormalised: false };
   }
@@ -175,7 +183,18 @@ function analyseMarkability(question: ImportQuestionIR, candidate: ImportAnswerC
   const rawCorrect = candidate.correctAnswer;
   const correctAnswer = normalizeMarkerLexeme(rawCorrect);
   let contract: QuestionMarkingContract | undefined;
-  if (interaction === "multiple_choice") {
+  if (isNarrowClosedVocabularyField) {
+    const closedVocabulary = closedVocabularyTextAnswerContract(candidate);
+    if (closedVocabulary && markQuestionAnswer({ marking: closedVocabulary }, closedVocabulary.target).outcomeKind === "graded") contract = closedVocabulary;
+    else {
+      blockers.push({
+        code: "requires_closed_vocabulary_text_answer",
+        message: 'Answer requires unsupported capability "closed_vocabulary_text_answer".',
+        requiredCapability: "closed_vocabulary_text_answer",
+        candidateId: candidate.id,
+      });
+    }
+  } else if (interaction === "multiple_choice") {
     const options = parseOptions(question.questionText);
     const authority = resolveMultipleChoiceAuthority(rawCorrect, options);
     const duplicateValues = hasDuplicates(options.map((option) => option.value));
@@ -210,7 +229,12 @@ function analyseMarkability(question: ImportQuestionIR, candidate: ImportAnswerC
   const aliasOutcomes = contract ? aliases.map((answer) => {
     const submitted = contract.strategy === "multiple_choice"
       ? resolveMultipleChoiceAuthority(answer, parseOptions(question.questionText)) ?? answer
-      : normalizeMarkerLexeme(answer);
+      // Closed-vocabulary text is never routed through the LaTeX/math-lexeme normaliser — an
+      // authored phrase could legitimately start with "A. " or contain other math-specific tokens
+      // that normalizeMarkerLexeme would mangle; the marker's own narrow text normaliser handles it.
+      : contract.strategy === "closed_vocabulary_text_answer"
+        ? answer
+        : normalizeMarkerLexeme(answer);
     const result = markQuestionAnswer({ marking: contract }, submitted);
     return { answer, outcomeKind: result.outcomeKind, isCorrect: result.isCorrect };
   }) : [];
@@ -225,7 +249,9 @@ function analyseMarkability(question: ImportQuestionIR, candidate: ImportAnswerC
       }
     });
   }
-  const canonicalCorrectAnswer = contract?.strategy === "multiple_choice" ? contract.correctOptionId : correctAnswer;
+  const canonicalCorrectAnswer = contract?.strategy === "multiple_choice" ? contract.correctOptionId
+    : contract?.strategy === "closed_vocabulary_text_answer" ? contract.target
+    : correctAnswer;
   const targetOutcome = contract ? markQuestionAnswer({ marking: contract }, canonicalCorrectAnswer).outcomeKind : undefined;
   return {
     blockers,
@@ -251,7 +277,10 @@ function toCanonicalQuestion(
 ): Question {
   const path = registry.paths.get(pathSlug);
   if (!path) throw new Error(`unknown_import_path:${pathSlug}`);
-  const answerType = marking.strategy === "multiple_choice" ? "multiple_choice" : marking.strategy === "numeric" ? "numerical" : "algebraic";
+  const answerType = marking.strategy === "multiple_choice" ? "multiple_choice"
+    : marking.strategy === "numeric" ? "numerical"
+    : marking.strategy === "closed_vocabulary_text_answer" ? "written"
+    : "algebraic";
   const options = marking.strategy === "multiple_choice" ? parseOptions(source.questionText) : undefined;
   return {
     id: source.id,
@@ -274,7 +303,9 @@ function toCanonicalQuestion(
     correctAnswer,
     acceptedAnswers: marking.strategy === "multiple_choice"
       ? [marking.correctOptionId]
-      : unique(candidate.acceptedAnswers.map(normalizeMarkerLexeme)),
+      : marking.strategy === "closed_vocabulary_text_answer"
+        ? marking.acceptedAnswers
+        : unique(candidate.acceptedAnswers.map(normalizeMarkerLexeme)),
     ...(options?.length ? { options } : {}),
     workedSolution: source.workedSolution,
     finalAnswer: correctAnswer,
@@ -358,6 +389,31 @@ function compositeAlgebraicContract(target: string, accepted: string[]): Composi
 
 function fixtures(correct: string[]): MarkingFixtures {
   return { correct: correct.map((input) => ({ input })), incorrect: [{ input: correct.includes("0") ? "1" : "0" }], malformed: [{ input: "++" }], unmarkable: [{ input: "sin(x)" }] };
+}
+
+/**
+ * Builds a validated closed-vocabulary contract from a candidate's raw correctAnswer/acceptedAnswers
+ * — never routed through normalizeMarkerLexeme (that normaliser is LaTeX/math-lexeme specific and
+ * would mangle plain text). Returns undefined if the declared vocabulary fails validation (empty,
+ * too many entries, an entry too long, an ambiguous duplicate after normalisation, or a target not
+ * present in its own vocabulary) — the caller then falls back to blocking, exactly like the
+ * numeric/polynomial/composite ladder does when no contract can be built.
+ */
+function closedVocabularyTextAnswerContract(candidate: ImportAnswerCandidate): ClosedVocabularyTextAnswerMarkingContract | undefined {
+  const target = candidate.correctAnswer;
+  const acceptedAnswers = unique(candidate.acceptedAnswers.length ? candidate.acceptedAnswers : [target]);
+  const validation = buildVocabulary({ target, acceptedAnswers });
+  if (validation.status !== "valid") return undefined;
+  return { strategy: "closed_vocabulary_text_answer", strategyVersion: 1, target, acceptedAnswers, fixtures: closedVocabularyFixtures(acceptedAnswers) };
+}
+
+function closedVocabularyFixtures(correct: string[]): MarkingFixtures {
+  return {
+    correct: correct.map((input) => ({ input })),
+    incorrect: [{ input: "definitely not in the declared vocabulary" }],
+    malformed: [{ input: "" }],
+    unmarkable: [{ input: String.fromCharCode(7) }],
+  };
 }
 
 export function normalizeMarkerLexeme(value: string) {

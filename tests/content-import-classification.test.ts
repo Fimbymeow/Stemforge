@@ -254,7 +254,7 @@ test("undeclared multi-field answers block while explicit single-assessed scaffo
 
 test("closed vocabulary, prompt diagrams, graph responses and repeated coordinate/nature groups have bounded blocker codes", () => {
   const cases: Array<[ReturnType<typeof questionIR>, RequiredCapability]> = [
-    [questionIR({ answerCandidates: [candidate("maximum", "text_short")] }), "closed_vocabulary_text_answer"],
+    [questionIR({ answerCandidates: [candidate("maximum", "classification")] }), "closed_vocabulary_text_answer"],
     [questionIR({ questionText: "Use the diagram shown below.", answerCandidates: [candidate("2x", "algebraic")] }), "prompt_diagram"],
     [questionIR({ interactionType: "graph", answerCandidates: [candidate("graph", "graph")] }), "graph_response"],
     [questionIR({
@@ -268,6 +268,51 @@ test("closed vocabulary, prompt diagrams, graph responses and repeated coordinat
     const classification = auditBankAssessment(syntheticBank(question))[0];
     assert.ok(classification.blockers.some((item) => item.requiredCapability === capability), capability);
   }
+});
+
+test("a constrained text_short field with a small explicit vocabulary infers closed_vocabulary_text_answer, and every declared alias grades correct", () => {
+  const classification = auditBankAssessment(syntheticBank(questionIR({
+    answerCandidates: [{ ...candidate("C1", "text_short"), acceptedAnswers: ["C1", "curve C1", "first curve"] }],
+  })))[0];
+  assert.notEqual(classification.status, "blocked");
+  assert.equal(classification.markerCompatibility?.strategy, "closed_vocabulary_text_answer");
+  assert.equal(classification.markerCompatibility?.strategyVersion, 1);
+  assert.equal(classification.markerCompatibility?.targetOutcome, "graded");
+  assert.ok(classification.markerCompatibility?.aliasOutcomes.every((outcome) => outcome.isCorrect === true));
+});
+
+test("plausible non-vocabulary answers grade incorrect for a constrained text_short field, never merely blocked", () => {
+  const contract = { strategy: "closed_vocabulary_text_answer" as const, strategyVersion: 1 as const, target: "C1", acceptedAnswers: ["C1", "curve C1"], fixtures: { correct: [], incorrect: [], malformed: [], unmarkable: [] } };
+  for (const wrong of ["C2", "both curves", "probably C1"]) {
+    const result = markQuestionAnswer({ marking: contract }, wrong);
+    assert.equal(result.outcomeKind, "graded", wrong);
+    assert.equal(result.isCorrect, false, wrong);
+  }
+});
+
+test("unsupported free-text questions do not automatically infer closed_vocabulary_text_answer merely because they have aliases: nature/classification-typed fields still block", () => {
+  for (const type of ["nature", "classification", "text"]) {
+    const classification = auditBankAssessment(syntheticBank(questionIR({
+      answerCandidates: [{ ...candidate("Maximum", type), acceptedAnswers: ["Maximum", "max", "a maximum point"] }],
+    })))[0];
+    assert.equal(classification.status, "blocked", type);
+    assert.ok(classification.blockers.some((item) => item.code === "requires_closed_vocabulary_text_answer"), type);
+  }
+});
+
+test("a text_short field whose declared vocabulary is invalid (too many entries, or an ambiguous duplicate) still blocks rather than silently accepting", () => {
+  const tooMany = Array.from({ length: 13 }, (_, index) => `option ${index}`);
+  const tooManyEntries = auditBankAssessment(syntheticBank(questionIR({
+    answerCandidates: [{ ...candidate(tooMany[0], "text_short"), acceptedAnswers: tooMany }],
+  })))[0];
+  assert.equal(tooManyEntries.status, "blocked");
+  assert.ok(tooManyEntries.blockers.some((item) => item.code === "requires_closed_vocabulary_text_answer"));
+
+  const ambiguousDuplicate = auditBankAssessment(syntheticBank(questionIR({
+    answerCandidates: [{ ...candidate("C1", "text_short"), acceptedAnswers: ["C1", "c1"] }],
+  })))[0];
+  assert.equal(ambiguousDuplicate.status, "blocked");
+  assert.ok(ambiguousDuplicate.blockers.some((item) => item.code === "requires_closed_vocabulary_text_answer"));
 });
 
 test("field-level collision diffs distinguish hint, solution, answers, marks, calculator and placement changes", () => {
@@ -399,17 +444,17 @@ test("A009 has canonical 1 with no unsupported aliases and is ready", () => {
   assert.deepEqual(classification.blockers, []);
 });
 
-test("the post-V2-authoring-cleanup Chain Rule draft produces exactly 23 ready / 10 convertible / 1 blocked", () => {
+test("the fully marker-compatible Chain Rule draft produces exactly 23 ready / 11 convertible / 0 blocked", () => {
   const bank = loadBank("chain-rule-v6.md");
   const classifications = auditBankAssessment(bank);
   const counts = { ready: 0, convertible: 0, blocked: 0 };
   for (const c of classifications) counts[c.status as "ready" | "convertible" | "blocked"] += 1;
-  assert.deepEqual(counts, { ready: 23, convertible: 10, blocked: 1 });
+  assert.deepEqual(counts, { ready: 23, convertible: 11, blocked: 0 });
   assert.equal(bank.questions.length, 34);
 
-  // The 12 V1-capable and 7 V2-capable questions now carry zero blockers of any kind, including
-  // unsupported_intended_alias — every declared alias list contains only bare-expression forms.
-  assert.ok(!classifications.some((c) => c.blockers.some((b) => b.code === "unsupported_intended_alias")));
+  // Every question now carries zero blockers of any kind, including unsupported_intended_alias —
+  // every declared alias list contains only forms the live strategies actually accept.
+  assert.ok(!classifications.some((c) => c.blockers.length > 0));
 
   const readyIds = classifications.filter((c) => c.status === "ready").map((c) => c.questionId).sort();
   assert.deepEqual(readyIds, [
@@ -445,21 +490,14 @@ test("the post-V2-authoring-cleanup Chain Rule draft produces exactly 23 ready /
     "hm-calc-diff-chain-ppq-012",
     "hm-calc-diff-chain-ppq-015",
     "hm-calc-diff-chain-ppq-016",
+    "hm-calc-diff-chain-ppq-017",
     "hm-calc-diff-chain-ppq-018",
     "hm-calc-diff-chain-ppq-019",
     "hm-calc-diff-chain-ppq-020",
     "hm-calc-diff-chain-ppq-021",
   ]);
   const blockedIds = classifications.filter((c) => c.status === "blocked").map((c) => c.questionId).sort();
-  assert.deepEqual(blockedIds, ["hm-calc-diff-chain-ppq-017"]);
-
-  const bySection = { Foundations: 0, Applications: 0, "Past Paper-style Questions": 0 };
-  for (const c of classifications) {
-    if (c.status !== "blocked") continue;
-    const q = bank.questions.find((item) => item.id === c.questionId)!;
-    bySection[q.declaredStage as keyof typeof bySection] += 1;
-  }
-  assert.deepEqual(bySection, { Foundations: 0, Applications: 0, "Past Paper-style Questions": 1 });
+  assert.deepEqual(blockedIds, []);
 });
 
 test("all 12 V1-repaired questions reach composite_algebraic_equivalence with every declared alias grading correct and no dy/dx= alias remaining", () => {
@@ -525,7 +563,7 @@ test("real Chain Rule V2 regression: all seven V2 target questions reach ready o
   }
 });
 
-test("ppq-017's metadata correction removes undeclared_multi_field_assessment and honestly reveals a genuinely new capability gap on its comparison field", () => {
+test("ppq-017's greater_gradient field now resolves through closed_vocabulary_text_answer: every real declared alias grades correct and the question is no longer blocked", () => {
   const bank = loadBank("chain-rule-v6.md");
   const question = bank.questions.find((item) => item.id === "hm-calc-diff-chain-ppq-017")!;
   const scaffolding = ["c1_derivative", "c1_gradient", "c2_derivative", "c2_gradient"];
@@ -535,21 +573,26 @@ test("ppq-017's metadata correction removes undeclared_multi_field_assessment an
   }
   const greaterGradient = question.answerCandidates.find((item) => item.id === "greater_gradient")!;
   assert.equal(greaterGradient.assessed, true);
-  // No mathematical value changed by the metadata correction.
+  assert.equal(greaterGradient.type, "text_short");
+  // No mathematical value or wording changed by this task.
   assert.equal(question.answerCandidates.find((item) => item.id === "c1_gradient")!.correctAnswer, "108");
   assert.equal(question.answerCandidates.find((item) => item.id === "c2_gradient")!.correctAnswer, "12");
   assert.equal(greaterGradient.correctAnswer, "C1");
+  assert.deepEqual(greaterGradient.acceptedAnswers, ["C1", "curve C1", "first curve", "y=(x+2)^4"]);
 
   const classification = auditBankAssessment(bank).find((item) => item.questionId === "hm-calc-diff-chain-ppq-017")!;
   assert.ok(!classification.blockers.some((b) => b.code === "undeclared_multi_field_assessment"));
   assert.ok(classification.conversions.includes("explicit_scaffolding_field_drop"));
-  // Honest result: this is not V2-related and does not become convertible. greater_gradient is a
-  // closed-vocabulary text answer, a capability this repository has never implemented — the real
-  // classifier reports that directly rather than the task's speculative "likely convertible" guess.
-  assert.equal(classification.status, "blocked");
-  assert.deepEqual(classification.blockers.map((b) => b.code), ["requires_closed_vocabulary_text_answer"]);
-  assert.equal(classification.blockers[0].requiredCapability, "closed_vocabulary_text_answer");
-  assert.equal(classification.blockers[0].candidateId, "greater_gradient");
+  assert.deepEqual(classification.blockers, []);
+  assert.notEqual(classification.status, "blocked");
+  assert.equal(classification.markerCompatibility?.strategy, "closed_vocabulary_text_answer");
+  assert.equal(classification.markerCompatibility?.strategyVersion, 1);
+  assert.equal(classification.markerCompatibility?.targetOutcome, "graded");
+  assert.deepEqual(
+    classification.markerCompatibility?.aliasOutcomes.map((outcome) => outcome.answer).sort(),
+    ["C1", "curve C1", "first curve", "y=(x+2)^4"].sort(),
+  );
+  assert.ok(classification.markerCompatibility?.aliasOutcomes.every((outcome) => outcome.isCorrect === true));
 });
 
 test("undeclared_multi_field_assessment no longer appears anywhere in the Chain Rule draft", () => {
