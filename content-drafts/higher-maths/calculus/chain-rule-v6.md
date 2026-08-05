@@ -1290,6 +1290,7 @@ answerFields:
       - (5x + 4)^(1/2)
       - (5x+4)^0.5
       - sqrt(5x+4)
+    assessed: false
 
   - id: derivative
     label: Derivative
@@ -1302,6 +1303,7 @@ answerFields:
       - 5/(2sqrt(5x + 4))
       - 5/(2*sqrt(5x+4))
       - dy/dx=(5/2)(5x+4)^(-1/2)
+    assessed: true
 ```
 
 Hint:  
@@ -1575,6 +1577,7 @@ answerFields:
       - 4(x+2)^3
       - 4*(x+2)^3
       - 4(x + 2)^3
+    assessed: false
 
   - id: c1_gradient
     label: Gradient of C1 at x = 1
@@ -1582,6 +1585,7 @@ answerFields:
     correctAnswer: 108
     acceptedAnswers:
       - 108
+    assessed: false
 
   - id: c2_derivative
     label: Derivative of C2
@@ -1590,6 +1594,7 @@ answerFields:
     acceptedAnswers:
       - 12x
       - dy/dx=12x
+    assessed: false
 
   - id: c2_gradient
     label: Gradient of C2 at x = 1
@@ -1597,6 +1602,7 @@ answerFields:
     correctAnswer: 12
     acceptedAnswers:
       - 12
+    assessed: false
 
   - id: greater_gradient
     label: Curve with greater gradient
@@ -1607,6 +1613,7 @@ answerFields:
       - curve C1
       - first curve
       - y=(x+2)^4
+    assessed: true
 ```
 
 Hint:  
