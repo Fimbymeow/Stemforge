@@ -17,15 +17,30 @@ const INCLUDED = [
 
 const FAQS = [
   {
-    question: "Is there a free trial?",
-    answer: "Yes — your first session is free, so you can see if it's the right fit before committing to more.",
+    question: "Who teaches the lessons?",
+    answer:
+      "Finlay Kennedy — achieved A grades across all five Highers (Maths, Physics, Chemistry, Biology and English) and is currently studying Advanced Higher Maths, Physics and Chemistry.",
+  },
+  {
+    question: "Why choose a recent student tutor?",
+    answer:
+      "The material and exam pressure are still fresh, having just been through the same courses. That recency is combined with structured, one-to-one preparation — not a comparison against what a qualified teacher offers.",
+  },
+  {
+    question: "Which subjects and levels are available?",
+    answer: "National 5 and Higher Maths, and National 5 and Higher Physics.",
+  },
+  {
+    question: "What happens in the free first session?",
+    answer:
+      "Your first session is free with no obligation — it's a chance to talk through your goals and see if it's the right fit before booking any further sessions.",
   },
   {
     question: "Are sessions online or in person?",
     answer: "All sessions are conducted online.",
   },
   {
-    question: "How do I book?",
+    question: "What happens after I enquire?",
     answer: "Send an enquiry through the contact form (or email directly) and you'll get a reply to arrange your first free session.",
   },
 ] as const;
@@ -73,7 +88,7 @@ export function TuitionPricing() {
                   </ul>
                 </div>
                 <TuitionButtonLink href="/tuition#contact" className="w-full">
-                  Book a free trial
+                  Enquire about a free trial
                 </TuitionButtonLink>
               </article>
             </TuitionReveal>

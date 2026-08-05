@@ -31,7 +31,7 @@ export function TuitionNavbar() {
           <Link href="/" className="text-[13px] font-semibold text-muted">
             Back to STEM Forge
           </Link>
-          <TuitionButtonLink href="/tuition#contact">Book a session</TuitionButtonLink>
+          <TuitionButtonLink href="/tuition#contact">Free first session</TuitionButtonLink>
         </div>
       </nav>
     </header>

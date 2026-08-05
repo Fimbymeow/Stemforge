@@ -73,9 +73,12 @@ export function TuitionContactForm() {
             type="submit"
             className="inline-flex min-h-11 items-center justify-center rounded-md border border-ink bg-ink px-6 text-sm font-extrabold uppercase text-white"
           >
-            Send enquiry
+            Open email to send enquiry
           </button>
-          <p className="mt-2 text-xs text-white/70">Opens your email app with your message ready to send.</p>
+          <p className="mt-2 text-xs text-muted">
+            This opens your device&apos;s email app with the message pre-filled — it doesn&apos;t submit anything
+            directly. If nothing opens, use the email address opposite instead; your details above won&apos;t be lost.
+          </p>
         </div>
       </form>
       <div className="grid content-start gap-3 rounded-xl border border-white/25 p-7 text-white">

@@ -6,23 +6,23 @@ import { TuitionReveal } from "@/components/tuition/tuition-reveal";
 const points = [
   {
     icon: Target,
-    title: "Personalised learning",
-    copy: "Bespoke lessons addressing your specific weaknesses and pushing your boundaries.",
+    title: "Focused one-to-one support",
+    copy: "Sessions concentrate on the exact methods and question types causing difficulty, rather than following a fixed class pace.",
   },
   {
     icon: BookOpen,
-    title: "Deep understanding",
-    copy: "Go beyond rote memorisation to build a genuine grasp of the method, not just the answer.",
+    title: "Clear explanations followed by practice",
+    copy: "We first make the method understandable, then use guided and independent questions to ensure it can actually be applied.",
   },
   {
     icon: Compass,
-    title: "Exam-focused",
-    copy: "Strategic preparation tailored to the National 5 and Higher SQA specifications.",
+    title: "Current Scottish course focus",
+    copy: "Lessons are built around National 5 and Higher course requirements and recurring exam-style skills.",
   },
   {
     icon: TrendingUp,
-    title: "Built on real practice",
-    copy: "Every session complements the same structured, worked-solution practice behind STEM Forge.",
+    title: "Original STEM Forge practice",
+    copy: "Where useful, sessions can draw on original staged questions developed through STEM Forge, progressing from direct fluency to harder applications.",
   },
 ] as const;
 
@@ -35,13 +35,13 @@ export function TuitionDifference() {
         </TuitionReveal>
         <TuitionReveal delayMs={60}>
           <h2 className={`${lora.className} mx-auto mb-4 mt-5 max-w-[680px] text-center text-[clamp(28px,3.6vw,40px)] font-bold leading-[1.15]`}>
-            No more monotonous lectures.
+            How each lesson is structured.
           </h2>
         </TuitionReveal>
         <TuitionReveal delayMs={120}>
           <p className="mx-auto mb-14 max-w-[600px] text-center text-lg leading-[1.5] text-muted">
-            Master content and exam technique with a methodical approach. One-to-one learning enables every
-            learner to reach their potential.
+            One-to-one time is used to work directly on the methods and questions causing difficulty, with clear
+            explanations and exam-style practice throughout.
           </p>
         </TuitionReveal>
         <div className="grid grid-cols-2 gap-x-12 gap-y-10 max-md:grid-cols-1">

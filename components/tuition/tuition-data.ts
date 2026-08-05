@@ -69,3 +69,16 @@ export const tuitionLevels: TuitionLevel[] = [
 export function getTuitionLevelBySlug(slug: string) {
   return tuitionLevels.find((level) => level.slug === slug);
 }
+
+export type TuitionTestimonial = {
+  quote: string;
+  name: string;
+  detail: string;
+};
+
+/**
+ * Empty until real student feedback exists. TuitionTestimonials gates its own rendering on
+ * this array's length, so the section (heading included) simply doesn't render while empty —
+ * never populate this with invented quotes, ratings, or student counts.
+ */
+export const tuitionTestimonials: TuitionTestimonial[] = [];

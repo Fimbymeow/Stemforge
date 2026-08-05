@@ -9,10 +9,11 @@ export function TuitionCta() {
         <TuitionReveal>
           <p className="m-0 text-center text-[12.5px] font-extrabold uppercase tracking-wide text-warning-soft">Get started</p>
           <p className={`${lora.className} m-0 mt-3 text-center text-[clamp(26px,3.4vw,36px)] font-bold text-white`}>
-            Ready to elevate your results?
+            Ready to get started?
           </p>
           <p className="mx-auto mt-3 max-w-[520px] text-center text-base leading-relaxed text-white/80">
-            Send a few details below and you&apos;ll get a reply directly, or email us straight away.
+            Your first session is free — send a few details below and you&apos;ll get a reply directly, or email
+            us straight away.
           </p>
         </TuitionReveal>
         <TuitionReveal delayMs={100} className="mt-9">

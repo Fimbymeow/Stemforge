@@ -4,12 +4,14 @@ import { TuitionCta } from "@/components/tuition/tuition-cta";
 import { TuitionDifference } from "@/components/tuition/tuition-difference";
 import { TuitionFooter } from "@/components/tuition/tuition-footer";
 import { TuitionHero } from "@/components/tuition/tuition-hero";
+import { TuitionIntro } from "@/components/tuition/tuition-intro";
 import { TuitionNavbar } from "@/components/tuition/tuition-navbar";
 import { TuitionTestimonials } from "@/components/tuition/tuition-testimonials";
 
 export const metadata: Metadata = {
   title: "Tuition",
-  description: "Specialist one-to-one tuition in National 5 and Higher Maths and Physics, from the team behind STEM Forge.",
+  description:
+    "One-to-one National 5 and Higher Maths and Physics tuition from Finlay Kennedy, who achieved A grades across five Highers and is building STEM Forge.",
 };
 
 export default function TuitionPage() {
@@ -20,6 +22,7 @@ export default function TuitionPage() {
         <TuitionHero />
         <TuitionCourses />
         <TuitionDifference />
+        <TuitionIntro />
         <TuitionTestimonials />
         <TuitionCta />
       </main>

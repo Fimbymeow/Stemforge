@@ -1,22 +1,16 @@
 import { lora } from "@/components/tuition/tuition-fonts";
 import { TuitionKicker } from "@/components/tuition/tuition-kicker";
 import { TuitionReveal } from "@/components/tuition/tuition-reveal";
+import { tuitionTestimonials } from "@/components/tuition/tuition-data";
 
-// Placeholder quotes — replace both with real student feedback before this page goes live.
-const testimonials = [
-  {
-    quote: "[Add a real student quote here — what result did they get, and how did tuition help?]",
-    name: "[Student name]",
-    detail: "[Level, e.g. Higher Maths student]",
-  },
-  {
-    quote: "[Add a second real student quote here.]",
-    name: "[Student name]",
-    detail: "[Level, e.g. National 5 Physics student]",
-  },
-] as const;
-
+/**
+ * Renders nothing at all — heading included — until tuitionTestimonials has at least one real
+ * entry. Never seed this with placeholder or invented quotes to make the section "look done";
+ * an empty state here is more honest than fabricated social proof.
+ */
 export function TuitionTestimonials() {
+  if (tuitionTestimonials.length === 0) return null;
+
   return (
     <section className="mx-auto w-[min(1120px,calc(100%_-_40px))] py-20">
       <TuitionReveal className="text-center">
@@ -28,7 +22,7 @@ export function TuitionTestimonials() {
         </h2>
       </TuitionReveal>
       <div className="grid grid-cols-2 gap-6 max-md:grid-cols-1">
-        {testimonials.map((testimonial, index) => (
+        {tuitionTestimonials.map((testimonial, index) => (
           <TuitionReveal key={index} delayMs={index * 90} className="h-full">
             <figure className="relative m-0 h-full overflow-hidden rounded-[6px] border border-line bg-white p-7 transition duration-300 ease-out hover:-translate-y-1 hover:shadow-card">
               <span className={`${lora.className} pointer-events-none absolute -left-1 -top-6 text-[110px] italic leading-none text-warning-soft`} aria-hidden="true">

@@ -5,7 +5,8 @@ import { TuitionNavbar } from "@/components/tuition/tuition-navbar";
 
 export const metadata: Metadata = {
   title: "About — Tuition",
-  description: "Meet the tutor behind STEM Forge's National 5 and Higher Maths and Physics tuition.",
+  description:
+    "Finlay Kennedy, 17, achieved A grades across five Highers and is now studying Advanced Higher Maths, Physics and Chemistry while tutoring National 5 and Higher Maths and Physics.",
 };
 
 export default function TuitionAboutPage() {

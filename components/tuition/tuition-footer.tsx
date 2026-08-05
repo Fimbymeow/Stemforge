@@ -8,7 +8,7 @@ export function TuitionFooter() {
         <div>
           <p className="m-0 text-lg font-extrabold text-ink">STEM Forge Tuition</p>
           <p className="mt-2 max-w-[280px] text-sm leading-relaxed text-muted max-md:mx-auto">
-            One-to-one National 5 and Higher tuition, from the team behind STEM Forge.
+            One-to-one National 5 and Higher tuition from Finlay Kennedy, who is also building STEM Forge.
           </p>
         </div>
         <div>
