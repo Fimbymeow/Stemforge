@@ -369,26 +369,52 @@ function compareSourceQuestion(existing: Question, source: ImportQuestionIR): Co
 
 function numericContract(target: string, accepted: string[]): NumericMarkingContract | undefined {
   if (!/^[-+]?(?:\d+(?:\.\d+)?|\.\d+|\d+\/[-+]?\d+)$/.test(target)) return undefined;
-  return { strategy: "numeric", strategyVersion: 1, target, comparison: { type: "exact" }, fixtures: fixtures(unique([target, ...accepted])) };
+  return { strategy: "numeric", strategyVersion: 1, target, comparison: { type: "exact" }, fixtures: fixtures(unique([target, ...accepted]), "numeric") };
 }
 
 function polynomialContract(target: string, accepted: string[]): PolynomialMarkingContract | undefined {
   if (!/[a-z]/i.test(target)) return undefined;
-  return { strategy: "polynomial_form", strategyVersion: 1, target, variable: inferVariable(target), fixtures: fixtures(unique([target, ...accepted])) };
+  return { strategy: "polynomial_form", strategyVersion: 1, target, variable: inferVariable(target), fixtures: fixtures(unique([target, ...accepted]), "polynomial_form") };
 }
 
 function compositeAlgebraicContract(target: string, accepted: string[]): CompositeAlgebraicEquivalenceMarkingContract | undefined {
   if (!/[a-z]/i.test(target) || /=/.test(target)) return undefined;
   const variable = inferVariable(target);
-  const v1: CompositeAlgebraicEquivalenceMarkingContract = { strategy: "composite_algebraic_equivalence", strategyVersion: 1, target, variable, fixtures: fixtures(unique([target, ...accepted])) };
+  const v1: CompositeAlgebraicEquivalenceMarkingContract = { strategy: "composite_algebraic_equivalence", strategyVersion: 1, target, variable, fixtures: fixtures(unique([target, ...accepted]), "composite_algebraic_equivalence") };
   if (markQuestionAnswer({ marking: v1 }, target).outcomeKind === "graded") return v1;
-  const v2: CompositeAlgebraicEquivalenceMarkingContract = { strategy: "composite_algebraic_equivalence", strategyVersion: 2, target, variable, fixtures: fixtures(unique([target, ...accepted])) };
+  const v2: CompositeAlgebraicEquivalenceMarkingContract = { strategy: "composite_algebraic_equivalence", strategyVersion: 2, target, variable, fixtures: fixtures(unique([target, ...accepted]), "composite_algebraic_equivalence") };
   if (markQuestionAnswer({ marking: v2 }, target).outcomeKind === "graded") return v2;
   return undefined;
 }
 
-function fixtures(correct: string[]): MarkingFixtures {
-  return { correct: correct.map((input) => ({ input })), incorrect: [{ input: correct.includes("0") ? "1" : "0" }], malformed: [{ input: "++" }], unmarkable: [{ input: "sin(x)" }] };
+// Reasons attached below are the exact legal values per strategy in isLegalPersistedMarkerMetadata
+// (lib/marking/types.ts) — malformed/unmarkable reasons differ per strategy; "value_wrong" for
+// incorrect is legal across every graded, non-guided strategy. The probe inputs ("0"/"1", "++",
+// "sin(x)") are unchanged from before and were independently confirmed against the real marker for
+// every strategy that reaches this helper (numeric, polynomial_form, composite_algebraic_equivalence
+// V1 and V2) to actually produce the outcome the attached reason declares.
+const FIXTURE_MALFORMED_REASON = {
+  numeric: "malformed_numeric",
+  polynomial_form: "malformed_polynomial",
+  composite_algebraic_equivalence: "malformed_composite_expression",
+} as const;
+const FIXTURE_UNMARKABLE_REASON = {
+  numeric: "expression_not_permitted",
+  polynomial_form: "unsupported_mathematical_form",
+  composite_algebraic_equivalence: "unsupported_mathematical_form",
+} as const;
+
+function fixtures(correct: string[], strategy?: keyof typeof FIXTURE_MALFORMED_REASON): MarkingFixtures {
+  const incorrectInput = correct.includes("0") ? "1" : "0";
+  if (!strategy) {
+    return { correct: correct.map((input) => ({ input })), incorrect: [{ input: incorrectInput }], malformed: [{ input: "++" }], unmarkable: [{ input: "sin(x)" }] };
+  }
+  return {
+    correct: correct.map((input) => ({ input })),
+    incorrect: [{ input: incorrectInput, reason: "value_wrong" }],
+    malformed: [{ input: "++", reason: FIXTURE_MALFORMED_REASON[strategy] }],
+    unmarkable: [{ input: "sin(x)", reason: FIXTURE_UNMARKABLE_REASON[strategy] }],
+  };
 }
 
 /**
@@ -410,9 +436,9 @@ function closedVocabularyTextAnswerContract(candidate: ImportAnswerCandidate): C
 function closedVocabularyFixtures(correct: string[]): MarkingFixtures {
   return {
     correct: correct.map((input) => ({ input })),
-    incorrect: [{ input: "definitely not in the declared vocabulary" }],
-    malformed: [{ input: "" }],
-    unmarkable: [{ input: String.fromCharCode(7) }],
+    incorrect: [{ input: "definitely not in the declared vocabulary", reason: "value_wrong" }],
+    malformed: [{ input: "", reason: "malformed_closed_vocabulary_text" }],
+    unmarkable: [{ input: String.fromCharCode(7), reason: "expression_not_permitted" }],
   };
 }
 

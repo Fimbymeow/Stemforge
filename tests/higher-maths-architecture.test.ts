@@ -51,9 +51,9 @@ test("every path resolves to a strand declared by its own course area", () => {
   }
 });
 
-test("all 48 future paths are honest zero-contribution placeholders", () => {
+test("all 47 future paths are honest zero-contribution placeholders", () => {
   const placeholders = allPathRecords().filter(({ skillPath }) => !skillPath.isAvailable);
-  assert.equal(placeholders.length, 48);
+  assert.equal(placeholders.length, 47);
   for (const { skillPath } of placeholders) {
     assert.notEqual(skillPath.status, "available");
     assert.equal(skillPath.questions, 0);
@@ -89,7 +89,7 @@ test("Basic differentiation and every pre-Sprint-B Calculus path retain their id
 test("expanded taxonomy leaves learner completion totals and percentages unchanged", () => {
   const resolver = createContentResolver(canonicalContent);
   const allPaths = resolver.getAllPathContexts().map((context) => context.skillPath);
-  const baselinePaths = allPaths.filter((path) => path.slug === "basic-differentiation");
+  const baselinePaths = allPaths.filter((path) => path.slug === "basic-differentiation" || path.slug === "chain-rule");
   const completedEvidence = evidence(
     resolver.getPathQuestions("basic-differentiation").map((question, index) =>
       attempt({
@@ -104,11 +104,11 @@ test("expanded taxonomy leaves learner completion totals and percentages unchang
   );
   const before = deriveCourseDashboardSummary(baselinePaths, completedEvidence, resolver.getQuestionVersions());
   const after = deriveCourseDashboardSummary(allPaths, completedEvidence, resolver.getQuestionVersions());
-  assert.equal(before.totalQuestions, 8);
+  assert.equal(before.totalQuestions, 42);
   assert.equal(after.totalQuestions, before.totalQuestions);
   assert.equal(after.completedQuestions, before.completedQuestions);
   assert.equal(after.completionPercentage, before.completionPercentage);
-  assert.equal(after.availablePathCount, 1);
+  assert.equal(after.availablePathCount, 2);
 });
 
 test("recommendations, practice and active Question Bank queries ignore placeholders", () => {
@@ -116,11 +116,11 @@ test("recommendations, practice and active Question Bank queries ignore placehol
   const next = deriveLearnerNextAction({ evidence: evidence(), source: canonicalContent });
   assert.equal(next.pathId, "basic-differentiation");
   const practice = discoverEligiblePracticeQuestions(canonicalContent);
-  assert.deepEqual(new Set(practice.eligible.map((entry) => entry.reference.pathId)), new Set(["basic-differentiation"]));
-  assert.equal(practice.eligible.length, 8);
+  assert.deepEqual(new Set(practice.eligible.map((entry) => entry.reference.pathId)), new Set(["basic-differentiation", "chain-rule"]));
+  assert.equal(practice.eligible.length, 42);
   const bank = queryAvailableQuestionBankQuestions(resolver, evidence(), { subjectSlug: "higher-maths" });
-  assert.equal(bank.length, 8);
-  assert(bank.every((entry) => entry.context.skillPath.slug === "basic-differentiation"));
+  assert.equal(bank.length, 42);
+  assert(bank.every((entry) => entry.context.skillPath.slug === "basic-differentiation" || entry.context.skillPath.slug === "chain-rule"));
 });
 
 test("content validation rejects broken strands, duplicate slugs and dishonest placeholders", () => {

@@ -18,7 +18,7 @@ test("empty learner dashboard recommends a deterministic guest start without fak
   assert.equal(model.nextAction.kind, "start_learning");
   assert.equal(model.nextAction.pathId, "basic-differentiation");
   assert.equal(model.course.completionPercentage, 0);
-  assert.equal(model.course.availablePathCount, 1);
+  assert.equal(model.course.availablePathCount, 2);
   assert.equal(model.weeklyActivity.activeDays, 0);
   assert.equal(model.recentActivity.length, 0);
   assert.equal(model.sync.label, "Saved on this browser");

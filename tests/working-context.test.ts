@@ -130,7 +130,7 @@ test("stage models expose ordinary recovery only for the stage containing the re
 test("path parsing accepts only an available canonical path", () => {
   assert.equal(parseWorkingContextPathId(pathId), pathId);
   assert.equal(parseWorkingContextPathId(["not-real", pathId]), null);
-  assert.equal(parseWorkingContextPathId("chain-rule"), null);
+  assert.equal(parseWorkingContextPathId("trigonometric-differentiation"), null);
 });
 
 test("production helpers contain path and question context without activation flags", () => {

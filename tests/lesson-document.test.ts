@@ -3,6 +3,7 @@ import test from "node:test";
 import { higherMathsDifferentiationQuestions } from "../content/questions/higher-maths/basic-differentiation";
 import { higherMaths } from "../data/higher-maths";
 import { basicDifferentiationLesson } from "../data/lessons/basic-differentiation";
+import { chainRuleLesson } from "../data/lessons/chain-rule";
 import type { LessonBlock, LessonDocument } from "../lib/lessons/types";
 import {
   estimateLessonReadingMinutes,
@@ -81,9 +82,10 @@ test("lesson resolution prefers native, adapts legacy and returns null for empty
   assert.equal(resolveLessonDocument(legacyPath)?.source, "legacy_adapter");
 
   const allPaths = higherMaths.courseAreas.flatMap((course) => course.specAreas).flatMap((area) => area.skillPaths ?? []);
+  const livePathSlugs = new Set(["basic-differentiation", "chain-rule"]);
   for (const path of allPaths) {
     const result = resolveLessonDocument(path);
-    if (path.slug === "basic-differentiation") assert.ok(result);
+    if (livePathSlugs.has(path.slug)) assert.ok(result);
     else assert.equal(result, null, `${path.slug} is an honest content placeholder`);
   }
 });
@@ -127,6 +129,39 @@ test("content validation aggregates lesson schema and ownership failures", () =>
   const report = validateContent({ subjects: [subject], questions: structuredClone(higherMathsDifferentiationQuestions) });
   assert(report.errors.some((issue) => issue.code === "lesson-skill-path-mismatch"));
   assert(report.errors.some((issue) => issue.code === "lesson-duplicate-block-id"));
+});
+
+const chainRulePath = higherMaths.courseAreas.flatMap((course) => course.specAreas).flatMap((area) => area.skillPaths ?? []).find((path) => path.slug === "chain-rule");
+assert.ok(chainRulePath);
+
+test("native Chain Rule lesson is valid, ordered and explicitly closed", () => {
+  const result = validateLessonDocument(chainRuleLesson);
+  assert.deepEqual(result.issues, []);
+  assert.equal(chainRuleLesson.schemaVersion, 1);
+  assert.equal(chainRuleLesson.skillPathId, chainRulePath.slug);
+  assert.equal(chainRuleLesson.closure.foundationsHref, "/question/hm-calc-diff-chain-f-001");
+  assert.equal(chainRuleLesson.estimatedReadingMinutes, estimateLessonReadingMinutes(chainRuleLesson.blocks));
+});
+
+test("the Chain Rule lesson is wired onto the now-live, imported skill path", () => {
+  // Chain Rule's import completed (34 questions, 10/9/15 across three real learning stages) and
+  // the skill path was atomically flipped to available in the same edit — see the Step 4 retry
+  // report. lessonDocument now resolves to the real, previously-authored chainRuleLesson.
+  assert.equal(chainRulePath.status, "available");
+  assert.equal(chainRulePath.isAvailable, true);
+  assert.equal(chainRulePath.lessonDocument, chainRuleLesson);
+});
+
+test("the Chain Rule lesson addresses both Notes-target misconceptions from the skill package adjudication", () => {
+  const plainText = chainRuleLesson.blocks.map(getLessonBlockPlainText).join("\n");
+  assert.match(plainText, /multiplying by the inside function itself rather than its derivative/i, "must name the multiplied-by-inner-function misconception explicitly");
+  assert.match(plainText, /not the same shape as/i, "must name the composite-as-simple-power-rule misconception explicitly");
+});
+
+test("the Chain Rule lesson has a self-check with a verifiable worked answer", () => {
+  const selfCheck = chainRuleLesson.blocks.find((block) => block.type === "self_check");
+  assert.ok(selfCheck && selfCheck.type === "self_check");
+  assert.match(selfCheck.answer, /36x\(3x\^2\+1\)\^2/);
 });
 
 test("every callout semantic maps to the schema without creating extra block designs", () => {

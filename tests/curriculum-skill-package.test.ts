@@ -6,6 +6,8 @@ import { higherMaths } from "../data/higher-maths";
 import { validateContent } from "../lib/content-validation";
 import { canonicalContent } from "../data/canonical-content";
 import { chainRulePackage } from "../data/curriculum/higher-mathematics/chain-rule-package";
+import { chainRuleLesson } from "../data/lessons/chain-rule";
+import { parseMarkdownBank } from "../lib/content-import/parser";
 import { tangentsPackage } from "../data/curriculum/higher-mathematics/tangents-package";
 import { chainRuleContract, tangentsAndNormalsContract, higherMathematicsCalculusSkillContracts } from "../data/curriculum/higher-mathematics/calculus-skill-contracts";
 import { higherMathematicsCalculusCoverageClaims } from "../data/curriculum/higher-mathematics/calculus-coverage-claims";
@@ -430,27 +432,43 @@ test("the real Chain Rule manifest validates cleanly against real Higher Maths c
   assert.deepEqual(report.errors, []);
 });
 
-test("real Chain Rule package readiness accurately reflects repository evidence: not ready for publication, and the expected blockers are present", () => {
+test("real Chain Rule package readiness accurately reflects repository evidence: the package-manifest layer is now clean, since Step 4 created the real import configuration", () => {
   const validation = validateSkillPackageManifest(chainRulePackage, knownHigherMathsRefs);
   const evidence = resolveSkillPackageEvidence(chainRulePackage);
   const readiness = deriveSkillPackageReadiness(chainRulePackage, validation, evidence);
 
   assert.equal(readiness.structurallyComplete, true);
-  assert.equal(readiness.readyForPackagePreview, false);
-  assert.equal(readiness.readyForImport, false);
-  assert.equal(readiness.readyForPublication, false);
+  assert.equal(readiness.readyForPackagePreview, true, "Notes now exists at data/lessons/chain-rule.ts, and Foundations/Applications/PPQ sources are all present");
+  // This resolver only checks package-manifest-level signals (config file presence and hash
+  // match against the declared bank/target/stage mapping) — it does not run the real importer's
+  // deeper content-validation apply-time check. Step 4 created a real, hash-matching
+  // chain-rule-v6.import.json and ran the real preview/approve workflow successfully (34/34
+  // eligible, 0 blocked), so this layer is now clean. The real `apply` step is still blocked —
+  // not by Chain Rule's package or content, but by two pre-existing, unrelated schema gaps in
+  // shared repository infrastructure (lib/content-import/configuration.ts's hierarchy-field
+  // mapping, and lib/content-validation.ts's marking-strategy allowlist not yet recognising
+  // composite_algebraic_equivalence/closed_vocabulary_text_answer). See the Step 4 report.
+  assert.equal(readiness.readyForImport, true);
+  assert.equal(readiness.readyForPublication, true);
 
   const codes = readiness.blockers.map((blocker) => blocker.code);
-  assert.ok(codes.includes("missing-notes-source"), "no Chain Rule Notes/LessonDocument exists yet");
-  assert.ok(codes.includes("import-config-missing"), "no chain-rule-v6.import.json exists");
+  assert.ok(!codes.includes("missing-notes-source"), "Chain Rule Notes now exists at data/lessons/chain-rule.ts");
+  assert.ok(!codes.includes("import-config-missing"), "content-drafts/higher-maths/calculus/chain-rule-v6.import.json now exists and its hash matches");
   assert.ok(
     !codes.includes("uncovered-question-shape"),
     "trig-composite is the only required-but-unobserved shape, and it was corrected to required: false — no uncovered-question-shape blocker should remain",
   );
-  assert.ok(codes.includes("mathematical-qa-incomplete"));
-  assert.ok(codes.includes("curriculum-qa-incomplete"));
-  assert.ok(codes.includes("originality-audit-incomplete"));
-  assert.ok(codes.includes("marking-qa-incomplete"));
+  assert.ok(
+    !codes.includes("uncovered-misconception"),
+    "the Step 2 QA pass confirmed both remaining misconceptions are genuinely covered in data/lessons/chain-rule.ts",
+  );
+  assert.ok(!codes.includes("mathematical-qa-incomplete"), "the Step 2 QA pass independently re-derived all 34 questions' mathematics");
+  assert.ok(!codes.includes("curriculum-qa-incomplete"), "the Step 2 QA pass re-confirmed contract/specification boundary discipline");
+  assert.ok(
+    !codes.includes("originality-audit-incomplete"),
+    "the Step 3 audit reviewed all 34 prompts and worked solutions, found no copied or lightly transformed identifiable source",
+  );
+  assert.ok(!codes.includes("marking-qa-incomplete"), "the Step 2 QA pass ran the real classifier and real marker against all 34 questions");
   assert.ok(!codes.includes("missing-foundations-source"), "chain-rule-v6.md's Foundations section does exist");
   assert.ok(!codes.includes("missing-applications-source"), "chain-rule-v6.md's Applications section does exist");
   assert.ok(!codes.includes("missing-ppq-source"), "chain-rule-v6.md's Past Paper-style Questions section does exist");
@@ -481,62 +499,87 @@ test("the corrected Chain Rule manifest still validates cleanly and still declar
   assert.equal(chainRulePackage.expectedMisconceptions.length, 7);
 });
 
-test("real Chain Rule package blocker count drops from 10 to 8 after the trig-composite manifest correction, with only the two trig-related blockers removed", () => {
+test("real Chain Rule package blocker count is 0 after Step 4 created the real import configuration", () => {
   const validation = validateSkillPackageManifest(chainRulePackage, knownHigherMathsRefs);
   const evidence = resolveSkillPackageEvidence(chainRulePackage);
   const readiness = deriveSkillPackageReadiness(chainRulePackage, validation, evidence);
 
-  assert.equal(readiness.blockers.length, 8);
-
-  const messages = readiness.blockers.map((blocker) => blocker.message);
-  assert.ok(!messages.some((message) => message.includes("trig-composite")), "no remaining blocker should mention trig-composite");
-  assert.ok(
-    !messages.some((message) => message.includes("mishandled-trig-composite-dependency")),
-    "no remaining blocker should mention mishandled-trig-composite-dependency",
-  );
-  assert.ok(
-    messages.some((message) => message.includes("composite-as-simple-power-rule")),
-    "composite-as-simple-power-rule was not touched by this correction and must remain an uncovered-misconception blocker",
-  );
-  assert.ok(
-    messages.some((message) => message.includes("multiplied-by-inner-function")),
-    "multiplied-by-inner-function was not touched by this correction and must remain an uncovered-misconception blocker",
-  );
+  assert.equal(readiness.blockers.length, 0);
 
   const codes = readiness.blockers.map((blocker) => blocker.code);
-  assert.deepEqual(
-    [...codes].sort(),
-    [
-      "curriculum-qa-incomplete",
-      "import-config-missing",
-      "marking-qa-incomplete",
-      "mathematical-qa-incomplete",
-      "missing-notes-source",
-      "originality-audit-incomplete",
-      "uncovered-misconception",
-      "uncovered-misconception",
-    ].sort(),
+  assert.deepEqual(codes, []);
+  assert.equal(readiness.readyForImport, true, "chain-rule-v6.import.json now exists and matches the manifest's declared bank/source hash");
+  assert.equal(readiness.readyForPublication, true, "import readiness gates publication readiness at this layer");
+});
+
+test("the Step 3 originality audit did not change the declared source hashes, and recorded real evidence for all four QA flags", () => {
+  for (const source of chainRulePackage.sources) {
+    if (source.kind === "notes") continue;
+    assert.equal(
+      source.expectedSourceHash,
+      "b86736d97716de10c0cbd44e51a064954cf4131e19d44f48a35b774e365c6294",
+      `${source.kind}: no content correction was needed, so no hash should have changed`,
+    );
+  }
+  assert.equal(chainRulePackage.qaEvidence.mathematicalQaComplete, true);
+  assert.equal(chainRulePackage.qaEvidence.curriculumQaComplete, true);
+  assert.equal(chainRulePackage.qaEvidence.markingQaComplete, true);
+  assert.equal(chainRulePackage.qaEvidence.originalityAuditComplete, true);
+});
+
+test("the originality QA evidence note is non-empty, specific, and does not overclaim exhaustive or uniqueness guarantees", () => {
+  const note = chainRulePackage.qaEvidence.note ?? "";
+  assert.ok(note.length > 200, "the note must be a substantive, specific summary, not a placeholder");
+  assert.match(note, /all 34/, "the note must state that all 34 questions were covered, not a sample");
+  assert.match(note, /does not claim/i, "the note must state its own limits honestly");
+  assert.doesNotMatch(
+    note,
+    /(?<!does not claim (?:that )?)no (?:mathematically )?similar question has ever existed/i,
+    "the note must not assert uniqueness outside of its own explicit disclaimer",
   );
 });
 
-test("this manifest correction changed neither the declared source hashes nor the QA evidence", () => {
-  for (const source of chainRulePackage.sources) {
-    if (source.kind === "notes") continue;
-    assert.equal(source.expectedSourceHash, "b86736d97716de10c0cbd44e51a064954cf4131e19d44f48a35b774e365c6294", source.kind);
-  }
-  assert.deepEqual(chainRulePackage.qaEvidence, {
-    mathematicalQaComplete: false,
-    curriculumQaComplete: false,
-    originalityAuditComplete: false,
-    markingQaComplete: false,
-    note: "chain-rule-v6.md contains informal inline \"QA note:\" author remarks (wording/mark corrections) but no structured, repository-level QA or approval record exists for this draft.",
-  });
+test("the final retained Chain Rule question count is still 34, all question IDs are unique, and the six previously removed duplicate IDs remain absent", () => {
+  const bytes = readFileSync("content-drafts/higher-maths/calculus/chain-rule-v6.md");
+  const bank = parseMarkdownBank({ sourcePath: "content-drafts/higher-maths/calculus/chain-rule-v6.md", bytes });
+  assert.equal(bank.questions.length, 34);
+
+  const ids = bank.questions.map((question) => question.id);
+  assert.equal(new Set(ids).size, ids.length, "no duplicate question IDs may exist in the retained bank");
+
+  const removedIds = [
+    "hm-calc-diff-chain-ppq-001",
+    "hm-calc-diff-chain-ppq-002",
+    "hm-calc-diff-chain-ppq-005",
+    "hm-calc-diff-chain-ppq-006",
+    "hm-calc-diff-chain-ppq-009",
+    "hm-calc-diff-chain-ppq-013",
+  ];
+  for (const removedId of removedIds) assert.ok(!ids.includes(removedId), `${removedId} must remain absent`);
+});
+
+test("both Notes-resolvable misconceptions are now recorded as observed, with an evidence note naming the specific Notes block", () => {
+  const multipliedByInner = chainRulePackage.expectedMisconceptions.find((entry) => entry.misconceptionId === "multiplied-by-inner-function");
+  assert.ok(multipliedByInner);
+  assert.equal(multipliedByInner!.observedInSource, true);
+  assert.match(multipliedByInner!.evidenceNote ?? "", /chain-rule-common-mistakes-inner-derivative/);
+
+  const compositeAsSimplePower = chainRulePackage.expectedMisconceptions.find((entry) => entry.misconceptionId === "composite-as-simple-power-rule");
+  assert.ok(compositeAsSimplePower);
+  assert.equal(compositeAsSimplePower!.observedInSource, true);
+  assert.match(compositeAsSimplePower!.evidenceNote ?? "", /chain-rule-note-recognition/);
+});
+
+test("the two Notes-resolved misconceptions are genuinely present as named blocks in data/lessons/chain-rule.ts, not just claimed in the manifest", () => {
+  const blockIds = chainRuleLesson.blocks.map((block) => block.blockId);
+  assert.ok(blockIds.includes("chain-rule-common-mistakes-inner-derivative"));
+  assert.ok(blockIds.includes("chain-rule-note-recognition"));
 });
 
 test("real Chain Rule source evidence resolves the actual draft's declared question counts", () => {
   const evidence = resolveSkillPackageEvidence(chainRulePackage);
   const byKind = new Map(evidence.sources.map((source) => [source.kind, source]));
-  assert.equal(byKind.get("notes")?.exists, false);
+  assert.equal(byKind.get("notes")?.exists, true, "data/lessons/chain-rule.ts now exists");
   assert.equal(byKind.get("foundations")?.exists, true);
   assert.equal(byKind.get("foundations")?.discoveredQuestionCount, 10);
   assert.equal(byKind.get("applications")?.discoveredQuestionCount, 9);
@@ -558,7 +601,7 @@ test("after the source hash update, the package report no longer treats the draf
   const readiness = deriveSkillPackageReadiness(chainRulePackage, validation, evidence);
   const codes = readiness.blockers.map((blocker) => blocker.code);
   assert.ok(!codes.includes("source-reference-stale"), "the manifest hash should match the freshly edited draft");
-  assert.equal(readiness.readyForImport, false, "genuine marking/config blockers remain regardless of staleness");
+  assert.equal(readiness.readyForImport, true, "no package-manifest-level blockers remain now that chain-rule-v6.import.json exists and is current");
 });
 
 // ---- Real Tangents package (post-migration) ----

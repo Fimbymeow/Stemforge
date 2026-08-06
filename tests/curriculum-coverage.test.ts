@@ -58,17 +58,17 @@ test("no prerequisite contract is missing, and the prerequisite graph and recomm
   assert.deepEqual(report.recommendedSequenceErrors, []);
 });
 
-test("only Basic Differentiation is published, and it is correctly reported as such", () => {
+test("Basic Differentiation and Chain Rule are published, and it is correctly reported as such", () => {
   const report = buildReport();
-  assert.deepEqual(report.publishedSkillPathIds, ["basic-differentiation"]);
-  assert.equal(report.publishedProductCompleteness.published, 1);
+  assert.deepEqual(report.publishedSkillPathIds, ["basic-differentiation", "chain-rule"]);
+  assert.equal(report.publishedProductCompleteness.published, 2);
   assert.equal(report.publishedProductCompleteness.total, 17);
 });
 
 test("curriculum-mapping completeness and published-product completeness are reported separately, never blended", () => {
   const report = buildReport();
   assert.equal(report.curriculumMappingCompleteness.defined, 4);
-  assert.equal(report.publishedProductCompleteness.published, 1);
+  assert.equal(report.publishedProductCompleteness.published, 2);
   assert.notEqual(report.curriculumMappingCompleteness.defined, report.publishedProductCompleteness.published);
 });
 

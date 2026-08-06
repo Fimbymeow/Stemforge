@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { higherMathsDifferentiationQuestions } from "../content/questions/higher-maths/basic-differentiation";
+import { higherMathsChainRuleQuestions } from "../content/questions/higher-maths/chain-rule";
 import { higherMaths } from "../data/higher-maths";
 import type { Question, Subject } from "../data/types";
 import { validateContent } from "../lib/content-validation";
@@ -10,7 +11,7 @@ function cloneSubject(): Subject {
 }
 
 function cloneQuestions(): Question[] {
-  return structuredClone(higherMathsDifferentiationQuestions);
+  return structuredClone([...higherMathsDifferentiationQuestions, ...higherMathsChainRuleQuestions]);
 }
 
 function basicDifferentiation(subject: Subject) {

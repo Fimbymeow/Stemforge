@@ -1,0 +1,3928 @@
+{
+  "receiptVersion": 1,
+  "previewHash": "654583dd55addd1e539a80df8f4ab454bea65e5b881fe7ea37ba398395da7c9d",
+  "previewDecisionPayload": {
+    "payloadVersion": 1,
+    "compilerVersion": 1,
+    "importable": true,
+    "sourcePath": "content-drafts/higher-maths/calculus/chain-rule-v6.md",
+    "sourceBytesHash": "b86736d97716de10c0cbd44e51a064954cf4131e19d44f48a35b774e365c6294",
+    "configurationPath": "content-drafts/higher-maths/calculus/chain-rule-v6.import.json",
+    "configurationBytesHash": "76552877cf5eb1ab60e322f63a40b8bc14e72a8e53d194438f5aab3f0fb478d6",
+    "configuration": {
+      "bankId": "hm-calc-diff-chain",
+      "sourceBankVersion": "6",
+      "targetSkillPathSlug": "chain-rule",
+      "stageNameToStageId": {
+        "Foundations": "chain-rule-stage-foundations",
+        "Applications": "chain-rule-stage-applications",
+        "Past Paper-style Questions": "chain-rule-stage-past-paper-style"
+      },
+      "runMode": "new_content_only"
+    },
+    "configurationHash": "18735c66597b34ec3a6428ac85dc81196debc8845c76131aec91b56f46d25782",
+    "liveCanonicalContentSnapshotHash": "0c82a84d2b3ffa111088e114968a443c9c4c2233fcc098b0a479a4213d4792dc",
+    "sourceQuestionIds": [
+      "hm-calc-diff-chain-f-001",
+      "hm-calc-diff-chain-f-002",
+      "hm-calc-diff-chain-f-003",
+      "hm-calc-diff-chain-f-004",
+      "hm-calc-diff-chain-f-005",
+      "hm-calc-diff-chain-f-006",
+      "hm-calc-diff-chain-f-007",
+      "hm-calc-diff-chain-f-008",
+      "hm-calc-diff-chain-f-009",
+      "hm-calc-diff-chain-f-010",
+      "hm-calc-diff-chain-a-001",
+      "hm-calc-diff-chain-a-002",
+      "hm-calc-diff-chain-a-003",
+      "hm-calc-diff-chain-a-004",
+      "hm-calc-diff-chain-a-005",
+      "hm-calc-diff-chain-a-006",
+      "hm-calc-diff-chain-a-007",
+      "hm-calc-diff-chain-a-008",
+      "hm-calc-diff-chain-a-009",
+      "hm-calc-diff-chain-ppq-003",
+      "hm-calc-diff-chain-ppq-004",
+      "hm-calc-diff-chain-ppq-007",
+      "hm-calc-diff-chain-ppq-008",
+      "hm-calc-diff-chain-ppq-010",
+      "hm-calc-diff-chain-ppq-011",
+      "hm-calc-diff-chain-ppq-012",
+      "hm-calc-diff-chain-ppq-014",
+      "hm-calc-diff-chain-ppq-015",
+      "hm-calc-diff-chain-ppq-016",
+      "hm-calc-diff-chain-ppq-017",
+      "hm-calc-diff-chain-ppq-018",
+      "hm-calc-diff-chain-ppq-019",
+      "hm-calc-diff-chain-ppq-020",
+      "hm-calc-diff-chain-ppq-021"
+    ],
+    "classifications": [
+      {
+        "questionId": "hm-calc-diff-chain-f-001",
+        "sourceLineRange": {
+          "start": 42,
+          "end": 87
+        },
+        "status": "convertible",
+        "targetSkillPathSlug": "chain-rule",
+        "targetStageId": "chain-rule-stage-foundations",
+        "conversions": [
+          "label_rename",
+          "stage_label_to_stage_id",
+          "marker_proven_lexical_normalisation"
+        ],
+        "blockers": [],
+        "diagnostics": [],
+        "markerCompatibility": {
+          "strategy": "multiple_choice",
+          "strategyVersion": 1,
+          "targetOutcome": "graded",
+          "aliasOutcomes": [
+            {
+              "answer": "A. \\(4x+3\\)",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "A",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "4x+3",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "4x + 3",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            }
+          ]
+        },
+        "canonicalQuestion": {
+          "id": "hm-calc-diff-chain-f-001",
+          "questionVersion": 1,
+          "contentRevision": 1,
+          "contentStatus": "active",
+          "subject": "Higher Maths",
+          "courseArea": "Calculus",
+          "specArea": "Differentiation",
+          "skillPath": "Chain rule",
+          "skillPathId": "chain-rule",
+          "stageId": "chain-rule-stage-foundations",
+          "stage": "Foundations",
+          "skill": "Identifying the inside function",
+          "title": "Identifying the inside function",
+          "questionText": "For the function \\(y=(4x+3)^6\\), which expression is the inside function?\n\nA. \\(4x+3\\)  \nB. \\(x^6\\)  \nC. \\(4x\\)  \nD. \\((4x+3)^6\\)",
+          "marks": 1,
+          "answerType": "multiple_choice",
+          "marking": {
+            "strategy": "multiple_choice",
+            "strategyVersion": 1,
+            "correctOptionId": "A",
+            "fixtures": {
+              "correct": [
+                {
+                  "input": "A"
+                }
+              ],
+              "incorrect": [
+                {
+                  "input": "0"
+                }
+              ],
+              "malformed": [
+                {
+                  "input": "++"
+                }
+              ],
+              "unmarkable": [
+                {
+                  "input": "sin(x)"
+                }
+              ]
+            }
+          },
+          "correctAnswer": "A",
+          "acceptedAnswers": [
+            "A"
+          ],
+          "options": [
+            {
+              "label": "\\(4x+3\\)",
+              "value": "A"
+            },
+            {
+              "label": "\\(x^6\\)",
+              "value": "B"
+            },
+            {
+              "label": "\\(4x\\)",
+              "value": "C"
+            },
+            {
+              "label": "\\((4x+3)^6\\)",
+              "value": "D"
+            }
+          ],
+          "workedSolution": "The function is\n\\[\ny=(4x+3)^6.\n\\]\nThe outside operation is raising to the power 6. The expression inside the brackets is\n\\[\n4x+3.\n\\]\nSo the inside function is \\(4x+3\\).",
+          "finalAnswer": "A",
+          "hint": "Look at the expression inside the brackets.",
+          "commonMistake": "Choosing the whole expression \\((4x+3)^6\\) instead of just the expression inside the brackets.",
+          "calculatorAllowed": false,
+          "source": "Original STEM Forge QS-style content",
+          "status": "ready",
+          "displayOrder": 1
+        }
+      },
+      {
+        "questionId": "hm-calc-diff-chain-f-002",
+        "sourceLineRange": {
+          "start": 88,
+          "end": 131
+        },
+        "status": "convertible",
+        "targetSkillPathSlug": "chain-rule",
+        "targetStageId": "chain-rule-stage-foundations",
+        "conversions": [
+          "label_rename",
+          "stage_label_to_stage_id",
+          "marker_proven_lexical_normalisation"
+        ],
+        "blockers": [],
+        "diagnostics": [],
+        "markerCompatibility": {
+          "strategy": "multiple_choice",
+          "strategyVersion": 1,
+          "targetOutcome": "graded",
+          "aliasOutcomes": [
+            {
+              "answer": "B. \\(2x^2-5\\)",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "B",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "2x^2-5",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "2x^2 - 5",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            }
+          ]
+        },
+        "canonicalQuestion": {
+          "id": "hm-calc-diff-chain-f-002",
+          "questionVersion": 1,
+          "contentRevision": 1,
+          "contentStatus": "active",
+          "subject": "Higher Maths",
+          "courseArea": "Calculus",
+          "specArea": "Differentiation",
+          "skillPath": "Chain rule",
+          "skillPathId": "chain-rule",
+          "stageId": "chain-rule-stage-foundations",
+          "stage": "Foundations",
+          "skill": "Identifying the inside function in a quadratic composite",
+          "title": "Identifying the inside function in a quadratic composite",
+          "questionText": "For the function \\(y=(2x^2-5)^4\\), which expression should be treated as the inside function when using the chain rule?\n\nA. \\(2x^2\\)  \nB. \\(2x^2-5\\)  \nC. \\(x^4\\)  \nD. \\(4(2x^2-5)^3\\)",
+          "marks": 1,
+          "answerType": "multiple_choice",
+          "marking": {
+            "strategy": "multiple_choice",
+            "strategyVersion": 1,
+            "correctOptionId": "B",
+            "fixtures": {
+              "correct": [
+                {
+                  "input": "B"
+                }
+              ],
+              "incorrect": [
+                {
+                  "input": "0"
+                }
+              ],
+              "malformed": [
+                {
+                  "input": "++"
+                }
+              ],
+              "unmarkable": [
+                {
+                  "input": "sin(x)"
+                }
+              ]
+            }
+          },
+          "correctAnswer": "B",
+          "acceptedAnswers": [
+            "B"
+          ],
+          "options": [
+            {
+              "label": "\\(2x^2\\)",
+              "value": "A"
+            },
+            {
+              "label": "\\(2x^2-5\\)",
+              "value": "B"
+            },
+            {
+              "label": "\\(x^4\\)",
+              "value": "C"
+            },
+            {
+              "label": "\\(4(2x^2-5)^3\\)",
+              "value": "D"
+            }
+          ],
+          "workedSolution": "The function is\n\\[\ny=(2x^2-5)^4.\n\\]\nThe expression inside the brackets is\n\\[\n2x^2-5.\n\\]\nSo the inside function is \\(2x^2-5\\).",
+          "finalAnswer": "B",
+          "hint": "The inside function is the full expression being raised to the power 4.",
+          "commonMistake": "Choosing only \\(2x^2\\) and leaving out the \\(-5\\).",
+          "calculatorAllowed": false,
+          "source": "Original STEM Forge QS-style content",
+          "status": "ready",
+          "displayOrder": 2
+        }
+      },
+      {
+        "questionId": "hm-calc-diff-chain-f-003",
+        "sourceLineRange": {
+          "start": 132,
+          "end": 179
+        },
+        "status": "convertible",
+        "targetSkillPathSlug": "chain-rule",
+        "targetStageId": "chain-rule-stage-foundations",
+        "conversions": [
+          "label_rename",
+          "stage_label_to_stage_id"
+        ],
+        "blockers": [],
+        "diagnostics": [],
+        "markerCompatibility": {
+          "strategy": "composite_algebraic_equivalence",
+          "strategyVersion": 1,
+          "targetOutcome": "graded",
+          "aliasOutcomes": [
+            {
+              "answer": "15(3x+2)^4",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "15*(3x+2)^4",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "15(3x + 2)^4",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            }
+          ]
+        },
+        "canonicalQuestion": {
+          "id": "hm-calc-diff-chain-f-003",
+          "questionVersion": 1,
+          "contentRevision": 1,
+          "contentStatus": "active",
+          "subject": "Higher Maths",
+          "courseArea": "Calculus",
+          "specArea": "Differentiation",
+          "skillPath": "Chain rule",
+          "skillPathId": "chain-rule",
+          "stageId": "chain-rule-stage-foundations",
+          "stage": "Foundations",
+          "skill": "Basic chain rule with \\((ax+b)^n\\)",
+          "title": "Basic chain rule with \\((ax+b)^n\\)",
+          "questionText": "Differentiate \\(y=(3x+2)^5\\) with respect to \\(x\\).",
+          "marks": 2,
+          "answerType": "algebraic",
+          "marking": {
+            "strategy": "composite_algebraic_equivalence",
+            "strategyVersion": 1,
+            "target": "15(3x+2)^4",
+            "variable": "x",
+            "fixtures": {
+              "correct": [
+                {
+                  "input": "15(3x+2)^4"
+                },
+                {
+                  "input": "15*(3x+2)^4"
+                },
+                {
+                  "input": "15(3x + 2)^4"
+                }
+              ],
+              "incorrect": [
+                {
+                  "input": "0",
+                  "reason": "value_wrong"
+                }
+              ],
+              "malformed": [
+                {
+                  "input": "++",
+                  "reason": "malformed_composite_expression"
+                }
+              ],
+              "unmarkable": [
+                {
+                  "input": "sin(x)",
+                  "reason": "unsupported_mathematical_form"
+                }
+              ]
+            }
+          },
+          "correctAnswer": "15(3x+2)^4",
+          "acceptedAnswers": [
+            "15(3x+2)^4",
+            "15*(3x+2)^4",
+            "15(3x + 2)^4"
+          ],
+          "workedSolution": "\\[\ny=(3x+2)^5\n\\]\nDifferentiate the outside power:\n\\[\n5(3x+2)^4.\n\\]\nThen multiply by the derivative of the bracket:\n\\[\n\\frac{d}{dx}(3x+2)=3.\n\\]\nSo\n\\[\n\\frac{dy}{dx}=5(3x+2)^4\\cdot3\n\\]\n\\[\n\\frac{dy}{dx}=15(3x+2)^4.\n\\]",
+          "finalAnswer": "15(3x+2)^4",
+          "hint": "Bring down the outside power, then multiply by the derivative of \\(3x+2\\).",
+          "commonMistake": "Writing \\(5(3x+2)^4\\) and forgetting to multiply by 3.",
+          "calculatorAllowed": false,
+          "source": "Original STEM Forge QS-style content",
+          "status": "ready",
+          "displayOrder": 3
+        }
+      },
+      {
+        "questionId": "hm-calc-diff-chain-f-004",
+        "sourceLineRange": {
+          "start": 180,
+          "end": 220
+        },
+        "status": "convertible",
+        "targetSkillPathSlug": "chain-rule",
+        "targetStageId": "chain-rule-stage-foundations",
+        "conversions": [
+          "label_rename",
+          "stage_label_to_stage_id"
+        ],
+        "blockers": [],
+        "diagnostics": [],
+        "markerCompatibility": {
+          "strategy": "composite_algebraic_equivalence",
+          "strategyVersion": 1,
+          "targetOutcome": "graded",
+          "aliasOutcomes": [
+            {
+              "answer": "15(5x-4)^2",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "15*(5x-4)^2",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "15(5x - 4)^2",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            }
+          ]
+        },
+        "canonicalQuestion": {
+          "id": "hm-calc-diff-chain-f-004",
+          "questionVersion": 1,
+          "contentRevision": 1,
+          "contentStatus": "active",
+          "subject": "Higher Maths",
+          "courseArea": "Calculus",
+          "specArea": "Differentiation",
+          "skillPath": "Chain rule",
+          "skillPathId": "chain-rule",
+          "stageId": "chain-rule-stage-foundations",
+          "stage": "Foundations",
+          "skill": "Basic chain rule with \\((ax-b)^n\\)",
+          "title": "Basic chain rule with \\((ax-b)^n\\)",
+          "questionText": "Differentiate \\(y=(5x-4)^3\\) with respect to \\(x\\).",
+          "marks": 2,
+          "answerType": "algebraic",
+          "marking": {
+            "strategy": "composite_algebraic_equivalence",
+            "strategyVersion": 1,
+            "target": "15(5x-4)^2",
+            "variable": "x",
+            "fixtures": {
+              "correct": [
+                {
+                  "input": "15(5x-4)^2"
+                },
+                {
+                  "input": "15*(5x-4)^2"
+                },
+                {
+                  "input": "15(5x - 4)^2"
+                }
+              ],
+              "incorrect": [
+                {
+                  "input": "0",
+                  "reason": "value_wrong"
+                }
+              ],
+              "malformed": [
+                {
+                  "input": "++",
+                  "reason": "malformed_composite_expression"
+                }
+              ],
+              "unmarkable": [
+                {
+                  "input": "sin(x)",
+                  "reason": "unsupported_mathematical_form"
+                }
+              ]
+            }
+          },
+          "correctAnswer": "15(5x-4)^2",
+          "acceptedAnswers": [
+            "15(5x-4)^2",
+            "15*(5x-4)^2",
+            "15(5x - 4)^2"
+          ],
+          "workedSolution": "\\[\ny=(5x-4)^3\n\\]\nUsing the chain rule,\n\\[\n\\frac{dy}{dx}=3(5x-4)^2\\cdot5.\n\\]\nTherefore,\n\\[\n\\frac{dy}{dx}=15(5x-4)^2.\n\\]",
+          "finalAnswer": "15(5x-4)^2",
+          "hint": "After applying the power rule to the bracket, multiply by the derivative of \\(5x-4\\).",
+          "commonMistake": "Forgetting that \\(\\frac{d}{dx}(5x-4)=5\\).",
+          "calculatorAllowed": false,
+          "source": "Original STEM Forge QS-style content",
+          "status": "ready",
+          "displayOrder": 4
+        }
+      },
+      {
+        "questionId": "hm-calc-diff-chain-f-005",
+        "sourceLineRange": {
+          "start": 221,
+          "end": 265
+        },
+        "status": "convertible",
+        "targetSkillPathSlug": "chain-rule",
+        "targetStageId": "chain-rule-stage-foundations",
+        "conversions": [
+          "label_rename",
+          "stage_label_to_stage_id"
+        ],
+        "blockers": [],
+        "diagnostics": [],
+        "markerCompatibility": {
+          "strategy": "composite_algebraic_equivalence",
+          "strategyVersion": 1,
+          "targetOutcome": "graded",
+          "aliasOutcomes": [
+            {
+              "answer": "48(4x+1)^5",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "48*(4x+1)^5",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "48(4x + 1)^5",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            }
+          ]
+        },
+        "canonicalQuestion": {
+          "id": "hm-calc-diff-chain-f-005",
+          "questionVersion": 1,
+          "contentRevision": 1,
+          "contentStatus": "active",
+          "subject": "Higher Maths",
+          "courseArea": "Calculus",
+          "specArea": "Differentiation",
+          "skillPath": "Chain rule",
+          "skillPathId": "chain-rule",
+          "stageId": "chain-rule-stage-foundations",
+          "stage": "Foundations",
+          "skill": "Chain rule with a constant multiplier",
+          "title": "Chain rule with a constant multiplier",
+          "questionText": "Differentiate \\(y=2(4x+1)^6\\) with respect to \\(x\\).",
+          "marks": 2,
+          "answerType": "algebraic",
+          "marking": {
+            "strategy": "composite_algebraic_equivalence",
+            "strategyVersion": 1,
+            "target": "48(4x+1)^5",
+            "variable": "x",
+            "fixtures": {
+              "correct": [
+                {
+                  "input": "48(4x+1)^5"
+                },
+                {
+                  "input": "48*(4x+1)^5"
+                },
+                {
+                  "input": "48(4x + 1)^5"
+                }
+              ],
+              "incorrect": [
+                {
+                  "input": "0",
+                  "reason": "value_wrong"
+                }
+              ],
+              "malformed": [
+                {
+                  "input": "++",
+                  "reason": "malformed_composite_expression"
+                }
+              ],
+              "unmarkable": [
+                {
+                  "input": "sin(x)",
+                  "reason": "unsupported_mathematical_form"
+                }
+              ]
+            }
+          },
+          "correctAnswer": "48(4x+1)^5",
+          "acceptedAnswers": [
+            "48(4x+1)^5",
+            "48*(4x+1)^5",
+            "48(4x + 1)^5"
+          ],
+          "workedSolution": "\\[\ny=2(4x+1)^6\n\\]\nUsing the chain rule,\n\\[\n\\frac{dy}{dx}=2\\cdot6(4x+1)^5\\cdot4.\n\\]\nMultiply the constants:\n\\[\n2\\cdot6\\cdot4=48.\n\\]\nSo\n\\[\n\\frac{dy}{dx}=48(4x+1)^5.\n\\]",
+          "finalAnswer": "48(4x+1)^5",
+          "hint": "Keep the 2 at the front, then apply the chain rule to \\((4x+1)^6\\).",
+          "commonMistake": "Forgetting either the coefficient 2 or the derivative of \\(4x+1\\).",
+          "calculatorAllowed": false,
+          "source": "Original STEM Forge QS-style content",
+          "status": "ready",
+          "displayOrder": 5
+        }
+      },
+      {
+        "questionId": "hm-calc-diff-chain-f-006",
+        "sourceLineRange": {
+          "start": 266,
+          "end": 306
+        },
+        "status": "convertible",
+        "targetSkillPathSlug": "chain-rule",
+        "targetStageId": "chain-rule-stage-foundations",
+        "conversions": [
+          "label_rename",
+          "stage_label_to_stage_id"
+        ],
+        "blockers": [],
+        "diagnostics": [],
+        "markerCompatibility": {
+          "strategy": "composite_algebraic_equivalence",
+          "strategyVersion": 1,
+          "targetOutcome": "graded",
+          "aliasOutcomes": [
+            {
+              "answer": "10x(x^2+4)^4",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "10*x*(x^2+4)^4",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "10x(x^2 + 4)^4",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            }
+          ]
+        },
+        "canonicalQuestion": {
+          "id": "hm-calc-diff-chain-f-006",
+          "questionVersion": 1,
+          "contentRevision": 1,
+          "contentStatus": "active",
+          "subject": "Higher Maths",
+          "courseArea": "Calculus",
+          "specArea": "Differentiation",
+          "skillPath": "Chain rule",
+          "skillPathId": "chain-rule",
+          "stageId": "chain-rule-stage-foundations",
+          "stage": "Foundations",
+          "skill": "Chain rule with quadratic inside functions",
+          "title": "Chain rule with quadratic inside functions",
+          "questionText": "Differentiate \\(y=(x^2+4)^5\\) with respect to \\(x\\).",
+          "marks": 2,
+          "answerType": "algebraic",
+          "marking": {
+            "strategy": "composite_algebraic_equivalence",
+            "strategyVersion": 1,
+            "target": "10x(x^2+4)^4",
+            "variable": "x",
+            "fixtures": {
+              "correct": [
+                {
+                  "input": "10x(x^2+4)^4"
+                },
+                {
+                  "input": "10*x*(x^2+4)^4"
+                },
+                {
+                  "input": "10x(x^2 + 4)^4"
+                }
+              ],
+              "incorrect": [
+                {
+                  "input": "0",
+                  "reason": "value_wrong"
+                }
+              ],
+              "malformed": [
+                {
+                  "input": "++",
+                  "reason": "malformed_composite_expression"
+                }
+              ],
+              "unmarkable": [
+                {
+                  "input": "sin(x)",
+                  "reason": "unsupported_mathematical_form"
+                }
+              ]
+            }
+          },
+          "correctAnswer": "10x(x^2+4)^4",
+          "acceptedAnswers": [
+            "10x(x^2+4)^4",
+            "10*x*(x^2+4)^4",
+            "10x(x^2 + 4)^4"
+          ],
+          "workedSolution": "\\[\ny=(x^2+4)^5\n\\]\nUsing the chain rule,\n\\[\n\\frac{dy}{dx}=5(x^2+4)^4\\cdot2x.\n\\]\nSo\n\\[\n\\frac{dy}{dx}=10x(x^2+4)^4.\n\\]",
+          "finalAnswer": "10x(x^2+4)^4",
+          "hint": "The derivative of the bracket \\(x^2+4\\) is \\(2x\\).",
+          "commonMistake": "Treating \\(x^2+4\\) like its derivative is 1.",
+          "calculatorAllowed": false,
+          "source": "Original STEM Forge QS-style content",
+          "status": "ready",
+          "displayOrder": 6
+        }
+      },
+      {
+        "questionId": "hm-calc-diff-chain-f-007",
+        "sourceLineRange": {
+          "start": 307,
+          "end": 347
+        },
+        "status": "convertible",
+        "targetSkillPathSlug": "chain-rule",
+        "targetStageId": "chain-rule-stage-foundations",
+        "conversions": [
+          "label_rename",
+          "stage_label_to_stage_id"
+        ],
+        "blockers": [],
+        "diagnostics": [],
+        "markerCompatibility": {
+          "strategy": "composite_algebraic_equivalence",
+          "strategyVersion": 1,
+          "targetOutcome": "graded",
+          "aliasOutcomes": [
+            {
+              "answer": "24x(3x^2-2)^3",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "24*x*(3x^2-2)^3",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "24x(3x^2 - 2)^3",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            }
+          ]
+        },
+        "canonicalQuestion": {
+          "id": "hm-calc-diff-chain-f-007",
+          "questionVersion": 1,
+          "contentRevision": 1,
+          "contentStatus": "active",
+          "subject": "Higher Maths",
+          "courseArea": "Calculus",
+          "specArea": "Differentiation",
+          "skillPath": "Chain rule",
+          "skillPathId": "chain-rule",
+          "stageId": "chain-rule-stage-foundations",
+          "stage": "Foundations",
+          "skill": "Chain rule with quadratic inside functions",
+          "title": "Chain rule with quadratic inside functions",
+          "questionText": "Differentiate \\(y=(3x^2-2)^4\\) with respect to \\(x\\).",
+          "marks": 2,
+          "answerType": "algebraic",
+          "marking": {
+            "strategy": "composite_algebraic_equivalence",
+            "strategyVersion": 1,
+            "target": "24x(3x^2-2)^3",
+            "variable": "x",
+            "fixtures": {
+              "correct": [
+                {
+                  "input": "24x(3x^2-2)^3"
+                },
+                {
+                  "input": "24*x*(3x^2-2)^3"
+                },
+                {
+                  "input": "24x(3x^2 - 2)^3"
+                }
+              ],
+              "incorrect": [
+                {
+                  "input": "0",
+                  "reason": "value_wrong"
+                }
+              ],
+              "malformed": [
+                {
+                  "input": "++",
+                  "reason": "malformed_composite_expression"
+                }
+              ],
+              "unmarkable": [
+                {
+                  "input": "sin(x)",
+                  "reason": "unsupported_mathematical_form"
+                }
+              ]
+            }
+          },
+          "correctAnswer": "24x(3x^2-2)^3",
+          "acceptedAnswers": [
+            "24x(3x^2-2)^3",
+            "24*x*(3x^2-2)^3",
+            "24x(3x^2 - 2)^3"
+          ],
+          "workedSolution": "\\[\ny=(3x^2-2)^4\n\\]\nUsing the chain rule,\n\\[\n\\frac{dy}{dx}=4(3x^2-2)^3\\cdot6x.\n\\]\nTherefore,\n\\[\n\\frac{dy}{dx}=24x(3x^2-2)^3.\n\\]",
+          "finalAnswer": "24x(3x^2-2)^3",
+          "hint": "Differentiate the bracket \\(3x^2-2\\) after applying the outside power.",
+          "commonMistake": "Differentiating \\(3x^2\\) as \\(3x\\) instead of \\(6x\\).",
+          "calculatorAllowed": false,
+          "source": "Original STEM Forge QS-style content",
+          "status": "ready",
+          "displayOrder": 7
+        }
+      },
+      {
+        "questionId": "hm-calc-diff-chain-f-008",
+        "sourceLineRange": {
+          "start": 348,
+          "end": 393
+        },
+        "status": "convertible",
+        "targetSkillPathSlug": "chain-rule",
+        "targetStageId": "chain-rule-stage-foundations",
+        "conversions": [
+          "label_rename",
+          "stage_label_to_stage_id"
+        ],
+        "blockers": [],
+        "diagnostics": [],
+        "markerCompatibility": {
+          "strategy": "composite_algebraic_equivalence",
+          "strategyVersion": 2,
+          "targetOutcome": "graded",
+          "aliasOutcomes": [
+            {
+              "answer": "(2x+7)^(-1/2)",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "(2x + 7)^(-1/2)",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "1/sqrt(2x+7)",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "1/sqrt(2x + 7)",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            }
+          ]
+        },
+        "canonicalQuestion": {
+          "id": "hm-calc-diff-chain-f-008",
+          "questionVersion": 1,
+          "contentRevision": 1,
+          "contentStatus": "active",
+          "subject": "Higher Maths",
+          "courseArea": "Calculus",
+          "specArea": "Differentiation",
+          "skillPath": "Chain rule",
+          "skillPathId": "chain-rule",
+          "stageId": "chain-rule-stage-foundations",
+          "stage": "Foundations",
+          "skill": "Chain rule with fractional powers",
+          "title": "Chain rule with fractional powers",
+          "questionText": "Differentiate \\(y=(2x+7)^{1/2}\\) with respect to \\(x\\).",
+          "marks": 2,
+          "answerType": "algebraic",
+          "marking": {
+            "strategy": "composite_algebraic_equivalence",
+            "strategyVersion": 2,
+            "target": "(2x+7)^(-1/2)",
+            "variable": "x",
+            "fixtures": {
+              "correct": [
+                {
+                  "input": "(2x+7)^(-1/2)"
+                },
+                {
+                  "input": "(2x + 7)^(-1/2)"
+                },
+                {
+                  "input": "1/sqrt(2x+7)"
+                },
+                {
+                  "input": "1/sqrt(2x + 7)"
+                }
+              ],
+              "incorrect": [
+                {
+                  "input": "0",
+                  "reason": "value_wrong"
+                }
+              ],
+              "malformed": [
+                {
+                  "input": "++",
+                  "reason": "malformed_composite_expression"
+                }
+              ],
+              "unmarkable": [
+                {
+                  "input": "sin(x)",
+                  "reason": "unsupported_mathematical_form"
+                }
+              ]
+            }
+          },
+          "correctAnswer": "(2x+7)^(-1/2)",
+          "acceptedAnswers": [
+            "(2x+7)^(-1/2)",
+            "(2x + 7)^(-1/2)",
+            "1/sqrt(2x+7)",
+            "1/sqrt(2x + 7)"
+          ],
+          "workedSolution": "\\[\ny=(2x+7)^{1/2}\n\\]\nUsing the chain rule,\n\\[\n\\frac{dy}{dx}=\\frac{1}{2}(2x+7)^{-1/2}\\cdot2.\n\\]\nSince \\(\\frac{1}{2}\\cdot2=1\\),\n\\[\n\\frac{dy}{dx}=(2x+7)^{-1/2}.\n\\]\nThis can also be written as\n\\[\n\\frac{dy}{dx}=\\frac{1}{\\sqrt{2x+7}}.\n\\]",
+          "finalAnswer": "(2x+7)^(-1/2)",
+          "hint": "Use the power \\(\\frac{1}{2}\\), then multiply by the derivative of \\(2x+7\\).",
+          "commonMistake": "Forgetting to multiply by 2, or not reducing the power from \\(\\frac{1}{2}\\) to \\(-\\frac{1}{2}\\).",
+          "calculatorAllowed": false,
+          "source": "Original STEM Forge QS-style content",
+          "status": "ready",
+          "displayOrder": 8
+        }
+      },
+      {
+        "questionId": "hm-calc-diff-chain-f-009",
+        "sourceLineRange": {
+          "start": 394,
+          "end": 440
+        },
+        "status": "convertible",
+        "targetSkillPathSlug": "chain-rule",
+        "targetStageId": "chain-rule-stage-foundations",
+        "conversions": [
+          "label_rename",
+          "stage_label_to_stage_id"
+        ],
+        "blockers": [],
+        "diagnostics": [],
+        "markerCompatibility": {
+          "strategy": "composite_algebraic_equivalence",
+          "strategyVersion": 2,
+          "targetOutcome": "graded",
+          "aliasOutcomes": [
+            {
+              "answer": "-6x(x^2+1)^(-4)",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "-6*x*(x^2+1)^(-4)",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "-6x(x^2 + 1)^(-4)",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "-6x/(x^2+1)^4",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "-6*x/(x^2+1)^4",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            }
+          ]
+        },
+        "canonicalQuestion": {
+          "id": "hm-calc-diff-chain-f-009",
+          "questionVersion": 1,
+          "contentRevision": 1,
+          "contentStatus": "active",
+          "subject": "Higher Maths",
+          "courseArea": "Calculus",
+          "specArea": "Differentiation",
+          "skillPath": "Chain rule",
+          "skillPathId": "chain-rule",
+          "stageId": "chain-rule-stage-foundations",
+          "stage": "Foundations",
+          "skill": "Chain rule with negative powers",
+          "title": "Chain rule with negative powers",
+          "questionText": "Differentiate \\(y=(x^2+1)^{-3}\\) with respect to \\(x\\).",
+          "marks": 2,
+          "answerType": "algebraic",
+          "marking": {
+            "strategy": "composite_algebraic_equivalence",
+            "strategyVersion": 2,
+            "target": "-6x(x^2+1)^(-4)",
+            "variable": "x",
+            "fixtures": {
+              "correct": [
+                {
+                  "input": "-6x(x^2+1)^(-4)"
+                },
+                {
+                  "input": "-6*x*(x^2+1)^(-4)"
+                },
+                {
+                  "input": "-6x(x^2 + 1)^(-4)"
+                },
+                {
+                  "input": "-6x/(x^2+1)^4"
+                },
+                {
+                  "input": "-6*x/(x^2+1)^4"
+                }
+              ],
+              "incorrect": [
+                {
+                  "input": "0",
+                  "reason": "value_wrong"
+                }
+              ],
+              "malformed": [
+                {
+                  "input": "++",
+                  "reason": "malformed_composite_expression"
+                }
+              ],
+              "unmarkable": [
+                {
+                  "input": "sin(x)",
+                  "reason": "unsupported_mathematical_form"
+                }
+              ]
+            }
+          },
+          "correctAnswer": "-6x(x^2+1)^(-4)",
+          "acceptedAnswers": [
+            "-6x(x^2+1)^(-4)",
+            "-6*x*(x^2+1)^(-4)",
+            "-6x(x^2 + 1)^(-4)",
+            "-6x/(x^2+1)^4",
+            "-6*x/(x^2+1)^4"
+          ],
+          "workedSolution": "\\[\ny=(x^2+1)^{-3}\n\\]\nUsing the chain rule,\n\\[\n\\frac{dy}{dx}=-3(x^2+1)^{-4}\\cdot2x.\n\\]\nSo\n\\[\n\\frac{dy}{dx}=-6x(x^2+1)^{-4}.\n\\]\nEquivalently,\n\\[\n\\frac{dy}{dx}=-\\frac{6x}{(x^2+1)^4}.\n\\]",
+          "finalAnswer": "-6x(x^2+1)^(-4)",
+          "hint": "Bring down the power \\(-3\\), reduce the power by 1, then multiply by \\(2x\\).",
+          "commonMistake": "Changing the power from \\(-3\\) to \\(-2\\). Differentiating reduces the power by 1, so it becomes \\(-4\\).",
+          "calculatorAllowed": false,
+          "source": "Original STEM Forge QS-style content",
+          "status": "ready",
+          "displayOrder": 9
+        }
+      },
+      {
+        "questionId": "hm-calc-diff-chain-f-010",
+        "sourceLineRange": {
+          "start": 441,
+          "end": 488
+        },
+        "status": "convertible",
+        "targetSkillPathSlug": "chain-rule",
+        "targetStageId": "chain-rule-stage-foundations",
+        "conversions": [
+          "label_rename",
+          "stage_label_to_stage_id",
+          "marker_proven_lexical_normalisation"
+        ],
+        "blockers": [],
+        "diagnostics": [],
+        "markerCompatibility": {
+          "strategy": "multiple_choice",
+          "strategyVersion": 1,
+          "targetOutcome": "graded",
+          "aliasOutcomes": [
+            {
+              "answer": "B. I and III only",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "B",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            }
+          ]
+        },
+        "canonicalQuestion": {
+          "id": "hm-calc-diff-chain-f-010",
+          "questionVersion": 1,
+          "contentRevision": 1,
+          "contentStatus": "active",
+          "subject": "Higher Maths",
+          "courseArea": "Calculus",
+          "specArea": "Differentiation",
+          "skillPath": "Chain rule",
+          "skillPathId": "chain-rule",
+          "stageId": "chain-rule-stage-foundations",
+          "stage": "Foundations",
+          "skill": "Recognising when the chain rule is useful",
+          "title": "Recognising when the chain rule is useful",
+          "questionText": "Which of the following functions are most naturally differentiated using the chain rule?\n\nI. \\(y=(3x-1)^5\\)  \nII. \\(y=4x^5-2x\\)  \nIII. \\(y=(x^2+6)^3\\)  \nIV. \\(y=7x^3+1\\)\n\nA. I and II only  \nB. I and III only  \nC. II and IV only  \nD. I, II and III only",
+          "marks": 1,
+          "answerType": "multiple_choice",
+          "marking": {
+            "strategy": "multiple_choice",
+            "strategyVersion": 1,
+            "correctOptionId": "B",
+            "fixtures": {
+              "correct": [
+                {
+                  "input": "B"
+                }
+              ],
+              "incorrect": [
+                {
+                  "input": "0"
+                }
+              ],
+              "malformed": [
+                {
+                  "input": "++"
+                }
+              ],
+              "unmarkable": [
+                {
+                  "input": "sin(x)"
+                }
+              ]
+            }
+          },
+          "correctAnswer": "B",
+          "acceptedAnswers": [
+            "B"
+          ],
+          "options": [
+            {
+              "label": "\\(y=(3x-1)^5\\)",
+              "value": "I"
+            },
+            {
+              "label": "I and II only",
+              "value": "A"
+            },
+            {
+              "label": "I and III only",
+              "value": "B"
+            },
+            {
+              "label": "II and IV only",
+              "value": "C"
+            },
+            {
+              "label": "I, II and III only",
+              "value": "D"
+            }
+          ],
+          "workedSolution": "I has \\((3x-1)\\) inside a power, so the chain rule is natural.  \nII is a polynomial and can be differentiated term by term.  \nIII has \\((x^2+6)\\) inside a power, so the chain rule is natural.  \nIV is a polynomial and can be differentiated term by term.\n\nSo the correct choice is I and III only.",
+          "finalAnswer": "B",
+          "hint": "Look for a function inside another function, usually brackets raised to a power.",
+          "commonMistake": "Thinking every power of \\(x\\), such as \\(x^5\\), needs the chain rule.",
+          "calculatorAllowed": false,
+          "source": "Original STEM Forge QS-style content",
+          "status": "ready",
+          "displayOrder": 10
+        }
+      },
+      {
+        "questionId": "hm-calc-diff-chain-a-001",
+        "sourceLineRange": {
+          "start": 489,
+          "end": 530
+        },
+        "status": "convertible",
+        "targetSkillPathSlug": "chain-rule",
+        "targetStageId": "chain-rule-stage-applications",
+        "conversions": [
+          "label_rename",
+          "stage_label_to_stage_id"
+        ],
+        "blockers": [],
+        "diagnostics": [],
+        "markerCompatibility": {
+          "strategy": "numeric",
+          "strategyVersion": 1,
+          "targetOutcome": "graded",
+          "aliasOutcomes": [
+            {
+              "answer": "1000",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            }
+          ]
+        },
+        "canonicalQuestion": {
+          "id": "hm-calc-diff-chain-a-001",
+          "questionVersion": 1,
+          "contentRevision": 1,
+          "contentStatus": "active",
+          "subject": "Higher Maths",
+          "courseArea": "Calculus",
+          "specArea": "Differentiation",
+          "skillPath": "Chain rule",
+          "skillPathId": "chain-rule",
+          "stageId": "chain-rule-stage-applications",
+          "stage": "Applications",
+          "skill": "Gradient at a point using chain rule",
+          "title": "Gradient at a point using chain rule",
+          "questionText": "For \\(y=(2x+3)^4\\), calculate the gradient of the curve at the point where \\(x=1\\).",
+          "marks": 3,
+          "answerType": "numerical",
+          "marking": {
+            "strategy": "numeric",
+            "strategyVersion": 1,
+            "target": "1000",
+            "comparison": {
+              "type": "exact"
+            },
+            "fixtures": {
+              "correct": [
+                {
+                  "input": "1000"
+                }
+              ],
+              "incorrect": [
+                {
+                  "input": "0",
+                  "reason": "value_wrong"
+                }
+              ],
+              "malformed": [
+                {
+                  "input": "++",
+                  "reason": "malformed_numeric"
+                }
+              ],
+              "unmarkable": [
+                {
+                  "input": "sin(x)",
+                  "reason": "expression_not_permitted"
+                }
+              ]
+            }
+          },
+          "correctAnswer": "1000",
+          "acceptedAnswers": [
+            "1000"
+          ],
+          "workedSolution": "\\[\ny=(2x+3)^4\n\\]\n\\[\n\\frac{dy}{dx}=4(2x+3)^3\\cdot2\n\\]\n\\[\n\\frac{dy}{dx}=8(2x+3)^3.\n\\]\nAt \\(x=1\\),\n\\[\n\\frac{dy}{dx}=8(2(1)+3)^3=8(5)^3=1000.\n\\]\nSo the gradient is 1000.",
+          "finalAnswer": "1000",
+          "hint": "Differentiate first, then substitute \\(x=1\\) into \\(\\frac{dy}{dx}\\).",
+          "commonMistake": "Substituting \\(x=1\\) into the original function instead of into the derivative.",
+          "calculatorAllowed": false,
+          "source": "Original STEM Forge QS-style content",
+          "status": "ready",
+          "displayOrder": 1001
+        }
+      },
+      {
+        "questionId": "hm-calc-diff-chain-a-002",
+        "sourceLineRange": {
+          "start": 531,
+          "end": 576
+        },
+        "status": "convertible",
+        "targetSkillPathSlug": "chain-rule",
+        "targetStageId": "chain-rule-stage-applications",
+        "conversions": [
+          "label_rename",
+          "stage_label_to_stage_id"
+        ],
+        "blockers": [],
+        "diagnostics": [],
+        "markerCompatibility": {
+          "strategy": "composite_algebraic_equivalence",
+          "strategyVersion": 1,
+          "targetOutcome": "graded",
+          "aliasOutcomes": [
+            {
+              "answer": "5(2x+4)(x^2+4x)^4",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "5*(2x+4)*(x^2+4x)^4",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "10(x+2)(x^2+4x)^4",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "10*(x+2)*(x^2+4x)^4",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            }
+          ]
+        },
+        "canonicalQuestion": {
+          "id": "hm-calc-diff-chain-a-002",
+          "questionVersion": 1,
+          "contentRevision": 1,
+          "contentStatus": "active",
+          "subject": "Higher Maths",
+          "courseArea": "Calculus",
+          "specArea": "Differentiation",
+          "skillPath": "Chain rule",
+          "skillPathId": "chain-rule",
+          "stageId": "chain-rule-stage-applications",
+          "stage": "Applications",
+          "skill": "Chain rule with a two-term inside derivative",
+          "title": "Chain rule with a two-term inside derivative",
+          "questionText": "Differentiate \\(y=(x^2+4x)^5\\) with respect to \\(x\\).",
+          "marks": 3,
+          "answerType": "algebraic",
+          "marking": {
+            "strategy": "composite_algebraic_equivalence",
+            "strategyVersion": 1,
+            "target": "5(2x+4)(x^2+4x)^4",
+            "variable": "x",
+            "fixtures": {
+              "correct": [
+                {
+                  "input": "5(2x+4)(x^2+4x)^4"
+                },
+                {
+                  "input": "5*(2x+4)*(x^2+4x)^4"
+                },
+                {
+                  "input": "10(x+2)(x^2+4x)^4"
+                },
+                {
+                  "input": "10*(x+2)*(x^2+4x)^4"
+                }
+              ],
+              "incorrect": [
+                {
+                  "input": "0",
+                  "reason": "value_wrong"
+                }
+              ],
+              "malformed": [
+                {
+                  "input": "++",
+                  "reason": "malformed_composite_expression"
+                }
+              ],
+              "unmarkable": [
+                {
+                  "input": "sin(x)",
+                  "reason": "unsupported_mathematical_form"
+                }
+              ]
+            }
+          },
+          "correctAnswer": "5(2x+4)(x^2+4x)^4",
+          "acceptedAnswers": [
+            "5(2x+4)(x^2+4x)^4",
+            "5*(2x+4)*(x^2+4x)^4",
+            "10(x+2)(x^2+4x)^4",
+            "10*(x+2)*(x^2+4x)^4"
+          ],
+          "workedSolution": "\\[\ny=(x^2+4x)^5\n\\]\nUsing the chain rule,\n\\[\n\\frac{dy}{dx}=5(x^2+4x)^4(2x+4).\n\\]\nSo\n\\[\n\\frac{dy}{dx}=5(2x+4)(x^2+4x)^4.\n\\]\nThis can also be written as\n\\[\n\\frac{dy}{dx}=10(x+2)(x^2+4x)^4.\n\\]",
+          "finalAnswer": "5(2x+4)(x^2+4x)^4",
+          "hint": "The derivative of the bracket is \\(2x+4\\), not just \\(2x\\).",
+          "commonMistake": "Forgetting to differentiate the \\(4x\\) term inside the bracket.",
+          "calculatorAllowed": false,
+          "source": "Original STEM Forge QS-style content",
+          "status": "ready",
+          "displayOrder": 1002
+        }
+      },
+      {
+        "questionId": "hm-calc-diff-chain-a-003",
+        "sourceLineRange": {
+          "start": 577,
+          "end": 620
+        },
+        "status": "convertible",
+        "targetSkillPathSlug": "chain-rule",
+        "targetStageId": "chain-rule-stage-applications",
+        "conversions": [
+          "label_rename",
+          "stage_label_to_stage_id"
+        ],
+        "blockers": [],
+        "diagnostics": [],
+        "markerCompatibility": {
+          "strategy": "numeric",
+          "strategyVersion": 1,
+          "targetOutcome": "graded",
+          "aliasOutcomes": [
+            {
+              "answer": "3528",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            }
+          ]
+        },
+        "canonicalQuestion": {
+          "id": "hm-calc-diff-chain-a-003",
+          "questionVersion": 1,
+          "contentRevision": 1,
+          "contentStatus": "active",
+          "subject": "Higher Maths",
+          "courseArea": "Calculus",
+          "specArea": "Differentiation",
+          "skillPath": "Chain rule",
+          "skillPathId": "chain-rule",
+          "stageId": "chain-rule-stage-applications",
+          "stage": "Applications",
+          "skill": "Gradient at a point with a constant multiplier",
+          "title": "Gradient at a point with a constant multiplier",
+          "questionText": "For \\(y=3(2x^2-1)^3\\), calculate the value of \\(\\frac{dy}{dx}\\) when \\(x=2\\).",
+          "marks": 3,
+          "answerType": "numerical",
+          "marking": {
+            "strategy": "numeric",
+            "strategyVersion": 1,
+            "target": "3528",
+            "comparison": {
+              "type": "exact"
+            },
+            "fixtures": {
+              "correct": [
+                {
+                  "input": "3528"
+                }
+              ],
+              "incorrect": [
+                {
+                  "input": "0",
+                  "reason": "value_wrong"
+                }
+              ],
+              "malformed": [
+                {
+                  "input": "++",
+                  "reason": "malformed_numeric"
+                }
+              ],
+              "unmarkable": [
+                {
+                  "input": "sin(x)",
+                  "reason": "expression_not_permitted"
+                }
+              ]
+            }
+          },
+          "correctAnswer": "3528",
+          "acceptedAnswers": [
+            "3528"
+          ],
+          "workedSolution": "\\[\ny=3(2x^2-1)^3\n\\]\n\\[\n\\frac{dy}{dx}=3\\cdot3(2x^2-1)^2\\cdot4x\n\\]\n\\[\n\\frac{dy}{dx}=36x(2x^2-1)^2.\n\\]\nAt \\(x=2\\),\n\\[\n\\frac{dy}{dx}=36(2)(2(2)^2-1)^2\n\\]\n\\[\n=72(7)^2=3528.\n\\]",
+          "finalAnswer": "3528",
+          "hint": "Keep the coefficient 3 at the front, then differentiate the bracket using the chain rule.",
+          "commonMistake": "Forgetting the outside coefficient 3, or forgetting that \\(\\frac{d}{dx}(2x^2-1)=4x\\).",
+          "calculatorAllowed": false,
+          "source": "Original STEM Forge QS-style content",
+          "status": "ready",
+          "displayOrder": 1003
+        }
+      },
+      {
+        "questionId": "hm-calc-diff-chain-a-004",
+        "sourceLineRange": {
+          "start": 621,
+          "end": 665
+        },
+        "status": "convertible",
+        "targetSkillPathSlug": "chain-rule",
+        "targetStageId": "chain-rule-stage-applications",
+        "conversions": [
+          "label_rename",
+          "stage_label_to_stage_id"
+        ],
+        "blockers": [],
+        "diagnostics": [],
+        "markerCompatibility": {
+          "strategy": "composite_algebraic_equivalence",
+          "strategyVersion": 2,
+          "targetOutcome": "graded",
+          "aliasOutcomes": [
+            {
+              "answer": "-12/(3x-2)^5",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "-12/(3x - 2)^5",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            }
+          ]
+        },
+        "canonicalQuestion": {
+          "id": "hm-calc-diff-chain-a-004",
+          "questionVersion": 1,
+          "contentRevision": 1,
+          "contentStatus": "active",
+          "subject": "Higher Maths",
+          "courseArea": "Calculus",
+          "specArea": "Differentiation",
+          "skillPath": "Chain rule",
+          "skillPathId": "chain-rule",
+          "stageId": "chain-rule-stage-applications",
+          "stage": "Applications",
+          "skill": "Chain rule with negative powers and positive-power final form",
+          "title": "Chain rule with negative powers and positive-power final form",
+          "questionText": "Differentiate \\(y=(3x-2)^{-4}\\) with respect to \\(x\\), giving your answer with positive powers.",
+          "marks": 3,
+          "answerType": "algebraic",
+          "marking": {
+            "strategy": "composite_algebraic_equivalence",
+            "strategyVersion": 2,
+            "target": "-12/(3x-2)^5",
+            "variable": "x",
+            "fixtures": {
+              "correct": [
+                {
+                  "input": "-12/(3x-2)^5"
+                },
+                {
+                  "input": "-12/(3x - 2)^5"
+                }
+              ],
+              "incorrect": [
+                {
+                  "input": "0",
+                  "reason": "value_wrong"
+                }
+              ],
+              "malformed": [
+                {
+                  "input": "++",
+                  "reason": "malformed_composite_expression"
+                }
+              ],
+              "unmarkable": [
+                {
+                  "input": "sin(x)",
+                  "reason": "unsupported_mathematical_form"
+                }
+              ]
+            }
+          },
+          "correctAnswer": "-12/(3x-2)^5",
+          "acceptedAnswers": [
+            "-12/(3x-2)^5",
+            "-12/(3x - 2)^5"
+          ],
+          "workedSolution": "\\[\ny=(3x-2)^{-4}\n\\]\nUsing the chain rule,\n\\[\n\\frac{dy}{dx}=-4(3x-2)^{-5}\\cdot3\n\\]\n\\[\n\\frac{dy}{dx}=-12(3x-2)^{-5}.\n\\]\nWith positive powers,\n\\[\n\\frac{dy}{dx}=-\\frac{12}{(3x-2)^5}.\n\\]",
+          "finalAnswer": "-12/(3x-2)^5",
+          "hint": "Differentiate first using the negative power, then rewrite the answer as a fraction.",
+          "commonMistake": "Leaving the answer as \\(-12(3x-2)^{-5}\\), even though the question asks for positive powers.",
+          "calculatorAllowed": false,
+          "source": "Original STEM Forge QS-style content",
+          "status": "ready",
+          "displayOrder": 1004
+        }
+      },
+      {
+        "questionId": "hm-calc-diff-chain-a-005",
+        "sourceLineRange": {
+          "start": 666,
+          "end": 706
+        },
+        "status": "convertible",
+        "targetSkillPathSlug": "chain-rule",
+        "targetStageId": "chain-rule-stage-applications",
+        "conversions": [
+          "label_rename",
+          "stage_label_to_stage_id"
+        ],
+        "blockers": [],
+        "diagnostics": [],
+        "markerCompatibility": {
+          "strategy": "numeric",
+          "strategyVersion": 1,
+          "targetOutcome": "graded",
+          "aliasOutcomes": [
+            {
+              "answer": "5/6",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            }
+          ]
+        },
+        "canonicalQuestion": {
+          "id": "hm-calc-diff-chain-a-005",
+          "questionVersion": 1,
+          "contentRevision": 1,
+          "contentStatus": "active",
+          "subject": "Higher Maths",
+          "courseArea": "Calculus",
+          "specArea": "Differentiation",
+          "skillPath": "Chain rule",
+          "skillPathId": "chain-rule",
+          "stageId": "chain-rule-stage-applications",
+          "stage": "Applications",
+          "skill": "Gradient at a point with square-root chain rule",
+          "title": "Gradient at a point with square-root chain rule",
+          "questionText": "For \\(y=\\sqrt{5x+4}\\), calculate \\(\\frac{dy}{dx}\\) when \\(x=1\\).",
+          "marks": 3,
+          "answerType": "numerical",
+          "marking": {
+            "strategy": "numeric",
+            "strategyVersion": 1,
+            "target": "5/6",
+            "comparison": {
+              "type": "exact"
+            },
+            "fixtures": {
+              "correct": [
+                {
+                  "input": "5/6"
+                }
+              ],
+              "incorrect": [
+                {
+                  "input": "0",
+                  "reason": "value_wrong"
+                }
+              ],
+              "malformed": [
+                {
+                  "input": "++",
+                  "reason": "malformed_numeric"
+                }
+              ],
+              "unmarkable": [
+                {
+                  "input": "sin(x)",
+                  "reason": "expression_not_permitted"
+                }
+              ]
+            }
+          },
+          "correctAnswer": "5/6",
+          "acceptedAnswers": [
+            "5/6"
+          ],
+          "workedSolution": "\\[\ny=\\sqrt{5x+4}=(5x+4)^{1/2}\n\\]\n\\[\n\\frac{dy}{dx}=\\frac{1}{2}(5x+4)^{-1/2}\\cdot5\n\\]\n\\[\n\\frac{dy}{dx}=\\frac{5}{2\\sqrt{5x+4}}.\n\\]\nAt \\(x=1\\),\n\\[\n\\frac{dy}{dx}=\\frac{5}{2\\sqrt{9}}=\\frac{5}{6}.\n\\]",
+          "finalAnswer": "5/6",
+          "hint": "Rewrite the square root as \\((5x+4)^{1/2}\\).",
+          "commonMistake": "Forgetting to multiply by the derivative of \\(5x+4\\), which is 5.",
+          "calculatorAllowed": false,
+          "source": "Original STEM Forge QS-style content",
+          "status": "ready",
+          "displayOrder": 1005
+        }
+      },
+      {
+        "questionId": "hm-calc-diff-chain-a-006",
+        "sourceLineRange": {
+          "start": 707,
+          "end": 751
+        },
+        "status": "convertible",
+        "targetSkillPathSlug": "chain-rule",
+        "targetStageId": "chain-rule-stage-applications",
+        "conversions": [
+          "label_rename",
+          "stage_label_to_stage_id"
+        ],
+        "blockers": [],
+        "diagnostics": [],
+        "markerCompatibility": {
+          "strategy": "composite_algebraic_equivalence",
+          "strategyVersion": 2,
+          "targetOutcome": "graded",
+          "aliasOutcomes": [
+            {
+              "answer": "7/(2sqrt(7x-3))",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "7/(2*sqrt(7x-3))",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "(7/2)(7x-3)^(-1/2)",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "7/2*(7x-3)^(-1/2)",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            }
+          ]
+        },
+        "canonicalQuestion": {
+          "id": "hm-calc-diff-chain-a-006",
+          "questionVersion": 1,
+          "contentRevision": 1,
+          "contentStatus": "active",
+          "subject": "Higher Maths",
+          "courseArea": "Calculus",
+          "specArea": "Differentiation",
+          "skillPath": "Chain rule",
+          "skillPathId": "chain-rule",
+          "stageId": "chain-rule-stage-applications",
+          "stage": "Applications",
+          "skill": "Rewrite square root then apply chain rule",
+          "title": "Rewrite square root then apply chain rule",
+          "questionText": "Differentiate \\(y=\\sqrt{7x-3}\\) with respect to \\(x\\).",
+          "marks": 3,
+          "answerType": "algebraic",
+          "marking": {
+            "strategy": "composite_algebraic_equivalence",
+            "strategyVersion": 2,
+            "target": "7/(2sqrt(7x-3))",
+            "variable": "x",
+            "fixtures": {
+              "correct": [
+                {
+                  "input": "7/(2sqrt(7x-3))"
+                },
+                {
+                  "input": "7/(2*sqrt(7x-3))"
+                },
+                {
+                  "input": "(7/2)(7x-3)^(-1/2)"
+                },
+                {
+                  "input": "7/2*(7x-3)^(-1/2)"
+                }
+              ],
+              "incorrect": [
+                {
+                  "input": "0",
+                  "reason": "value_wrong"
+                }
+              ],
+              "malformed": [
+                {
+                  "input": "++",
+                  "reason": "malformed_composite_expression"
+                }
+              ],
+              "unmarkable": [
+                {
+                  "input": "sin(x)",
+                  "reason": "unsupported_mathematical_form"
+                }
+              ]
+            }
+          },
+          "correctAnswer": "7/(2sqrt(7x-3))",
+          "acceptedAnswers": [
+            "7/(2sqrt(7x-3))",
+            "7/(2*sqrt(7x-3))",
+            "(7/2)(7x-3)^(-1/2)",
+            "7/2*(7x-3)^(-1/2)"
+          ],
+          "workedSolution": "\\[\ny=\\sqrt{7x-3}=(7x-3)^{1/2}\n\\]\n\\[\n\\frac{dy}{dx}=\\frac{1}{2}(7x-3)^{-1/2}\\cdot7\n\\]\n\\[\n\\frac{dy}{dx}=\\frac{7}{2}(7x-3)^{-1/2}\n\\]\n\\[\n\\frac{dy}{dx}=\\frac{7}{2\\sqrt{7x-3}}.\n\\]",
+          "finalAnswer": "7/(2sqrt(7x-3))",
+          "hint": "Use \\(\\sqrt{7x-3}=(7x-3)^{1/2}\\).",
+          "commonMistake": "Writing \\(\\frac{1}{2\\sqrt{7x-3}}\\) and forgetting the factor of 7.",
+          "calculatorAllowed": false,
+          "source": "Original STEM Forge QS-style content",
+          "status": "ready",
+          "displayOrder": 1006
+        }
+      },
+      {
+        "questionId": "hm-calc-diff-chain-a-007",
+        "sourceLineRange": {
+          "start": 752,
+          "end": 796
+        },
+        "status": "convertible",
+        "targetSkillPathSlug": "chain-rule",
+        "targetStageId": "chain-rule-stage-applications",
+        "conversions": [
+          "label_rename",
+          "stage_label_to_stage_id"
+        ],
+        "blockers": [],
+        "diagnostics": [],
+        "markerCompatibility": {
+          "strategy": "composite_algebraic_equivalence",
+          "strategyVersion": 2,
+          "targetOutcome": "graded",
+          "aliasOutcomes": [
+            {
+              "answer": "-12/(4x+5)^4",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "-12/(4x + 5)^4",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "-12(4x+5)^(-4)",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "-12*(4x+5)^(-4)",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            }
+          ]
+        },
+        "canonicalQuestion": {
+          "id": "hm-calc-diff-chain-a-007",
+          "questionVersion": 1,
+          "contentRevision": 1,
+          "contentStatus": "active",
+          "subject": "Higher Maths",
+          "courseArea": "Calculus",
+          "specArea": "Differentiation",
+          "skillPath": "Chain rule",
+          "skillPathId": "chain-rule",
+          "stageId": "chain-rule-stage-applications",
+          "stage": "Applications",
+          "skill": "Rewrite reciprocal then apply chain rule",
+          "title": "Rewrite reciprocal then apply chain rule",
+          "questionText": "Differentiate \\(y=\\frac{1}{(4x+5)^3}\\) with respect to \\(x\\).",
+          "marks": 3,
+          "answerType": "algebraic",
+          "marking": {
+            "strategy": "composite_algebraic_equivalence",
+            "strategyVersion": 2,
+            "target": "-12/(4x+5)^4",
+            "variable": "x",
+            "fixtures": {
+              "correct": [
+                {
+                  "input": "-12/(4x+5)^4"
+                },
+                {
+                  "input": "-12/(4x + 5)^4"
+                },
+                {
+                  "input": "-12(4x+5)^(-4)"
+                },
+                {
+                  "input": "-12*(4x+5)^(-4)"
+                }
+              ],
+              "incorrect": [
+                {
+                  "input": "0",
+                  "reason": "value_wrong"
+                }
+              ],
+              "malformed": [
+                {
+                  "input": "++",
+                  "reason": "malformed_composite_expression"
+                }
+              ],
+              "unmarkable": [
+                {
+                  "input": "sin(x)",
+                  "reason": "unsupported_mathematical_form"
+                }
+              ]
+            }
+          },
+          "correctAnswer": "-12/(4x+5)^4",
+          "acceptedAnswers": [
+            "-12/(4x+5)^4",
+            "-12/(4x + 5)^4",
+            "-12(4x+5)^(-4)",
+            "-12*(4x+5)^(-4)"
+          ],
+          "workedSolution": "\\[\ny=\\frac{1}{(4x+5)^3}=(4x+5)^{-3}\n\\]\nUsing the chain rule,\n\\[\n\\frac{dy}{dx}=-3(4x+5)^{-4}\\cdot4\n\\]\n\\[\n\\frac{dy}{dx}=-12(4x+5)^{-4}.\n\\]\nEquivalently,\n\\[\n\\frac{dy}{dx}=-\\frac{12}{(4x+5)^4}.\n\\]",
+          "finalAnswer": "-12/(4x+5)^4",
+          "hint": "Rewrite the function as \\((4x+5)^{-3}\\).",
+          "commonMistake": "Differentiating the denominator as if it were a separate fraction rule, instead of first rewriting with a negative power.",
+          "calculatorAllowed": false,
+          "source": "Original STEM Forge QS-style content",
+          "status": "ready",
+          "displayOrder": 1007
+        }
+      },
+      {
+        "questionId": "hm-calc-diff-chain-a-008",
+        "sourceLineRange": {
+          "start": 797,
+          "end": 837
+        },
+        "status": "convertible",
+        "targetSkillPathSlug": "chain-rule",
+        "targetStageId": "chain-rule-stage-applications",
+        "conversions": [
+          "label_rename",
+          "stage_label_to_stage_id"
+        ],
+        "blockers": [],
+        "diagnostics": [],
+        "markerCompatibility": {
+          "strategy": "numeric",
+          "strategyVersion": 1,
+          "targetOutcome": "graded",
+          "aliasOutcomes": [
+            {
+              "answer": "216",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            }
+          ]
+        },
+        "canonicalQuestion": {
+          "id": "hm-calc-diff-chain-a-008",
+          "questionVersion": 1,
+          "contentRevision": 1,
+          "contentStatus": "active",
+          "subject": "Higher Maths",
+          "courseArea": "Calculus",
+          "specArea": "Differentiation",
+          "skillPath": "Chain rule",
+          "skillPathId": "chain-rule",
+          "stageId": "chain-rule-stage-applications",
+          "stage": "Applications",
+          "skill": "Gradient at a point using a quadratic inside function",
+          "title": "Gradient at a point using a quadratic inside function",
+          "questionText": "For \\(y=(x^2-2x+6)^3\\), calculate the gradient of the curve at the point where \\(x=2\\).",
+          "marks": 3,
+          "answerType": "numerical",
+          "marking": {
+            "strategy": "numeric",
+            "strategyVersion": 1,
+            "target": "216",
+            "comparison": {
+              "type": "exact"
+            },
+            "fixtures": {
+              "correct": [
+                {
+                  "input": "216"
+                }
+              ],
+              "incorrect": [
+                {
+                  "input": "0",
+                  "reason": "value_wrong"
+                }
+              ],
+              "malformed": [
+                {
+                  "input": "++",
+                  "reason": "malformed_numeric"
+                }
+              ],
+              "unmarkable": [
+                {
+                  "input": "sin(x)",
+                  "reason": "expression_not_permitted"
+                }
+              ]
+            }
+          },
+          "correctAnswer": "216",
+          "acceptedAnswers": [
+            "216"
+          ],
+          "workedSolution": "\\[\ny=(x^2-2x+6)^3\n\\]\n\\[\n\\frac{dy}{dx}=3(x^2-2x+6)^2(2x-2).\n\\]\nAt \\(x=2\\),\n\\[\n\\frac{dy}{dx}=3(2^2-2(2)+6)^2(2(2)-2)\n\\]\n\\[\n=3(6)^2(2)=216.\n\\]",
+          "finalAnswer": "216",
+          "hint": "Differentiate the bracket \\(x^2-2x+6\\), then substitute \\(x=2\\).",
+          "commonMistake": "Calculating the \\(y\\)-value at \\(x=2\\) instead of the gradient.",
+          "calculatorAllowed": false,
+          "source": "Original STEM Forge QS-style content",
+          "status": "ready",
+          "displayOrder": 1008
+        }
+      },
+      {
+        "questionId": "hm-calc-diff-chain-a-009",
+        "sourceLineRange": {
+          "start": 838,
+          "end": 896
+        },
+        "status": "convertible",
+        "targetSkillPathSlug": "chain-rule",
+        "targetStageId": "chain-rule-stage-applications",
+        "conversions": [
+          "label_rename",
+          "stage_label_to_stage_id"
+        ],
+        "blockers": [],
+        "diagnostics": [],
+        "markerCompatibility": {
+          "strategy": "numeric",
+          "strategyVersion": 1,
+          "targetOutcome": "graded",
+          "aliasOutcomes": [
+            {
+              "answer": "1",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            }
+          ]
+        },
+        "canonicalQuestion": {
+          "id": "hm-calc-diff-chain-a-009",
+          "questionVersion": 1,
+          "contentRevision": 1,
+          "contentStatus": "active",
+          "subject": "Higher Maths",
+          "courseArea": "Calculus",
+          "specArea": "Differentiation",
+          "skillPath": "Chain rule",
+          "skillPathId": "chain-rule",
+          "stageId": "chain-rule-stage-applications",
+          "stage": "Applications",
+          "skill": "Solving from a gradient condition",
+          "title": "Solving from a gradient condition",
+          "questionText": "For \\(y=(2x+1)^3\\), determine the positive value of \\(x\\) for which the gradient of the curve is 54.",
+          "marks": 4,
+          "answerType": "numerical",
+          "marking": {
+            "strategy": "numeric",
+            "strategyVersion": 1,
+            "target": "1",
+            "comparison": {
+              "type": "exact"
+            },
+            "fixtures": {
+              "correct": [
+                {
+                  "input": "1"
+                }
+              ],
+              "incorrect": [
+                {
+                  "input": "0",
+                  "reason": "value_wrong"
+                }
+              ],
+              "malformed": [
+                {
+                  "input": "++",
+                  "reason": "malformed_numeric"
+                }
+              ],
+              "unmarkable": [
+                {
+                  "input": "sin(x)",
+                  "reason": "expression_not_permitted"
+                }
+              ]
+            }
+          },
+          "correctAnswer": "1",
+          "acceptedAnswers": [
+            "1"
+          ],
+          "workedSolution": "\\[\ny=(2x+1)^3\n\\]\n\\[\n\\frac{dy}{dx}=3(2x+1)^2\\cdot2\n\\]\n\\[\n\\frac{dy}{dx}=6(2x+1)^2.\n\\]\nThe gradient is 54, so\n\\[\n6(2x+1)^2=54.\n\\]\n\\[\n(2x+1)^2=9\n\\]\n\\[\n2x+1=\\pm3.\n\\]\nSo\n\\[\nx=1 \\quad \\text{or} \\quad x=-2.\n\\]\nThe positive value is\n\\[\nx=1.\n\\]",
+          "finalAnswer": "1",
+          "hint": "Find \\(\\frac{dy}{dx}\\), set it equal to 54, then solve for \\(x\\).",
+          "commonMistake": "Stopping at \\(2x+1=3\\) without noticing that a square equation also gives \\(2x+1=-3\\). The question asks for the positive value.",
+          "calculatorAllowed": false,
+          "source": "Original STEM Forge QS-style content",
+          "status": "ready",
+          "displayOrder": 1009
+        }
+      },
+      {
+        "questionId": "hm-calc-diff-chain-ppq-003",
+        "sourceLineRange": {
+          "start": 897,
+          "end": 951
+        },
+        "status": "convertible",
+        "targetSkillPathSlug": "chain-rule",
+        "targetStageId": "chain-rule-stage-past-paper-style",
+        "conversions": [
+          "label_rename",
+          "stage_label_to_stage_id"
+        ],
+        "blockers": [],
+        "diagnostics": [],
+        "markerCompatibility": {
+          "strategy": "composite_algebraic_equivalence",
+          "strategyVersion": 1,
+          "targetOutcome": "graded",
+          "aliasOutcomes": [
+            {
+              "answer": "-8(7-2x)^3",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "-8*(7-2x)^3",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "-8(7 - 2x)^3",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            }
+          ]
+        },
+        "canonicalQuestion": {
+          "id": "hm-calc-diff-chain-ppq-003",
+          "questionVersion": 1,
+          "contentRevision": 1,
+          "contentStatus": "active",
+          "subject": "Higher Maths",
+          "courseArea": "Calculus",
+          "specArea": "Differentiation",
+          "skillPath": "Chain rule",
+          "skillPathId": "chain-rule",
+          "stageId": "chain-rule-stage-past-paper-style",
+          "stage": "Past Paper-style Questions",
+          "skill": "Chain rule with a negative bracket derivative",
+          "title": "Chain rule with a negative bracket derivative",
+          "questionText": "Differentiate\n\\[\ny=(7-2x)^4\n\\]\nwith respect to \\(x\\).",
+          "marks": 2,
+          "answerType": "algebraic",
+          "marking": {
+            "strategy": "composite_algebraic_equivalence",
+            "strategyVersion": 1,
+            "target": "-8(7-2x)^3",
+            "variable": "x",
+            "fixtures": {
+              "correct": [
+                {
+                  "input": "-8(7-2x)^3"
+                },
+                {
+                  "input": "-8*(7-2x)^3"
+                },
+                {
+                  "input": "-8(7 - 2x)^3"
+                }
+              ],
+              "incorrect": [
+                {
+                  "input": "0",
+                  "reason": "value_wrong"
+                }
+              ],
+              "malformed": [
+                {
+                  "input": "++",
+                  "reason": "malformed_composite_expression"
+                }
+              ],
+              "unmarkable": [
+                {
+                  "input": "sin(x)",
+                  "reason": "unsupported_mathematical_form"
+                }
+              ]
+            }
+          },
+          "correctAnswer": "-8(7-2x)^3",
+          "acceptedAnswers": [
+            "-8(7-2x)^3",
+            "-8*(7-2x)^3",
+            "-8(7 - 2x)^3"
+          ],
+          "workedSolution": "\\[\ny=(7-2x)^4\n\\]\nUsing the Chain rule,\n\\[\n\\frac{dy}{dx}=4(7-2x)^3\\cdot(-2).\n\\]\nTherefore,\n\\[\n\\frac{dy}{dx}=-8(7-2x)^3.\n\\]",
+          "finalAnswer": "-8(7-2x)^3",
+          "hint": "After bringing down the power, multiply by the derivative of \\(7-2x\\).",
+          "commonMistake": "Dropping the negative sign from the derivative of \\(7-2x\\).",
+          "calculatorAllowed": false,
+          "source": "Original STEM Forge QS-style content",
+          "status": "ready",
+          "displayOrder": 2003
+        }
+      },
+      {
+        "questionId": "hm-calc-diff-chain-ppq-004",
+        "sourceLineRange": {
+          "start": 952,
+          "end": 1006
+        },
+        "status": "convertible",
+        "targetSkillPathSlug": "chain-rule",
+        "targetStageId": "chain-rule-stage-past-paper-style",
+        "conversions": [
+          "label_rename",
+          "stage_label_to_stage_id"
+        ],
+        "blockers": [],
+        "diagnostics": [],
+        "markerCompatibility": {
+          "strategy": "composite_algebraic_equivalence",
+          "strategyVersion": 1,
+          "targetOutcome": "graded",
+          "aliasOutcomes": [
+            {
+              "answer": "-15(5-3x)^4",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "-15*(5-3x)^4",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "-15(5 - 3x)^4",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            }
+          ]
+        },
+        "canonicalQuestion": {
+          "id": "hm-calc-diff-chain-ppq-004",
+          "questionVersion": 1,
+          "contentRevision": 1,
+          "contentStatus": "active",
+          "subject": "Higher Maths",
+          "courseArea": "Calculus",
+          "specArea": "Differentiation",
+          "skillPath": "Chain rule",
+          "skillPathId": "chain-rule",
+          "stageId": "chain-rule-stage-past-paper-style",
+          "stage": "Past Paper-style Questions",
+          "skill": "Chain rule with a negative linear bracket",
+          "title": "Chain rule with a negative linear bracket",
+          "questionText": "Differentiate\n\\[\ny=(5-3x)^5\n\\]\nwith respect to \\(x\\).",
+          "marks": 3,
+          "answerType": "algebraic",
+          "marking": {
+            "strategy": "composite_algebraic_equivalence",
+            "strategyVersion": 1,
+            "target": "-15(5-3x)^4",
+            "variable": "x",
+            "fixtures": {
+              "correct": [
+                {
+                  "input": "-15(5-3x)^4"
+                },
+                {
+                  "input": "-15*(5-3x)^4"
+                },
+                {
+                  "input": "-15(5 - 3x)^4"
+                }
+              ],
+              "incorrect": [
+                {
+                  "input": "0",
+                  "reason": "value_wrong"
+                }
+              ],
+              "malformed": [
+                {
+                  "input": "++",
+                  "reason": "malformed_composite_expression"
+                }
+              ],
+              "unmarkable": [
+                {
+                  "input": "sin(x)",
+                  "reason": "unsupported_mathematical_form"
+                }
+              ]
+            }
+          },
+          "correctAnswer": "-15(5-3x)^4",
+          "acceptedAnswers": [
+            "-15(5-3x)^4",
+            "-15*(5-3x)^4",
+            "-15(5 - 3x)^4"
+          ],
+          "workedSolution": "\\[\ny=(5-3x)^5\n\\]\nUsing the Chain rule,\n\\[\n\\frac{dy}{dx}=5(5-3x)^4\\cdot(-3).\n\\]\nSo\n\\[\n\\frac{dy}{dx}=-15(5-3x)^4.\n\\]",
+          "finalAnswer": "-15(5-3x)^4",
+          "hint": "The derivative of \\(5-3x\\) is \\(-3\\).",
+          "commonMistake": "Writing \\(15(5-3x)^4\\) instead of \\(-15(5-3x)^4\\).",
+          "calculatorAllowed": false,
+          "source": "Original STEM Forge QS-style content",
+          "status": "ready",
+          "displayOrder": 2004
+        }
+      },
+      {
+        "questionId": "hm-calc-diff-chain-ppq-007",
+        "sourceLineRange": {
+          "start": 1007,
+          "end": 1062
+        },
+        "status": "convertible",
+        "targetSkillPathSlug": "chain-rule",
+        "targetStageId": "chain-rule-stage-past-paper-style",
+        "conversions": [
+          "label_rename",
+          "stage_label_to_stage_id"
+        ],
+        "blockers": [],
+        "diagnostics": [],
+        "markerCompatibility": {
+          "strategy": "composite_algebraic_equivalence",
+          "strategyVersion": 1,
+          "targetOutcome": "graded",
+          "aliasOutcomes": [
+            {
+              "answer": "4(2x+3)(x^2+3x+1)^3",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "4*(2x+3)*(x^2+3x+1)^3",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "4(2x + 3)(x^2 + 3x + 1)^3",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "(8x+12)(x^2+3x+1)^3",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            }
+          ]
+        },
+        "canonicalQuestion": {
+          "id": "hm-calc-diff-chain-ppq-007",
+          "questionVersion": 1,
+          "contentRevision": 1,
+          "contentStatus": "active",
+          "subject": "Higher Maths",
+          "courseArea": "Calculus",
+          "specArea": "Differentiation",
+          "skillPath": "Chain rule",
+          "skillPathId": "chain-rule",
+          "stageId": "chain-rule-stage-past-paper-style",
+          "stage": "Past Paper-style Questions",
+          "skill": "Chain rule with a quadratic expression inside the bracket",
+          "title": "Chain rule with a quadratic expression inside the bracket",
+          "questionText": "Differentiate\n\\[\ny=(x^2+3x+1)^4\n\\]\nwith respect to \\(x\\).",
+          "marks": 3,
+          "answerType": "algebraic",
+          "marking": {
+            "strategy": "composite_algebraic_equivalence",
+            "strategyVersion": 1,
+            "target": "4(2x+3)(x^2+3x+1)^3",
+            "variable": "x",
+            "fixtures": {
+              "correct": [
+                {
+                  "input": "4(2x+3)(x^2+3x+1)^3"
+                },
+                {
+                  "input": "4*(2x+3)*(x^2+3x+1)^3"
+                },
+                {
+                  "input": "4(2x + 3)(x^2 + 3x + 1)^3"
+                },
+                {
+                  "input": "(8x+12)(x^2+3x+1)^3"
+                }
+              ],
+              "incorrect": [
+                {
+                  "input": "0",
+                  "reason": "value_wrong"
+                }
+              ],
+              "malformed": [
+                {
+                  "input": "++",
+                  "reason": "malformed_composite_expression"
+                }
+              ],
+              "unmarkable": [
+                {
+                  "input": "sin(x)",
+                  "reason": "unsupported_mathematical_form"
+                }
+              ]
+            }
+          },
+          "correctAnswer": "4(2x+3)(x^2+3x+1)^3",
+          "acceptedAnswers": [
+            "4(2x+3)(x^2+3x+1)^3",
+            "4*(2x+3)*(x^2+3x+1)^3",
+            "4(2x + 3)(x^2 + 3x + 1)^3",
+            "(8x+12)(x^2+3x+1)^3"
+          ],
+          "workedSolution": "\\[\ny=(x^2+3x+1)^4\n\\]\nUsing the Chain rule,\n\\[\n\\frac{dy}{dx}=4(x^2+3x+1)^3(2x+3).\n\\]\nTherefore,\n\\[\n\\frac{dy}{dx}=4(2x+3)(x^2+3x+1)^3.\n\\]",
+          "finalAnswer": "4(2x+3)(x^2+3x+1)^3",
+          "hint": "The derivative of the inside function \\(x^2+3x+1\\) is \\(2x+3\\).",
+          "commonMistake": "Only differentiating the outside power and forgetting the derivative of the full inside expression.",
+          "calculatorAllowed": false,
+          "source": "Original STEM Forge QS-style content",
+          "status": "ready",
+          "displayOrder": 2007
+        }
+      },
+      {
+        "questionId": "hm-calc-diff-chain-ppq-008",
+        "sourceLineRange": {
+          "start": 1063,
+          "end": 1117
+        },
+        "status": "convertible",
+        "targetSkillPathSlug": "chain-rule",
+        "targetStageId": "chain-rule-stage-past-paper-style",
+        "conversions": [
+          "label_rename",
+          "stage_label_to_stage_id"
+        ],
+        "blockers": [],
+        "diagnostics": [],
+        "markerCompatibility": {
+          "strategy": "composite_algebraic_equivalence",
+          "strategyVersion": 1,
+          "targetOutcome": "graded",
+          "aliasOutcomes": [
+            {
+              "answer": "-10x(6-x^2)^4",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "-10*x*(6-x^2)^4",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "-10x(6 - x^2)^4",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            }
+          ]
+        },
+        "canonicalQuestion": {
+          "id": "hm-calc-diff-chain-ppq-008",
+          "questionVersion": 1,
+          "contentRevision": 1,
+          "contentStatus": "active",
+          "subject": "Higher Maths",
+          "courseArea": "Calculus",
+          "specArea": "Differentiation",
+          "skillPath": "Chain rule",
+          "skillPathId": "chain-rule",
+          "stageId": "chain-rule-stage-past-paper-style",
+          "stage": "Past Paper-style Questions",
+          "skill": "Chain rule with a negative quadratic inside function",
+          "title": "Chain rule with a negative quadratic inside function",
+          "questionText": "Differentiate\n\\[\ny=(6-x^2)^5\n\\]\nwith respect to \\(x\\).",
+          "marks": 3,
+          "answerType": "algebraic",
+          "marking": {
+            "strategy": "composite_algebraic_equivalence",
+            "strategyVersion": 1,
+            "target": "-10x(6-x^2)^4",
+            "variable": "x",
+            "fixtures": {
+              "correct": [
+                {
+                  "input": "-10x(6-x^2)^4"
+                },
+                {
+                  "input": "-10*x*(6-x^2)^4"
+                },
+                {
+                  "input": "-10x(6 - x^2)^4"
+                }
+              ],
+              "incorrect": [
+                {
+                  "input": "0",
+                  "reason": "value_wrong"
+                }
+              ],
+              "malformed": [
+                {
+                  "input": "++",
+                  "reason": "malformed_composite_expression"
+                }
+              ],
+              "unmarkable": [
+                {
+                  "input": "sin(x)",
+                  "reason": "unsupported_mathematical_form"
+                }
+              ]
+            }
+          },
+          "correctAnswer": "-10x(6-x^2)^4",
+          "acceptedAnswers": [
+            "-10x(6-x^2)^4",
+            "-10*x*(6-x^2)^4",
+            "-10x(6 - x^2)^4"
+          ],
+          "workedSolution": "\\[\ny=(6-x^2)^5\n\\]\nUsing the Chain rule,\n\\[\n\\frac{dy}{dx}=5(6-x^2)^4\\cdot(-2x).\n\\]\nTherefore,\n\\[\n\\frac{dy}{dx}=-10x(6-x^2)^4.\n\\]",
+          "finalAnswer": "-10x(6-x^2)^4",
+          "hint": "Be careful: the derivative of \\(6-x^2\\) is \\(-2x\\).",
+          "commonMistake": "Writing \\(10x(6-x^2)^4\\) and losing the negative sign.",
+          "calculatorAllowed": false,
+          "source": "Original STEM Forge QS-style content",
+          "status": "ready",
+          "displayOrder": 2008
+        }
+      },
+      {
+        "questionId": "hm-calc-diff-chain-ppq-010",
+        "sourceLineRange": {
+          "start": 1118,
+          "end": 1172
+        },
+        "status": "convertible",
+        "targetSkillPathSlug": "chain-rule",
+        "targetStageId": "chain-rule-stage-past-paper-style",
+        "conversions": [
+          "label_rename",
+          "stage_label_to_stage_id"
+        ],
+        "blockers": [],
+        "diagnostics": [],
+        "markerCompatibility": {
+          "strategy": "composite_algebraic_equivalence",
+          "strategyVersion": 1,
+          "targetOutcome": "graded",
+          "aliasOutcomes": [
+            {
+              "answer": "20x(x^2-1)^4",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "20*x*(x^2-1)^4",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "20x(x^2 - 1)^4",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            }
+          ]
+        },
+        "canonicalQuestion": {
+          "id": "hm-calc-diff-chain-ppq-010",
+          "questionVersion": 1,
+          "contentRevision": 1,
+          "contentStatus": "active",
+          "subject": "Higher Maths",
+          "courseArea": "Calculus",
+          "specArea": "Differentiation",
+          "skillPath": "Chain rule",
+          "skillPathId": "chain-rule",
+          "stageId": "chain-rule-stage-past-paper-style",
+          "stage": "Past Paper-style Questions",
+          "skill": "Chain rule with a constant multiplier and quadratic inside function",
+          "title": "Chain rule with a constant multiplier and quadratic inside function",
+          "questionText": "Differentiate\n\\[\ny=2(x^2-1)^5\n\\]\nwith respect to \\(x\\).",
+          "marks": 3,
+          "answerType": "algebraic",
+          "marking": {
+            "strategy": "composite_algebraic_equivalence",
+            "strategyVersion": 1,
+            "target": "20x(x^2-1)^4",
+            "variable": "x",
+            "fixtures": {
+              "correct": [
+                {
+                  "input": "20x(x^2-1)^4"
+                },
+                {
+                  "input": "20*x*(x^2-1)^4"
+                },
+                {
+                  "input": "20x(x^2 - 1)^4"
+                }
+              ],
+              "incorrect": [
+                {
+                  "input": "0",
+                  "reason": "value_wrong"
+                }
+              ],
+              "malformed": [
+                {
+                  "input": "++",
+                  "reason": "malformed_composite_expression"
+                }
+              ],
+              "unmarkable": [
+                {
+                  "input": "sin(x)",
+                  "reason": "unsupported_mathematical_form"
+                }
+              ]
+            }
+          },
+          "correctAnswer": "20x(x^2-1)^4",
+          "acceptedAnswers": [
+            "20x(x^2-1)^4",
+            "20*x*(x^2-1)^4",
+            "20x(x^2 - 1)^4"
+          ],
+          "workedSolution": "\\[\ny=2(x^2-1)^5\n\\]\nUsing the Chain rule,\n\\[\n\\frac{dy}{dx}=2\\cdot 5(x^2-1)^4\\cdot 2x.\n\\]\nTherefore,\n\\[\n\\frac{dy}{dx}=20x(x^2-1)^4.\n\\]",
+          "finalAnswer": "20x(x^2-1)^4",
+          "hint": "Keep the multiplier \\(2\\), then multiply by the derivative of \\(x^2-1\\).",
+          "commonMistake": "Using the outside power correctly but forgetting to multiply by \\(2x\\).",
+          "calculatorAllowed": false,
+          "source": "Original STEM Forge QS-style content",
+          "status": "ready",
+          "displayOrder": 2010
+        }
+      },
+      {
+        "questionId": "hm-calc-diff-chain-ppq-011",
+        "sourceLineRange": {
+          "start": 1173,
+          "end": 1232
+        },
+        "status": "convertible",
+        "targetSkillPathSlug": "chain-rule",
+        "targetStageId": "chain-rule-stage-past-paper-style",
+        "conversions": [
+          "label_rename",
+          "stage_label_to_stage_id"
+        ],
+        "blockers": [],
+        "diagnostics": [],
+        "markerCompatibility": {
+          "strategy": "composite_algebraic_equivalence",
+          "strategyVersion": 1,
+          "targetOutcome": "graded",
+          "aliasOutcomes": [
+            {
+              "answer": "12(3x+1)^3+10x",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "12*(3x+1)^3+10x",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "12(3x + 1)^3 + 10x",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "10x+12(3x+1)^3",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            }
+          ]
+        },
+        "canonicalQuestion": {
+          "id": "hm-calc-diff-chain-ppq-011",
+          "questionVersion": 1,
+          "contentRevision": 1,
+          "contentStatus": "active",
+          "subject": "Higher Maths",
+          "courseArea": "Calculus",
+          "specArea": "Differentiation",
+          "skillPath": "Chain rule",
+          "skillPathId": "chain-rule",
+          "stageId": "chain-rule-stage-past-paper-style",
+          "stage": "Past Paper-style Questions",
+          "skill": "Chain rule with an added basic differentiation term",
+          "title": "Chain rule with an added basic differentiation term",
+          "questionText": "Differentiate\n\\[\ny=(3x+1)^4+5x^2\n\\]\nwith respect to \\(x\\).",
+          "marks": 4,
+          "answerType": "algebraic",
+          "marking": {
+            "strategy": "composite_algebraic_equivalence",
+            "strategyVersion": 1,
+            "target": "12(3x+1)^3+10x",
+            "variable": "x",
+            "fixtures": {
+              "correct": [
+                {
+                  "input": "12(3x+1)^3+10x"
+                },
+                {
+                  "input": "12*(3x+1)^3+10x"
+                },
+                {
+                  "input": "12(3x + 1)^3 + 10x"
+                },
+                {
+                  "input": "10x+12(3x+1)^3"
+                }
+              ],
+              "incorrect": [
+                {
+                  "input": "0",
+                  "reason": "value_wrong"
+                }
+              ],
+              "malformed": [
+                {
+                  "input": "++",
+                  "reason": "malformed_composite_expression"
+                }
+              ],
+              "unmarkable": [
+                {
+                  "input": "sin(x)",
+                  "reason": "unsupported_mathematical_form"
+                }
+              ]
+            }
+          },
+          "correctAnswer": "12(3x+1)^3+10x",
+          "acceptedAnswers": [
+            "12(3x+1)^3+10x",
+            "12*(3x+1)^3+10x",
+            "12(3x + 1)^3 + 10x",
+            "10x+12(3x+1)^3"
+          ],
+          "workedSolution": "\\[\ny=(3x+1)^4+5x^2\n\\]\nUsing the Chain rule,\n\\[\n\\frac{d}{dx}\\left((3x+1)^4\\right)=4(3x+1)^3\\cdot3=12(3x+1)^3.\n\\]\nAlso,\n\\[\n\\frac{d}{dx}(5x^2)=10x.\n\\]\nTherefore,\n\\[\n\\frac{dy}{dx}=12(3x+1)^3+10x.\n\\]",
+          "finalAnswer": "12(3x+1)^3+10x",
+          "hint": "Use the Chain rule on \\((3x+1)^4\\), then differentiate \\(5x^2\\) normally.",
+          "commonMistake": "Only differentiating the bracketed term and forgetting the \\(5x^2\\) term.",
+          "calculatorAllowed": false,
+          "source": "Original STEM Forge QS-style content",
+          "status": "ready",
+          "displayOrder": 2011
+        }
+      },
+      {
+        "questionId": "hm-calc-diff-chain-ppq-012",
+        "sourceLineRange": {
+          "start": 1233,
+          "end": 1309
+        },
+        "status": "convertible",
+        "targetSkillPathSlug": "chain-rule",
+        "targetStageId": "chain-rule-stage-past-paper-style",
+        "conversions": [
+          "label_rename",
+          "stage_label_to_stage_id",
+          "explicit_scaffolding_field_drop"
+        ],
+        "blockers": [],
+        "diagnostics": [],
+        "markerCompatibility": {
+          "strategy": "composite_algebraic_equivalence",
+          "strategyVersion": 2,
+          "targetOutcome": "graded",
+          "aliasOutcomes": [
+            {
+              "answer": "(5/2)(5x+4)^(-1/2)",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "5/2(5x+4)^(-1/2)",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "5/(2sqrt(5x+4))",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "5/(2sqrt(5x + 4))",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "5/(2*sqrt(5x+4))",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            }
+          ]
+        },
+        "canonicalQuestion": {
+          "id": "hm-calc-diff-chain-ppq-012",
+          "questionVersion": 1,
+          "contentRevision": 1,
+          "contentStatus": "active",
+          "subject": "Higher Maths",
+          "courseArea": "Calculus",
+          "specArea": "Differentiation",
+          "skillPath": "Chain rule",
+          "skillPathId": "chain-rule",
+          "stageId": "chain-rule-stage-past-paper-style",
+          "stage": "Past Paper-style Questions",
+          "skill": "Chain rule with a square-root composite",
+          "title": "Chain rule with a square-root composite",
+          "questionText": "Differentiate\n\\[\ny=\\sqrt{5x+4}\n\\]\nwith respect to \\(x\\).",
+          "marks": 3,
+          "answerType": "algebraic",
+          "marking": {
+            "strategy": "composite_algebraic_equivalence",
+            "strategyVersion": 2,
+            "target": "(5/2)(5x+4)^(-1/2)",
+            "variable": "x",
+            "fixtures": {
+              "correct": [
+                {
+                  "input": "(5/2)(5x+4)^(-1/2)"
+                },
+                {
+                  "input": "5/2(5x+4)^(-1/2)"
+                },
+                {
+                  "input": "5/(2sqrt(5x+4))"
+                },
+                {
+                  "input": "5/(2sqrt(5x + 4))"
+                },
+                {
+                  "input": "5/(2*sqrt(5x+4))"
+                }
+              ],
+              "incorrect": [
+                {
+                  "input": "0",
+                  "reason": "value_wrong"
+                }
+              ],
+              "malformed": [
+                {
+                  "input": "++",
+                  "reason": "malformed_composite_expression"
+                }
+              ],
+              "unmarkable": [
+                {
+                  "input": "sin(x)",
+                  "reason": "unsupported_mathematical_form"
+                }
+              ]
+            }
+          },
+          "correctAnswer": "(5/2)(5x+4)^(-1/2)",
+          "acceptedAnswers": [
+            "(5/2)(5x+4)^(-1/2)",
+            "5/2(5x+4)^(-1/2)",
+            "5/(2sqrt(5x+4))",
+            "5/(2sqrt(5x + 4))",
+            "5/(2*sqrt(5x+4))"
+          ],
+          "workedSolution": "\\[\ny=\\sqrt{5x+4}=(5x+4)^{1/2}.\n\\]\nUsing the Chain rule,\n\\[\n\\frac{dy}{dx}=\\frac12(5x+4)^{-1/2}\\cdot5.\n\\]\nSo\n\\[\n\\frac{dy}{dx}=\\frac52(5x+4)^{-1/2}.\n\\]\nThis can also be written as\n\\[\n\\frac{dy}{dx}=\\frac{5}{2\\sqrt{5x+4}}.\n\\]",
+          "finalAnswer": "(5/2)(5x+4)^(-1/2)",
+          "hint": "Rewrite the square root as a power of \\(\\frac12\\).",
+          "commonMistake": "Writing \\(\\frac12(5x+4)^{-1/2}\\) and forgetting to multiply by 5.",
+          "calculatorAllowed": false,
+          "source": "Original STEM Forge QS-style content",
+          "status": "ready",
+          "displayOrder": 2012
+        }
+      },
+      {
+        "questionId": "hm-calc-diff-chain-ppq-014",
+        "sourceLineRange": {
+          "start": 1310,
+          "end": 1370
+        },
+        "status": "convertible",
+        "targetSkillPathSlug": "chain-rule",
+        "targetStageId": "chain-rule-stage-past-paper-style",
+        "conversions": [
+          "label_rename",
+          "stage_label_to_stage_id"
+        ],
+        "blockers": [],
+        "diagnostics": [],
+        "markerCompatibility": {
+          "strategy": "composite_algebraic_equivalence",
+          "strategyVersion": 2,
+          "targetOutcome": "graded",
+          "aliasOutcomes": [
+            {
+              "answer": "-2(x+3)^(-3)",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "-2*(x+3)^(-3)",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "-2(x + 3)^(-3)",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "-2/(x+3)^3",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "-2/((x+3)^3)",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            }
+          ]
+        },
+        "canonicalQuestion": {
+          "id": "hm-calc-diff-chain-ppq-014",
+          "questionVersion": 1,
+          "contentRevision": 1,
+          "contentStatus": "active",
+          "subject": "Higher Maths",
+          "courseArea": "Calculus",
+          "specArea": "Differentiation",
+          "skillPath": "Chain rule",
+          "skillPathId": "chain-rule",
+          "stageId": "chain-rule-stage-past-paper-style",
+          "stage": "Past Paper-style Questions",
+          "skill": "Chain rule with a negative power",
+          "title": "Chain rule with a negative power",
+          "questionText": "Differentiate\n\\[\ny=(x+3)^{-2}\n\\]\nwith respect to \\(x\\).",
+          "marks": 3,
+          "answerType": "algebraic",
+          "marking": {
+            "strategy": "composite_algebraic_equivalence",
+            "strategyVersion": 2,
+            "target": "-2(x+3)^(-3)",
+            "variable": "x",
+            "fixtures": {
+              "correct": [
+                {
+                  "input": "-2(x+3)^(-3)"
+                },
+                {
+                  "input": "-2*(x+3)^(-3)"
+                },
+                {
+                  "input": "-2(x + 3)^(-3)"
+                },
+                {
+                  "input": "-2/(x+3)^3"
+                },
+                {
+                  "input": "-2/((x+3)^3)"
+                }
+              ],
+              "incorrect": [
+                {
+                  "input": "0",
+                  "reason": "value_wrong"
+                }
+              ],
+              "malformed": [
+                {
+                  "input": "++",
+                  "reason": "malformed_composite_expression"
+                }
+              ],
+              "unmarkable": [
+                {
+                  "input": "sin(x)",
+                  "reason": "unsupported_mathematical_form"
+                }
+              ]
+            }
+          },
+          "correctAnswer": "-2(x+3)^(-3)",
+          "acceptedAnswers": [
+            "-2(x+3)^(-3)",
+            "-2*(x+3)^(-3)",
+            "-2(x + 3)^(-3)",
+            "-2/(x+3)^3",
+            "-2/((x+3)^3)"
+          ],
+          "workedSolution": "\\[\ny=(x+3)^{-2}\n\\]\nUsing the Chain rule,\n\\[\n\\frac{dy}{dx}=-2(x+3)^{-3}\\cdot1.\n\\]\nTherefore,\n\\[\n\\frac{dy}{dx}=-2(x+3)^{-3}.\n\\]",
+          "finalAnswer": "-2(x+3)^(-3)",
+          "hint": "Bring down the power \\(-2\\), then reduce the power by 1.",
+          "commonMistake": "Changing the power from \\(-2\\) to \\(-1\\) instead of reducing it to \\(-3\\).",
+          "calculatorAllowed": false,
+          "source": "Original STEM Forge QS-style content",
+          "status": "ready",
+          "displayOrder": 2014
+        }
+      },
+      {
+        "questionId": "hm-calc-diff-chain-ppq-015",
+        "sourceLineRange": {
+          "start": 1371,
+          "end": 1442
+        },
+        "status": "convertible",
+        "targetSkillPathSlug": "chain-rule",
+        "targetStageId": "chain-rule-stage-past-paper-style",
+        "conversions": [
+          "label_rename",
+          "stage_label_to_stage_id",
+          "explicit_scaffolding_field_drop"
+        ],
+        "blockers": [],
+        "diagnostics": [],
+        "markerCompatibility": {
+          "strategy": "numeric",
+          "strategyVersion": 1,
+          "targetOutcome": "graded",
+          "aliasOutcomes": [
+            {
+              "answer": "810",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            }
+          ]
+        },
+        "canonicalQuestion": {
+          "id": "hm-calc-diff-chain-ppq-015",
+          "questionVersion": 1,
+          "contentRevision": 1,
+          "contentStatus": "active",
+          "subject": "Higher Maths",
+          "courseArea": "Calculus",
+          "specArea": "Differentiation",
+          "skillPath": "Chain rule",
+          "skillPathId": "chain-rule",
+          "stageId": "chain-rule-stage-past-paper-style",
+          "stage": "Past Paper-style Questions",
+          "skill": "Finding a gradient using the Chain rule",
+          "title": "Finding a gradient using the Chain rule",
+          "questionText": "A curve has equation\n\\[\ny=(2x+1)^5.\n\\]\nFind the gradient of the curve at \\(x=1\\).",
+          "marks": 4,
+          "answerType": "numerical",
+          "marking": {
+            "strategy": "numeric",
+            "strategyVersion": 1,
+            "target": "810",
+            "comparison": {
+              "type": "exact"
+            },
+            "fixtures": {
+              "correct": [
+                {
+                  "input": "810"
+                }
+              ],
+              "incorrect": [
+                {
+                  "input": "0",
+                  "reason": "value_wrong"
+                }
+              ],
+              "malformed": [
+                {
+                  "input": "++",
+                  "reason": "malformed_numeric"
+                }
+              ],
+              "unmarkable": [
+                {
+                  "input": "sin(x)",
+                  "reason": "expression_not_permitted"
+                }
+              ]
+            }
+          },
+          "correctAnswer": "810",
+          "acceptedAnswers": [
+            "810"
+          ],
+          "workedSolution": "\\[\ny=(2x+1)^5\n\\]\nUsing the Chain rule,\n\\[\n\\frac{dy}{dx}=5(2x+1)^4\\cdot2=10(2x+1)^4.\n\\]\nAt \\(x=1\\),\n\\[\n\\frac{dy}{dx}=10(2(1)+1)^4=10(3)^4.\n\\]\n\\[\n10(3)^4=10\\cdot81=810.\n\\]\nSo the gradient is\n\\[\n810.\n\\]",
+          "finalAnswer": "810",
+          "hint": "Differentiate first, then substitute \\(x=1\\) into the derivative.",
+          "commonMistake": "Substituting \\(x=1\\) into \\(y\\) instead of into \\(\\frac{dy}{dx}\\).",
+          "calculatorAllowed": false,
+          "source": "Original STEM Forge QS-style content",
+          "status": "ready",
+          "displayOrder": 2015
+        }
+      },
+      {
+        "questionId": "hm-calc-diff-chain-ppq-016",
+        "sourceLineRange": {
+          "start": 1443,
+          "end": 1518
+        },
+        "status": "convertible",
+        "targetSkillPathSlug": "chain-rule",
+        "targetStageId": "chain-rule-stage-past-paper-style",
+        "conversions": [
+          "label_rename",
+          "stage_label_to_stage_id",
+          "explicit_scaffolding_field_drop"
+        ],
+        "blockers": [],
+        "diagnostics": [],
+        "markerCompatibility": {
+          "strategy": "numeric",
+          "strategyVersion": 1,
+          "targetOutcome": "graded",
+          "aliasOutcomes": [
+            {
+              "answer": "432",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            }
+          ]
+        },
+        "canonicalQuestion": {
+          "id": "hm-calc-diff-chain-ppq-016",
+          "questionVersion": 1,
+          "contentRevision": 1,
+          "contentStatus": "active",
+          "subject": "Higher Maths",
+          "courseArea": "Calculus",
+          "specArea": "Differentiation",
+          "skillPath": "Chain rule",
+          "skillPathId": "chain-rule",
+          "stageId": "chain-rule-stage-past-paper-style",
+          "stage": "Past Paper-style Questions",
+          "skill": "Finding a gradient with a quadratic inside function",
+          "title": "Finding a gradient with a quadratic inside function",
+          "questionText": "A curve has equation\n\\[\ny=(x^2+2)^3.\n\\]\nFind the gradient of the curve at \\(x=2\\).",
+          "marks": 4,
+          "answerType": "numerical",
+          "marking": {
+            "strategy": "numeric",
+            "strategyVersion": 1,
+            "target": "432",
+            "comparison": {
+              "type": "exact"
+            },
+            "fixtures": {
+              "correct": [
+                {
+                  "input": "432"
+                }
+              ],
+              "incorrect": [
+                {
+                  "input": "0",
+                  "reason": "value_wrong"
+                }
+              ],
+              "malformed": [
+                {
+                  "input": "++",
+                  "reason": "malformed_numeric"
+                }
+              ],
+              "unmarkable": [
+                {
+                  "input": "sin(x)",
+                  "reason": "expression_not_permitted"
+                }
+              ]
+            }
+          },
+          "correctAnswer": "432",
+          "acceptedAnswers": [
+            "432"
+          ],
+          "workedSolution": "\\[\ny=(x^2+2)^3\n\\]\nUsing the Chain rule,\n\\[\n\\frac{dy}{dx}=3(x^2+2)^2\\cdot2x.\n\\]\nSo\n\\[\n\\frac{dy}{dx}=6x(x^2+2)^2.\n\\]\nAt \\(x=2\\),\n\\[\n\\frac{dy}{dx}=6(2)(2^2+2)^2.\n\\]\n\\[\n=12(6)^2=12\\cdot36=432.\n\\]\nSo the gradient is\n\\[\n432.\n\\]",
+          "finalAnswer": "432",
+          "hint": "Differentiate using the Chain rule, then substitute \\(x=2\\).",
+          "commonMistake": "Forgetting the \\(2x\\) from differentiating \\(x^2+2\\).",
+          "calculatorAllowed": false,
+          "source": "Original STEM Forge QS-style content",
+          "status": "ready",
+          "displayOrder": 2016
+        }
+      },
+      {
+        "questionId": "hm-calc-diff-chain-ppq-017",
+        "sourceLineRange": {
+          "start": 1519,
+          "end": 1633
+        },
+        "status": "convertible",
+        "targetSkillPathSlug": "chain-rule",
+        "targetStageId": "chain-rule-stage-past-paper-style",
+        "conversions": [
+          "label_rename",
+          "stage_label_to_stage_id",
+          "explicit_scaffolding_field_drop"
+        ],
+        "blockers": [],
+        "diagnostics": [],
+        "markerCompatibility": {
+          "strategy": "closed_vocabulary_text_answer",
+          "strategyVersion": 1,
+          "targetOutcome": "graded",
+          "aliasOutcomes": [
+            {
+              "answer": "C1",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "curve C1",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "first curve",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            },
+            {
+              "answer": "y=(x+2)^4",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            }
+          ]
+        },
+        "canonicalQuestion": {
+          "id": "hm-calc-diff-chain-ppq-017",
+          "questionVersion": 1,
+          "contentRevision": 1,
+          "contentStatus": "active",
+          "subject": "Higher Maths",
+          "courseArea": "Calculus",
+          "specArea": "Differentiation",
+          "skillPath": "Chain rule",
+          "skillPathId": "chain-rule",
+          "stageId": "chain-rule-stage-past-paper-style",
+          "stage": "Past Paper-style Questions",
+          "skill": "Comparing gradients after differentiating",
+          "title": "Comparing gradients after differentiating",
+          "questionText": "Curve \\(C_1\\) has equation\n\\[\ny=(x+2)^4.\n\\]\nCurve \\(C_2\\) has equation\n\\[\ny=6x^2+1.\n\\]\nCompare the gradients of the two curves at \\(x=1\\).",
+          "marks": 5,
+          "answerType": "written",
+          "marking": {
+            "strategy": "closed_vocabulary_text_answer",
+            "strategyVersion": 1,
+            "target": "C1",
+            "acceptedAnswers": [
+              "C1",
+              "curve C1",
+              "first curve",
+              "y=(x+2)^4"
+            ],
+            "fixtures": {
+              "correct": [
+                {
+                  "input": "C1"
+                },
+                {
+                  "input": "curve C1"
+                },
+                {
+                  "input": "first curve"
+                },
+                {
+                  "input": "y=(x+2)^4"
+                }
+              ],
+              "incorrect": [
+                {
+                  "input": "definitely not in the declared vocabulary",
+                  "reason": "value_wrong"
+                }
+              ],
+              "malformed": [
+                {
+                  "input": "",
+                  "reason": "malformed_closed_vocabulary_text"
+                }
+              ],
+              "unmarkable": [
+                {
+                  "input": "\u0007",
+                  "reason": "expression_not_permitted"
+                }
+              ]
+            }
+          },
+          "correctAnswer": "C1",
+          "acceptedAnswers": [
+            "C1",
+            "curve C1",
+            "first curve",
+            "y=(x+2)^4"
+          ],
+          "workedSolution": "For \\(C_1\\),\n\\[\ny=(x+2)^4.\n\\]\nUsing the Chain rule,\n\\[\n\\frac{dy}{dx}=4(x+2)^3.\n\\]\nAt \\(x=1\\),\n\\[\n4(1+2)^3=4(3)^3=108.\n\\]\n\nFor \\(C_2\\),\n\\[\ny=6x^2+1.\n\\]\n\\[\n\\frac{dy}{dx}=12x.\n\\]\nAt \\(x=1\\),\n\\[\n12(1)=12.\n\\]\n\nSince\n\\[\n108>12,\n\\]\ncurve \\(C_1\\) has the greater gradient at \\(x=1\\).",
+          "finalAnswer": "C1",
+          "hint": "Find each derivative, then substitute \\(x=1\\) into both derivatives.",
+          "commonMistake": "Comparing the \\(y\\)-values of the curves instead of comparing the gradients.",
+          "calculatorAllowed": false,
+          "source": "Original STEM Forge QS-style content",
+          "status": "ready",
+          "displayOrder": 2017
+        }
+      },
+      {
+        "questionId": "hm-calc-diff-chain-ppq-018",
+        "sourceLineRange": {
+          "start": 1634,
+          "end": 1708
+        },
+        "status": "convertible",
+        "targetSkillPathSlug": "chain-rule",
+        "targetStageId": "chain-rule-stage-past-paper-style",
+        "conversions": [
+          "label_rename",
+          "stage_label_to_stage_id",
+          "explicit_scaffolding_field_drop"
+        ],
+        "blockers": [],
+        "diagnostics": [],
+        "markerCompatibility": {
+          "strategy": "numeric",
+          "strategyVersion": 1,
+          "targetOutcome": "graded",
+          "aliasOutcomes": [
+            {
+              "answer": "168",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            }
+          ]
+        },
+        "canonicalQuestion": {
+          "id": "hm-calc-diff-chain-ppq-018",
+          "questionVersion": 1,
+          "contentRevision": 1,
+          "contentStatus": "active",
+          "subject": "Higher Maths",
+          "courseArea": "Calculus",
+          "specArea": "Differentiation",
+          "skillPath": "Chain rule",
+          "skillPathId": "chain-rule",
+          "stageId": "chain-rule-stage-past-paper-style",
+          "stage": "Past Paper-style Questions",
+          "skill": "Evaluating \\(f'(a)\\) after using the Chain rule",
+          "title": "Evaluating \\(f'(a)\\) after using the Chain rule",
+          "questionText": "Given\n\\[\nf(x)=(x^2+5)^2,\n\\]\nfind\n\\[\nf'(3).\n\\]",
+          "marks": 4,
+          "answerType": "numerical",
+          "marking": {
+            "strategy": "numeric",
+            "strategyVersion": 1,
+            "target": "168",
+            "comparison": {
+              "type": "exact"
+            },
+            "fixtures": {
+              "correct": [
+                {
+                  "input": "168"
+                }
+              ],
+              "incorrect": [
+                {
+                  "input": "0",
+                  "reason": "value_wrong"
+                }
+              ],
+              "malformed": [
+                {
+                  "input": "++",
+                  "reason": "malformed_numeric"
+                }
+              ],
+              "unmarkable": [
+                {
+                  "input": "sin(x)",
+                  "reason": "expression_not_permitted"
+                }
+              ]
+            }
+          },
+          "correctAnswer": "168",
+          "acceptedAnswers": [
+            "168"
+          ],
+          "workedSolution": "\\[\nf(x)=(x^2+5)^2.\n\\]\nUsing the Chain rule,\n\\[\nf'(x)=2(x^2+5)\\cdot2x.\n\\]\nSo\n\\[\nf'(x)=4x(x^2+5).\n\\]\nNow substitute \\(x=3\\):\n\\[\nf'(3)=4(3)(3^2+5).\n\\]\n\\[\n=12(14)=168.\n\\]",
+          "finalAnswer": "168",
+          "hint": "Find \\(f'(x)\\), then substitute \\(x=3\\).",
+          "commonMistake": "Substituting \\(x=3\\) into \\(f(x)\\) instead of into \\(f'(x)\\).",
+          "calculatorAllowed": false,
+          "source": "Original STEM Forge QS-style content",
+          "status": "ready",
+          "displayOrder": 2018
+        }
+      },
+      {
+        "questionId": "hm-calc-diff-chain-ppq-019",
+        "sourceLineRange": {
+          "start": 1709,
+          "end": 1803
+        },
+        "status": "convertible",
+        "targetSkillPathSlug": "chain-rule",
+        "targetStageId": "chain-rule-stage-past-paper-style",
+        "conversions": [
+          "label_rename",
+          "stage_label_to_stage_id",
+          "explicit_scaffolding_field_drop"
+        ],
+        "blockers": [],
+        "diagnostics": [],
+        "markerCompatibility": {
+          "strategy": "numeric",
+          "strategyVersion": 1,
+          "targetOutcome": "graded",
+          "aliasOutcomes": [
+            {
+              "answer": "-1",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            }
+          ]
+        },
+        "canonicalQuestion": {
+          "id": "hm-calc-diff-chain-ppq-019",
+          "questionVersion": 1,
+          "contentRevision": 1,
+          "contentStatus": "active",
+          "subject": "Higher Maths",
+          "courseArea": "Calculus",
+          "specArea": "Differentiation",
+          "skillPath": "Chain rule",
+          "skillPathId": "chain-rule",
+          "stageId": "chain-rule-stage-past-paper-style",
+          "stage": "Past Paper-style Questions",
+          "skill": "Solving a gradient condition after using the Chain rule",
+          "title": "Solving a gradient condition after using the Chain rule",
+          "questionText": "For\n\\[\nf(x)=(2x+3)^4,\n\\]\nfind the value of \\(x\\) for which\n\\[\nf'(x)=8.\n\\]",
+          "marks": 4,
+          "answerType": "numerical",
+          "marking": {
+            "strategy": "numeric",
+            "strategyVersion": 1,
+            "target": "-1",
+            "comparison": {
+              "type": "exact"
+            },
+            "fixtures": {
+              "correct": [
+                {
+                  "input": "-1"
+                }
+              ],
+              "incorrect": [
+                {
+                  "input": "0",
+                  "reason": "value_wrong"
+                }
+              ],
+              "malformed": [
+                {
+                  "input": "++",
+                  "reason": "malformed_numeric"
+                }
+              ],
+              "unmarkable": [
+                {
+                  "input": "sin(x)",
+                  "reason": "expression_not_permitted"
+                }
+              ]
+            }
+          },
+          "correctAnswer": "-1",
+          "acceptedAnswers": [
+            "-1"
+          ],
+          "workedSolution": "\\[\nf(x)=(2x+3)^4\n\\]\nUsing the Chain rule,\n\\[\nf'(x)=4(2x+3)^3\\cdot2.\n\\]\nSo\n\\[\nf'(x)=8(2x+3)^3.\n\\]\nSet this equal to 8:\n\\[\n8(2x+3)^3=8.\n\\]\n\\[\n(2x+3)^3=1.\n\\]\n\\[\n2x+3=1.\n\\]\n\\[\n2x=-2.\n\\]\n\\[\nx=-1.\n\\]",
+          "finalAnswer": "-1",
+          "hint": "Differentiate first, then set the derivative equal to 8.",
+          "commonMistake": "Setting \\(f(x)=8\\) instead of setting \\(f'(x)=8\\).",
+          "calculatorAllowed": false,
+          "source": "Original STEM Forge QS-style content",
+          "status": "ready",
+          "displayOrder": 2019
+        }
+      },
+      {
+        "questionId": "hm-calc-diff-chain-ppq-020",
+        "sourceLineRange": {
+          "start": 1804,
+          "end": 1893
+        },
+        "status": "convertible",
+        "targetSkillPathSlug": "chain-rule",
+        "targetStageId": "chain-rule-stage-past-paper-style",
+        "conversions": [
+          "label_rename",
+          "stage_label_to_stage_id",
+          "explicit_scaffolding_field_drop"
+        ],
+        "blockers": [],
+        "diagnostics": [],
+        "markerCompatibility": {
+          "strategy": "numeric",
+          "strategyVersion": 1,
+          "targetOutcome": "graded",
+          "aliasOutcomes": [
+            {
+              "answer": "2",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            }
+          ]
+        },
+        "canonicalQuestion": {
+          "id": "hm-calc-diff-chain-ppq-020",
+          "questionVersion": 1,
+          "contentRevision": 1,
+          "contentStatus": "active",
+          "subject": "Higher Maths",
+          "courseArea": "Calculus",
+          "specArea": "Differentiation",
+          "skillPath": "Chain rule",
+          "skillPathId": "chain-rule",
+          "stageId": "chain-rule-stage-past-paper-style",
+          "stage": "Past Paper-style Questions",
+          "skill": "Solving a positive gradient condition with a quadratic inside function",
+          "title": "Solving a positive gradient condition with a quadratic inside function",
+          "questionText": "For\n\\[\nf(x)=(x^2+1)^3,\n\\]\nfind the positive value of \\(x\\) for which\n\\[\nf'(x)=300.\n\\]",
+          "marks": 5,
+          "answerType": "numerical",
+          "marking": {
+            "strategy": "numeric",
+            "strategyVersion": 1,
+            "target": "2",
+            "comparison": {
+              "type": "exact"
+            },
+            "fixtures": {
+              "correct": [
+                {
+                  "input": "2"
+                }
+              ],
+              "incorrect": [
+                {
+                  "input": "0",
+                  "reason": "value_wrong"
+                }
+              ],
+              "malformed": [
+                {
+                  "input": "++",
+                  "reason": "malformed_numeric"
+                }
+              ],
+              "unmarkable": [
+                {
+                  "input": "sin(x)",
+                  "reason": "expression_not_permitted"
+                }
+              ]
+            }
+          },
+          "correctAnswer": "2",
+          "acceptedAnswers": [
+            "2"
+          ],
+          "workedSolution": "\\[\nf(x)=(x^2+1)^3.\n\\]\nUsing the Chain rule,\n\\[\nf'(x)=3(x^2+1)^2\\cdot2x.\n\\]\nSo\n\\[\nf'(x)=6x(x^2+1)^2.\n\\]\nSet this equal to 300:\n\\[\n6x(x^2+1)^2=300.\n\\]\nCheck \\(x=2\\):\n\\[\n6(2)(2^2+1)^2=12(5)^2=12\\cdot25=300.\n\\]\nTherefore, the positive value is\n\\[\nx=2.\n\\]",
+          "finalAnswer": "2",
+          "hint": "Differentiate first, then check the positive value that makes the derivative equal to 300.",
+          "commonMistake": "Trying to solve the full equation by expanding everything. Since the question asks for the positive value, substitution/checking is a clean method here.",
+          "calculatorAllowed": false,
+          "source": "Original STEM Forge QS-style content",
+          "status": "ready",
+          "displayOrder": 2020
+        }
+      },
+      {
+        "questionId": "hm-calc-diff-chain-ppq-021",
+        "sourceLineRange": {
+          "start": 1894,
+          "end": 1992
+        },
+        "status": "convertible",
+        "targetSkillPathSlug": "chain-rule",
+        "targetStageId": "chain-rule-stage-past-paper-style",
+        "conversions": [
+          "label_rename",
+          "stage_label_to_stage_id",
+          "explicit_scaffolding_field_drop"
+        ],
+        "blockers": [],
+        "diagnostics": [],
+        "markerCompatibility": {
+          "strategy": "numeric",
+          "strategyVersion": 1,
+          "targetOutcome": "graded",
+          "aliasOutcomes": [
+            {
+              "answer": "2",
+              "outcomeKind": "graded",
+              "isCorrect": true
+            }
+          ]
+        },
+        "canonicalQuestion": {
+          "id": "hm-calc-diff-chain-ppq-021",
+          "questionVersion": 1,
+          "contentRevision": 1,
+          "contentStatus": "active",
+          "subject": "Higher Maths",
+          "courseArea": "Calculus",
+          "specArea": "Differentiation",
+          "skillPath": "Chain rule",
+          "skillPathId": "chain-rule",
+          "stageId": "chain-rule-stage-past-paper-style",
+          "stage": "Past Paper-style Questions",
+          "skill": "Finding an unknown coefficient from a gradient condition",
+          "title": "Finding an unknown coefficient from a gradient condition",
+          "questionText": "A curve has equation\n\\[\ny=(kx+1)^3,\n\\]\nwhere \\(k\\) is a positive constant.\n\nThe gradient of the curve at \\(x=1\\) is \\(54\\).\n\nFind the value of \\(k\\).",
+          "marks": 5,
+          "answerType": "numerical",
+          "marking": {
+            "strategy": "numeric",
+            "strategyVersion": 1,
+            "target": "2",
+            "comparison": {
+              "type": "exact"
+            },
+            "fixtures": {
+              "correct": [
+                {
+                  "input": "2"
+                }
+              ],
+              "incorrect": [
+                {
+                  "input": "0",
+                  "reason": "value_wrong"
+                }
+              ],
+              "malformed": [
+                {
+                  "input": "++",
+                  "reason": "malformed_numeric"
+                }
+              ],
+              "unmarkable": [
+                {
+                  "input": "sin(x)",
+                  "reason": "expression_not_permitted"
+                }
+              ]
+            }
+          },
+          "correctAnswer": "2",
+          "acceptedAnswers": [
+            "2"
+          ],
+          "workedSolution": "\\[\ny=(kx+1)^3\n\\]\nUsing the Chain rule,\n\\[\n\\frac{dy}{dx}=3(kx+1)^2\\cdot k.\n\\]\nSo\n\\[\n\\frac{dy}{dx}=3k(kx+1)^2.\n\\]\n\nAt \\(x=1\\),\n\\[\n\\frac{dy}{dx}=3k(k+1)^2.\n\\]\n\nThe gradient is \\(54\\), so\n\\[\n3k(k+1)^2=54.\n\\]\n\nSince \\(k\\) is positive, check \\(k=2\\):\n\\[\n3(2)(2+1)^2=6(9)=54.\n\\]\nTherefore,\n\\[\nk=2.\n\\]",
+          "finalAnswer": "2",
+          "hint": "Differentiate using the Chain rule, then substitute \\(x=1\\) and use the given gradient.",
+          "commonMistake": "Differentiating \\(kx+1\\) as \\(x+1\\), instead of recognising that its derivative is \\(k\\).",
+          "calculatorAllowed": false,
+          "source": "Original STEM Forge QS-style content",
+          "status": "ready",
+          "displayOrder": 2021
+        }
+      }
+    ],
+    "eligibleCandidateIds": [
+      "hm-calc-diff-chain-f-001",
+      "hm-calc-diff-chain-f-002",
+      "hm-calc-diff-chain-f-003",
+      "hm-calc-diff-chain-f-004",
+      "hm-calc-diff-chain-f-005",
+      "hm-calc-diff-chain-f-006",
+      "hm-calc-diff-chain-f-007",
+      "hm-calc-diff-chain-f-008",
+      "hm-calc-diff-chain-f-009",
+      "hm-calc-diff-chain-f-010",
+      "hm-calc-diff-chain-a-001",
+      "hm-calc-diff-chain-a-002",
+      "hm-calc-diff-chain-a-003",
+      "hm-calc-diff-chain-a-004",
+      "hm-calc-diff-chain-a-005",
+      "hm-calc-diff-chain-a-006",
+      "hm-calc-diff-chain-a-007",
+      "hm-calc-diff-chain-a-008",
+      "hm-calc-diff-chain-a-009",
+      "hm-calc-diff-chain-ppq-003",
+      "hm-calc-diff-chain-ppq-004",
+      "hm-calc-diff-chain-ppq-007",
+      "hm-calc-diff-chain-ppq-008",
+      "hm-calc-diff-chain-ppq-010",
+      "hm-calc-diff-chain-ppq-011",
+      "hm-calc-diff-chain-ppq-012",
+      "hm-calc-diff-chain-ppq-014",
+      "hm-calc-diff-chain-ppq-015",
+      "hm-calc-diff-chain-ppq-016",
+      "hm-calc-diff-chain-ppq-017",
+      "hm-calc-diff-chain-ppq-018",
+      "hm-calc-diff-chain-ppq-019",
+      "hm-calc-diff-chain-ppq-020",
+      "hm-calc-diff-chain-ppq-021"
+    ],
+    "blockedIds": [],
+    "unchangedIds": [],
+    "collisionDiffs": [],
+    "plannedOutputs": [
+      {
+        "questionId": "hm-calc-diff-chain-f-001",
+        "path": "content/questions/higher-maths/chain-rule.ts",
+        "contentHash": "f446e0254878c1efb8627a28353543e7d70f2fc7d2e4ab8773c54895027b0208"
+      },
+      {
+        "questionId": "hm-calc-diff-chain-f-002",
+        "path": "content/questions/higher-maths/chain-rule.ts",
+        "contentHash": "8e9788e28dcca3b4ef0029d8885b94498057e148c140176e2997d9c329ff71b2"
+      },
+      {
+        "questionId": "hm-calc-diff-chain-f-003",
+        "path": "content/questions/higher-maths/chain-rule.ts",
+        "contentHash": "6712367cc98c121df54edfdd2e8c492af2308089cc4b5e8eca3f28685138c66d"
+      },
+      {
+        "questionId": "hm-calc-diff-chain-f-004",
+        "path": "content/questions/higher-maths/chain-rule.ts",
+        "contentHash": "47804f07e041e664d7aa3fc45abe9ca8bd2adec6099861507f51f027cbde646b"
+      },
+      {
+        "questionId": "hm-calc-diff-chain-f-005",
+        "path": "content/questions/higher-maths/chain-rule.ts",
+        "contentHash": "ff3b209fec4fa64103f6386bb92e1fde81d12da001bce60589e4eeb0ee23762b"
+      },
+      {
+        "questionId": "hm-calc-diff-chain-f-006",
+        "path": "content/questions/higher-maths/chain-rule.ts",
+        "contentHash": "a904b5b528bc4d8ae421bdcb9b75a3bc37041082a6464c4ec17d6982e5ed19e0"
+      },
+      {
+        "questionId": "hm-calc-diff-chain-f-007",
+        "path": "content/questions/higher-maths/chain-rule.ts",
+        "contentHash": "93d36e57672a43e4569b9efda4f6cf01ee5094e61b545bfd5f7a13fc3404784b"
+      },
+      {
+        "questionId": "hm-calc-diff-chain-f-008",
+        "path": "content/questions/higher-maths/chain-rule.ts",
+        "contentHash": "2f1f8970feca04c46c0585e3c788c69cf4d869421ca6ddc0af7e9a5383156fbe"
+      },
+      {
+        "questionId": "hm-calc-diff-chain-f-009",
+        "path": "content/questions/higher-maths/chain-rule.ts",
+        "contentHash": "59582f644a5df53fc05b15956679bcd6a4272ca55735cc67bd1045cd9a6bf552"
+      },
+      {
+        "questionId": "hm-calc-diff-chain-f-010",
+        "path": "content/questions/higher-maths/chain-rule.ts",
+        "contentHash": "666b7487b274108073b689608b4a1e9a8850df49bba1de2a0cc59e608cdac36d"
+      },
+      {
+        "questionId": "hm-calc-diff-chain-a-001",
+        "path": "content/questions/higher-maths/chain-rule.ts",
+        "contentHash": "c15d12d1e204b9e25537226583faee2f06d6376ef90b050b8afdfe77684b2212"
+      },
+      {
+        "questionId": "hm-calc-diff-chain-a-002",
+        "path": "content/questions/higher-maths/chain-rule.ts",
+        "contentHash": "dbe7eae273a770159067501400b7fb9f7031773d74c604f4220579a10dbf8a06"
+      },
+      {
+        "questionId": "hm-calc-diff-chain-a-003",
+        "path": "content/questions/higher-maths/chain-rule.ts",
+        "contentHash": "08cefc7a6efa358cb57ef1930d74b3599c050099af1dd4ea977a6b79538b567a"
+      },
+      {
+        "questionId": "hm-calc-diff-chain-a-004",
+        "path": "content/questions/higher-maths/chain-rule.ts",
+        "contentHash": "b7f9b09e668485a019ec55a9f38cfc4bbb063e30450b06e0ef80af9b5689016f"
+      },
+      {
+        "questionId": "hm-calc-diff-chain-a-005",
+        "path": "content/questions/higher-maths/chain-rule.ts",
+        "contentHash": "79276477d8a3cbea36091b58a5ed2d228156acfeb5a537c1b037a218ea2be84b"
+      },
+      {
+        "questionId": "hm-calc-diff-chain-a-006",
+        "path": "content/questions/higher-maths/chain-rule.ts",
+        "contentHash": "ae46a892fcb9dd569f320e9385c85199d65c0face28b9214c85c17b05211eada"
+      },
+      {
+        "questionId": "hm-calc-diff-chain-a-007",
+        "path": "content/questions/higher-maths/chain-rule.ts",
+        "contentHash": "6486cb2f7d65b8ea08a2482908bfa91729709f2e9b6c8730ad287983cb4c63f9"
+      },
+      {
+        "questionId": "hm-calc-diff-chain-a-008",
+        "path": "content/questions/higher-maths/chain-rule.ts",
+        "contentHash": "3bc75fc1b95495eab4d379812d20c5c8c3303ab2d049158a8549f61025a70add"
+      },
+      {
+        "questionId": "hm-calc-diff-chain-a-009",
+        "path": "content/questions/higher-maths/chain-rule.ts",
+        "contentHash": "65ada844eda72bad95eb6a8bd42220de4151d169eeaab1a732153d55d9200ef8"
+      },
+      {
+        "questionId": "hm-calc-diff-chain-ppq-003",
+        "path": "content/questions/higher-maths/chain-rule.ts",
+        "contentHash": "c314bc3b8634f814ae8d533d9ba61b1106c81d17fb24a6de77220b700367dc1d"
+      },
+      {
+        "questionId": "hm-calc-diff-chain-ppq-004",
+        "path": "content/questions/higher-maths/chain-rule.ts",
+        "contentHash": "38a6b4fbb9605e5343cf5a499b6195d6ce0e3634f244c3480a51b9bf0977e622"
+      },
+      {
+        "questionId": "hm-calc-diff-chain-ppq-007",
+        "path": "content/questions/higher-maths/chain-rule.ts",
+        "contentHash": "dc1a7c0cf354ce2c279c4ea0dfd0106a7b2b673c97299902cc2850d358fb3970"
+      },
+      {
+        "questionId": "hm-calc-diff-chain-ppq-008",
+        "path": "content/questions/higher-maths/chain-rule.ts",
+        "contentHash": "cc7ff550ebc9aa8c88a4a6e9d32bfa079ec7ca6e2391a1a71b173078fe77e8ce"
+      },
+      {
+        "questionId": "hm-calc-diff-chain-ppq-010",
+        "path": "content/questions/higher-maths/chain-rule.ts",
+        "contentHash": "a48f51a6428e2e8f5040aa150ee484e11acae48dd33e195c0e474f827a6b69e9"
+      },
+      {
+        "questionId": "hm-calc-diff-chain-ppq-011",
+        "path": "content/questions/higher-maths/chain-rule.ts",
+        "contentHash": "a7f994d3147c7e3cb1a3eaa18950fee082208df9ecd42f45c567cb1d489d6b8b"
+      },
+      {
+        "questionId": "hm-calc-diff-chain-ppq-012",
+        "path": "content/questions/higher-maths/chain-rule.ts",
+        "contentHash": "3ad92e26d20f05db61b690c7663d0fb549b60f89976f88dd2dd1a0fa135d7af3"
+      },
+      {
+        "questionId": "hm-calc-diff-chain-ppq-014",
+        "path": "content/questions/higher-maths/chain-rule.ts",
+        "contentHash": "1228635e2762c46445bc209b956eccd8fc0f834ccdf52388a7bdb7ea9fe6bf01"
+      },
+      {
+        "questionId": "hm-calc-diff-chain-ppq-015",
+        "path": "content/questions/higher-maths/chain-rule.ts",
+        "contentHash": "f4b83e23ff9814932c28410bef443364807ccda7ddba256d6d9133430b7c11a0"
+      },
+      {
+        "questionId": "hm-calc-diff-chain-ppq-016",
+        "path": "content/questions/higher-maths/chain-rule.ts",
+        "contentHash": "43689aaf4314fa3ff18d7db3f8d9155c2c05f0aabe6e94574546413b7df88d5f"
+      },
+      {
+        "questionId": "hm-calc-diff-chain-ppq-017",
+        "path": "content/questions/higher-maths/chain-rule.ts",
+        "contentHash": "e99a3d126671f2bc2563e601e6562fdfb7f4e22044a41ff2e2b024190b245f28"
+      },
+      {
+        "questionId": "hm-calc-diff-chain-ppq-018",
+        "path": "content/questions/higher-maths/chain-rule.ts",
+        "contentHash": "3cddd52407c7183a8fe583f4033cabd0c9c01b17e75518b7ae45259ebc28ade4"
+      },
+      {
+        "questionId": "hm-calc-diff-chain-ppq-019",
+        "path": "content/questions/higher-maths/chain-rule.ts",
+        "contentHash": "266bb86fb1ee9603f1afe9e0dc5f7959cf984cbe15ebdf6e2fe6d3fc4757b7bc"
+      },
+      {
+        "questionId": "hm-calc-diff-chain-ppq-020",
+        "path": "content/questions/higher-maths/chain-rule.ts",
+        "contentHash": "799964dd1fec428e89b00c650d0bd2e0e36688bfccf32376ed2cf58df1e23caf"
+      },
+      {
+        "questionId": "hm-calc-diff-chain-ppq-021",
+        "path": "content/questions/higher-maths/chain-rule.ts",
+        "contentHash": "ce27456e174cc346dc59e13cffaa150be9ff994155ea2aab5a9a6b32d2bb3a81"
+      }
+    ],
+    "diagnostics": []
+  },
+  "approvedQuestionIds": [
+    "hm-calc-diff-chain-f-001",
+    "hm-calc-diff-chain-f-002",
+    "hm-calc-diff-chain-f-003",
+    "hm-calc-diff-chain-f-004",
+    "hm-calc-diff-chain-f-005",
+    "hm-calc-diff-chain-f-006",
+    "hm-calc-diff-chain-f-007",
+    "hm-calc-diff-chain-f-008",
+    "hm-calc-diff-chain-f-009",
+    "hm-calc-diff-chain-f-010",
+    "hm-calc-diff-chain-a-001",
+    "hm-calc-diff-chain-a-002",
+    "hm-calc-diff-chain-a-003",
+    "hm-calc-diff-chain-a-004",
+    "hm-calc-diff-chain-a-005",
+    "hm-calc-diff-chain-a-006",
+    "hm-calc-diff-chain-a-007",
+    "hm-calc-diff-chain-a-008",
+    "hm-calc-diff-chain-a-009",
+    "hm-calc-diff-chain-ppq-003",
+    "hm-calc-diff-chain-ppq-004",
+    "hm-calc-diff-chain-ppq-007",
+    "hm-calc-diff-chain-ppq-008",
+    "hm-calc-diff-chain-ppq-010",
+    "hm-calc-diff-chain-ppq-011",
+    "hm-calc-diff-chain-ppq-012",
+    "hm-calc-diff-chain-ppq-014",
+    "hm-calc-diff-chain-ppq-015",
+    "hm-calc-diff-chain-ppq-016",
+    "hm-calc-diff-chain-ppq-017",
+    "hm-calc-diff-chain-ppq-018",
+    "hm-calc-diff-chain-ppq-019",
+    "hm-calc-diff-chain-ppq-020",
+    "hm-calc-diff-chain-ppq-021"
+  ],
+  "explicitlyExcludedCandidateIds": [],
+  "versionDecisions": {},
+  "approvedAt": "2026-08-06T15:28:46.229Z"
+}

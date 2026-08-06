@@ -16,6 +16,8 @@ import { markQuestionAnswer } from "@/lib/answer-engine";
 import { MARKING_STRATEGIES, type MarkingFixture, type MarkingFixtures } from "@/lib/marking/types";
 import { parseNumericLiteral } from "@/lib/marking/numeric";
 import { parsePolynomial } from "@/lib/marking/polynomial";
+import { parseCompositeAlgebraicExpression } from "@/lib/marking/composite-algebraic";
+import { buildVocabulary } from "@/lib/marking/closed-vocabulary-text";
 import { validateMathExpression } from "@/lib/maths/expression-core";
 import { getSubjectFamily, getStudentResourceCapabilities } from "@/lib/resource-capabilities";
 import { validateLessonDocument } from "@/lib/lessons/lesson-document";
@@ -423,19 +425,20 @@ function validateMarkingContract(question: Question, location: string, issue: Is
     issue("error", "invalid-marking-strategy", `Question "${question.id}" must declare one of the five implemented Alpha marking strategies.`, location);
     return;
   }
-  if (contract.strategyVersion !== 1) {
-    issue("error", "invalid-marking-strategy-version", `Question "${question.id}" must declare implemented marking strategy version 1.`, location);
+  const allowedStrategyVersions = contract.strategy === "composite_algebraic_equivalence" ? [1, 2] : [1];
+  if (!allowedStrategyVersions.includes(contract.strategyVersion)) {
+    issue("error", "invalid-marking-strategy-version", `Question "${question.id}" must declare an implemented marking strategy version (${allowedStrategyVersions.join(" or ")}).`, location);
   }
   if (question.unit?.trim()) {
     issue("error", "alpha-units-deferred", `Question "${question.id}" cannot declare active unit marking during Alpha.`, location);
   }
-  const expectedStrategy = question.answerType === "numerical" ? "numeric"
-    : question.answerType === "algebraic" ? "polynomial_form"
-      : question.answerType === "multiple_choice" ? "multiple_choice"
-        : question.answerType === "written" || question.answerType === "multi_step" ? "guided_self_check"
-          : "structured_graph";
-  if (contract.strategy !== expectedStrategy) {
-    issue("error", "marking-answer-type-mismatch", `Question "${question.id}" answer type requires strategy "${expectedStrategy}".`, location);
+  const legalStrategies: readonly string[] = question.answerType === "numerical" ? ["numeric"]
+    : question.answerType === "algebraic" ? ["polynomial_form", "composite_algebraic_equivalence"]
+      : question.answerType === "multiple_choice" ? ["multiple_choice"]
+        : question.answerType === "written" || question.answerType === "multi_step" ? ["guided_self_check", "closed_vocabulary_text_answer"]
+          : ["structured_graph"];
+  if (!legalStrategies.includes(contract.strategy)) {
+    issue("error", "marking-answer-type-mismatch", `Question "${question.id}" answer type requires one of strategies: ${legalStrategies.join(", ")}.`, location);
     return;
   }
   if (contract.strategy === "numeric") {
@@ -476,6 +479,15 @@ function validateMarkingContract(question: Question, location: string, issue: Is
   } else if (contract.strategy === "polynomial_form") {
     if (contract.variable === "e" || !/^[a-z]$/i.test(contract.variable)) issue("error", "invalid-polynomial-variable", `Question "${question.id}" has an invalid polynomial variable.`, location);
     if (parsePolynomial(contract.target, contract.variable).status !== "parsed") issue("error", "invalid-polynomial-target", `Question "${question.id}" has an invalid polynomial target.`, location);
+    validateFixtures(question, contract.fixtures, location, issue);
+  } else if (contract.strategy === "composite_algebraic_equivalence") {
+    if (contract.variable === "e" || !/^[a-z]$/i.test(contract.variable)) issue("error", "invalid-composite-variable", `Question "${question.id}" has an invalid composite algebraic variable.`, location);
+    const targetParse = parseCompositeAlgebraicExpression(contract.target, contract.variable, contract.strategyVersion as 1 | 2);
+    if (targetParse.status !== "v1" && targetParse.status !== "v2") issue("error", "invalid-composite-target", `Question "${question.id}" has an invalid composite algebraic target.`, location);
+    validateFixtures(question, contract.fixtures, location, issue);
+  } else if (contract.strategy === "closed_vocabulary_text_answer") {
+    const vocabulary = buildVocabulary({ target: contract.target, acceptedAnswers: contract.acceptedAnswers });
+    if (vocabulary.status !== "valid") issue("error", "invalid-closed-vocabulary-contract", `Question "${question.id}" has an invalid closed-vocabulary contract (${vocabulary.reason}).`, location);
     validateFixtures(question, contract.fixtures, location, issue);
   } else if (contract.strategy === "multiple_choice") {
     const optionValues = new Set(question.options?.map((option) => option.value) ?? []);

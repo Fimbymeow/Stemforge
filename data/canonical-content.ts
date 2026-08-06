@@ -1,4 +1,5 @@
 import { higherMathsDifferentiationQuestions } from "@/content/questions/higher-maths/basic-differentiation";
+import { higherMathsChainRuleQuestions } from "@/content/questions/higher-maths/chain-rule";
 import { higherMaths } from "@/data/higher-maths";
 import { higherPhysics } from "@/data/higher-physics";
 import type { Question, Subject } from "@/data/types";
@@ -14,5 +15,5 @@ export type CanonicalContentSource = {
  */
 export const canonicalContent: CanonicalContentSource = {
   subjects: [higherMaths, higherPhysics],
-  questions: higherMathsDifferentiationQuestions,
+  questions: [...higherMathsDifferentiationQuestions, ...higherMathsChainRuleQuestions],
 };

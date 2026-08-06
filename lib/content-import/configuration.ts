@@ -22,7 +22,7 @@ export function createImportRegistry(subjects: readonly Subject[], questions: re
         for (const path of specArea.skillPaths ?? []) {
           paths.set(path.slug, {
             slug: path.slug,
-            subject: subject.subject,
+            subject: subject.subjectName,
             courseArea: course.name,
             specArea: specArea.name,
             name: path.name,

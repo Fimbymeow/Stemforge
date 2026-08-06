@@ -1,0 +1,48 @@
+{
+  "receiptVersion": 1,
+  "approvalReceiptHash": "d7dc37ee2bb450342b72a85b82fdfc09af82cce05728186c9128a4a32a9d1305",
+  "appliedQuestionIds": [
+    "hm-calc-diff-chain-f-001",
+    "hm-calc-diff-chain-f-002",
+    "hm-calc-diff-chain-f-003",
+    "hm-calc-diff-chain-f-004",
+    "hm-calc-diff-chain-f-005",
+    "hm-calc-diff-chain-f-006",
+    "hm-calc-diff-chain-f-007",
+    "hm-calc-diff-chain-f-008",
+    "hm-calc-diff-chain-f-009",
+    "hm-calc-diff-chain-f-010",
+    "hm-calc-diff-chain-a-001",
+    "hm-calc-diff-chain-a-002",
+    "hm-calc-diff-chain-a-003",
+    "hm-calc-diff-chain-a-004",
+    "hm-calc-diff-chain-a-005",
+    "hm-calc-diff-chain-a-006",
+    "hm-calc-diff-chain-a-007",
+    "hm-calc-diff-chain-a-008",
+    "hm-calc-diff-chain-a-009",
+    "hm-calc-diff-chain-ppq-003",
+    "hm-calc-diff-chain-ppq-004",
+    "hm-calc-diff-chain-ppq-007",
+    "hm-calc-diff-chain-ppq-008",
+    "hm-calc-diff-chain-ppq-010",
+    "hm-calc-diff-chain-ppq-011",
+    "hm-calc-diff-chain-ppq-012",
+    "hm-calc-diff-chain-ppq-014",
+    "hm-calc-diff-chain-ppq-015",
+    "hm-calc-diff-chain-ppq-016",
+    "hm-calc-diff-chain-ppq-017",
+    "hm-calc-diff-chain-ppq-018",
+    "hm-calc-diff-chain-ppq-019",
+    "hm-calc-diff-chain-ppq-020",
+    "hm-calc-diff-chain-ppq-021"
+  ],
+  "outputPaths": [
+    "content/questions/higher-maths/chain-rule.ts"
+  ],
+  "finalOutputHashes": {
+    "content/questions/higher-maths/chain-rule.ts": "a911ab2fc479221a1729a82a95ef2cd2918091ba822db79b430f6cb36804aa48"
+  },
+  "appliedAt": "2026-08-06T15:35:31.779Z",
+  "compilerVersion": 1
+}

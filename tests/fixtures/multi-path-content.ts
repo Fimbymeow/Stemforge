@@ -7,6 +7,37 @@ const TEST_PATH_ID = "fixture-basic-integration";
 const TEST_FOUNDATIONS_STAGE_ID = "fixture-integration-stage-foundations";
 const TEST_APPLICATIONS_STAGE_ID = "fixture-integration-stage-applications";
 
+/**
+ * These fixtures test isolation between a fixed, small number of available paths. They clone the
+ * real higherMaths subject for authentic taxonomy shape, but any *other* skill that has since gone
+ * live in production (Chain Rule, and whatever follows it) would otherwise leak into these counts.
+ * Resetting every non-kept path back to an honest unavailable placeholder keeps the fixture's
+ * "N available paths" invariant stable regardless of how many real skills are live in the app.
+ */
+function resetOtherPathsToHonestPlaceholders(subject: Subject, keepSlugs: readonly string[]) {
+  for (const course of subject.courseAreas) {
+    for (const spec of course.specAreas) {
+      for (const path of spec.skillPaths ?? []) {
+        if (keepSlugs.includes(path.slug)) continue;
+        path.isAvailable = false;
+        path.status = "coming-soon";
+        path.questions = 0;
+        path.progress = 0;
+        path.completed = 0;
+        delete path.learningStages;
+        delete path.lessonDocument;
+        delete path.recommendedAction;
+        delete path.sidebarLinks;
+        delete path.practiceSets;
+        delete path.notes;
+        delete path.formulaCards;
+        delete path.workedExamples;
+        delete path.flashcards;
+      }
+    }
+  }
+}
+
 function stage(id: string, name: LearningStage["name"], questionIds: string[], accent: LearningStage["accent"]): LearningStage {
   return {
     id,
@@ -48,6 +79,7 @@ function question(id: string, stageId: string, stageName: LearningStage["name"],
 
 export function createTwoPathFixture(): CanonicalContentSource {
   const subject: Subject = structuredClone(higherMaths);
+  resetOtherPathsToHonestPlaceholders(subject, ["basic-differentiation"]);
   const integrationTopic = subject.courseAreas
     .find((courseArea) => courseArea.slug === "calculus")
     ?.specAreas.find((topic) => topic.slug === "integration");
@@ -146,6 +178,7 @@ function subjectTwoSkillPath(): SkillPath {
  */
 export function createTwoSubjectFixture(): CanonicalContentSource {
   const subjectOne: Subject = structuredClone(higherMaths);
+  resetOtherPathsToHonestPlaceholders(subjectOne, ["basic-differentiation"]);
 
   const subjectTwoPath = subjectTwoSkillPath();
   const subjectTwoStages = subjectTwoPath.learningStages as LearningStage[];

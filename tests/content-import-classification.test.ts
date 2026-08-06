@@ -5,6 +5,7 @@ import { markQuestionAnswer } from "@/lib/answer-engine";
 import { auditBankAssessment, classifyBank, compareQuestion } from "@/lib/content-import/classification";
 import { createImportRegistry, parseAndValidateBankConfiguration } from "@/lib/content-import/configuration";
 import type { BankImportConfiguration, ImportAnswerCandidate, RequiredCapability } from "@/lib/content-import/types";
+import { higherMathsDifferentiationQuestions } from "@/content/questions/higher-maths/basic-differentiation";
 import {
   BANK_DIRECTORY,
   basicConfigurationText,
@@ -88,7 +89,7 @@ test("all eight real Basic Differentiation exact-ID collisions are surfaced with
   const config = parseAndValidateBankConfiguration(basicConfigurationText(), registry, bank);
   assert.ok(config.configuration);
   const result = classifyBank(bank, config.configuration!, registry);
-  assert.deepEqual(result.collisionDiffs.map((item) => item.questionId).sort(), canonicalContent.questions.map((question) => question.id).sort());
+  assert.deepEqual(result.collisionDiffs.map((item) => item.questionId).sort(), higherMathsDifferentiationQuestions.map((question) => question.id).sort());
   assert.equal(result.collisionDiffs.length, 8);
   assert.ok(result.collisionDiffs.every((item) => item.fields.length > 0));
 });

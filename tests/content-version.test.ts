@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { higherMathsDifferentiationQuestions } from "../content/questions/higher-maths/basic-differentiation";
+import { higherMathsChainRuleQuestions } from "../content/questions/higher-maths/chain-rule";
 import { higherMaths } from "../data/higher-maths";
 import { questions as legacyPhysicsQuestions } from "../data/questions";
 import type { Question, Subject } from "../data/types";
@@ -14,7 +15,7 @@ import {
 import { validateContent } from "../lib/content-validation";
 
 const cloneSubject = (): Subject => structuredClone(higherMaths);
-const cloneQuestions = (): Question[] => structuredClone(higherMathsDifferentiationQuestions);
+const cloneQuestions = (): Question[] => structuredClone([...higherMathsDifferentiationQuestions, ...higherMathsChainRuleQuestions]);
 
 function reportFor(subject = cloneSubject(), questions = cloneQuestions()) {
   return validateContent({ subjects: [subject], questions });
@@ -41,7 +42,10 @@ test("active selectors preserve order, exclude archives, and support explicit hi
   const questions = cloneQuestions();
   const archived = { ...structuredClone(questions[0]), questionVersion: 2, contentStatus: "archived" as const };
   questions.splice(1, 0, archived);
-  assert.deepEqual(getActiveQuestions(questions).map((question) => question.id), higherMathsDifferentiationQuestions.map((question) => question.id));
+  assert.deepEqual(
+    getActiveQuestions(questions).map((question) => question.id),
+    [...higherMathsDifferentiationQuestions, ...higherMathsChainRuleQuestions].map((question) => question.id),
+  );
   assert.equal(getActiveQuestionById(questions, archived.id)?.questionVersion, 1);
   assert.equal(getQuestionByIdIncludingArchived(questions, archived.id, 2)?.contentStatus, "archived");
 });
