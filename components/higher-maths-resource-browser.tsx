@@ -9,17 +9,19 @@ import { AppTopbar } from "@/components/layout/app-topbar";
 import { LessonRenderer, type LessonTypography } from "@/components/learning/lesson-renderer";
 import { SubjectResourceLinks } from "@/components/learning/subject-resource-links";
 import { Card } from "@/components/ui";
-import { getActiveSkillPath, getQuestionContext } from "@/lib/learning-paths";
+import { getActiveSkillPath, getQuestionContext, getSkillPathById } from "@/lib/learning-paths";
 import { resolveLessonDocument } from "@/lib/lessons/resolver";
 import { getEmptyProgressEvidence, getProgressEvidence } from "@/lib/local-progress";
-import { deriveLessonContinuationAction, WORKING_CONTEXT_NOTES_ORIGIN_PREFIX } from "@/lib/working-context";
+import { deriveLessonContinuationAction, parseWorkingContextPathId, WORKING_CONTEXT_NOTES_ORIGIN_PREFIX } from "@/lib/working-context";
 
 export function HigherMathsResourceBrowser({
   returnTo: requestedReturnTo,
+  pathId,
   questionOrigin,
   typography = "system_sans",
 }: {
   returnTo?: string;
+  pathId?: string;
   questionOrigin?: {
     questionId?: string;
     questionNumber?: string;
@@ -28,12 +30,17 @@ export function HigherMathsResourceBrowser({
   typography?: LessonTypography;
 }) {
   const router = useRouter();
-  const skillPath = getActiveSkillPath();
-  const lesson = resolveLessonDocument(skillPath);
-  const [continuation, setContinuation] = useState(() => deriveLessonContinuationAction({
+  // No `path` in the URL preserves the historical default (the active beta skill). An explicit
+  // `path` must resolve to a genuinely available skill via the same resolver Practice already
+  // uses (parseWorkingContextPathId) — an unavailable or unknown slug must never silently fall
+  // back to a different skill's real Notes.
+  const requestedSkillPathId = pathId ? parseWorkingContextPathId(pathId) : null;
+  const skillPath = pathId ? (requestedSkillPathId ? getSkillPathById(requestedSkillPathId) : undefined) : getActiveSkillPath();
+  const lesson = skillPath ? resolveLessonDocument(skillPath) : null;
+  const [continuation, setContinuation] = useState(() => skillPath ? deriveLessonContinuationAction({
     pathId: skillPath.slug,
     evidence: getEmptyProgressEvidence(),
-  }));
+  }) : null);
   const returnTo = requestedReturnTo?.startsWith("/") && !requestedReturnTo.startsWith("//") ? requestedReturnTo : null;
   const originQuestionId = questionOrigin?.questionId && /^[a-z0-9-]+$/i.test(questionOrigin.questionId)
     ? questionOrigin.questionId
@@ -42,13 +49,15 @@ export function HigherMathsResourceBrowser({
   const originQuestionContext = originQuestionId ? getQuestionContext(originQuestionId) : null;
   const hasQuestionOrigin = Boolean(
     originQuestionId
-    && originQuestionContext?.skillPath.slug === "basic-differentiation"
+    && skillPath
+    && originQuestionContext?.skillPath.slug === skillPath.slug
     && Number.isInteger(originQuestionNumber)
     && originQuestionNumber > 0
     && questionOrigin?.token,
   );
 
   useEffect(() => {
+    if (!skillPath) return;
     const update = () => setContinuation(deriveLessonContinuationAction({
       pathId: skillPath.slug,
       evidence: getProgressEvidence(),
@@ -62,7 +71,23 @@ export function HigherMathsResourceBrowser({
       window.removeEventListener("stemforge:progress-sync-updated", update);
       window.removeEventListener("storage", update);
     };
-  }, [skillPath.slug]);
+  }, [skillPath]);
+
+  if (!skillPath) {
+    return (
+      <AppShell demo active="Subjects">
+        <div className="mx-auto mb-3 flex max-w-[1180px] justify-end"><AppTopbar demo /></div>
+        <div className="mx-auto grid max-w-[1180px] gap-5">
+          <nav className="flex flex-wrap items-center gap-2 text-sm text-muted" aria-label="Breadcrumb">
+            <Link href="/subjects/higher-maths">Higher Maths</Link>
+            <ArrowRight aria-hidden="true" className="size-4" />
+            <span className="font-bold text-forge">Notes</span>
+          </nav>
+          <Card className="p-6"><h1 className="text-2xl font-extrabold">Notes are being prepared</h1><p className="mt-2 text-muted">There is no published lesson for this path yet.</p></Card>
+        </div>
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell demo active="Subjects" workingContextPathId={skillPath.slug}>
@@ -93,7 +118,7 @@ export function HigherMathsResourceBrowser({
           family="mathematics"
           current="notes"
           hrefs={{
-            notes: "/subjects/higher-maths/revision-notes",
+            notes: `/subjects/higher-maths/revision-notes?path=${encodeURIComponent(skillPath.slug)}`,
             flashcards: "/subjects/higher-maths/flashcards",
             practice: `/practice?path=${encodeURIComponent(skillPath.slug)}`,
           }}

@@ -48,7 +48,7 @@ export function TopicRoadmap({ skillPaths, showHeading = true }: { skillPaths: S
               <Link href={selected.href} className="flex min-h-12 items-center gap-3 rounded-xl border border-line bg-white px-4 text-sm font-extrabold hover:border-forge/40 hover:bg-forge-soft">
                 <LayoutList aria-hidden="true" className="size-4 text-forge" /> Overview
               </Link>
-              <Link href={getResourceHref("revision-notes", subject?.subjectSlug)} className="flex min-h-12 items-center gap-3 rounded-xl border border-line bg-white px-4 text-sm font-extrabold hover:border-forge/40 hover:bg-forge-soft">
+              <Link href={getResourceHref("revision-notes", subject?.subjectSlug, selected.slug)} className="flex min-h-12 items-center gap-3 rounded-xl border border-line bg-white px-4 text-sm font-extrabold hover:border-forge/40 hover:bg-forge-soft">
                 <BookOpen aria-hidden="true" className="size-4 text-forge" /> Notes
               </Link>
               {(selected.learningStages ?? []).map((stage) => (

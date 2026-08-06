@@ -10,6 +10,7 @@ export default async function HigherMathsResourcePage({
   return (
     <HigherMathsResourceBrowser
       returnTo={first(query.returnTo)}
+      pathId={first(query.path)}
       questionOrigin={{
         questionId: first(query.fromQuestion),
         questionNumber: first(query.questionNumber),

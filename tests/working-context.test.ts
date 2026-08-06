@@ -10,6 +10,12 @@ import {
   workingContextPracticeHref,
 } from "../lib/working-context";
 import type { ProgressEvidence, QuestionAttempt } from "../lib/progress/types";
+import { getAllSkillPathContexts, getResourceHref, getSkillPathById } from "../lib/learning-paths";
+import { resolveLessonDocument } from "../lib/lessons/resolver";
+import { basicDifferentiationLesson } from "../data/lessons/basic-differentiation";
+import { chainRuleLesson } from "../data/lessons/chain-rule";
+import { higherMathsDifferentiationQuestions } from "../content/questions/higher-maths/basic-differentiation";
+import { higherMathsChainRuleQuestions } from "../content/questions/higher-maths/chain-rule";
 
 const pathId = "basic-differentiation";
 const context = contentResolver.getPathContext(pathId)!;
@@ -18,7 +24,7 @@ const questionIds = context.skillPath.learningStages!.flatMap((stage) => stage.q
 test("fresh state starts with Notes while Foundations remains canonical", () => {
   const model = deriveWorkingContextModel({ pathId, evidence: emptyEvidence() })!;
   assert.equal(model.primaryLabel, "Start");
-  assert.equal(model.primaryHref, "/subjects/higher-maths/revision-notes");
+  assert.equal(model.primaryHref, "/subjects/higher-maths/revision-notes?path=basic-differentiation");
   assert.equal(model.stages[0].href, `/question/${questionIds[0]}`);
   assert.equal(model.completed, 0);
   assert.equal(model.reviewHref, null);
@@ -131,6 +137,54 @@ test("path parsing accepts only an available canonical path", () => {
   assert.equal(parseWorkingContextPathId(pathId), pathId);
   assert.equal(parseWorkingContextPathId(["not-real", pathId]), null);
   assert.equal(parseWorkingContextPathId("trigonometric-differentiation"), null);
+});
+
+test("the working-context model's own notesHref is skill-aware for both live skills", () => {
+  const basicModel = deriveWorkingContextModel({ pathId: "basic-differentiation", evidence: emptyEvidence() })!;
+  const chainRuleModel = deriveWorkingContextModel({ pathId: "chain-rule", evidence: emptyEvidence() })!;
+  assert.equal(basicModel.notesHref, "/subjects/higher-maths/revision-notes?path=basic-differentiation");
+  assert.equal(chainRuleModel.notesHref, "/subjects/higher-maths/revision-notes?path=chain-rule");
+  assert.notEqual(basicModel.notesHref, chainRuleModel.notesHref);
+});
+
+test("Notes route resolves per skill, not from a single hard-coded active skill", () => {
+  const basicHref = getResourceHref("revision-notes", "higher-maths", "basic-differentiation");
+  const chainRuleHref = getResourceHref("revision-notes", "higher-maths", "chain-rule");
+
+  assert.equal(basicHref, "/subjects/higher-maths/revision-notes?path=basic-differentiation");
+  assert.equal(chainRuleHref, "/subjects/higher-maths/revision-notes?path=chain-rule");
+  assert.notEqual(basicHref, chainRuleHref, "Basic Differentiation and Chain Rule must generate different Notes URLs");
+
+  // The route-builder's own resolved query parameter must resolve back to the correct lesson,
+  // via the same resolver Practice already uses for its ?path= parameter — no second active-skill
+  // state model, and no fallback to a different skill.
+  const basicSlug = parseWorkingContextPathId("basic-differentiation");
+  const chainRuleSlug = parseWorkingContextPathId("chain-rule");
+  assert.ok(basicSlug && chainRuleSlug);
+  assert.equal(resolveLessonDocument(getSkillPathById(basicSlug!)!)?.document, basicDifferentiationLesson);
+  assert.equal(resolveLessonDocument(getSkillPathById(chainRuleSlug!)!)?.document, chainRuleLesson);
+});
+
+test("an unavailable skill cannot inherit another skill's Notes route", () => {
+  // trigonometric-differentiation is a real, live-registered skill slug with no published
+  // content — parseWorkingContextPathId must refuse to resolve it, exactly as it already refuses
+  // for Practice, rather than the Notes page silently substituting a different skill's real lesson.
+  assert.equal(parseWorkingContextPathId("trigonometric-differentiation"), null);
+  assert.equal(parseWorkingContextPathId("not-a-real-skill-at-all"), null);
+});
+
+test("other resource routes are unaffected by the skill-aware Notes fix", () => {
+  assert.equal(getResourceHref("flashcards", "higher-maths"), "/subjects/higher-maths/flashcards");
+  assert.equal(getResourceHref("formula-cards", "higher-maths"), "/subjects/higher-maths/formula-cards");
+  assert.equal(getResourceHref("worked-examples", "higher-maths"), "/subjects/higher-maths/worked-examples");
+  // Omitting the skill entirely still produces the original, unparameterised Notes URL.
+  assert.equal(getResourceHref("revision-notes", "higher-maths"), "/subjects/higher-maths/revision-notes");
+});
+
+test("Higher Maths content counts are unchanged by the routing fix", () => {
+  assert.equal(getAllSkillPathContexts().length, 49);
+  assert.equal(higherMathsChainRuleQuestions.length, 34);
+  assert.equal(higherMathsDifferentiationQuestions.length, 8);
 });
 
 test("production helpers contain path and question context without activation flags", () => {

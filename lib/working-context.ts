@@ -126,7 +126,7 @@ export function deriveWorkingContextModel(input: {
     ? `/practice?review=1&path=${encodeURIComponent(input.pathId)}`
     : null;
   const notesHref = context.skillPath.lessonDocument || getActiveRecords(context.skillPath.notes ?? []).length
-    ? `/subjects/${context.subject.subjectSlug}/revision-notes`
+    ? `/subjects/${context.subject.subjectSlug}/revision-notes?path=${encodeURIComponent(context.skillPath.slug)}`
     : null;
   const isFreshStart = progress.attemptedCount === 0 && nextAction.kind === "start_learning";
   const primaryHref = !isComplete && isFreshStart && notesHref

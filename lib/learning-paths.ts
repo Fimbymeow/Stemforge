@@ -169,8 +169,9 @@ export function getQuestionHref(questionId: string) {
   return `/question/${questionId}`;
 }
 
-export function getResourceHref(resourceType: ResourceType, subjectSlug = ACTIVE_SUBJECT_SLUG) {
-  return `/subjects/${subjectSlug}/${resourceType}`;
+export function getResourceHref(resourceType: ResourceType, subjectSlug = ACTIVE_SUBJECT_SLUG, skillPathSlug?: string) {
+  const base = `/subjects/${subjectSlug}/${resourceType}`;
+  return skillPathSlug ? `${base}?path=${encodeURIComponent(skillPathSlug)}` : base;
 }
 
 export function getQuestionBankHref(subjectSlug = ACTIVE_SUBJECT_SLUG) {
