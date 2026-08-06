@@ -49,15 +49,15 @@ Calculator/non-calculator: Non-calculator
 Command word: Identify
 
 Question:  
-For the function \(y=(4x+3)^6\), which expression is the inside function?
+For the function $y=(4x+3)^6$, which expression is the inside function?
 
-A. \(4x+3\)  
-B. \(x^6\)  
-C. \(4x\)  
-D. \((4x+3)^6\)
+A. $4x+3$  
+B. $x^6$  
+C. $4x$  
+D. $(4x+3)^6$
 
 Correct answer:  
-A. \(4x+3\)
+A. $4x+3$
 
 Accepted answers:
 - A
@@ -69,17 +69,17 @@ Look at the expression inside the brackets.
 
 Worked solution:  
 The function is
-\[
+$$
 y=(4x+3)^6.
-\]
+$$
 The outside operation is raising to the power 6. The expression inside the brackets is
-\[
+$$
 4x+3.
-\]
-So the inside function is \(4x+3\).
+$$
+So the inside function is $4x+3$.
 
 Common mistake:  
-Choosing the whole expression \((4x+3)^6\) instead of just the expression inside the brackets.
+Choosing the whole expression $(4x+3)^6$ instead of just the expression inside the brackets.
 
 QA note: Scaffolded intro question.
 
@@ -95,15 +95,15 @@ Calculator/non-calculator: Non-calculator
 Command word: Identify
 
 Question:  
-For the function \(y=(2x^2-5)^4\), which expression should be treated as the inside function when using the chain rule?
+For the function $y=(2x^2-5)^4$, which expression should be treated as the inside function when using the chain rule?
 
-A. \(2x^2\)  
-B. \(2x^2-5\)  
-C. \(x^4\)  
-D. \(4(2x^2-5)^3\)
+A. $2x^2$  
+B. $2x^2-5$  
+C. $x^4$  
+D. $4(2x^2-5)^3$
 
 Correct answer:  
-B. \(2x^2-5\)
+B. $2x^2-5$
 
 Accepted answers:
 - B
@@ -115,31 +115,31 @@ The inside function is the full expression being raised to the power 4.
 
 Worked solution:  
 The function is
-\[
+$$
 y=(2x^2-5)^4.
-\]
+$$
 The expression inside the brackets is
-\[
+$$
 2x^2-5.
-\]
-So the inside function is \(2x^2-5\).
+$$
+So the inside function is $2x^2-5$.
 
 Common mistake:  
-Choosing only \(2x^2\) and leaving out the \(-5\).
+Choosing only $2x^2$ and leaving out the $-5$.
 
 ---
 
 ### F003 — hm-calc-diff-chain-f-003
 
 Stage: Foundations  
-Subskill: Basic chain rule with \((ax+b)^n\)  
+Subskill: Basic chain rule with $(ax+b)^n$  
 Type: algebraic  
 Marks: 2  
 Calculator/non-calculator: Non-calculator  
 Command word: Differentiate
 
 Question:  
-Differentiate \(y=(3x+2)^5\) with respect to \(x\).
+Differentiate $y=(3x+2)^5$ with respect to $x$.
 
 Correct answer:  
 15(3x+2)^4
@@ -150,44 +150,44 @@ Accepted answers:
 - 15(3x + 2)^4
 
 Hint:  
-Bring down the outside power, then multiply by the derivative of \(3x+2\).
+Bring down the outside power, then multiply by the derivative of $3x+2$.
 
 Worked solution:  
-\[
+$$
 y=(3x+2)^5
-\]
+$$
 Differentiate the outside power:
-\[
+$$
 5(3x+2)^4.
-\]
+$$
 Then multiply by the derivative of the bracket:
-\[
+$$
 \frac{d}{dx}(3x+2)=3.
-\]
+$$
 So
-\[
+$$
 \frac{dy}{dx}=5(3x+2)^4\cdot3
-\]
-\[
+$$
+$$
 \frac{dy}{dx}=15(3x+2)^4.
-\]
+$$
 
 Common mistake:  
-Writing \(5(3x+2)^4\) and forgetting to multiply by 3.
+Writing $5(3x+2)^4$ and forgetting to multiply by 3.
 
 ---
 
 ### F004 — hm-calc-diff-chain-f-004
 
 Stage: Foundations  
-Subskill: Basic chain rule with \((ax-b)^n\)  
+Subskill: Basic chain rule with $(ax-b)^n$  
 Type: algebraic  
 Marks: 2  
 Calculator/non-calculator: Non-calculator  
 Command word: Differentiate
 
 Question:  
-Differentiate \(y=(5x-4)^3\) with respect to \(x\).
+Differentiate $y=(5x-4)^3$ with respect to $x$.
 
 Correct answer:  
 15(5x-4)^2
@@ -198,23 +198,23 @@ Accepted answers:
 - 15(5x - 4)^2
 
 Hint:  
-After applying the power rule to the bracket, multiply by the derivative of \(5x-4\).
+After applying the power rule to the bracket, multiply by the derivative of $5x-4$.
 
 Worked solution:  
-\[
+$$
 y=(5x-4)^3
-\]
+$$
 Using the chain rule,
-\[
+$$
 \frac{dy}{dx}=3(5x-4)^2\cdot5.
-\]
+$$
 Therefore,
-\[
+$$
 \frac{dy}{dx}=15(5x-4)^2.
-\]
+$$
 
 Common mistake:  
-Forgetting that \(\frac{d}{dx}(5x-4)=5\).
+Forgetting that $\frac{d}{dx}(5x-4)=5$.
 
 ---
 
@@ -228,7 +228,7 @@ Calculator/non-calculator: Non-calculator
 Command word: Differentiate
 
 Question:  
-Differentiate \(y=2(4x+1)^6\) with respect to \(x\).
+Differentiate $y=2(4x+1)^6$ with respect to $x$.
 
 Correct answer:  
 48(4x+1)^5
@@ -239,27 +239,27 @@ Accepted answers:
 - 48(4x + 1)^5
 
 Hint:  
-Keep the 2 at the front, then apply the chain rule to \((4x+1)^6\).
+Keep the 2 at the front, then apply the chain rule to $(4x+1)^6$.
 
 Worked solution:  
-\[
+$$
 y=2(4x+1)^6
-\]
+$$
 Using the chain rule,
-\[
+$$
 \frac{dy}{dx}=2\cdot6(4x+1)^5\cdot4.
-\]
+$$
 Multiply the constants:
-\[
+$$
 2\cdot6\cdot4=48.
-\]
+$$
 So
-\[
+$$
 \frac{dy}{dx}=48(4x+1)^5.
-\]
+$$
 
 Common mistake:  
-Forgetting either the coefficient 2 or the derivative of \(4x+1\).
+Forgetting either the coefficient 2 or the derivative of $4x+1$.
 
 ---
 
@@ -273,7 +273,7 @@ Calculator/non-calculator: Non-calculator
 Command word: Differentiate
 
 Question:  
-Differentiate \(y=(x^2+4)^5\) with respect to \(x\).
+Differentiate $y=(x^2+4)^5$ with respect to $x$.
 
 Correct answer:  
 10x(x^2+4)^4
@@ -284,23 +284,23 @@ Accepted answers:
 - 10x(x^2 + 4)^4
 
 Hint:  
-The derivative of the bracket \(x^2+4\) is \(2x\).
+The derivative of the bracket $x^2+4$ is $2x$.
 
 Worked solution:  
-\[
+$$
 y=(x^2+4)^5
-\]
+$$
 Using the chain rule,
-\[
+$$
 \frac{dy}{dx}=5(x^2+4)^4\cdot2x.
-\]
+$$
 So
-\[
+$$
 \frac{dy}{dx}=10x(x^2+4)^4.
-\]
+$$
 
 Common mistake:  
-Treating \(x^2+4\) like its derivative is 1.
+Treating $x^2+4$ like its derivative is 1.
 
 ---
 
@@ -314,7 +314,7 @@ Calculator/non-calculator: Non-calculator
 Command word: Differentiate
 
 Question:  
-Differentiate \(y=(3x^2-2)^4\) with respect to \(x\).
+Differentiate $y=(3x^2-2)^4$ with respect to $x$.
 
 Correct answer:  
 24x(3x^2-2)^3
@@ -325,23 +325,23 @@ Accepted answers:
 - 24x(3x^2 - 2)^3
 
 Hint:  
-Differentiate the bracket \(3x^2-2\) after applying the outside power.
+Differentiate the bracket $3x^2-2$ after applying the outside power.
 
 Worked solution:  
-\[
+$$
 y=(3x^2-2)^4
-\]
+$$
 Using the chain rule,
-\[
+$$
 \frac{dy}{dx}=4(3x^2-2)^3\cdot6x.
-\]
+$$
 Therefore,
-\[
+$$
 \frac{dy}{dx}=24x(3x^2-2)^3.
-\]
+$$
 
 Common mistake:  
-Differentiating \(3x^2\) as \(3x\) instead of \(6x\).
+Differentiating $3x^2$ as $3x$ instead of $6x$.
 
 ---
 
@@ -355,7 +355,7 @@ Calculator/non-calculator: Non-calculator
 Command word: Differentiate
 
 Question:  
-Differentiate \(y=(2x+7)^{1/2}\) with respect to \(x\).
+Differentiate $y=(2x+7)^{1/2}$ with respect to $x$.
 
 Correct answer:  
 (2x+7)^(-1/2)
@@ -367,27 +367,27 @@ Accepted answers:
 - 1/sqrt(2x + 7)
 
 Hint:  
-Use the power \(\frac{1}{2}\), then multiply by the derivative of \(2x+7\).
+Use the power $\frac{1}{2}$, then multiply by the derivative of $2x+7$.
 
 Worked solution:  
-\[
+$$
 y=(2x+7)^{1/2}
-\]
+$$
 Using the chain rule,
-\[
+$$
 \frac{dy}{dx}=\frac{1}{2}(2x+7)^{-1/2}\cdot2.
-\]
-Since \(\frac{1}{2}\cdot2=1\),
-\[
+$$
+Since $\frac{1}{2}\cdot2=1$,
+$$
 \frac{dy}{dx}=(2x+7)^{-1/2}.
-\]
+$$
 This can also be written as
-\[
+$$
 \frac{dy}{dx}=\frac{1}{\sqrt{2x+7}}.
-\]
+$$
 
 Common mistake:  
-Forgetting to multiply by 2, or not reducing the power from \(\frac{1}{2}\) to \(-\frac{1}{2}\).
+Forgetting to multiply by 2, or not reducing the power from $\frac{1}{2}$ to $-\frac{1}{2}$.
 
 ---
 
@@ -401,7 +401,7 @@ Calculator/non-calculator: Non-calculator
 Command word: Differentiate
 
 Question:  
-Differentiate \(y=(x^2+1)^{-3}\) with respect to \(x\).
+Differentiate $y=(x^2+1)^{-3}$ with respect to $x$.
 
 Correct answer:  
 -6x(x^2+1)^(-4)
@@ -414,27 +414,27 @@ Accepted answers:
 - -6*x/(x^2+1)^4
 
 Hint:  
-Bring down the power \(-3\), reduce the power by 1, then multiply by \(2x\).
+Bring down the power $-3$, reduce the power by 1, then multiply by $2x$.
 
 Worked solution:  
-\[
+$$
 y=(x^2+1)^{-3}
-\]
+$$
 Using the chain rule,
-\[
+$$
 \frac{dy}{dx}=-3(x^2+1)^{-4}\cdot2x.
-\]
+$$
 So
-\[
+$$
 \frac{dy}{dx}=-6x(x^2+1)^{-4}.
-\]
+$$
 Equivalently,
-\[
+$$
 \frac{dy}{dx}=-\frac{6x}{(x^2+1)^4}.
-\]
+$$
 
 Common mistake:  
-Changing the power from \(-3\) to \(-2\). Differentiating reduces the power by 1, so it becomes \(-4\).
+Changing the power from $-3$ to $-2$. Differentiating reduces the power by 1, so it becomes $-4$.
 
 ---
 
@@ -450,10 +450,10 @@ Command word: Select
 Question:  
 Which of the following functions are most naturally differentiated using the chain rule?
 
-I. \(y=(3x-1)^5\)  
-II. \(y=4x^5-2x\)  
-III. \(y=(x^2+6)^3\)  
-IV. \(y=7x^3+1\)
+I. $y=(3x-1)^5$  
+II. $y=4x^5-2x$  
+III. $y=(x^2+6)^3$  
+IV. $y=7x^3+1$
 
 A. I and II only  
 B. I and III only  
@@ -470,15 +470,15 @@ Hint:
 Look for a function inside another function, usually brackets raised to a power.
 
 Worked solution:  
-I has \((3x-1)\) inside a power, so the chain rule is natural.  
+I has $(3x-1)$ inside a power, so the chain rule is natural.  
 II is a polynomial and can be differentiated term by term.  
-III has \((x^2+6)\) inside a power, so the chain rule is natural.  
+III has $(x^2+6)$ inside a power, so the chain rule is natural.  
 IV is a polynomial and can be differentiated term by term.
 
 So the correct choice is I and III only.
 
 Common mistake:  
-Thinking every power of \(x\), such as \(x^5\), needs the chain rule.
+Thinking every power of $x$, such as $x^5$, needs the chain rule.
 
 QA note: Mark reduced to 1 and wording changed from “require” to “most naturally differentiated using” to avoid expansion arguments.
 
@@ -496,7 +496,7 @@ Calculator/non-calculator: Non-calculator
 Command word: Calculate
 
 Question:  
-For \(y=(2x+3)^4\), calculate the gradient of the curve at the point where \(x=1\).
+For $y=(2x+3)^4$, calculate the gradient of the curve at the point where $x=1$.
 
 Correct answer:  
 1000
@@ -505,26 +505,26 @@ Accepted answers:
 - 1000
 
 Hint:  
-Differentiate first, then substitute \(x=1\) into \(\frac{dy}{dx}\).
+Differentiate first, then substitute $x=1$ into $\frac{dy}{dx}$.
 
 Worked solution:  
-\[
+$$
 y=(2x+3)^4
-\]
-\[
+$$
+$$
 \frac{dy}{dx}=4(2x+3)^3\cdot2
-\]
-\[
+$$
+$$
 \frac{dy}{dx}=8(2x+3)^3.
-\]
-At \(x=1\),
-\[
+$$
+At $x=1$,
+$$
 \frac{dy}{dx}=8(2(1)+3)^3=8(5)^3=1000.
-\]
+$$
 So the gradient is 1000.
 
 Common mistake:  
-Substituting \(x=1\) into the original function instead of into the derivative.
+Substituting $x=1$ into the original function instead of into the derivative.
 
 ---
 
@@ -538,7 +538,7 @@ Calculator/non-calculator: Non-calculator
 Command word: Differentiate
 
 Question:  
-Differentiate \(y=(x^2+4x)^5\) with respect to \(x\).
+Differentiate $y=(x^2+4x)^5$ with respect to $x$.
 
 Correct answer:  
 5(2x+4)(x^2+4x)^4
@@ -550,27 +550,27 @@ Accepted answers:
 - 10*(x+2)*(x^2+4x)^4
 
 Hint:  
-The derivative of the bracket is \(2x+4\), not just \(2x\).
+The derivative of the bracket is $2x+4$, not just $2x$.
 
 Worked solution:  
-\[
+$$
 y=(x^2+4x)^5
-\]
+$$
 Using the chain rule,
-\[
+$$
 \frac{dy}{dx}=5(x^2+4x)^4(2x+4).
-\]
+$$
 So
-\[
+$$
 \frac{dy}{dx}=5(2x+4)(x^2+4x)^4.
-\]
+$$
 This can also be written as
-\[
+$$
 \frac{dy}{dx}=10(x+2)(x^2+4x)^4.
-\]
+$$
 
 Common mistake:  
-Forgetting to differentiate the \(4x\) term inside the bracket.
+Forgetting to differentiate the $4x$ term inside the bracket.
 
 ---
 
@@ -584,7 +584,7 @@ Calculator/non-calculator: Non-calculator
 Command word: Calculate
 
 Question:  
-For \(y=3(2x^2-1)^3\), calculate the value of \(\frac{dy}{dx}\) when \(x=2\).
+For $y=3(2x^2-1)^3$, calculate the value of $\frac{dy}{dx}$ when $x=2$.
 
 Correct answer:  
 3528
@@ -596,25 +596,25 @@ Hint:
 Keep the coefficient 3 at the front, then differentiate the bracket using the chain rule.
 
 Worked solution:  
-\[
+$$
 y=3(2x^2-1)^3
-\]
-\[
+$$
+$$
 \frac{dy}{dx}=3\cdot3(2x^2-1)^2\cdot4x
-\]
-\[
+$$
+$$
 \frac{dy}{dx}=36x(2x^2-1)^2.
-\]
-At \(x=2\),
-\[
+$$
+At $x=2$,
+$$
 \frac{dy}{dx}=36(2)(2(2)^2-1)^2
-\]
-\[
+$$
+$$
 =72(7)^2=3528.
-\]
+$$
 
 Common mistake:  
-Forgetting the outside coefficient 3, or forgetting that \(\frac{d}{dx}(2x^2-1)=4x\).
+Forgetting the outside coefficient 3, or forgetting that $\frac{d}{dx}(2x^2-1)=4x$.
 
 ---
 
@@ -628,7 +628,7 @@ Calculator/non-calculator: Non-calculator
 Command word: Differentiate
 
 Question:  
-Differentiate \(y=(3x-2)^{-4}\) with respect to \(x\), giving your answer with positive powers.
+Differentiate $y=(3x-2)^{-4}$ with respect to $x$, giving your answer with positive powers.
 
 Correct answer:  
 -12/(3x-2)^5
@@ -641,23 +641,23 @@ Hint:
 Differentiate first using the negative power, then rewrite the answer as a fraction.
 
 Worked solution:  
-\[
+$$
 y=(3x-2)^{-4}
-\]
+$$
 Using the chain rule,
-\[
+$$
 \frac{dy}{dx}=-4(3x-2)^{-5}\cdot3
-\]
-\[
+$$
+$$
 \frac{dy}{dx}=-12(3x-2)^{-5}.
-\]
+$$
 With positive powers,
-\[
+$$
 \frac{dy}{dx}=-\frac{12}{(3x-2)^5}.
-\]
+$$
 
 Common mistake:  
-Leaving the answer as \(-12(3x-2)^{-5}\), even though the question asks for positive powers.
+Leaving the answer as $-12(3x-2)^{-5}$, even though the question asks for positive powers.
 
 QA note: Negative-power accepted answers removed to match the instruction.
 
@@ -673,7 +673,7 @@ Calculator/non-calculator: Non-calculator
 Command word: Calculate
 
 Question:  
-For \(y=\sqrt{5x+4}\), calculate \(\frac{dy}{dx}\) when \(x=1\).
+For $y=\sqrt{5x+4}$, calculate $\frac{dy}{dx}$ when $x=1$.
 
 Correct answer:  
 5/6
@@ -682,25 +682,25 @@ Accepted answers:
 - 5/6
 
 Hint:  
-Rewrite the square root as \((5x+4)^{1/2}\).
+Rewrite the square root as $(5x+4)^{1/2}$.
 
 Worked solution:  
-\[
+$$
 y=\sqrt{5x+4}=(5x+4)^{1/2}
-\]
-\[
+$$
+$$
 \frac{dy}{dx}=\frac{1}{2}(5x+4)^{-1/2}\cdot5
-\]
-\[
+$$
+$$
 \frac{dy}{dx}=\frac{5}{2\sqrt{5x+4}}.
-\]
-At \(x=1\),
-\[
+$$
+At $x=1$,
+$$
 \frac{dy}{dx}=\frac{5}{2\sqrt{9}}=\frac{5}{6}.
-\]
+$$
 
 Common mistake:  
-Forgetting to multiply by the derivative of \(5x+4\), which is 5.
+Forgetting to multiply by the derivative of $5x+4$, which is 5.
 
 ---
 
@@ -714,7 +714,7 @@ Calculator/non-calculator: Non-calculator
 Command word: Differentiate
 
 Question:  
-Differentiate \(y=\sqrt{7x-3}\) with respect to \(x\).
+Differentiate $y=\sqrt{7x-3}$ with respect to $x$.
 
 Correct answer:  
 7/(2sqrt(7x-3))
@@ -726,24 +726,24 @@ Accepted answers:
 - 7/2*(7x-3)^(-1/2)
 
 Hint:  
-Use \(\sqrt{7x-3}=(7x-3)^{1/2}\).
+Use $\sqrt{7x-3}=(7x-3)^{1/2}$.
 
 Worked solution:  
-\[
+$$
 y=\sqrt{7x-3}=(7x-3)^{1/2}
-\]
-\[
+$$
+$$
 \frac{dy}{dx}=\frac{1}{2}(7x-3)^{-1/2}\cdot7
-\]
-\[
+$$
+$$
 \frac{dy}{dx}=\frac{7}{2}(7x-3)^{-1/2}
-\]
-\[
+$$
+$$
 \frac{dy}{dx}=\frac{7}{2\sqrt{7x-3}}.
-\]
+$$
 
 Common mistake:  
-Writing \(\frac{1}{2\sqrt{7x-3}}\) and forgetting the factor of 7.
+Writing $\frac{1}{2\sqrt{7x-3}}$ and forgetting the factor of 7.
 
 QA note: Ambiguous `7/2(7x-3)^(-1/2)` removed.
 
@@ -759,7 +759,7 @@ Calculator/non-calculator: Non-calculator
 Command word: Differentiate
 
 Question:  
-Differentiate \(y=\frac{1}{(4x+5)^3}\) with respect to \(x\).
+Differentiate $y=\frac{1}{(4x+5)^3}$ with respect to $x$.
 
 Correct answer:  
 -12/(4x+5)^4
@@ -771,23 +771,23 @@ Accepted answers:
 - -12*(4x+5)^(-4)
 
 Hint:  
-Rewrite the function as \((4x+5)^{-3}\).
+Rewrite the function as $(4x+5)^{-3}$.
 
 Worked solution:  
-\[
+$$
 y=\frac{1}{(4x+5)^3}=(4x+5)^{-3}
-\]
+$$
 Using the chain rule,
-\[
+$$
 \frac{dy}{dx}=-3(4x+5)^{-4}\cdot4
-\]
-\[
+$$
+$$
 \frac{dy}{dx}=-12(4x+5)^{-4}.
-\]
+$$
 Equivalently,
-\[
+$$
 \frac{dy}{dx}=-\frac{12}{(4x+5)^4}.
-\]
+$$
 
 Common mistake:  
 Differentiating the denominator as if it were a separate fraction rule, instead of first rewriting with a negative power.
@@ -804,7 +804,7 @@ Calculator/non-calculator: Non-calculator
 Command word: Calculate
 
 Question:  
-For \(y=(x^2-2x+6)^3\), calculate the gradient of the curve at the point where \(x=2\).
+For $y=(x^2-2x+6)^3$, calculate the gradient of the curve at the point where $x=2$.
 
 Correct answer:  
 216
@@ -813,25 +813,25 @@ Accepted answers:
 - 216
 
 Hint:  
-Differentiate the bracket \(x^2-2x+6\), then substitute \(x=2\).
+Differentiate the bracket $x^2-2x+6$, then substitute $x=2$.
 
 Worked solution:  
-\[
+$$
 y=(x^2-2x+6)^3
-\]
-\[
+$$
+$$
 \frac{dy}{dx}=3(x^2-2x+6)^2(2x-2).
-\]
-At \(x=2\),
-\[
+$$
+At $x=2$,
+$$
 \frac{dy}{dx}=3(2^2-2(2)+6)^2(2(2)-2)
-\]
-\[
+$$
+$$
 =3(6)^2(2)=216.
-\]
+$$
 
 Common mistake:  
-Calculating the \(y\)-value at \(x=2\) instead of the gradient.
+Calculating the $y$-value at $x=2$ instead of the gradient.
 
 ---
 
@@ -845,7 +845,7 @@ Calculator/non-calculator: Non-calculator
 Command word: Determine
 
 Question:  
-For \(y=(2x+1)^3\), determine the positive value of \(x\) for which the gradient of the curve is 54.
+For $y=(2x+1)^3$, determine the positive value of $x$ for which the gradient of the curve is 54.
 
 Correct answer:  
 1
@@ -854,41 +854,41 @@ Accepted answers:
 - 1
 
 Hint:  
-Find \(\frac{dy}{dx}\), set it equal to 54, then solve for \(x\).
+Find $\frac{dy}{dx}$, set it equal to 54, then solve for $x$.
 
 Worked solution:  
-\[
+$$
 y=(2x+1)^3
-\]
-\[
+$$
+$$
 \frac{dy}{dx}=3(2x+1)^2\cdot2
-\]
-\[
+$$
+$$
 \frac{dy}{dx}=6(2x+1)^2.
-\]
+$$
 The gradient is 54, so
-\[
+$$
 6(2x+1)^2=54.
-\]
-\[
+$$
+$$
 (2x+1)^2=9
-\]
-\[
+$$
+$$
 2x+1=\pm3.
-\]
+$$
 So
-\[
+$$
 x=1 \quad \text{or} \quad x=-2.
-\]
+$$
 The positive value is
-\[
+$$
 x=1.
-\]
+$$
 
 Common mistake:  
-Stopping at \(2x+1=3\) without noticing that a square equation also gives \(2x+1=-3\). The question asks for the positive value.
+Stopping at $2x+1=3$ without noticing that a square equation also gives $2x+1=-3$. The question asks for the positive value.
 
-QA note: Rewritten to avoid the artificial condition \(\frac{dy}{dx}=24x\). This is still a final Application / bridge-to-PPQ question.
+QA note: Rewritten to avoid the artificial condition $\frac{dy}{dx}=24x$. This is still a final Application / bridge-to-PPQ question.
 
 ---
 
@@ -905,15 +905,15 @@ Command word: Differentiate
 
 Question:  
 Differentiate
-\[
+$$
 y=(7-2x)^4
-\]
-with respect to \(x\).
+$$
+with respect to $x$.
 
 Correct answer:  
-\[
+$$
 \frac{dy}{dx}=-8(7-2x)^3
-\]
+$$
 
 Answer fields:
 ```yaml
@@ -929,23 +929,23 @@ answerFields:
 ```
 
 Hint:  
-After bringing down the power, multiply by the derivative of \(7-2x\).
+After bringing down the power, multiply by the derivative of $7-2x$.
 
 Worked solution:  
-\[
+$$
 y=(7-2x)^4
-\]
+$$
 Using the Chain rule,
-\[
+$$
 \frac{dy}{dx}=4(7-2x)^3\cdot(-2).
-\]
+$$
 Therefore,
-\[
+$$
 \frac{dy}{dx}=-8(7-2x)^3.
-\]
+$$
 
 Common mistake:  
-Dropping the negative sign from the derivative of \(7-2x\).
+Dropping the negative sign from the derivative of $7-2x$.
 
 ---
 
@@ -960,15 +960,15 @@ Command word: Differentiate
 
 Question:  
 Differentiate
-\[
+$$
 y=(5-3x)^5
-\]
-with respect to \(x\).
+$$
+with respect to $x$.
 
 Correct answer:  
-\[
+$$
 \frac{dy}{dx}=-15(5-3x)^4
-\]
+$$
 
 Answer fields:
 ```yaml
@@ -984,23 +984,23 @@ answerFields:
 ```
 
 Hint:  
-The derivative of \(5-3x\) is \(-3\).
+The derivative of $5-3x$ is $-3$.
 
 Worked solution:  
-\[
+$$
 y=(5-3x)^5
-\]
+$$
 Using the Chain rule,
-\[
+$$
 \frac{dy}{dx}=5(5-3x)^4\cdot(-3).
-\]
+$$
 So
-\[
+$$
 \frac{dy}{dx}=-15(5-3x)^4.
-\]
+$$
 
 Common mistake:  
-Writing \(15(5-3x)^4\) instead of \(-15(5-3x)^4\).
+Writing $15(5-3x)^4$ instead of $-15(5-3x)^4$.
 
 ---
 
@@ -1015,15 +1015,15 @@ Command word: Differentiate
 
 Question:  
 Differentiate
-\[
+$$
 y=(x^2+3x+1)^4
-\]
-with respect to \(x\).
+$$
+with respect to $x$.
 
 Correct answer:  
-\[
+$$
 \frac{dy}{dx}=4(2x+3)(x^2+3x+1)^3
-\]
+$$
 
 Answer fields:
 ```yaml
@@ -1040,20 +1040,20 @@ answerFields:
 ```
 
 Hint:  
-The derivative of the inside function \(x^2+3x+1\) is \(2x+3\).
+The derivative of the inside function $x^2+3x+1$ is $2x+3$.
 
 Worked solution:  
-\[
+$$
 y=(x^2+3x+1)^4
-\]
+$$
 Using the Chain rule,
-\[
+$$
 \frac{dy}{dx}=4(x^2+3x+1)^3(2x+3).
-\]
+$$
 Therefore,
-\[
+$$
 \frac{dy}{dx}=4(2x+3)(x^2+3x+1)^3.
-\]
+$$
 
 Common mistake:  
 Only differentiating the outside power and forgetting the derivative of the full inside expression.
@@ -1071,15 +1071,15 @@ Command word: Differentiate
 
 Question:  
 Differentiate
-\[
+$$
 y=(6-x^2)^5
-\]
-with respect to \(x\).
+$$
+with respect to $x$.
 
 Correct answer:  
-\[
+$$
 \frac{dy}{dx}=-10x(6-x^2)^4
-\]
+$$
 
 Answer fields:
 ```yaml
@@ -1095,23 +1095,23 @@ answerFields:
 ```
 
 Hint:  
-Be careful: the derivative of \(6-x^2\) is \(-2x\).
+Be careful: the derivative of $6-x^2$ is $-2x$.
 
 Worked solution:  
-\[
+$$
 y=(6-x^2)^5
-\]
+$$
 Using the Chain rule,
-\[
+$$
 \frac{dy}{dx}=5(6-x^2)^4\cdot(-2x).
-\]
+$$
 Therefore,
-\[
+$$
 \frac{dy}{dx}=-10x(6-x^2)^4.
-\]
+$$
 
 Common mistake:  
-Writing \(10x(6-x^2)^4\) and losing the negative sign.
+Writing $10x(6-x^2)^4$ and losing the negative sign.
 
 ---
 
@@ -1126,15 +1126,15 @@ Command word: Differentiate
 
 Question:  
 Differentiate
-\[
+$$
 y=2(x^2-1)^5
-\]
-with respect to \(x\).
+$$
+with respect to $x$.
 
 Correct answer:  
-\[
+$$
 \frac{dy}{dx}=20x(x^2-1)^4
-\]
+$$
 
 Answer fields:
 ```yaml
@@ -1150,23 +1150,23 @@ answerFields:
 ```
 
 Hint:  
-Keep the multiplier \(2\), then multiply by the derivative of \(x^2-1\).
+Keep the multiplier $2$, then multiply by the derivative of $x^2-1$.
 
 Worked solution:  
-\[
+$$
 y=2(x^2-1)^5
-\]
+$$
 Using the Chain rule,
-\[
+$$
 \frac{dy}{dx}=2\cdot 5(x^2-1)^4\cdot 2x.
-\]
+$$
 Therefore,
-\[
+$$
 \frac{dy}{dx}=20x(x^2-1)^4.
-\]
+$$
 
 Common mistake:  
-Using the outside power correctly but forgetting to multiply by \(2x\).
+Using the outside power correctly but forgetting to multiply by $2x$.
 
 ---
 
@@ -1181,15 +1181,15 @@ Command word: Differentiate
 
 Question:  
 Differentiate
-\[
+$$
 y=(3x+1)^4+5x^2
-\]
-with respect to \(x\).
+$$
+with respect to $x$.
 
 Correct answer:  
-\[
+$$
 \frac{dy}{dx}=12(3x+1)^3+10x
-\]
+$$
 
 Answer fields:
 ```yaml
@@ -1206,27 +1206,27 @@ answerFields:
 ```
 
 Hint:  
-Use the Chain rule on \((3x+1)^4\), then differentiate \(5x^2\) normally.
+Use the Chain rule on $(3x+1)^4$, then differentiate $5x^2$ normally.
 
 Worked solution:  
-\[
+$$
 y=(3x+1)^4+5x^2
-\]
+$$
 Using the Chain rule,
-\[
+$$
 \frac{d}{dx}\left((3x+1)^4\right)=4(3x+1)^3\cdot3=12(3x+1)^3.
-\]
+$$
 Also,
-\[
+$$
 \frac{d}{dx}(5x^2)=10x.
-\]
+$$
 Therefore,
-\[
+$$
 \frac{dy}{dx}=12(3x+1)^3+10x.
-\]
+$$
 
 Common mistake:  
-Only differentiating the bracketed term and forgetting the \(5x^2\) term.
+Only differentiating the bracketed term and forgetting the $5x^2$ term.
 
 ---
 
@@ -1241,19 +1241,19 @@ Command word: Differentiate
 
 Question:  
 Differentiate
-\[
+$$
 y=\sqrt{5x+4}
-\]
-with respect to \(x\).
+$$
+with respect to $x$.
 
 Correct answer:  
-\[
+$$
 \frac{dy}{dx}=\frac{5}{2}(5x+4)^{-1/2}
-\]
+$$
 or
-\[
+$$
 \frac{dy}{dx}=\frac{5}{2\sqrt{5x+4}}.
-\]
+$$
 
 Answer fields:
 ```yaml
@@ -1283,27 +1283,27 @@ answerFields:
 ```
 
 Hint:  
-Rewrite the square root as a power of \(\frac12\).
+Rewrite the square root as a power of $\frac12$.
 
 Worked solution:  
-\[
+$$
 y=\sqrt{5x+4}=(5x+4)^{1/2}.
-\]
+$$
 Using the Chain rule,
-\[
+$$
 \frac{dy}{dx}=\frac12(5x+4)^{-1/2}\cdot5.
-\]
+$$
 So
-\[
+$$
 \frac{dy}{dx}=\frac52(5x+4)^{-1/2}.
-\]
+$$
 This can also be written as
-\[
+$$
 \frac{dy}{dx}=\frac{5}{2\sqrt{5x+4}}.
-\]
+$$
 
 Common mistake:  
-Writing \(\frac12(5x+4)^{-1/2}\) and forgetting to multiply by 5.
+Writing $\frac12(5x+4)^{-1/2}$ and forgetting to multiply by 5.
 
 ---
 
@@ -1318,19 +1318,19 @@ Command word: Differentiate
 
 Question:  
 Differentiate
-\[
+$$
 y=(x+3)^{-2}
-\]
-with respect to \(x\).
+$$
+with respect to $x$.
 
 Correct answer:  
-\[
+$$
 \frac{dy}{dx}=-2(x+3)^{-3}
-\]
+$$
 or
-\[
+$$
 \frac{dy}{dx}=-\frac{2}{(x+3)^3}.
-\]
+$$
 
 Answer fields:
 ```yaml
@@ -1348,23 +1348,23 @@ answerFields:
 ```
 
 Hint:  
-Bring down the power \(-2\), then reduce the power by 1.
+Bring down the power $-2$, then reduce the power by 1.
 
 Worked solution:  
-\[
+$$
 y=(x+3)^{-2}
-\]
+$$
 Using the Chain rule,
-\[
+$$
 \frac{dy}{dx}=-2(x+3)^{-3}\cdot1.
-\]
+$$
 Therefore,
-\[
+$$
 \frac{dy}{dx}=-2(x+3)^{-3}.
-\]
+$$
 
 Common mistake:  
-Changing the power from \(-2\) to \(-1\) instead of reducing it to \(-3\).
+Changing the power from $-2$ to $-1$ instead of reducing it to $-3$.
 
 ---
 
@@ -1379,15 +1379,15 @@ Command word: Find
 
 Question:  
 A curve has equation
-\[
+$$
 y=(2x+1)^5.
-\]
-Find the gradient of the curve at \(x=1\).
+$$
+Find the gradient of the curve at $x=1$.
 
 Correct answer:  
-\[
+$$
 810
-\]
+$$
 
 Answer fields:
 ```yaml
@@ -1413,30 +1413,30 @@ answerFields:
 ```
 
 Hint:  
-Differentiate first, then substitute \(x=1\) into the derivative.
+Differentiate first, then substitute $x=1$ into the derivative.
 
 Worked solution:  
-\[
+$$
 y=(2x+1)^5
-\]
+$$
 Using the Chain rule,
-\[
+$$
 \frac{dy}{dx}=5(2x+1)^4\cdot2=10(2x+1)^4.
-\]
-At \(x=1\),
-\[
+$$
+At $x=1$,
+$$
 \frac{dy}{dx}=10(2(1)+1)^4=10(3)^4.
-\]
-\[
+$$
+$$
 10(3)^4=10\cdot81=810.
-\]
+$$
 So the gradient is
-\[
+$$
 810.
-\]
+$$
 
 Common mistake:  
-Substituting \(x=1\) into \(y\) instead of into \(\frac{dy}{dx}\).
+Substituting $x=1$ into $y$ instead of into $\frac{dy}{dx}$.
 
 ---
 
@@ -1451,15 +1451,15 @@ Command word: Find
 
 Question:  
 A curve has equation
-\[
+$$
 y=(x^2+2)^3.
-\]
-Find the gradient of the curve at \(x=2\).
+$$
+Find the gradient of the curve at $x=2$.
 
 Correct answer:  
-\[
+$$
 432
-\]
+$$
 
 Answer fields:
 ```yaml
@@ -1485,34 +1485,34 @@ answerFields:
 ```
 
 Hint:  
-Differentiate using the Chain rule, then substitute \(x=2\).
+Differentiate using the Chain rule, then substitute $x=2$.
 
 Worked solution:  
-\[
+$$
 y=(x^2+2)^3
-\]
+$$
 Using the Chain rule,
-\[
+$$
 \frac{dy}{dx}=3(x^2+2)^2\cdot2x.
-\]
+$$
 So
-\[
+$$
 \frac{dy}{dx}=6x(x^2+2)^2.
-\]
-At \(x=2\),
-\[
+$$
+At $x=2$,
+$$
 \frac{dy}{dx}=6(2)(2^2+2)^2.
-\]
-\[
+$$
+$$
 =12(6)^2=12\cdot36=432.
-\]
+$$
 So the gradient is
-\[
+$$
 432.
-\]
+$$
 
 Common mistake:  
-Forgetting the \(2x\) from differentiating \(x^2+2\).
+Forgetting the $2x$ from differentiating $x^2+2$.
 
 ---
 
@@ -1526,20 +1526,20 @@ Calculator/non-calculator: Non-calculator
 Command word: Compare
 
 Question:  
-Curve \(C_1\) has equation
-\[
+Curve $C_1$ has equation
+$$
 y=(x+2)^4.
-\]
-Curve \(C_2\) has equation
-\[
+$$
+Curve $C_2$ has equation
+$$
 y=6x^2+1.
-\]
-Compare the gradients of the two curves at \(x=1\).
+$$
+Compare the gradients of the two curves at $x=1$.
 
 Correct answer:  
-Gradient of \(C_1\): \(108\)  
-Gradient of \(C_2\): \(12\)  
-\(C_1\) has the greater gradient at \(x=1\).
+Gradient of $C_1$: $108$  
+Gradient of $C_2$: $12$  
+$C_1$ has the greater gradient at $x=1$.
 
 Answer fields:
 ```yaml
@@ -1592,49 +1592,49 @@ answerFields:
 ```
 
 Hint:  
-Find each derivative, then substitute \(x=1\) into both derivatives.
+Find each derivative, then substitute $x=1$ into both derivatives.
 
 Worked solution:  
-For \(C_1\),
-\[
+For $C_1$,
+$$
 y=(x+2)^4.
-\]
+$$
 Using the Chain rule,
-\[
+$$
 \frac{dy}{dx}=4(x+2)^3.
-\]
-At \(x=1\),
-\[
+$$
+At $x=1$,
+$$
 4(1+2)^3=4(3)^3=108.
-\]
+$$
 
-For \(C_2\),
-\[
+For $C_2$,
+$$
 y=6x^2+1.
-\]
-\[
+$$
+$$
 \frac{dy}{dx}=12x.
-\]
-At \(x=1\),
-\[
+$$
+At $x=1$,
+$$
 12(1)=12.
-\]
+$$
 
 Since
-\[
+$$
 108>12,
-\]
-curve \(C_1\) has the greater gradient at \(x=1\).
+$$
+curve $C_1$ has the greater gradient at $x=1$.
 
 Common mistake:  
-Comparing the \(y\)-values of the curves instead of comparing the gradients.
+Comparing the $y$-values of the curves instead of comparing the gradients.
 
 ---
 
 ### PPQ018 — hm-calc-diff-chain-ppq-018
 
 Stage: Past Paper-style Questions  
-Subskill: Evaluating \(f'(a)\) after using the Chain rule  
+Subskill: Evaluating $f'(a)$ after using the Chain rule  
 Type: multi_step  
 Marks: 4  
 Calculator/non-calculator: Non-calculator  
@@ -1642,18 +1642,18 @@ Command word: Find
 
 Question:  
 Given
-\[
+$$
 f(x)=(x^2+5)^2,
-\]
+$$
 find
-\[
+$$
 f'(3).
-\]
+$$
 
 Correct answer:  
-\[
+$$
 168
-\]
+$$
 
 Answer fields:
 ```yaml
@@ -1679,30 +1679,30 @@ answerFields:
 ```
 
 Hint:  
-Find \(f'(x)\), then substitute \(x=3\).
+Find $f'(x)$, then substitute $x=3$.
 
 Worked solution:  
-\[
+$$
 f(x)=(x^2+5)^2.
-\]
+$$
 Using the Chain rule,
-\[
+$$
 f'(x)=2(x^2+5)\cdot2x.
-\]
+$$
 So
-\[
+$$
 f'(x)=4x(x^2+5).
-\]
-Now substitute \(x=3\):
-\[
+$$
+Now substitute $x=3$:
+$$
 f'(3)=4(3)(3^2+5).
-\]
-\[
+$$
+$$
 =12(14)=168.
-\]
+$$
 
 Common mistake:  
-Substituting \(x=3\) into \(f(x)\) instead of into \(f'(x)\).
+Substituting $x=3$ into $f(x)$ instead of into $f'(x)$.
 
 ---
 
@@ -1717,18 +1717,18 @@ Command word: Find
 
 Question:  
 For
-\[
+$$
 f(x)=(2x+3)^4,
-\]
-find the value of \(x\) for which
-\[
+$$
+find the value of $x$ for which
+$$
 f'(x)=8.
-\]
+$$
 
 Correct answer:  
-\[
+$$
 x=-1
-\]
+$$
 
 Answer fields:
 ```yaml
@@ -1768,36 +1768,36 @@ Hint:
 Differentiate first, then set the derivative equal to 8.
 
 Worked solution:  
-\[
+$$
 f(x)=(2x+3)^4
-\]
+$$
 Using the Chain rule,
-\[
+$$
 f'(x)=4(2x+3)^3\cdot2.
-\]
+$$
 So
-\[
+$$
 f'(x)=8(2x+3)^3.
-\]
+$$
 Set this equal to 8:
-\[
+$$
 8(2x+3)^3=8.
-\]
-\[
+$$
+$$
 (2x+3)^3=1.
-\]
-\[
+$$
+$$
 2x+3=1.
-\]
-\[
+$$
+$$
 2x=-2.
-\]
-\[
+$$
+$$
 x=-1.
-\]
+$$
 
 Common mistake:  
-Setting \(f(x)=8\) instead of setting \(f'(x)=8\).
+Setting $f(x)=8$ instead of setting $f'(x)=8$.
 
 ---
 
@@ -1812,18 +1812,18 @@ Command word: Find
 
 Question:  
 For
-\[
+$$
 f(x)=(x^2+1)^3,
-\]
-find the positive value of \(x\) for which
-\[
+$$
+find the positive value of $x$ for which
+$$
 f'(x)=300.
-\]
+$$
 
 Correct answer:  
-\[
+$$
 x=2
-\]
+$$
 
 Answer fields:
 ```yaml
@@ -1862,29 +1862,29 @@ Hint:
 Differentiate first, then check the positive value that makes the derivative equal to 300.
 
 Worked solution:  
-\[
+$$
 f(x)=(x^2+1)^3.
-\]
+$$
 Using the Chain rule,
-\[
+$$
 f'(x)=3(x^2+1)^2\cdot2x.
-\]
+$$
 So
-\[
+$$
 f'(x)=6x(x^2+1)^2.
-\]
+$$
 Set this equal to 300:
-\[
+$$
 6x(x^2+1)^2=300.
-\]
-Check \(x=2\):
-\[
+$$
+Check $x=2$:
+$$
 6(2)(2^2+1)^2=12(5)^2=12\cdot25=300.
-\]
+$$
 Therefore, the positive value is
-\[
+$$
 x=2.
-\]
+$$
 
 Common mistake:  
 Trying to solve the full equation by expanding everything. Since the question asks for the positive value, substitution/checking is a clean method here.
@@ -1902,19 +1902,19 @@ Command word: Find
 
 Question:  
 A curve has equation
-\[
+$$
 y=(kx+1)^3,
-\]
-where \(k\) is a positive constant.
+$$
+where $k$ is a positive constant.
 
-The gradient of the curve at \(x=1\) is \(54\).
+The gradient of the curve at $x=1$ is $54$.
 
-Find the value of \(k\).
+Find the value of $k$.
 
 Correct answer:  
-\[
+$$
 k=2
-\]
+$$
 
 Answer fields:
 ```yaml
@@ -1951,62 +1951,62 @@ answerFields:
 ```
 
 Hint:  
-Differentiate using the Chain rule, then substitute \(x=1\) and use the given gradient.
+Differentiate using the Chain rule, then substitute $x=1$ and use the given gradient.
 
 Worked solution:  
-\[
+$$
 y=(kx+1)^3
-\]
+$$
 Using the Chain rule,
-\[
+$$
 \frac{dy}{dx}=3(kx+1)^2\cdot k.
-\]
+$$
 So
-\[
+$$
 \frac{dy}{dx}=3k(kx+1)^2.
-\]
+$$
 
-At \(x=1\),
-\[
+At $x=1$,
+$$
 \frac{dy}{dx}=3k(k+1)^2.
-\]
+$$
 
-The gradient is \(54\), so
-\[
+The gradient is $54$, so
+$$
 3k(k+1)^2=54.
-\]
+$$
 
-Since \(k\) is positive, check \(k=2\):
-\[
+Since $k$ is positive, check $k=2$:
+$$
 3(2)(2+1)^2=6(9)=54.
-\]
+$$
 Therefore,
-\[
+$$
 k=2.
-\]
+$$
 
 Common mistake:  
-Differentiating \(kx+1\) as \(x+1\), instead of recognising that its derivative is \(k\).
+Differentiating $kx+1$ as $x+1$, instead of recognising that its derivative is $k$.
 
 ---
 
 ## Past Paper-style Questions — all questions together for skim
 
-1. Differentiate \(y=(7-2x)^4\) with respect to \(x\).  
-2. Differentiate \(y=(5-3x)^5\) with respect to \(x\).  
-3. Differentiate \(y=(x^2+3x+1)^4\) with respect to \(x\).  
-4. Differentiate \(y=(6-x^2)^5\) with respect to \(x\).  
-5. Differentiate \(y=2(x^2-1)^5\) with respect to \(x\).  
-6. Differentiate \(y=(3x+1)^4+5x^2\) with respect to \(x\).  
-7. Differentiate \(y=\sqrt{5x+4}\) with respect to \(x\).  
-8. Differentiate \(y=(x+3)^{-2}\) with respect to \(x\).  
-9. A curve has equation \(y=(2x+1)^5\). Find the gradient of the curve at \(x=1\).  
-10. A curve has equation \(y=(x^2+2)^3\). Find the gradient of the curve at \(x=2\).  
-11. Curve \(C_1\) has equation \(y=(x+2)^4\). Curve \(C_2\) has equation \(y=6x^2+1\). Compare the gradients of the two curves at \(x=1\).  
-12. Given \(f(x)=(x^2+5)^2\), find \(f'(3)\).  
-13. For \(f(x)=(2x+3)^4\), find the value of \(x\) for which \(f'(x)=8\).  
-14. For \(f(x)=(x^2+1)^3\), find the positive value of \(x\) for which \(f'(x)=300\).  
-15. A curve has equation \(y=(kx+1)^3\), where \(k\) is a positive constant. The gradient of the curve at \(x=1\) is \(54\). Find the value of \(k\).
+1. Differentiate $y=(7-2x)^4$ with respect to $x$.  
+2. Differentiate $y=(5-3x)^5$ with respect to $x$.  
+3. Differentiate $y=(x^2+3x+1)^4$ with respect to $x$.  
+4. Differentiate $y=(6-x^2)^5$ with respect to $x$.  
+5. Differentiate $y=2(x^2-1)^5$ with respect to $x$.  
+6. Differentiate $y=(3x+1)^4+5x^2$ with respect to $x$.  
+7. Differentiate $y=\sqrt{5x+4}$ with respect to $x$.  
+8. Differentiate $y=(x+3)^{-2}$ with respect to $x$.  
+9. A curve has equation $y=(2x+1)^5$. Find the gradient of the curve at $x=1$.  
+10. A curve has equation $y=(x^2+2)^3$. Find the gradient of the curve at $x=2$.  
+11. Curve $C_1$ has equation $y=(x+2)^4$. Curve $C_2$ has equation $y=6x^2+1$. Compare the gradients of the two curves at $x=1$.  
+12. Given $f(x)=(x^2+5)^2$, find $f'(3)$.  
+13. For $f(x)=(2x+3)^4$, find the value of $x$ for which $f'(x)=8$.  
+14. For $f(x)=(x^2+1)^3$, find the positive value of $x$ for which $f'(x)=300$.  
+15. A curve has equation $y=(kx+1)^3$, where $k$ is a positive constant. The gradient of the curve at $x=1$ is $54$. Find the value of $k$.
 
 ## Import readiness checklist
 

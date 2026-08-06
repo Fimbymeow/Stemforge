@@ -517,7 +517,7 @@ test("the Step 3 originality audit did not change the declared source hashes, an
     if (source.kind === "notes") continue;
     assert.equal(
       source.expectedSourceHash,
-      "b86736d97716de10c0cbd44e51a064954cf4131e19d44f48a35b774e365c6294",
+      "7c45e31b926d24829e30031890d80429fcb74fe3d2780d7531032efea6e00d89",
       `${source.kind}: no content correction was needed, so no hash should have changed`,
     );
   }

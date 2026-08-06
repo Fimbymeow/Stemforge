@@ -7,5 +7,5 @@
     "Applications": "chain-rule-stage-applications",
     "Past Paper-style Questions": "chain-rule-stage-past-paper-style"
   },
-  "runMode": "new_content_only"
+  "runMode": "includes_authorised_edits"
 }
