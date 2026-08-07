@@ -109,7 +109,7 @@ test("navigation away and revisit do not replay the transient celebration", asyn
   await expect(page.getByTestId("path-completion-panel")).toBeVisible();
 
   await page.goto(HUB_ROUTE);
-  await expect(page.getByText("Path complete.")).toBeVisible();
+  await expect(page.getByTestId("working-context-hub")).toContainText("Chain rule");
   await page.goto(PATH_ROUTE);
   await expect(page.getByTestId("completed-path-card")).toBeVisible();
   await openQuestion(page, FINAL_QUESTION_ID);
@@ -125,7 +125,7 @@ test("solution-assisted final completion is Completed with Review Recommended", 
   const panel = page.getByTestId("path-completion-panel");
   await expect(panel).toBeVisible();
   await expect(panel.getByText("Completed", { exact: true })).toBeVisible();
-  await expect(panel.getByText("Review recommended", { exact: true })).toBeVisible();
+  await expect(panel.getByText("Needs more practice", { exact: true })).toBeVisible();
   await expect(panel).toContainText("8 / 8 completed");
   await expect(panel.getByText("Mastered", { exact: true })).toHaveCount(0);
 
@@ -156,7 +156,7 @@ test("secure completion uses the Secure variant without a Mastered claim", async
   await expect(page.getByTestId("path-mastery-status")).toContainText("Secure");
 });
 
-test("mastered completion stays consistent across question, dashboard, hub and path", async ({ page }) => {
+test("mastered completion stays consistent while the hub advances to the next live skill", async ({ page }) => {
   await seedStoredProgress(page, v3Payload(priorIndependentAttempts()));
   await openQuestion(page, FINAL_QUESTION_ID);
   await submitAnswer(page, QUESTION_ANSWERS[FINAL_QUESTION_ID]);
@@ -164,9 +164,10 @@ test("mastered completion stays consistent across question, dashboard, hub and p
   expect(calculateSkillPathProgress(skillPath, (await readStoredProgress(page) as ProgressPayload).data, QUESTION_VERSIONS).status).toBe("mastered");
 
   await page.goto("/dashboard");
-  await expect(page.getByTestId("dashboard-progress-summary")).toContainText("8 / 8 completed");
+  await expect(page.getByTestId("dashboard-progress-summary")).toContainText("8 / 42 completed");
   await page.goto(HUB_ROUTE);
-  await expect(page.getByText("Mastered", { exact: true })).toBeVisible();
+  await expect(page.getByTestId("working-context-hub")).toContainText("Chain rule");
+  await expect(page.getByRole("link", { name: "Basic differentiation Complete" })).toBeVisible();
   await page.goto(PATH_ROUTE);
   await expect(page.getByTestId("path-mastery-status")).toContainText("Mastered");
   await expect(page.getByTestId("completed-path-card")).toContainText("8 / 8 questions");

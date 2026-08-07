@@ -91,9 +91,15 @@ export function getQuestionProgressForVersion(
   questionId: string,
   currentVersion: number,
   evidence: ProgressEvidence,
+  expectedSkillPathId?: string,
 ): QuestionProgressState {
-  const historicalAttempts = evidence.attempts.filter((attempt) => attempt.questionId === questionId && attempt.isGenuine);
-  const historicalEvents = evidence.supportEvents.filter((event) => event.questionId === questionId);
+  const historicalAttempts = evidence.attempts.filter((attempt) =>
+    attempt.questionId === questionId &&
+    attempt.isGenuine &&
+    (!expectedSkillPathId || attempt.skillPathId === expectedSkillPathId));
+  const historicalEvents = evidence.supportEvents.filter((event) =>
+    event.questionId === questionId &&
+    (!expectedSkillPathId || event.skillPathId === expectedSkillPathId));
   const currentAttempts = historicalAttempts.filter(
     (attempt) => attempt.versionEvidence.kind === "known" && attempt.versionEvidence.questionVersion === currentVersion,
   );
@@ -208,7 +214,7 @@ export function calculateStageProgress(
   evidence: ProgressEvidence,
   questionVersions: Readonly<Record<string, number>> = {},
 ): StageProgress {
-  const states = stage.questionIds.map((questionId) => getQuestionProgressForVersion(questionId, questionVersions[questionId] ?? 1, evidence));
+  const states = stage.questionIds.map((questionId) => getQuestionProgressForVersion(questionId, questionVersions[questionId] ?? 1, evidence, skillPath.slug));
   const attempted = states.filter((state) => state.attempted);
   const completed = states.filter((state) => state.completed);
   const latestCorrect = states.filter((state) => state.latestResult === true);
@@ -216,6 +222,7 @@ export function calculateStageProgress(
   const firstAttempts = stage.questionIds
     .map((questionId) => evidence.attempts.find((attempt) =>
       attempt.questionId === questionId &&
+      attempt.skillPathId === skillPath.slug &&
       attempt.isGenuine &&
       attempt.versionEvidence.kind === "known" &&
       attempt.versionEvidence.questionVersion === (questionVersions[questionId] ?? 1) &&
@@ -281,7 +288,7 @@ export function calculateSkillPathProgress(
   const stages = skillPath.learningStages ?? [];
   const stageProgress = Object.fromEntries(stages.map((stage) => [stage.id, calculateStageProgress(skillPath, stage, evidence, questionVersions)]));
   const questionIds = stages.flatMap((stage) => stage.questionIds);
-  const states = questionIds.map((questionId) => getQuestionProgressForVersion(questionId, questionVersions[questionId] ?? 1, evidence));
+  const states = questionIds.map((questionId) => getQuestionProgressForVersion(questionId, questionVersions[questionId] ?? 1, evidence, skillPath.slug));
   const attempted = states.filter((state) => state.attempted);
   const completed = states.filter((state) => state.completed);
   const latestCorrect = states.filter((state) => state.latestResult === true);
@@ -289,6 +296,7 @@ export function calculateSkillPathProgress(
   const firstAttempts = questionIds
     .map((questionId) => evidence.attempts.find((attempt) =>
       attempt.questionId === questionId &&
+      attempt.skillPathId === skillPath.slug &&
       attempt.isGenuine &&
       attempt.versionEvidence.kind === "known" &&
       attempt.versionEvidence.questionVersion === (questionVersions[questionId] ?? 1) &&
@@ -371,7 +379,7 @@ export function selectNextQuestionId(
 ) {
   for (const stage of skillPath.learningStages ?? []) {
     const next = stage.questionIds.find((questionId) =>
-      !getQuestionProgressForVersion(questionId, questionVersions[questionId] ?? 1, evidence).completed,
+      !getQuestionProgressForVersion(questionId, questionVersions[questionId] ?? 1, evidence, skillPath.slug).completed,
     );
     if (next) return next;
   }

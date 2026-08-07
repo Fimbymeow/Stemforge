@@ -5,7 +5,7 @@ import { ArrowRight, Calculator } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { AppTopbar } from "@/components/layout/app-topbar";
 import { SubjectRoadmapNavigator } from "@/components/learning/subject-roadmap-navigator";
-import { getActiveSkillPath, getActiveSubject } from "@/lib/learning-paths";
+import { getActiveSubject } from "@/lib/learning-paths";
 import { useLearnerNextAction } from "@/components/learning/use-learner-next-action";
 import { PracticeEntryCard } from "@/components/practice/practice-entry-card";
 import { ReviewEntryCard } from "@/components/review/review-entry-card";
@@ -14,12 +14,11 @@ import { getQualificationPresentation } from "@/lib/qualification-presentation";
 
 export function HigherMathsHub() {
   const subject = getActiveSubject();
-  const skillPath = getActiveSkillPath();
   const nextAction = useLearnerNextAction();
   const qualification = getQualificationPresentation(subject.level);
 
   return (
-    <AppShell demo active="Subjects">
+    <AppShell demo active="Subjects" workingContextPathId={nextAction.pathId}>
       <div className="mx-auto mb-3 flex max-w-[1240px] justify-end"><AppTopbar demo /></div>
       <div className="mx-auto grid max-w-[1240px] gap-6">
         <header>
@@ -38,14 +37,14 @@ export function HigherMathsHub() {
 
         <section>
           <h2 className="mb-2 text-lg font-extrabold">Start here</h2>
-          <WorkingContextHubCard pathId={skillPath.slug} />
+          <WorkingContextHubCard pathId={nextAction.pathId} />
         </section>
 
         <section aria-labelledby="practice-review-title">
           <h2 id="practice-review-title" className="mb-2 text-lg font-extrabold">Practice and Review</h2>
           <div className="grid auto-rows-fr grid-cols-2 items-stretch gap-4 max-md:grid-cols-1">
             <PracticeEntryCard preferredPathId={nextAction.pathId} testId="higher-maths-practice" />
-            <ReviewEntryCard pathId={skillPath.slug} />
+            <ReviewEntryCard />
           </div>
         </section>
 

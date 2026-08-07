@@ -19,21 +19,24 @@ import { createReviewSessionSelection } from "@/lib/review/selection";
 const modeCopy: Record<Exclude<PracticeMode, "retry_incorrect">, { title: string; detail: string }> = {
   targeted: { title: "Path practice", detail: "Practise available questions from one path." },
   mixed: { title: "Mixed practice", detail: "Balance questions across multiple available paths." },
-  needs_work: { title: "Needs Review", detail: "Revisit unfinished and review-recommended questions from your earlier work." },
+  needs_work: { title: "Needs more practice", detail: "Revisit unfinished questions and questions that would benefit from another attempt." },
   review: { title: "Review", detail: "Complete due scheduled Review through a focused Practice Session." },
 };
 
 export function PracticeSetup({
   workingContextPathId,
+  invalidWorkingContextPath = false,
   reviewMode = false,
 }: {
   workingContextPathId?: string | null;
+  invalidWorkingContextPath?: boolean;
   reviewMode?: boolean;
 }) {
   const activation = usePracticeActivation();
   const hasMounted = useHasMounted();
   const evidence = hasMounted ? getProgressEvidence() : getEmptyProgressEvidence();
   const paths = useMemo(() => contentResolver.getAllPathContexts().filter((context) => context.skillPath.isAvailable), []);
+  const workingContextPath = paths.find((context) => context.skillPath.slug === workingContextPathId);
   const courses = [...new Map(paths.map((context) => [context.courseArea.slug, context.courseArea])).values()];
   const [mode, setMode] = useState<Exclude<PracticeMode, "retry_incorrect">>("targeted");
   const [courseId, setCourseId] = useState(courses[0]?.slug ?? "");
@@ -103,6 +106,18 @@ export function PracticeSetup({
     if (result.session) void activation.begin(result.session);
   }
 
+  if (invalidWorkingContextPath) {
+    return (
+      <AppShell demo active="Practice" className="py-8 max-xl:pt-5">
+        <Card className="mx-auto max-w-[760px] p-6">
+          <h1 className="text-2xl font-extrabold">Practice path unavailable</h1>
+          <p className="mt-2 text-muted">That learning path is not available for practice. Choose from the published Higher Maths skills instead.</p>
+          <Link href="/practice" className="mt-4 inline-flex min-h-11 items-center rounded-lg bg-forge px-5 font-extrabold text-white">Browse available practice</Link>
+        </Card>
+      </AppShell>
+    );
+  }
+
   if (reviewMode) {
     const dueCount = reviewPreview.dueStates.filter((state) => state.due).length;
     const reason = reviewPreview.dueStates.find((state) => state.due)?.reason;
@@ -150,7 +165,7 @@ export function PracticeSetup({
         <header className="flex items-start justify-between gap-4 max-md:grid">
           <div>
             <p className="font-mono text-xs font-extrabold uppercase text-forge">Practice</p>
-            <h1 className="m-0 mt-2 text-[34px] font-extrabold leading-none">Practise Basic differentiation</h1>
+            <h1 className="m-0 mt-2 text-[34px] font-extrabold leading-none">Practise {workingContextPath?.skillPath.name ?? "Higher Maths"}</h1>
             <p className="mt-3 max-w-3xl text-muted">Start a useful short session now, or choose options when you want more control.</p>
           </div>
           <AppTopbar demo={false} />

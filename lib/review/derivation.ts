@@ -15,6 +15,13 @@ export type ReviewDerivationCache = {
   baselineBySkill: Map<string, BaselineResult>;
 };
 
+export type SubjectReviewSummary = {
+  dueSkillCount: number;
+  dueSkillNames: string[];
+  dueStates: ReviewDueState[];
+  href: string | null;
+};
+
 type BaselineResult =
   | { status: "eligible"; firstCompletedAt: string }
   | { status: "not_eligible"; firstCompletedAt: null }
@@ -22,6 +29,26 @@ type BaselineResult =
 
 export function createReviewDerivationCache(): ReviewDerivationCache {
   return { baselineBySkill: new Map() };
+}
+
+export function deriveSubjectReviewSummary(
+  subjectSlug: string,
+  evidence: ProgressEvidence,
+  now = new Date(),
+): SubjectReviewSummary {
+  const cache = createReviewDerivationCache();
+  const contexts = contentResolver.getAllPathContexts().filter((context) =>
+    context.subject.subjectSlug === subjectSlug && context.skillPath.isAvailable);
+  const dueStates = contexts
+    .map((context) => deriveSkillReviewState(context.skillPath, evidence, now, cache))
+    .filter((state) => state.eligible && state.due && state.reason !== "history_unavailable");
+  return {
+    dueSkillCount: dueStates.length,
+    dueSkillNames: dueStates.map((state) =>
+      contentResolver.getPathContext(state.target.targetId)?.skillPath.name ?? state.target.targetId),
+    dueStates,
+    href: dueStates.length ? "/practice?review=1" : null,
+  };
 }
 
 export function deriveSkillFirstCompletedAt(
@@ -39,6 +66,7 @@ export function deriveSkillFirstCompletedAt(
   > = [
     ...evidence.attempts.filter((attempt) =>
       activeIds.has(attempt.questionId) &&
+      attempt.skillPathId === skillPath.slug &&
       baselineCompatible(attempt.versionEvidence, questionVersions[attempt.questionId] ?? 1),
     ).map((value) => ({
       kind: "attempt" as const,
@@ -49,6 +77,7 @@ export function deriveSkillFirstCompletedAt(
     })),
     ...evidence.supportEvents.filter((event) =>
       activeIds.has(event.questionId) &&
+      event.skillPathId === skillPath.slug &&
       baselineCompatible(event.versionEvidence, questionVersions[event.questionId] ?? 1),
     ).map((value) => ({
       kind: "support" as const,
@@ -82,6 +111,7 @@ export function deriveSkillFirstCompletedAt(
       event.value.questionId,
       questionVersions[event.value.questionId] ?? 1,
       prefix,
+      skillPath.slug,
     );
     if (state.historicalCompleted) {
       incomplete.delete(event.value.questionId);
@@ -121,6 +151,7 @@ export function deriveOrdinaryRecovery(
     const currentVersion = questionVersions[questionId] ?? 1;
     const attempts = evidence.attempts.filter((attempt) =>
       attempt.questionId === questionId &&
+      attempt.skillPathId === skillPath.slug &&
       isCompatible(attempt, currentVersion) &&
       isGradedAttempt(attempt) &&
       (!attempt.practiceSessionId ||

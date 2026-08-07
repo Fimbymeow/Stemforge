@@ -36,7 +36,7 @@ test("fresh dashboard and single-path practice omit meaningless zero-value choic
   await expect(page.getByRole("combobox", { name: "Course" })).toHaveCount(0);
   await expect(page.getByRole("combobox", { name: "Path" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: /Mixed practice/ })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: /Needs Review/ })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /Needs more practice/ })).toHaveCount(0);
   await expect(page.getByRole("button", { name: /Retry incorrect/ })).toHaveCount(0);
   await expect(page.getByLabel("Requested questions")).not.toBeVisible();
   const quick = page.getByTestId("quick-practice-action");

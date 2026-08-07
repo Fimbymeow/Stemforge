@@ -10,7 +10,7 @@ test("guest learner dashboard hydrates without errors and presents calm course a
   await expect(summary.getByText("Recommended next")).toHaveCount(0);
   await expect(summary.getByRole("link", { name: "Open Higher Maths" })).toHaveAttribute("href", "/subjects/higher-maths");
   await expect(summary.getByRole("link", { name: "Start learning" })).toHaveCount(0);
-  await expect(summary).toContainText("0 / 8 completed");
+  await expect(summary).toContainText("0 / 42 completed");
   await expect(page.getByText("Saved on this browser")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Course progress" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Recent activity" })).toHaveCount(0);
@@ -33,11 +33,11 @@ test("dashboard updates from stored evidence with compact course context and a r
   await page.goto("/dashboard");
 
   const summary = page.getByTestId("dashboard-progress-summary");
-  await expect(summary).toContainText("Current position: Foundations");
+  await expect(summary).toContainText("Progress across published Higher Maths skills");
   await expect(summary.getByRole("link", { name: "Open Higher Maths" })).toHaveAttribute("href", "/subjects/higher-maths");
   await expect(summary.getByRole("link", { name: "Resume question" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
-  await expect(summary).toContainText("1 / 8 completed");
-  await expect(page.getByTestId("dashboard-course-progress").getByRole("progressbar")).toHaveAttribute("aria-valuenow", "13");
+  await expect(summary).toContainText("1 / 42 completed");
+  await expect(page.getByTestId("dashboard-course-progress").getByRole("progressbar")).toHaveAttribute("aria-valuenow", "2");
   await expect(page.getByRole("heading", { name: "Recent activity" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Weekly activity" })).toHaveCount(0);
 });

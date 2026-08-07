@@ -19,7 +19,7 @@ test("new learner gets calm course access before the one-click learning entry", 
   await expect(page.getByRole("link", { name: "Start learning" })).toHaveCount(0);
 
   await page.goto(HUB_ROUTE);
-  await expectPrimaryAction(page, "Start", "/subjects/higher-maths/revision-notes");
+  await expectPrimaryAction(page, "Start", "/subjects/higher-maths/revision-notes?path=basic-differentiation");
   await expect(page.getByTestId("working-context-hub").getByRole("link", { name: "Overview" })).toBeVisible();
 
   await page.goto(PATH_ROUTE);
@@ -94,18 +94,22 @@ test("stage completion advances to the next recommended stage without hard-locki
   await expect(page.locator("article").filter({ hasText: "Foundations" }).getByRole("link", { name: "Revisit" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
 });
 
-test("completed guided content recommends due Review before practice and never locked inventory", async ({ page }) => {
+test("completed Basic Differentiation advances Learn to Chain Rule while scheduled Review remains separately available", async ({ page }) => {
   await seedStoredProgress(page, v3Payload(QUESTION_IDS.map((id, index) => currentAttempt(id, index + 1))));
 
-  for (const route of ["/dashboard"]) {
-    await page.goto(route);
-    if (route === "/dashboard") await expectHigherMathsCourseAccess(page);
-    await expectPrimaryAction(page, "Practise again", "/practice");
-  }
-  for (const route of [HUB_ROUTE, PATH_ROUTE]) {
-    await page.goto(route);
-    await expectPrimaryAction(page, "Start Review", "/practice?review=1&path=basic-differentiation");
-  }
+  await page.goto("/dashboard");
+  await expectHigherMathsCourseAccess(page);
+  await expect(page.getByText("Trigonometric differentiation", { exact: true })).toHaveCount(0);
+
+  await page.goto(HUB_ROUTE);
+  await expect(page.getByTestId("working-context-hub")).toContainText("Chain rule");
+  await expectPrimaryAction(page, "Start", "/subjects/higher-maths/revision-notes?path=chain-rule");
+  await expect(page.getByTestId("review-entry-card")).toContainText("Basic differentiation is ready to review.");
+  await expect(page.getByTestId("review-entry-card").getByRole("link", { name: "Start Review for 1 skill" })).toHaveAttribute("href", "/practice?review=1");
+
+  await page.goto(PATH_ROUTE);
+  await expectPrimaryAction(page, "Start Review", "/practice?review=1&path=basic-differentiation");
+
   await page.goto("/subjects");
   await expectHigherMathsCourseAccess(page);
   await expect(page.getByRole("link", { name: "Practise again" })).toHaveCount(0);
@@ -120,10 +124,10 @@ test("review recommendation stays on learning surfaces rather than the course ca
 
   await page.goto("/dashboard");
   await expectHigherMathsCourseAccess(page);
-  await expectPrimaryAction(page, "Review 1 question", `/question/${QUESTION_IDS[0]}`);
+  await expectPrimaryAction(page, "Practise 1 question again", `/question/${QUESTION_IDS[0]}`);
   await page.goto("/subjects");
   await expectHigherMathsCourseAccess(page);
-  await expect(page.getByRole("link", { name: "Review 1 question" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Practise 1 question again" })).toHaveCount(0);
 });
 
 test("question completion uses the shared next action and mobile hierarchy stays usable", async ({ page, seriousBrowserErrors }) => {

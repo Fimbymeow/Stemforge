@@ -15,14 +15,22 @@ export function practiceOriginLabel(origin: PracticeSessionOrigin) {
   return ORIGIN_LABELS[origin];
 }
 
-export function practiceReturnDestination(session: Pick<PracticeSession, "origin" | "subjectId">) {
+export function practiceReturnDestination(
+  session: Pick<PracticeSession, "origin" | "subjectId"> & Partial<Pick<PracticeSession, "selectedPathIds">>,
+) {
   if (session.origin === "question_bank_custom" || session.origin === "subject_review") {
     return {
       href: `/subjects/${encodeURIComponent(session.subjectId)}/question-bank`,
       label: "Question Bank",
     };
   }
-  if (session.origin === "scheduled_review") return { href: "/practice?review=1", label: "Review" };
+  if (session.origin === "scheduled_review") {
+    const pathId = session.selectedPathIds?.length === 1 ? session.selectedPathIds[0] : null;
+    return {
+      href: pathId ? `/practice?review=1&path=${encodeURIComponent(pathId)}` : "/practice?review=1",
+      label: "Review",
+    };
+  }
   return { href: "/practice", label: "Practice" };
 }
 

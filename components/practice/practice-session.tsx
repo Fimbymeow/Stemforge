@@ -189,7 +189,7 @@ export function PracticeSession({ sessionId }: { sessionId: string }) {
 
   if (resolved.status !== "resolved") {
     return (
-      <AppShell demo={false} active="Practice">
+      <AppShell demo={false} active="Practice" workingContextPathId={currentReference?.pathId ?? null}>
         <div className="mx-auto grid max-w-[1080px] gap-3">
           {panel}
           <Card className="p-6" data-testid="practice-question-unavailable">
@@ -254,12 +254,19 @@ function SessionToolbar({
   announcement: string;
 }) {
   const returnDestination = practiceReturnDestination(session);
+  const currentReference = session.questionReferences[session.currentQuestionIndex];
+  const currentSkillName = currentReference
+    ? contentResolver.getPathContext(currentReference.pathId)?.skillPath.name
+    : null;
   const triggerRef = useRef<HTMLButtonElement>(null);
   return (
     <Card className="relative border-forge/20 bg-forge-soft p-3 max-sm:p-2" data-testid="practice-session-panel">
       <div className="flex flex-wrap items-center gap-2">
         <div className="mr-auto min-w-0">
           <p className="truncate font-mono text-[11px] font-extrabold uppercase text-forge">{practiceOriginLabel(session.origin)}</p>
+          {session.origin === "scheduled_review" && currentSkillName ? (
+            <p data-testid="review-current-skill" aria-label={`Current Review skill: ${currentSkillName}`} className="mt-1 text-xs font-extrabold text-muted">{currentSkillName}</p>
+          ) : null}
           <button ref={triggerRef} type="button" onClick={onToggleQuestions} aria-expanded={showQuestions} aria-haspopup="dialog" className="mt-1 inline-flex min-h-11 items-center gap-2 rounded-lg font-extrabold text-ink">
             <List className="size-4" />Question {session.currentQuestionIndex + 1} of {session.questionReferences.length}
           </button>
@@ -518,7 +525,7 @@ function PracticeSummaryCard({ session, summary }: { session: PracticeSessionMod
   }
 
   return (
-    <AppShell demo={false} active="Practice">
+    <AppShell demo={false} active="Practice" workingContextPathId={session.selectedPathIds.length === 1 ? session.selectedPathIds[0] : null}>
       <div className="mx-auto grid max-w-[780px] gap-4">
         <Card className="p-6" role="status" aria-live="polite">
           <p className="font-mono text-xs font-extrabold uppercase text-forge">{practiceOriginLabel(session.origin)} complete</p>

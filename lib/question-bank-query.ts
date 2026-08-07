@@ -179,13 +179,13 @@ export function queryAvailableQuestionBankQuestions(
       context.specificationStrand.name,
     ].map(normalizeSearch);
     if (search && !searchable.some((value) => value.includes(search))) return [];
-    const progress = getQuestionProgressForVersion(question.id, question.questionVersion, evidence);
+    const progress = getQuestionProgressForVersion(question.id, question.questionVersion, evidence, context.skillPath.slug);
     if (!matchesQuestionProgress(progress, progressFilter)) return [];
     return [{
       question,
       context,
       progress,
-      lastPractisedAt: latestActivityForQuestion(question.id, evidence),
+      lastPractisedAt: latestActivityForQuestion(question.id, context.skillPath.slug, evidence),
     }];
   });
 
@@ -240,10 +240,10 @@ function matchesQuestionProgress(progress: QuestionProgressState, filter: Questi
   return progress.completed;
 }
 
-function latestActivityForQuestion(questionId: string, evidence: ProgressEvidence) {
+function latestActivityForQuestion(questionId: string, skillPathId: string, evidence: ProgressEvidence) {
   const times = [
-    ...evidence.attempts.filter((attempt) => attempt.questionId === questionId).map((attempt) => attempt.attemptedAt),
-    ...evidence.supportEvents.filter((event) => event.questionId === questionId).map((event) => event.occurredAt),
+    ...evidence.attempts.filter((attempt) => attempt.questionId === questionId && attempt.skillPathId === skillPathId).map((attempt) => attempt.attemptedAt),
+    ...evidence.supportEvents.filter((event) => event.questionId === questionId && event.skillPathId === skillPathId).map((event) => event.occurredAt),
   ].filter((value) => !Number.isNaN(Date.parse(value)));
   return times.sort((left, right) => Date.parse(right) - Date.parse(left))[0] ?? null;
 }

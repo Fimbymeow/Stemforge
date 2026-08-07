@@ -50,7 +50,7 @@ test("incomplete and review-recommended evidence drives the needs-work lane", ()
 
   assert.equal(model.nextAction.kind, "resume_question");
   assert.equal(model.needsWork[0]?.pathId, "basic-differentiation");
-  assert.match(model.needsWork[0]?.detail ?? "", /review/i);
+  assert.match(model.needsWork[0]?.detail ?? "", /needs more practice/i);
 });
 
 test("current mastered evidence appears in the secure and mastered lane", () => {
@@ -62,7 +62,8 @@ test("current mastered evidence appears in the secure and mastered lane", () => 
   const model = deriveLearnerDashboardModel({ evidence: evidence(attempts), now: now() });
 
   assert.equal(model.course.masteredPathCount, 1);
-  assert.equal(model.nextAction.kind, "practice_again");
+  assert.equal(model.nextAction.kind, "start_learning");
+  assert.equal(model.nextAction.pathId, "chain-rule");
   assert.match(model.secureAndMastered[0]?.title ?? "", /mastered/i);
 });
 

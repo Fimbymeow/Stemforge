@@ -194,6 +194,14 @@ test("all origins remain distinct and destinations are subject generic", () => {
     href: "/practice?review=1",
     label: "Review",
   });
+  assert.deepEqual(practiceReturnDestination({
+    origin: "scheduled_review",
+    subjectId: "higher-maths",
+    selectedPathIds: ["chain-rule"],
+  }), {
+    href: "/practice?review=1&path=chain-rule",
+    label: "Review",
+  });
 });
 
 test("new session evidence carries exact identity while standalone evidence omits it", async () => {

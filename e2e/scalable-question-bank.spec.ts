@@ -6,14 +6,14 @@ test("Question Bank opens directly into compact discovery with published-only fi
   await page.goto(bank);
   await expect(page.getByRole("heading", { name: "Question Bank", exact: true })).toBeVisible();
   await expect(page.getByText("Best next step")).toHaveCount(0);
-  await expect(page.getByText("8 questions available")).toBeVisible();
+  await expect(page.getByText("42 questions available")).toBeVisible();
   await page.getByLabel("Course area").selectOption({ label: "Calculus" });
   await page.getByLabel("Specification area").selectOption({ label: "Differentiation" });
   await page.getByLabel("Skill path").selectOption({ label: "Basic differentiation" });
   await page.getByLabel("Stage", { exact: true }).selectOption({ label: "Foundations" });
   await expect(page.getByRole("heading", { name: "3 matching questions" })).toBeVisible();
   await page.getByRole("button", { name: "Reset filters" }).click();
-  await expect(page.getByRole("heading", { name: "8 matching questions" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "42 matching questions" })).toBeVisible();
 });
 
 test("filter state is shareable through the URL and survives refresh and Back/Forward", async ({ page }) => {

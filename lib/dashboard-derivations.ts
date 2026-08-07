@@ -317,7 +317,7 @@ function deriveNeedsWork(paths: DashboardPathSummary[]): DashboardFocusItem[] {
       pathId: path.skillPathId,
       title: path.name,
       detail: path.reviewRecommendedCount > 0
-        ? `${path.reviewRecommendedCount} question${path.reviewRecommendedCount === 1 ? "" : "s"} to review`
+        ? `${path.reviewRecommendedCount} question${path.reviewRecommendedCount === 1 ? " needs" : "s need"} more practice`
         : `${path.completionPercentage}% complete · not secure yet`,
       href: path.nextHref,
       status: path.status,
@@ -523,6 +523,7 @@ function formatShortDate(iso: string) {
 }
 
 export function getQuestionProgressForDashboard(questionId: string, evidence: ProgressEvidence) {
-  const version = contentResolver.getQuestion(questionId)?.questionVersion ?? 1;
-  return getQuestionProgressForVersion(questionId, version, evidence);
+  const context = contentResolver.getQuestionContext(questionId);
+  const version = context?.question.questionVersion ?? 1;
+  return getQuestionProgressForVersion(questionId, version, evidence, context?.skillPath.slug);
 }

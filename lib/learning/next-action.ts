@@ -202,9 +202,12 @@ export function deriveLearnerNextAction(input: LearnerNextActionInput): LearnerN
   const review = actionForReview(orderedContexts, input.evidence, resolver, questionVersions);
   if (review) return review;
 
-  const firstAvailable = availableContexts[0];
-  if (firstAvailable) {
-    const firstQuestionId = selectNextQuestionId(firstAvailable.skillPath, input.evidence, questionVersions);
+  const nextIncomplete = availableContexts.find((context) => {
+    const progress = calculateSkillPathProgress(context.skillPath, input.evidence, questionVersions);
+    return progress.totalQuestions > 0 && progress.completedQuestionIds.length < progress.totalQuestions;
+  });
+  if (nextIncomplete) {
+    const firstQuestionId = selectNextQuestionId(nextIncomplete.skillPath, input.evidence, questionVersions);
     const firstQuestion = firstQuestionId ? resolver.getQuestionContext(firstQuestionId) : undefined;
     if (firstQuestion) {
       return questionAction({
@@ -212,21 +215,27 @@ export function deriveLearnerNextAction(input: LearnerNextActionInput): LearnerN
         intent: "starting",
         context: firstQuestion,
         label: "Start learning",
-        title: `Start ${firstAvailable.skillPath.name}`,
+        title: `Start ${nextIncomplete.skillPath.name}`,
         reason: `Begin with the first ${firstQuestion.stage.name} question. Your progress is saved automatically.`,
       });
     }
+  }
 
+  const completedForRepeat = availableContexts.find((context) => {
+    const progress = calculateSkillPathProgress(context.skillPath, input.evidence, questionVersions);
+    return progress.totalQuestions > 0 && progress.completedQuestionIds.length >= progress.totalQuestions;
+  });
+  if (completedForRepeat) {
     return {
       kind: "practice_again",
       intent: "practising",
-      href: "/practice",
+      href: `/practice?path=${encodeURIComponent(completedForRepeat.skillPath.slug)}`,
       label: "Practise again",
-      title: `Practise ${firstAvailable.skillPath.name}`,
+      title: `Practise ${completedForRepeat.skillPath.name}`,
       reason: "You have completed the guided questions currently available. Use targeted practice to keep the skill fresh.",
-      subjectId: firstAvailable.subject.subjectSlug,
-      courseId: firstAvailable.courseArea.slug,
-      pathId: firstAvailable.skillPath.slug,
+      subjectId: completedForRepeat.subject.subjectSlug,
+      courseId: completedForRepeat.courseArea.slug,
+      pathId: completedForRepeat.skillPath.slug,
       stageId: null,
       questionId: null,
       questionVersion: null,
@@ -296,6 +305,7 @@ function latestCurrentVersionUnfinishedQuestion(
   const events = [
     ...evidence.attempts.filter((attempt) => attempt.isGenuine).map((attempt) => ({
       questionId: attempt.questionId,
+      skillPathId: attempt.skillPathId,
       occurredAt: attempt.attemptedAt,
       sequence: attempt.sequence,
       version: attempt.versionEvidence,
@@ -305,6 +315,7 @@ function latestCurrentVersionUnfinishedQuestion(
     })),
     ...evidence.supportEvents.map((event) => ({
       questionId: event.questionId,
+      skillPathId: event.skillPathId,
       occurredAt: event.occurredAt,
       sequence: event.sequence,
       version: event.versionEvidence,
@@ -318,6 +329,7 @@ function latestCurrentVersionUnfinishedQuestion(
     const context = resolver.getQuestionContext(event.questionId);
     const version = questionVersions[event.questionId];
     if (!context || !context.skillPath.isAvailable || !version) continue;
+    if (event.skillPathId !== context.skillPath.slug) continue;
     if (pathId && context.skillPath.slug !== pathId) continue;
     if (event.version.kind !== "known" || event.version.questionVersion !== version) continue;
     const progress = getQuestionProgressForVersion(event.questionId, version, evidence);
@@ -350,9 +362,9 @@ function actionForReview(
       kind: "review_question",
       intent: "reviewing",
       context: questionContext,
-      label: `Review ${count} question${count === 1 ? "" : "s"}`,
-      title: `Review ${context.skillPath.name}`,
-      reason: "A completed question is ready to revisit so you can strengthen it independently.",
+      label: `Practise ${count} question${count === 1 ? "" : "s"} again`,
+      title: `Practise ${context.skillPath.name} again`,
+      reason: "A completed question needs more practice so you can strengthen it independently.",
     });
   }
   return null;

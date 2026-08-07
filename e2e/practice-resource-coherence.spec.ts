@@ -4,7 +4,7 @@ import { STORAGE_KEY } from "./fixtures/progress";
 
 test("Quick Practice starts one deterministic untimed session without creating an attempt", async ({ page, seriousBrowserErrors }) => {
   await page.goto("/practice");
-  await expect(page.getByRole("heading", { name: "Practise Basic differentiation" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Practise Higher Maths" })).toBeVisible();
   await expect(page.getByLabel("Requested questions")).not.toBeVisible();
   await expect(page.getByLabel("Timed session")).not.toBeVisible();
   expect(await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY)).toBeNull();
@@ -27,6 +27,16 @@ test("Quick Practice starts one deterministic untimed session without creating a
   expect(seriousBrowserErrors).toEqual([]);
 });
 
+test("Practice preserves an explicit live skill and refuses an unavailable explicit path", async ({ page }) => {
+  await page.goto("/practice?path=chain-rule");
+  await expect(page.getByRole("heading", { name: "Practise Chain rule" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Current Path: Chain rule" })).toBeVisible();
+
+  await page.goto("/practice?path=trigonometric-differentiation");
+  await expect(page.getByRole("heading", { name: "Practice path unavailable" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Practise Basic differentiation" })).toHaveCount(0);
+});
+
 test("Quick Practice never overwrites an active session and can resume it explicitly", async ({ page }) => {
   await page.goto("/practice");
   await page.getByTestId("quick-practice-action").click();
@@ -45,11 +55,14 @@ test("Quick Practice never overwrites an active session and can resume it explic
   expect(activeCount).toBe(1);
 });
 
-test("Question Bank exposes eight direct questions while future paths stay collapsed", async ({ page, seriousBrowserErrors }) => {
+test("Question Bank exposes both published skills while future paths stay collapsed", async ({ page, seriousBrowserErrors }) => {
   await page.goto("/subjects/higher-maths/question-bank");
-  await expect(page.getByRole("heading", { name: "8 matching questions" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "42 matching questions" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Open Differentiate a power" })).toBeVisible();
-  await expect(page.getByText("Chain rule", { exact: true })).not.toBeVisible();
+  await page.getByLabel("Skill path").selectOption({ label: "Chain rule" });
+  await expect(page.getByRole("heading", { name: "34 matching questions" })).toBeVisible();
+  await page.getByRole("button", { name: "Reset filters" }).click();
+  await expect(page.getByRole("heading", { name: "42 matching questions" })).toBeVisible();
   await page.getByRole("link", { name: "Open Differentiate a power" }).click();
   await expect(page).toHaveURL(/\/question\/hm-calc-diff-basic-f-001$/);
   expect(seriousBrowserErrors).toEqual([]);

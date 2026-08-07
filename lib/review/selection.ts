@@ -132,13 +132,13 @@ function rankReviewQuestions(state: ReviewDueState, evidence: ProgressEvidence) 
     .map((question, index) => [question.id, index]));
   return contentResolver.getPathQuestions(context.skillPath)
     .filter((question) => {
-      const progress = getQuestionProgressForVersion(question.id, question.questionVersion, evidence);
+      const progress = getQuestionProgressForVersion(question.id, question.questionVersion, evidence, state.target.targetId);
       return progress.historicalAttempted ||
         state.reassessmentQuestionIds.includes(question.id);
     })
     .sort((left, right) => {
-      const leftProgress = getQuestionProgressForVersion(left.id, left.questionVersion, evidence);
-      const rightProgress = getQuestionProgressForVersion(right.id, right.questionVersion, evidence);
+      const leftProgress = getQuestionProgressForVersion(left.id, left.questionVersion, evidence, state.target.targetId);
+      const rightProgress = getQuestionProgressForVersion(right.id, right.questionVersion, evidence, state.target.targetId);
       return Number(state.reassessmentQuestionIds.includes(right.id)) - Number(state.reassessmentQuestionIds.includes(left.id)) ||
         Number(state.ordinaryRecoveryQuestionIds.includes(right.id)) - Number(state.ordinaryRecoveryQuestionIds.includes(left.id)) ||
         Number(lastSelected.has(left.id)) - Number(lastSelected.has(right.id)) ||
@@ -151,7 +151,9 @@ function rankReviewQuestions(state: ReviewDueState, evidence: ProgressEvidence) 
 }
 
 function latestAttemptTime(questionId: string, evidence: ProgressEvidence) {
-  return evidence.attempts.filter((attempt) => attempt.questionId === questionId)
+  const pathId = contentResolver.getQuestionContext(questionId)?.skillPath.slug;
+  return evidence.attempts.filter((attempt) =>
+    attempt.questionId === questionId && (!pathId || attempt.skillPathId === pathId))
     .reduce((latest, attempt) => Math.max(latest, Date.parse(attempt.attemptedAt)), 0);
 }
 

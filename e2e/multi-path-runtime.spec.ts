@@ -18,7 +18,7 @@ test("question context and navigation derive from canonical ownership", async ({
 
 test("question bank leads with available questions and keeps future taxonomy secondary", async ({ page }) => {
   await page.goto("/subjects/higher-maths/question-bank");
-  await expect(page.getByRole("heading", { name: "8 matching questions" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "42 matching questions" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Open Differentiate a power" })).toBeVisible();
   const search = page.getByRole("textbox", { name: "Search questions" });
   await search.fill("evaluate");

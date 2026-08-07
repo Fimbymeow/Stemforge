@@ -4,7 +4,7 @@ import { expectNoHorizontalOverflow, openQuestion, openWorkedSolution, submitAns
 
 test("mobile student can navigate, answer, use support and continue without overflow", async ({ page }) => {
   await page.goto("/dashboard");
-  await expect(page.getByTestId("dashboard-progress-summary")).toContainText("0 / 8 completed");
+  await expect(page.getByTestId("dashboard-progress-summary")).toContainText("0 / 42 completed");
   await expect(page.getByRole("link", { name: "Open Higher Maths", exact: true })).toHaveAttribute("href", "/subjects/higher-maths");
   await expect(page.getByRole("link", { name: "Start learning" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Course progress" })).toHaveCount(0);
@@ -48,9 +48,10 @@ test("mobile final completion is readable, stacked and free of horizontal overfl
   await expect(panel).toBeVisible();
   await expect(panel).toContainText("Basic differentiation mastered");
   await expect(panel).toContainText("8 / 8 completed");
-  const primary = panel.getByRole("button", { name: "Practise again" });
+  const primary = panel.getByRole("link", { name: "Start learning" });
   const secondary = panel.getByRole("link", { name: "Review a stage" });
   await expect(primary).toBeVisible();
+  await expect(primary).toHaveAttribute("href", "/question/hm-calc-diff-chain-f-001");
   await expect(secondary).toBeVisible();
   const primaryBox = await primary.boundingBox();
   const secondaryBox = await secondary.boundingBox();
@@ -65,10 +66,10 @@ test("mobile final completion is readable, stacked and free of horizontal overfl
 
 test("mobile taxonomy and question context remain readable without page overflow", async ({ page }) => {
   await page.goto("/subjects/higher-maths/question-bank");
-  await expect(page.getByRole("heading", { name: "8 matching questions" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "42 matching questions" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Open Differentiate a power" })).toBeVisible();
   await expect(page.getByText("Future Higher Maths coverage", { exact: true })).toBeVisible();
-  await expect(page.getByText("Chain rule", { exact: true })).not.toBeVisible();
+  await expect(page.getByLabel("Skill path").locator("option", { hasText: "Chain rule" })).toHaveCount(1);
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
 
   await page.goto("/question/hm-calc-diff-basic-a-001");

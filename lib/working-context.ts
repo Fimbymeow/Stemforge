@@ -148,7 +148,7 @@ export function deriveWorkingContextModel(input: {
   const stageTotal = stageProgress?.totalQuestions ?? 0;
   const collapsedSummary = isComplete
     ? "All stages complete"
-    : `${stageName} · ${stageCompleted}/${stageTotal}${reviewQuestionIds.length ? ` · ${reviewQuestionIds.length} to review` : ""}`;
+    : `${stageName} · ${stageCompleted}/${stageTotal}${reviewQuestionIds.length ? ` · ${reviewQuestionIds.length} to practise again` : ""}`;
 
   return {
     pathId: context.skillPath.slug,
@@ -207,6 +207,11 @@ export function workingContextPracticeHref(pathId: string) {
 /** Single source of truth for the rail/hub/overview Review due label. */
 export function formatReviewDueLabel(reviewCount: number): string {
   return `Review ${reviewCount} skill${reviewCount === 1 ? "" : "s"} due`;
+}
+
+/** Immediate question-level practice heuristic; deliberately distinct from scheduled Review. */
+export function formatNeedsPracticeLabel(questionCount: number): string {
+  return `${questionCount} question${questionCount === 1 ? "" : "s"} need${questionCount === 1 ? "s" : ""} more practice`;
 }
 
 export function questionHelpNotesHref(input: {

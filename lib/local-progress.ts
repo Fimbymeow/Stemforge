@@ -235,8 +235,9 @@ export async function recordReviewEvent(event: ReviewEvent) {
 }
 
 export function getQuestionProgress(questionId: string, evidenceOverride?: ProgressEvidence) {
-  const version = contentResolver.getQuestion(questionId)?.questionVersion ?? 1;
-  return deriveQuestionProgress(questionId, version, evidenceOverride ?? readEvidence());
+  const context = contentResolver.getQuestionContext(questionId);
+  const version = context?.question.questionVersion ?? 1;
+  return deriveQuestionProgress(questionId, version, evidenceOverride ?? readEvidence(), context?.skillPath.slug);
 }
 
 export function getStageProgress(skillPath: SkillPath, stage: LearningStage, evidenceOverride?: ProgressEvidence) {

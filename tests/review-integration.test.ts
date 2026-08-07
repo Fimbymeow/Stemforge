@@ -10,6 +10,7 @@ import { createPracticeSessionSelection } from "../lib/practice/practice-selecti
 import type { PracticeSession } from "../lib/practice/practice-types";
 import { isPracticeSession } from "../lib/practice/practice-validation";
 import { recordResolvedReviewTargets } from "../lib/review/emission";
+import { deriveSubjectReviewSummary } from "../lib/review/derivation";
 import { createReviewEventId } from "../lib/review/identity";
 import { createReviewSessionSelection } from "../lib/review/selection";
 import { isReviewEvent } from "../lib/review/validation";
@@ -17,6 +18,7 @@ import { attempt, evidence } from "./progress-fixtures";
 
 const path = contentResolver.getPathContext("basic-differentiation")!.skillPath;
 const questionIds = (path.learningStages ?? []).flatMap((stage) => stage.questionIds);
+const chainPath = contentResolver.getPathContext("chain-rule")!.skillPath;
 
 test("Practice Session V2 migrates conservatively to V3 without inventing Review metadata", () => {
   const current = createPracticeSessionSelection({
@@ -70,6 +72,63 @@ test("Review selector creates a bounded, frozen V3 Practice Session only when le
     repeated.session?.questionReferences.map((item) => item.questionId),
     result.session.questionReferences.map((item) => item.questionId),
   );
+});
+
+test("Higher Maths Review summary reports Basic Differentiation-only, Chain Rule-only and both-skill due states", () => {
+  const now = new Date("2026-07-20T10:00:00.000Z");
+  const basic = completedPathEvidence(path, "2026-07-01T10:00:00.000Z");
+  const chain = completedPathEvidence(chainPath, "2026-07-02T10:00:00.000Z", 100);
+  assert.deepEqual(deriveSubjectReviewSummary("higher-maths", basic, now).dueSkillNames, ["Basic differentiation"]);
+  assert.deepEqual(deriveSubjectReviewSummary("higher-maths", chain, now).dueSkillNames, ["Chain rule"]);
+  const both = combineEvidence(basic, chain);
+  const summary = deriveSubjectReviewSummary("higher-maths", both, now);
+  assert.equal(summary.dueSkillCount, 2);
+  assert.deepEqual(new Set(summary.dueSkillNames), new Set(["Basic differentiation", "Chain rule"]));
+  assert.equal(summary.href, "/practice?review=1");
+});
+
+test("a combined scheduled Review queue contains both live skills", () => {
+  const evidence = combineEvidence(
+    completedPathEvidence(path, "2026-07-01T10:00:00.000Z"),
+    completedPathEvidence(chainPath, "2026-07-02T10:00:00.000Z", 100),
+  );
+  const result = createReviewSessionSelection({
+    evidence,
+    requestedCount: 6,
+    now: new Date("2026-07-20T10:00:00.000Z"),
+  });
+  assert(result.session);
+  assert.equal(result.selectedTargetCount, 2);
+  assert.deepEqual(new Set(result.session.selectedPathIds), new Set([path.slug, chainPath.slug]));
+  assert.deepEqual(
+    new Set(result.session.questionReferences.map((reference) => reference.pathId)),
+    new Set([path.slug, chainPath.slug]),
+  );
+});
+
+test("completing one skill's scheduled Review leaves the other skill due", () => {
+  const now = new Date("2026-07-20T10:00:00.000Z");
+  const combined = combineEvidence(
+    completedPathEvidence(path, "2026-07-01T10:00:00.000Z"),
+    completedPathEvidence(chainPath, "2026-07-02T10:00:00.000Z", 100),
+  );
+  combined.reviewEvents.push({
+    eventId: "review_basic_completed_only",
+    source: { sourceType: "practice_session", sourceId: "review_session_basic_completed_only" },
+    target: { targetType: "skill", targetId: path.slug },
+    targetVersion: { versionType: "skill_path", version: path.pathVersion },
+    outcome: "independent_success",
+    occurredAt: now.toISOString(),
+    sequence: 500,
+    priorEventId: null,
+    schedulerVersion: 1,
+    stageAfter: 0,
+    evidenceRefs: [],
+    questionIds: [questionIds[0]],
+  });
+  const summary = deriveSubjectReviewSummary("higher-maths", combined, now);
+  assert.equal(summary.dueSkillCount, 1);
+  assert.deepEqual(summary.dueSkillNames, ["Chain rule"]);
 });
 
 test("Review selector prioritises current-version reassessment and never fills with first-time content", () => {
@@ -272,22 +331,37 @@ function dueSession() {
 }
 
 function completedEvidence(start: string): ProgressEvidence {
+  return completedPathEvidence(path, start);
+}
+
+function completedPathEvidence(skillPath: typeof path, start: string, sequenceOffset = 0): ProgressEvidence {
   const startTime = Date.parse(start);
-  return evidence(questionIds.map((questionId, index) => {
+  const ids = (skillPath.learningStages ?? []).flatMap((stage) => stage.questionIds);
+  return evidence(ids.map((questionId, index) => {
     const context = contentResolver.getQuestionContext(questionId)!;
     return attempt({
-      eventId: `attempt_review_complete_${index}`,
+      eventId: `attempt_review_complete_${skillPath.slug}_${index}`,
       questionId,
-      skillPathId: path.slug,
+      skillPathId: skillPath.slug,
       stageId: context.stage.id,
       versionEvidence: { kind: "known", questionVersion: context.question.questionVersion },
       attemptedAt: new Date(startTime + index * 60_000).toISOString(),
-      sequence: index + 1,
+      sequence: sequenceOffset + index + 1,
       isCorrect: true,
       answer: "correct",
       outcomeKind: "graded",
     });
   }));
+}
+
+function combineEvidence(...items: ProgressEvidence[]): ProgressEvidence {
+  return {
+    attempts: items.flatMap((item) => item.attempts),
+    supportEvents: items.flatMap((item) => item.supportEvents),
+    guidedSelfAssessments: items.flatMap((item) => item.guidedSelfAssessments),
+    achievementSnapshots: items.flatMap((item) => item.achievementSnapshots),
+    reviewEvents: items.flatMap((item) => item.reviewEvents),
+  };
 }
 
 function payloadWithSessionAttempt(session: PracticeSession, questionId: string): ProgressPayload {

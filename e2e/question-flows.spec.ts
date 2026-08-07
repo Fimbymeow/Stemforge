@@ -39,7 +39,7 @@ test("incorrect answer remains incomplete across refresh and pages", async ({ pa
   stored = await readStoredProgress(page);
   expect(stateFromStored(stored, QUESTION_IDS[0]).completed).toBe(false);
   await page.goto("/dashboard");
-  await expect(page.getByTestId("dashboard-progress-summary")).toContainText("0 / 8 completed");
+  await expect(page.getByTestId("dashboard-progress-summary")).toContainText("0 / 42 completed");
 });
 
 test("independent first-attempt correctness persists and unlocks progression", async ({ page }) => {
@@ -59,7 +59,7 @@ test("independent first-attempt correctness persists and unlocks progression", a
   state = stateFromStored(await readStoredProgress(page), QUESTION_IDS[0]);
   expect(state.bestOutcome).toBe("independently_correct_first_attempt");
   await page.goto("/dashboard");
-  await expect(page.getByTestId("dashboard-progress-summary")).toContainText("1 / 8 completed");
+  await expect(page.getByTestId("dashboard-progress-summary")).toContainText("1 / 42 completed");
   await page.goto("/subjects/higher-maths/calculus/differentiation/basic-differentiation");
   await expect(page.getByTestId("skill-path-hero-progress").getByRole("progressbar")).toHaveAttribute("aria-valuenow", "13");
 });
@@ -79,7 +79,7 @@ test("hint-assisted correct is completed with support and review evidence", asyn
   state = stateFromStored(await readStoredProgress(page), QUESTION_IDS[0]);
   expect(state.bestOutcome).toBe("correct_with_hint");
   await page.goto("/dashboard");
-  await expect(page.getByTestId("dashboard-progress-summary")).toContainText("1 / 8 completed");
+  await expect(page.getByTestId("dashboard-progress-summary")).toContainText("1 / 42 completed");
 });
 
 test("worked solution is gated, completes after an attempt, and unlocks next", async ({ page }) => {

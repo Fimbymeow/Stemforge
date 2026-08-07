@@ -4,6 +4,7 @@ import { contentResolver } from "../lib/content-resolver";
 import {
   deriveLessonContinuationAction,
   deriveWorkingContextModel,
+  formatNeedsPracticeLabel,
   formatReviewDueLabel,
   parseWorkingContextPathId,
   questionHelpNotesHref,
@@ -108,6 +109,8 @@ test("formatReviewDueLabel pluralises the noun, not the verb, and never touches 
   assert.equal(formatReviewDueLabel(1), "Review 1 skill due");
   assert.equal(formatReviewDueLabel(2), "Review 2 skills due");
   assert.equal(formatReviewDueLabel(0), "Review 0 skills due");
+  assert.equal(formatNeedsPracticeLabel(1), "1 question needs more practice");
+  assert.equal(formatNeedsPracticeLabel(12), "12 questions need more practice");
 });
 
 test("completed skill with scheduled Review due prioritises the existing Review delivery path", () => {

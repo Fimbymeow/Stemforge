@@ -67,7 +67,7 @@ export function AppSidebar({
       </nav>
       <div className="mt-auto rounded-2xl border border-line bg-white p-5 shadow-card max-xl:hidden">
         <p className="m-0 text-sm font-extrabold uppercase text-forge">Available now</p>
-        <strong className="mt-3 block text-lg">Basic differentiation</strong>
+        <strong className="mt-3 block text-lg">2 Higher Maths skills</strong>
         <p className="mb-0 mt-2 text-sm leading-relaxed text-muted">Higher Maths is available now. Higher Physics is coming soon.</p>
       </div>
     </aside>

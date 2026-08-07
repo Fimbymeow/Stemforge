@@ -8,7 +8,7 @@ test("Higher Maths hub presents four broad areas and prioritises the live path",
   await expect(page.getByRole("button", { name: "Vectors" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Calculus" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Lines, Circles and Sequences" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Start", exact: true })).toHaveAttribute("href", "/subjects/higher-maths/revision-notes");
+  await expect(page.getByRole("link", { name: "Start", exact: true })).toHaveAttribute("href", "/subjects/higher-maths/revision-notes?path=basic-differentiation");
   await expect(page.getByText(/1 of 51|1 \/ 51|1 of 50|1 \/ 50/i)).toHaveCount(0);
 });
 
@@ -42,7 +42,7 @@ test("planned paths have no learning workspace while existing deep links remain 
 
 test("Question Bank keeps active questions usable and groups future coverage broadly", async ({ page }) => {
   await page.goto("/subjects/higher-maths/question-bank");
-  await expect(page.getByRole("heading", { name: "8 matching questions" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "42 matching questions" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Open Differentiate a power" })).toBeVisible();
   await page.getByText("Future Higher Maths coverage", { exact: true }).click();
   await expect(page.getByText("Algebra and Trigonometry", { exact: true })).toBeVisible();

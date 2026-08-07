@@ -6,7 +6,7 @@ import { Card, ProgressBar } from "@/components/ui";
 import { useWorkingContextModel } from "@/components/working-context/use-working-context-model";
 import { formatProgressStatusLabel } from "@/components/learning/mastery-badge";
 
-export function WorkingContextHubCard({ pathId }: { pathId: string }) {
+export function WorkingContextHubCard({ pathId }: { pathId: string | null }) {
   const model = useWorkingContextModel(pathId);
   if (!model) return null;
 

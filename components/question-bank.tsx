@@ -37,13 +37,13 @@ import { createCustomPracticeSession } from "@/lib/practice/custom-practice";
 import { usePracticeActivation } from "@/components/practice/use-practice-activation";
 import { useHasMounted } from "@/lib/use-mounted";
 import { useModalFocusTrap } from "@/lib/use-modal-focus-trap";
-import { formatReviewDueLabel } from "@/lib/working-context";
+import { formatNeedsPracticeLabel } from "@/lib/working-context";
 
 const STATUS_FILTERS: Array<{ id: QuestionBankProgressFilter; label: string }> = [
   { id: "all", label: "All questions" },
   { id: "not-started", label: "Not attempted" },
   { id: "in-progress", label: "In progress" },
-  { id: "review-recommended", label: "Needs review" },
+  { id: "review-recommended", label: "Needs more practice" },
   { id: "completed", label: "Completed" },
 ];
 
@@ -385,7 +385,7 @@ export function QuestionBank({ subjectSlug }: { subjectSlug: string }) {
             <button type="button" onClick={() => updateFilters({ skillPathId: "", stageId: "" })} className="min-h-8 rounded-full border border-line px-2 text-xs font-bold text-forge">Browse all {subject.subjectName}</button>
           </p> : null}
           {reviewDueEligible.length ? <button ref={reviewDueTriggerRef} type="button" onClick={() => setReviewDueConfirmOpen(true)} className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-forge/40 bg-forge-soft px-3 text-sm font-bold text-forge">
-            {formatReviewDueLabel(reviewDueEligible.length)}
+            {formatNeedsPracticeLabel(reviewDueEligible.length)}
           </button> : null}
         </div> : null}
 
@@ -646,8 +646,8 @@ function ReviewDueConfirmation({ containerRef, closeRef, eligibleCount, ineligib
     <section ref={containerRef} role="dialog" aria-modal="true" aria-labelledby="review-due-title" className="w-full max-w-lg rounded-xl bg-white p-5 shadow-card">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-extrabold uppercase text-forge">Review practice</p>
-          <h2 id="review-due-title" className="text-xl font-extrabold">{formatReviewDueLabel(eligibleCount)}</h2>
+          <p className="text-xs font-extrabold uppercase text-forge">Practice again</p>
+          <h2 id="review-due-title" className="text-xl font-extrabold">{formatNeedsPracticeLabel(eligibleCount)}</h2>
         </div>
         <button ref={closeRef} type="button" onClick={onClose} aria-label="Close review confirmation" className="grid size-11 place-items-center rounded-lg border border-line"><X className="size-5" /></button>
       </div>
@@ -655,7 +655,7 @@ function ReviewDueConfirmation({ containerRef, closeRef, eligibleCount, ineligib
       {ineligibleCount ? <p className="mt-2 text-sm text-muted">{ineligibleCount} further due question{ineligibleCount === 1 ? "" : "s"} {ineligibleCount === 1 ? "is" : "are"} not yet available for practice and {ineligibleCount === 1 ? "is" : "are"} excluded from this session.</p> : null}
       <div className="mt-5 flex flex-wrap justify-end gap-2">
         <button type="button" onClick={onClose} className="min-h-11 px-3 font-bold text-muted">Cancel</button>
-        <button type="button" onClick={onStart} className="min-h-11 rounded-lg bg-forge px-4 font-extrabold text-white">Start review practice</button>
+        <button type="button" onClick={onStart} className="min-h-11 rounded-lg bg-forge px-4 font-extrabold text-white">Start practice again</button>
       </div>
     </section>
   </div>;
@@ -674,7 +674,7 @@ function groupFutureCoverage(lockedPaths: ReturnType<typeof contentResolver.getA
 }
 
 function questionStatus(entry: QuestionBankQuestionEntry) {
-  if (entry.progress.reviewRecommended) return "Needs review";
+  if (entry.progress.reviewRecommended) return "Needs more practice";
   if (entry.progress.completed) return "Completed";
   if (entry.progress.attempted) return "In progress";
   return "Not attempted";

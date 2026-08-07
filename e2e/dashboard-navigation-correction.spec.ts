@@ -62,7 +62,7 @@ test("review and active-practice recommendations never replace course access at 
   ));
   await page.goto("/dashboard");
   await expect(page.getByRole("link", { name: "Open Higher Maths", exact: true })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Review 1 question", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Practise 1 question again", exact: true })).toBeVisible();
   await expectNoHorizontalOverflow(page);
 
   await page.goto("/practice");

@@ -46,7 +46,7 @@ export function ReviewBadge({ count, className = "" }: { count: number; classNam
   if (count <= 0) return null;
   return (
     <span className={`inline-flex items-center rounded-full bg-warning-soft px-3 py-1 text-xs font-extrabold text-warning ${className}`}>
-      Review recommended
+      Needs more practice
     </span>
   );
 }

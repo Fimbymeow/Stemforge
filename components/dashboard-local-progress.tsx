@@ -53,7 +53,6 @@ export function DashboardLocalProgressSection() {
     sync.accountFingerprint,
   ]);
 
-  const recommendedPath = model.paths.find((path) => path.skillPathId === recommendation.pathId);
   const meaningfulEvidenceCount = evidence.attempts.length + evidence.achievementSnapshots.length;
 
   return (
@@ -77,7 +76,7 @@ export function DashboardLocalProgressSection() {
 
           <div className="mt-5 grid gap-2 border-t border-forge/20 pt-4" data-testid="dashboard-course-progress">
               <div className="flex flex-wrap items-center justify-between gap-2 text-sm font-bold text-muted">
-                <span>{recommendedPath?.currentStageName ? `Current position: ${recommendedPath.currentStageName}` : "Current Higher Maths progress"}</span>
+                <span>Progress across published Higher Maths skills</span>
                 <span>{model.course.completedQuestions} / {model.course.totalQuestions} completed</span>
               </div>
               <ProgressBar value={model.course.completionPercentage} />

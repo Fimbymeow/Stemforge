@@ -183,7 +183,7 @@ test("stage completion drives the retained dashboard recommendation and denomina
 
   await page.goto("/dashboard");
   await expect(page.getByTestId("dashboard-progress-summary")).toContainText("Begin Applications");
-  await expect(page.getByTestId("dashboard-progress-summary")).toContainText("3 / 8 completed");
+  await expect(page.getByTestId("dashboard-progress-summary")).toContainText("3 / 42 completed");
   await expect(page.getByRole("heading", { name: "Recent activity" })).toHaveCount(0);
   await expect(page.getByText(/^Stage Completed$/)).toHaveCount(0);
 });

@@ -6,7 +6,7 @@ test("guest targeted practice starts, uses the canonical question workspace, per
   const errors: string[] = [];
   watchErrors(page, errors);
   await page.goto("/practice");
-  await expect(page.getByRole("heading", { name: "Practise Basic differentiation" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Practise Higher Maths" })).toBeVisible();
   await page.getByTestId("quick-practice-action").click();
   await expect(page).toHaveURL(/\/practice\/session\//);
   await expect(page.getByTestId("practice-session-panel")).toContainText(/Question 1 of/);
@@ -144,17 +144,17 @@ test("completed-session retry contains exactly that session's incorrect question
   });
 });
 
-test("Needs Review appears only after relevant progress and later correct work removes it", async ({ page }) => {
+test("Needs more practice appears only after relevant progress and later correct work removes it", async ({ page }) => {
   await page.goto("/practice");
   await page.getByText("Choose practice options", { exact: true }).click();
-  await expect(page.getByRole("button", { name: /Needs Review/i })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /Needs more practice/i })).toHaveCount(0);
   await page.goto("/question/hm-calc-diff-basic-f-001");
   await page.getByLabel("Your answer").fill("x^4");
   await page.getByRole("button", { name: "Submit Answer" }).click();
   await expect(page.getByTestId("question-status")).toContainText("Not quite");
   await page.goto("/practice");
   await page.getByText("Choose practice options", { exact: true }).click();
-  await page.getByRole("button", { name: /Needs Review/i }).click();
+  await page.getByRole("button", { name: /Needs more practice/i }).click();
   await expect(page.getByText(/1 question is currently available/i)).toBeVisible();
   await page.goto("/question/hm-calc-diff-basic-f-001");
   await page.getByLabel("Your answer").fill("5x^4");
@@ -162,7 +162,7 @@ test("Needs Review appears only after relevant progress and later correct work r
   await expect(page.getByTestId("question-status")).toContainText("Correct");
   await page.goto("/practice");
   await page.getByText("Choose practice options", { exact: true }).click();
-  await expect(page.getByRole("button", { name: /Needs Review/i })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /Needs more practice/i })).toHaveCount(0);
 });
 
 test("timed practice expires without submitting blank answers and mobile layout has no overflow", async ({ page }) => {

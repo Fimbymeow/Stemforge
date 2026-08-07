@@ -161,7 +161,7 @@ function createSessionSubsetRetry(
 function filterForMode(mode: PracticeMode, candidates: EligiblePracticeQuestion[], evidence: ProgressEvidence) {
     if (mode === "needs_work") {
       return candidates.filter((item) => {
-        const progress = getQuestionProgressForVersion(item.reference.questionId, item.reference.questionVersion, evidence);
+        const progress = getQuestionProgressForVersion(item.reference.questionId, item.reference.questionVersion, evidence, item.reference.pathId);
         const latestGraded = latestCurrentGradedAttempt(item, evidence);
         return progress.reviewRecommended || (Boolean(latestGraded) && !progress.completed);
     });
@@ -209,7 +209,7 @@ function prioritySelection(candidates: EligiblePracticeQuestion[], requestedCoun
 }
 
 function scoreQuestion(candidate: EligiblePracticeQuestion, evidence: ProgressEvidence) {
-  const progress = getQuestionProgressForVersion(candidate.reference.questionId, candidate.reference.questionVersion, evidence);
+  const progress = getQuestionProgressForVersion(candidate.reference.questionId, candidate.reference.questionVersion, evidence, candidate.reference.pathId);
   const latest = latestCurrentGradedAttempt(candidate, evidence);
   let score = 0;
   if (!latest) score += 1000;
@@ -224,6 +224,7 @@ function latestCurrentGradedAttempt(candidate: EligiblePracticeQuestion, evidenc
   const attempt = evidence.attempts
     .filter((item) =>
       item.questionId === candidate.reference.questionId &&
+      item.skillPathId === candidate.reference.pathId &&
       item.isGenuine &&
       item.versionEvidence.kind === "known" &&
       item.versionEvidence.questionVersion === candidate.reference.questionVersion &&

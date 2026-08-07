@@ -3,12 +3,15 @@ import assert from "node:assert/strict";
 import { canonicalContent } from "../data/canonical-content";
 import { createContentResolver } from "../lib/content-resolver";
 import { deriveLearnerNextAction, derivePracticeSummaryNextAction } from "../lib/learning/next-action";
+import { deriveSubjectReviewSummary } from "../lib/review/derivation";
 import type { PracticeSession } from "../lib/practice/practice-types";
 import type { ProgressEvidence, QuestionAttempt, QuestionSupportEvent } from "../lib/progress/types";
 
 const resolver = createContentResolver(canonicalContent);
 const path = resolver.getPathContext("basic-differentiation")!.skillPath;
 const questionIds = (path.learningStages ?? []).flatMap((stage) => stage.questionIds);
+const chainPath = resolver.getPathContext("chain-rule")!.skillPath;
+const chainQuestionIds = (chainPath.learningStages ?? []).flatMap((stage) => stage.questionIds);
 
 test("new learner starts the first valid available question without inferring review", () => {
   const action = deriveLearnerNextAction({ evidence: emptyEvidence() });
@@ -63,21 +66,60 @@ test("completing a stage begins the next stage while keeping it directly availab
   assert.equal(action.label, "Begin Applications");
 });
 
-test("completed guided content recommends genuine review before practice", () => {
+test("completed guided content that needs another attempt uses practice language, not scheduled Review language", () => {
   const attempts = questionIds.map((id, index) => attempt(id, index + 1, true, { hintViewedBeforeSubmission: index === 0 }));
   const action = deriveLearnerNextAction({ evidence: evidence(attempts) });
   assert.equal(action.kind, "review_question");
   assert.equal(action.questionId, questionIds[0]);
-  assert.match(action.label, /^Review 1 question$/);
+  assert.equal(action.label, "Practise 1 question again");
 });
 
 test("completed content with no review due recommends existing practice and never locked inventory", () => {
   const action = deriveLearnerNextAction({
-    evidence: evidence(questionIds.map((id, index) => attempt(id, index + 1, true))),
+    evidence: evidence([...questionIds, ...chainQuestionIds].map((id, index) => attempt(id, index + 1, true))),
   });
   assert.equal(action.kind, "practice_again");
-  assert.equal(action.href, "/practice");
+  assert.equal(action.href, "/practice?path=basic-differentiation");
   assert.equal(action.pathId, "basic-differentiation");
+  assert.notEqual(action.pathId, "trigonometric-differentiation");
+});
+
+test("a completed Basic Differentiation path advances to untouched Chain Rule", () => {
+  const action = deriveLearnerNextAction({
+    evidence: evidence(questionIds.map((id, index) => attempt(id, index + 1, true))),
+  });
+  assert.equal(action.kind, "start_learning");
+  assert.equal(action.pathId, "chain-rule");
+  assert.equal(action.questionId, chainQuestionIds[0]);
+});
+
+test("Chain Rule mid-Applications resumes the exact Chain Rule question", () => {
+  const foundations = chainPath.learningStages![0].questionIds;
+  const current = chainPath.learningStages![1].questionIds[0];
+  const completedBasic = questionIds.map((id, index) => attempt(id, index + 1, true));
+  const completedFoundations = foundations.map((id, index) => attempt(id, 20 + index, true));
+  const action = deriveLearnerNextAction({
+    evidence: evidence([...completedBasic, ...completedFoundations, attempt(current, 40, false)]),
+  });
+  assert.equal(action.kind, "resume_question");
+  assert.equal(action.pathId, "chain-rule");
+  assert.equal(action.stageId, chainPath.learningStages![1].id);
+  assert.equal(action.questionId, current);
+});
+
+test("active Chain Rule work stays primary while scheduled Basic Differentiation Review remains separately due", () => {
+  const completedBasic = questionIds.map((id, index) => attempt(id, index + 1, true, {
+    attemptedAt: `2026-06-01T10:${String(index).padStart(2, "0")}:00.000Z`,
+  }));
+  const current = chainQuestionIds[0];
+  const progress = evidence([...completedBasic, attempt(current, 50, false)]);
+  const action = deriveLearnerNextAction({ evidence: progress });
+  const review = deriveSubjectReviewSummary("higher-maths", progress, new Date("2026-07-20T10:00:00.000Z"));
+
+  assert.equal(action.kind, "resume_question");
+  assert.equal(action.pathId, "chain-rule");
+  assert.equal(action.questionId, current);
+  assert.deepEqual(review.dueSkillNames, ["Basic differentiation"]);
 });
 
 test("older pinned evidence is not treated as current completion", () => {

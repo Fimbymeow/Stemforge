@@ -14,15 +14,15 @@ test("fresh learner gets real production entry points with no activation query",
   const card = page.getByTestId("working-context-hub");
   await expect(card).toContainText("Basic differentiation");
   await expect(card.getByRole("link", { name: "Basic differentiation" })).toHaveAttribute("href", overview);
-  await expect(card.getByRole("link", { name: "Start", exact: true })).toHaveAttribute("href", "/subjects/higher-maths/revision-notes");
-  await expect(card.getByRole("link", { name: "Notes" })).toHaveAttribute("href", "/subjects/higher-maths/revision-notes");
+  await expect(card.getByRole("link", { name: "Start", exact: true })).toHaveAttribute("href", "/subjects/higher-maths/revision-notes?path=basic-differentiation");
+  await expect(card.getByRole("link", { name: "Notes" })).toHaveAttribute("href", "/subjects/higher-maths/revision-notes?path=basic-differentiation");
   await expect(card.getByRole("link", { name: "Overview" })).toHaveAttribute("href", overview);
   await expect(card.getByRole("link", { name: "Practice" })).toHaveCount(0);
   await expect(page.getByTestId("higher-maths-practice")).toBeVisible();
   await expect(page.getByTestId("review-entry-card")).toBeVisible();
   expect(page.url()).not.toContain("workingContext=");
   await card.getByRole("link", { name: "Start", exact: true }).click();
-  await expect(page).toHaveURL(/\/subjects\/higher-maths\/revision-notes$/);
+  await expect(page).toHaveURL(/\/subjects\/higher-maths\/revision-notes\?path=basic-differentiation$/);
   await page.goBack();
   await expect(page).toHaveURL(new RegExp(`${hub}$`));
 });
@@ -87,7 +87,7 @@ test("completed overview stays compact and renders exactly one primary action", 
   await page.goto(overview);
   await expect(page.getByTestId("completed-path-card")).toBeVisible();
   await expect(page.getByTestId("skill-path-hero-progress")).toContainText("8 of 8 questions complete");
-  await expect(page.getByTestId("completed-path-card").getByRole("button", { name: "Practise again" })).toHaveCount(1);
+  await expect(page.getByTestId("completed-path-card").getByRole("link", { name: "Start learning" })).toHaveAttribute("href", "/question/hm-calc-diff-chain-f-001");
   await expect(page.locator("article").filter({ hasText: "Foundations" }).getByRole("link", { name: "Revisit" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
 });
 
@@ -161,7 +161,7 @@ test("scheduled Review exposes one contextual Practice Session entry and a recen
   const panel = page.getByTestId("working-context-desktop-panel");
   await expect(panel.getByRole("link", { name: "Review 1 skill due" })).toHaveAttribute("href", "/practice?review=1&path=basic-differentiation");
   await page.goto(hub);
-  await expect(page.getByTestId("review-entry-card").getByRole("link", { name: "Review now" })).toHaveAttribute("href", "/practice?review=1&path=basic-differentiation");
+  await expect(page.getByTestId("review-entry-card").getByRole("link", { name: "Start Review for 1 skill" })).toHaveAttribute("href", "/practice?review=1");
 
   await seedStoredProgress(page, v3Payload(recentCompletion()));
   await page.goto(`/question/${QUESTION_IDS[7]}`);
@@ -176,7 +176,7 @@ test("scheduled Review count and destination stay coherent across rail, hub and 
   await expect(page.getByTestId("working-context-desktop-panel").getByRole("link", { name: "Review 1 skill due" })).toHaveAttribute("href", "/practice?review=1&path=basic-differentiation");
 
   await page.goto(hub);
-  await expect(page.getByTestId("review-entry-card").getByRole("link", { name: "Review now" })).toBeVisible();
+  await expect(page.getByTestId("review-entry-card").getByRole("link", { name: "Start Review for 1 skill" })).toHaveAttribute("href", "/practice?review=1");
 
   await page.goto(overview);
   await expect(page.getByRole("link", { name: "Review 1 skill due" })).toBeVisible();
@@ -219,7 +219,7 @@ test("mobile Current Path opens a trapped modal and closes with Escape", async (
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(hub);
   await page.getByTestId("working-context-hub").getByRole("link", { name: "Start", exact: true }).click();
-  await expect(page).toHaveURL(/\/subjects\/higher-maths\/revision-notes$/);
+  await expect(page).toHaveURL(/\/subjects\/higher-maths\/revision-notes\?path=basic-differentiation$/);
   await page.getByRole("link", { name: "Continue to Foundations" }).click();
   await expect(page).toHaveURL(new RegExp(`/question/${QUESTION_IDS[0]}$`));
   const trigger = page.getByRole("button", { name: "Current Path: Basic differentiation" });
@@ -242,7 +242,7 @@ test("working routes remain production URLs and unavailable paths still return 4
     expect(response?.status()).toBe(200);
     expect(page.url()).not.toContain("workingContext=");
   }
-  const unavailable = await page.goto("/subjects/higher-maths/calculus/differentiation/chain-rule");
+  const unavailable = await page.goto("/subjects/higher-maths/calculus/differentiation/not-a-real-path");
   expect(unavailable?.status()).toBe(404);
 });
 

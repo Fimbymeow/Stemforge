@@ -4,7 +4,7 @@ import { readStoredProgress } from "./fixtures/progress";
 test("fresh student reaches the Basic differentiation path through the app", async ({ page }) => {
   await page.goto("/dashboard");
   await expect(page.getByRole("heading", { name: "STEM Forge", level: 1 })).toBeVisible();
-  await expect(page.getByTestId("dashboard-progress-summary")).toContainText("0 / 8 completed");
+  await expect(page.getByTestId("dashboard-progress-summary")).toContainText("0 / 42 completed");
 
   await page.getByRole("link", { name: "Subjects" }).click();
   await expect(page).toHaveURL(/\/subjects$/);
@@ -12,7 +12,7 @@ test("fresh student reaches the Basic differentiation path through the app", asy
   await mathsCard.getByRole("link", { name: "Open Higher Maths" }).click();
   await expect(page).toHaveURL(/\/subjects\/higher-maths$/);
   await page.getByRole("link", { name: "Start", exact: true }).click();
-  await expect(page).toHaveURL(/\/subjects\/higher-maths\/revision-notes$/);
+  await expect(page).toHaveURL(/\/subjects\/higher-maths\/revision-notes\?path=basic-differentiation$/);
   await expect(page.getByRole("link", { name: "Continue to Foundations" })).toHaveAttribute("href", "/question/hm-calc-diff-basic-f-001");
   await page.getByRole("button", { name: "Current Path: Basic differentiation" }).click();
   await page.getByRole("link", { name: "View full overview" }).click();
@@ -45,6 +45,6 @@ test("disabled account navigation hydrates without console or page errors and fa
   await expect(page.getByRole("heading", { name: "Accounts are not available" })).toBeVisible();
   await page.getByRole("link", { name: "Continue as a guest" }).click();
   await expect(page).toHaveURL(/\/dashboard$/);
-  await expect(page.getByTestId("dashboard-progress-summary")).toContainText("0 / 8 completed");
+  await expect(page.getByTestId("dashboard-progress-summary")).toContainText("0 / 42 completed");
   expect(seriousBrowserErrors).toEqual([]);
 });

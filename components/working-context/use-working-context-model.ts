@@ -5,7 +5,7 @@ import { getEmptyProgressEvidence, getProgressEvidence } from "@/lib/local-progr
 import { loadPracticeSessionStore } from "@/lib/practice/practice-storage";
 import { deriveWorkingContextModel } from "@/lib/working-context";
 
-export function useWorkingContextModel(pathId: string) {
+export function useWorkingContextModel(pathId: string | null) {
   const [mounted, setMounted] = useState(false);
   const [version, setVersion] = useState(0);
 
@@ -26,6 +26,7 @@ export function useWorkingContextModel(pathId: string) {
 
   return useMemo(() => {
     void version;
+    if (!pathId) return null;
     const sessions = mounted ? loadPracticeSessionStore().store : null;
     const activePracticeSession = sessions?.activeSessionId
       ? sessions.sessions.find((session) => session.sessionId === sessions.activeSessionId) ?? null

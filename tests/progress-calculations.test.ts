@@ -179,6 +179,19 @@ test("removed questions do not affect current totals and added questions do", ()
   assert.equal(calculateSkillPathProgress(expanded, evidence()).totalQuestions, foundations.questionIds.length + 1);
 });
 
+test("skill progress ignores malformed evidence that reuses a question ID under the wrong skill", () => {
+  const valid = attempt({ isCorrect: true, answer: "5x^4" });
+  const malformed = attempt({
+    eventId: "attempt_wrong_skill_identity",
+    skillPathId: "chain-rule",
+    isCorrect: true,
+    answer: "5x^4",
+  });
+  assert.equal(calculateSkillPathProgress(skillPath, evidence([valid])).completedQuestionIds.length, 1);
+  assert.equal(calculateSkillPathProgress(skillPath, evidence([malformed])).completedQuestionIds.length, 0);
+  assert.equal(calculateSkillPathProgress(skillPath, evidence([valid, malformed])).completedQuestionIds.length, 1);
+});
+
 test("recording and path reset are immutable and include events", () => {
   const original = createDefaultProgressPayload();
   const recorded = recordQuestionSubmission(original, attempt({ isCorrect: true }));
