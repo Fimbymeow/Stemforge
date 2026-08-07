@@ -33,11 +33,26 @@ test("dashboard updates from stored evidence with compact course context and a r
   await page.goto("/dashboard");
 
   const summary = page.getByTestId("dashboard-progress-summary");
-  await expect(summary).toContainText("Progress across published Higher Maths skills");
+  await expect(summary).toContainText("Combined progress across the Higher Maths skills available now");
   await expect(summary.getByRole("link", { name: "Open Higher Maths" })).toHaveAttribute("href", "/subjects/higher-maths");
   await expect(summary.getByRole("link", { name: "Resume question" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
   await expect(summary).toContainText("1 / 42 completed");
-  await expect(page.getByTestId("dashboard-course-progress").getByRole("progressbar")).toHaveAttribute("aria-valuenow", "2");
+  await expect(page.getByTestId("dashboard-course-progress").getByRole("progressbar").first()).toHaveAttribute("aria-valuenow", "2");
+  await expect(page.getByTestId("dashboard-per-skill-progress")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Recent activity" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Weekly activity" })).toHaveCount(0);
+});
+
+test("dashboard surfaces the existing weekly-activity signal without turning it into a streak or goal", async ({ page }) => {
+  const today = new Date().toISOString();
+  await seedStoredProgress(page, v3Payload([
+    currentAttempt(QUESTION_IDS[0], 1, { isCorrect: true, attemptedAt: today }),
+  ]));
+
+  await page.goto("/dashboard");
+
+  const activity = page.getByTestId("dashboard-weekly-activity");
+  await expect(activity).toBeVisible();
+  await expect(activity).toContainText("1 active day this week");
   await expect(page.getByRole("heading", { name: "Weekly activity" })).toHaveCount(0);
 });

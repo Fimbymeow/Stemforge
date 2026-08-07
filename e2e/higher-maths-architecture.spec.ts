@@ -10,6 +10,7 @@ test("Higher Maths hub presents four broad areas and prioritises the live path",
   await expect(page.getByRole("button", { name: "Lines, Circles and Sequences" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Start", exact: true })).toHaveAttribute("href", "/subjects/higher-maths/revision-notes?path=basic-differentiation");
   await expect(page.getByText(/1 of 51|1 \/ 51|1 of 50|1 \/ 50/i)).toHaveCount(0);
+  await expect(page.getByTestId("higher-maths-coverage")).toHaveText("2 of 49 Higher Maths skills available");
 });
 
 test("generic course and spec-area hubs distinguish published and planned coverage", async ({ page }) => {
@@ -26,7 +27,7 @@ test("generic course and spec-area hubs distinguish published and planned covera
 
   await page.goto("/subjects/higher-maths/algebra-and-trigonometry/polynomials");
   await expect(page.getByRole("heading", { level: 1, name: "Polynomials" })).toBeVisible();
-  await expect(page.getByText("No questions or learning resources are published here yet.")).toBeVisible();
+  await expect(page.getByText("No questions or learning resources are here yet.")).toBeVisible();
   await expect(page.getByRole("button", { name: "Factorising cubics and quartics" })).toBeVisible();
   await expect(page.getByRole("navigation", { name: "Breadcrumb" })).toContainText("Algebra and Trigonometry");
   await expect(page.getByRole("link", { name: /Practise/ })).toHaveCount(0);

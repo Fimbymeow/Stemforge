@@ -67,7 +67,7 @@ function ReviewCard({ dueCount, detail, href }: { dueCount: number; detail: stri
           Start Review <ArrowRight aria-hidden="true" className="size-4" />
         </Link>
       ) : (
-        <span className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-line bg-paper px-4 text-sm font-extrabold text-muted">
+        <span className="animate-fade-rise mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-line bg-paper px-4 text-sm font-extrabold text-muted">
           No review due
         </span>
       )}

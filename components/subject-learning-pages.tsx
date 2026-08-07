@@ -21,12 +21,12 @@ const stageIcons = {
 
 const accentClasses = {
   green: {
-    border: "border-[#229954]/45",
-    bg: "bg-[#f1fbf4]",
-    text: "text-[#188246]",
-    button: "bg-[#188246] text-white",
-    ring: "border-[#229954]",
-    bar: "bg-[#188246]",
+    border: "border-success/45",
+    bg: "bg-success-soft",
+    text: "text-success",
+    button: "bg-success text-white",
+    ring: "border-success",
+    bar: "bg-success",
   },
   blue: {
     border: "border-[#2563eb]/40",
@@ -106,7 +106,7 @@ export function CourseAreaPage({ subjectSlug, courseAreaSlug }: { subjectSlug: s
             <p className="mt-2 text-muted">
               {availablePaths.length
                 ? "Available learning is prioritised; planned coverage remains visible without affecting progress."
-                : "This planned course area is visible for orientation. No questions or learning routes are published here yet."}
+                : "This planned course area is visible for orientation. No questions or learning routes are here yet."}
             </p>
             <div className="mt-4 grid grid-cols-2 gap-4 max-md:grid-cols-1">
               {courseArea.specAreas.map((specArea, index) => (
@@ -122,7 +122,7 @@ export function CourseAreaPage({ subjectSlug, courseAreaSlug }: { subjectSlug: s
               <>
                 <p className="mb-2 text-sm font-bold uppercase text-forge">Available now</p>
                 <h3 className="text-xl font-extrabold">{recommendedSpecArea.name}</h3>
-                <p className="my-4 text-sm leading-relaxed text-muted">Continue into the published Higher Maths learning path.</p>
+                <p className="my-4 text-sm leading-relaxed text-muted">Continue into the available Higher Maths learning path.</p>
                 <ButtonLink href={recommendedSpecArea.href}>Open available content</ButtonLink>
               </>
             ) : (
@@ -196,7 +196,7 @@ export function SpecAreaLearningPathPage({
           <Card className="p-4">
             <h2 className="mb-3 text-xl font-extrabold">Recommended Next</h2>
             <p className="mb-2 text-sm font-bold uppercase text-muted">Start</p>
-            <h3 className="text-xl font-extrabold text-[#188246]">Foundations</h3>
+            <h3 className="text-xl font-extrabold text-success">Foundations</h3>
             <p className="mt-3 leading-relaxed text-muted">Begin with the core rules before moving into gradients and exam-style questions.</p>
             <div className="my-5">
               <div className="mb-2 flex justify-between font-bold">
@@ -249,14 +249,14 @@ export function SkillPathLearningPage({
         <Topbar />
           <div className="mx-auto grid max-w-[920px] gap-4">
             <Breadcrumbs items={["Subjects", subject.subjectName, courseArea.name, specificationStrand.name, skillPath.name]} />
-            <header className="rounded-xl border border-line bg-surface p-5 shadow-sm">
+            <header className="rounded-xl border border-line bg-paper p-5 shadow-card">
               <p className="mb-1 text-sm font-extrabold uppercase tracking-wide text-forge">Coming soon</p>
               <h1 className="text-3xl font-black tracking-tight text-ink">{skillPath.name}</h1>
               <p className="mt-2 text-muted">{specificationStrand.name}</p>
             </header>
             <LockedCard
               title="Reviewed questions are being prepared"
-            description="This learner-sized path is mapped into the official course structure, but its reviewed questions have not been published."
+            description="This learner-sized path is mapped into the official course structure, but its reviewed questions aren't ready yet."
             badge="Coming Soon"
           />
           <Card className="p-4">
@@ -414,7 +414,7 @@ function SpecAreaHubHero({ subject, courseArea, specArea }: { subject: Subject; 
       <p className="mt-3 max-w-3xl text-base leading-relaxed text-muted">
         {availableCount
           ? "Choose an available skill path, or preview the planned coverage being prepared."
-          : "These skill paths map the planned course coverage. No questions or learning resources are published here yet."}
+          : "These skill paths map the planned course coverage. No questions or learning resources are here yet."}
       </p>
       <div className="mt-5 grid max-w-3xl grid-cols-3 gap-4 max-md:grid-cols-1">
         <HeroStat label="Available Now" value={String(availableCount)} />

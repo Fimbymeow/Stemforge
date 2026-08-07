@@ -64,13 +64,13 @@ export function StageCompletionPanel({
               href={nextAction.href}
               data-testid="stage-completion-primary-action"
               aria-describedby="stage-completion-next-action-reason"
-              className="inline-flex min-h-10 items-center justify-center rounded-lg bg-forge px-5 text-sm font-extrabold text-white max-md:w-full"
+              className="inline-flex min-h-10 items-center justify-center rounded-lg bg-forge px-5 text-sm font-extrabold text-white transition duration-300 ease-out hover:-translate-y-0.5 active:translate-y-0 active:duration-100 max-md:w-full"
             >
               {nextAction.label}
             </Link> : null}
             <Link
               href={getSkillPathHref(skillPath)}
-              className="inline-flex min-h-10 items-center justify-center rounded-lg border border-line bg-white px-5 text-sm font-extrabold max-md:w-full"
+              className="inline-flex min-h-10 items-center justify-center rounded-lg border border-line bg-white px-5 text-sm font-extrabold transition hover:border-forge max-md:w-full"
             >
               View path
             </Link>

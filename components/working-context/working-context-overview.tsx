@@ -35,7 +35,7 @@ export function WorkingContextOverview({ pathId }: { pathId: string }) {
         <section aria-labelledby="stages" className="grid gap-3">
           <div>
             <h2 id="stages" tabIndex={-1} className="text-xl font-extrabold">Learning stages</h2>
-            <p className="mt-1 text-sm text-muted">A direct route from core ideas to exam-style questions.</p>
+            <p className="mt-1 text-sm text-muted">Learn it in Notes, build confidence in Foundations, apply it in harder questions, then practise exam-style questions — Review keeps it fresh afterwards.</p>
           </div>
           <div className="grid auto-rows-fr grid-cols-3 items-stretch gap-3 max-md:grid-cols-1">
             {model.stages.map((stage) => {

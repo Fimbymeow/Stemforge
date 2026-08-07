@@ -462,7 +462,7 @@ export function QuestionWorkspace({
                       type="submit"
                       onPointerDown={() => { submissionIntentRef.current = "pointer"; }}
                       disabled={submitted || submitting || session?.answerLocked}
-                      className="inline-flex min-h-11 items-center justify-center rounded-lg bg-forge px-6 text-sm font-extrabold text-white disabled:cursor-not-allowed disabled:opacity-45 max-sm:w-full"
+                      className="inline-flex min-h-11 items-center justify-center rounded-lg bg-forge px-6 text-sm font-extrabold text-white transition duration-300 ease-out hover:-translate-y-0.5 active:translate-y-0 active:duration-100 disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-y-0 max-sm:w-full"
                     >
                       {session?.answerLocked ? "Session ended" : submitting ? "Saving..." : "Submit Answer"}
                     </button>
@@ -479,7 +479,7 @@ export function QuestionWorkspace({
                   aria-label={feedbackAccessibleLabel}
                   aria-live="polite"
                   aria-atomic="true"
-                  className={`mt-4 rounded-xl border p-4 ${feedbackPanelClass}`}
+                  className={`mt-4 animate-fade-rise rounded-xl border p-4 ${feedbackPanelClass}`}
                 >
                   <div className="flex items-start gap-3 max-sm:grid">
                     <span aria-hidden="true" className={`grid size-9 shrink-0 place-items-center rounded-full text-white ${feedbackIconClass}`}>
@@ -594,11 +594,11 @@ export function QuestionWorkspace({
             <StageCompletionPanel skillPath={skillPath} stage={stage} progress={stageLocalProgress} nextAction={nextAction} />
           ) : session ? null : (
             <div className="grid grid-cols-2 gap-3 max-md:grid-cols-1">
-              <Link href={position.previous ? getQuestionHref(position.previous.id) : fallbackPathHref} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-line bg-white text-sm font-bold">
+              <Link href={position.previous ? getQuestionHref(position.previous.id) : fallbackPathHref} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-line bg-white text-sm font-bold transition hover:border-forge">
                 <ArrowLeft className="size-5" /> Previous
               </Link>
               {questionProgress.navigationEligible && nextAction.href ? (
-                <Link data-testid="next-question-action" href={nextAction.href} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-forge text-sm font-bold text-white">
+                <Link data-testid="next-question-action" href={nextAction.href} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-forge text-sm font-bold text-white transition duration-300 ease-out hover:-translate-y-0.5 active:translate-y-0 active:duration-100">
                   {nextAction.label}<ArrowRight className="size-5" />
                 </Link>
               ) : (

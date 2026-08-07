@@ -32,12 +32,12 @@ const stageIcons = {
 
 const accentClasses = {
   green: {
-    border: "border-[#229954]/45",
-    bg: "bg-[#f1fbf4]",
-    text: "text-[#188246]",
-    button: "bg-[#188246] text-white",
-    ring: "border-[#229954]",
-    bar: "bg-[#229954]",
+    border: "border-success/45",
+    bg: "bg-success-soft",
+    text: "text-success",
+    button: "bg-success text-white",
+    ring: "border-success",
+    bar: "bg-success",
   },
   blue: {
     border: "border-[#2563eb]/40",
@@ -333,7 +333,7 @@ function BreakdownCard() {
   return (
     <Card className="p-6">
       <h2 className="mb-5 text-xl font-extrabold">Practice Breakdown</h2>
-      <BreakdownRow label="Foundations" value="0 / 5" progress={0} color="bg-[#229954]" />
+      <BreakdownRow label="Foundations" value="0 / 5" progress={0} color="bg-success" />
       <BreakdownRow label="Applications" value="2 / 5" progress={40} color="bg-[#1d5fd8]" />
       <BreakdownRow label="Past Paper-style Questions" value="3 / 6" progress={50} color="bg-forge" />
       <div className="mt-7">

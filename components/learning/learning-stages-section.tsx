@@ -11,10 +11,10 @@ const stageIcons = {
 
 const accentClasses = {
   green: {
-    border: "border-[#229954]/45",
-    bg: "bg-[#f1fbf4]",
-    text: "text-[#188246]",
-    button: "bg-[#188246] text-white",
+    border: "border-success/45",
+    bg: "bg-success-soft",
+    text: "text-success",
+    button: "bg-success text-white",
   },
   blue: {
     border: "border-[#2563eb]/40",

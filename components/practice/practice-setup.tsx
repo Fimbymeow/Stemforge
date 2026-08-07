@@ -111,7 +111,7 @@ export function PracticeSetup({
       <AppShell demo active="Practice" className="py-8 max-xl:pt-5">
         <Card className="mx-auto max-w-[760px] p-6">
           <h1 className="text-2xl font-extrabold">Practice path unavailable</h1>
-          <p className="mt-2 text-muted">That learning path is not available for practice. Choose from the published Higher Maths skills instead.</p>
+          <p className="mt-2 text-muted">That topic isn&apos;t available for practice yet. Choose from the topics available now instead.</p>
           <Link href="/practice" className="mt-4 inline-flex min-h-11 items-center rounded-lg bg-forge px-5 font-extrabold text-white">Browse available practice</Link>
         </Card>
       </AppShell>
@@ -127,7 +127,7 @@ export function PracticeSetup({
           <header>
             <p className="font-mono text-xs font-extrabold uppercase text-forge">Review</p>
             <h1 className="mt-2 text-[34px] font-extrabold leading-none">Review what is due</h1>
-            <p className="mt-3 text-muted">A short scheduled Review uses the same trusted question workspace as Practice.</p>
+            <p className="mt-3 text-muted">A short Review uses the same practice screen you already know.</p>
           </header>
           <Card className="border-forge/30 bg-gradient-to-br from-forge/10 to-white p-5" data-testid="review-launch-card">
             {reviewPreview.session ? (
@@ -177,7 +177,7 @@ export function PracticeSetup({
             <div>
               <p className="mb-1 text-xs font-extrabold uppercase text-forge">Recommended</p>
               <h2 className="m-0 text-xl font-extrabold">Quick Practice</h2>
-              <p className="mt-1 text-sm text-muted">Six untimed questions selected deterministically from your most relevant available path.</p>
+              <p className="mt-1 text-sm text-muted">Six untimed questions picked from what you&apos;re working on right now.</p>
             </div>
             <QuickPracticeAction className="max-md:w-full" preferredPathId={workingContextPathId} />
           </div>
@@ -280,6 +280,6 @@ function timing(timed: boolean, minutes: number): PracticeTiming {
 
 function reviewReasonCopy(reason: ReturnType<typeof createReviewSessionSelection>["dueStates"][number]["reason"] | undefined) {
   if (reason === "recently_incorrect") return "This Review is due because of a recent incorrect answer.";
-  if (reason === "content_changed") return "This Review is due because the learning content changed.";
+  if (reason === "content_changed") return "This topic was updated since you last practised it, so it's worth another look.";
   return "This skill is due after time away from it.";
 }

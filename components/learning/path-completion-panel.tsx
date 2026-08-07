@@ -65,13 +65,13 @@ export function PathCompletionPanel({ skillPath, progress, nextAction }: { skill
               href={nextAction.href}
               data-testid="path-completion-primary-action"
               aria-describedby="completion-next-action-reason"
-              className="inline-flex min-h-10 items-center justify-center rounded-lg bg-forge px-5 text-sm font-extrabold text-white max-md:w-full"
+              className="inline-flex min-h-10 items-center justify-center rounded-lg bg-forge px-5 text-sm font-extrabold text-white transition duration-300 ease-out hover:-translate-y-0.5 active:translate-y-0 active:duration-100 max-md:w-full"
             >
               {nextAction.label}
             </Link> : null}
             <Link
               href={secondary.href}
-              className="inline-flex min-h-10 items-center justify-center rounded-lg border border-line bg-white px-5 text-sm font-extrabold max-md:w-full"
+              className="inline-flex min-h-10 items-center justify-center rounded-lg border border-line bg-white px-5 text-sm font-extrabold transition hover:border-forge max-md:w-full"
             >
               {secondary.label}
             </Link>

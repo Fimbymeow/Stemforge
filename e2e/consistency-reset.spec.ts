@@ -30,7 +30,7 @@ test("dashboard, Higher Maths hub and path agree for mixed outcomes", async ({ p
 
   await page.goto("/dashboard");
   await expect(page.getByTestId("dashboard-progress-summary")).toContainText("3 / 42 completed");
-  await expect(page.getByTestId("dashboard-course-progress").getByRole("progressbar")).toHaveAttribute("aria-valuenow", "7");
+  await expect(page.getByTestId("dashboard-course-progress").getByRole("progressbar").first()).toHaveAttribute("aria-valuenow", "7");
 
   await page.goto("/subjects/higher-maths");
   await expect(page.getByText("3 / 8 completed", { exact: true })).toBeVisible();

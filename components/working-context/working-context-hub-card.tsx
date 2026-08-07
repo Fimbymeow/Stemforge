@@ -37,14 +37,14 @@ export function WorkingContextHubCard({ pathId }: { pathId: string | null }) {
         </div>
 
         <div className="flex min-w-[230px] flex-col justify-center gap-2 border-l border-forge/20 pl-6 max-md:min-w-0 max-md:border-l-0 max-md:border-t max-md:pt-4 max-md:pl-0">
-          <Link href={model.primaryHref} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-forge px-5 text-sm font-extrabold text-white">
+          <Link href={model.primaryHref} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-forge px-5 text-sm font-extrabold text-white transition duration-300 ease-out hover:-translate-y-0.5 active:translate-y-0 active:duration-100">
             {model.primaryLabel}<ArrowRight aria-hidden="true" className="size-4" />
           </Link>
           <div className="grid grid-cols-2 gap-2">
-            {model.notesHref ? <Link href={model.notesHref} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-line bg-white px-3 text-sm font-extrabold text-ink">
+            {model.notesHref ? <Link href={model.notesHref} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-line bg-white px-3 text-sm font-extrabold text-ink transition hover:border-forge">
               <BookOpen aria-hidden="true" className="size-4" /> Notes
             </Link> : null}
-            <Link href={model.overviewHref} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-line bg-white px-3 text-sm font-extrabold text-ink">
+            <Link href={model.overviewHref} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-line bg-white px-3 text-sm font-extrabold text-ink transition hover:border-forge">
               <LayoutList aria-hidden="true" className="size-4" /> Overview
             </Link>
           </div>

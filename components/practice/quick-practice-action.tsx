@@ -46,7 +46,7 @@ export function QuickPracticeAction({
         aria-describedby={describedBy}
         onClick={begin}
         disabled={!hasMounted || !quick.result.session || activation.busy}
-        className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-forge px-5 font-extrabold text-white disabled:opacity-45 ${className}`}
+        className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-forge px-5 font-extrabold text-white transition duration-300 ease-out hover:-translate-y-0.5 active:translate-y-0 active:duration-100 disabled:opacity-45 disabled:hover:translate-y-0 ${className}`}
       >
         {label}
         <ArrowRight className="size-5" />

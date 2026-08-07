@@ -23,7 +23,7 @@ export function RecommendedNextAction({ title, copy, href, label }: { title: str
     <Card className="p-6">
       <h2 className="mb-5 text-xl font-extrabold">Recommended Next</h2>
       <p className="mb-2 text-sm font-bold uppercase text-muted">Start</p>
-      <h3 className="text-3xl font-extrabold text-[#188246]">{title}</h3>
+      <h3 className="text-3xl font-extrabold text-success">{title}</h3>
       <p className="mt-3 leading-relaxed text-muted">{copy}</p>
       <Link href={href} className="mt-6 inline-flex min-h-11 items-center justify-center rounded-lg bg-forge px-5 font-extrabold text-white">
         {label}

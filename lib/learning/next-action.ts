@@ -82,7 +82,7 @@ export function deriveSkillPathNextAction(
           context: questionContext,
           label: "Review updated question",
           title: `Review ${questionContext.stage.name}`,
-          reason: "This question has changed since your earlier work, so revisiting it is the safest next step.",
+          reason: "This question was updated since you last tried it — worth another go to make sure it still makes sense.",
         });
       }
 

@@ -527,7 +527,7 @@ function PracticeSummaryCard({ session, summary }: { session: PracticeSessionMod
   return (
     <AppShell demo={false} active="Practice" workingContextPathId={session.selectedPathIds.length === 1 ? session.selectedPathIds[0] : null}>
       <div className="mx-auto grid max-w-[780px] gap-4">
-        <Card className="p-6" role="status" aria-live="polite">
+        <Card className="animate-fade-rise p-6" role="status" aria-live="polite">
           <p className="font-mono text-xs font-extrabold uppercase text-forge">{practiceOriginLabel(session.origin)} complete</p>
           <h1 className="mt-2 text-3xl font-extrabold">Practice summary</h1>
           <p className="mt-2 font-bold text-ink">{summaryHeadline(summary)}</p>
@@ -566,12 +566,12 @@ function PracticeSummaryCard({ session, summary }: { session: PracticeSessionMod
           {session.timing.type === "timed" ? <p className="mt-2 text-sm text-muted">Elapsed time: {formatTime(session.timing.elapsedSeconds)}. Blank answers were never submitted automatically.</p> : null}
           {activation.error ? <p role="alert" className="mt-3 text-sm font-bold text-danger">{activation.error}</p> : null}
           <div className="mt-5 flex flex-wrap gap-3">
-            {summary.incorrectQuestionIds.length ? <button type="button" onClick={retryIncorrect} disabled={activation.busy} aria-label="Retry incorrect questions from this session" className="inline-flex min-h-11 items-center rounded-lg bg-forge px-4 font-extrabold text-white">Retry incorrect</button> : null}
-            {summary.skippedCount ? <button type="button" onClick={retrySkipped} disabled={activation.busy} className="inline-flex min-h-11 items-center rounded-lg border border-forge bg-white px-4 font-extrabold text-forge">Retry skipped questions</button> : null}
+            {summary.incorrectQuestionIds.length ? <button type="button" onClick={retryIncorrect} disabled={activation.busy} aria-label="Retry incorrect questions from this session" className="inline-flex min-h-11 items-center rounded-lg bg-forge px-4 font-extrabold text-white transition duration-300 ease-out hover:-translate-y-0.5 active:translate-y-0 active:duration-100 disabled:hover:translate-y-0">Retry incorrect</button> : null}
+            {summary.skippedCount ? <button type="button" onClick={retrySkipped} disabled={activation.busy} className="inline-flex min-h-11 items-center rounded-lg border border-forge bg-white px-4 font-extrabold text-forge transition hover:bg-forge-soft">Retry skipped questions</button> : null}
             {!summary.incorrectQuestionIds.length && !summary.skippedCount && nextAction.kind === "practice_again" ? <QuickPracticeAction preferredPathId={nextAction.pathId} label={nextAction.label} /> : null}
-            <Link href={returnDestination.href} className="inline-flex min-h-11 items-center rounded-lg border border-line bg-white px-4 font-extrabold">{returnDestination.label}</Link>
-            <Link href={practiceSubjectDestination(session.subjectId)} className="inline-flex min-h-11 items-center rounded-lg border border-line bg-white px-4 font-extrabold">Subject</Link>
-            <Link href="/dashboard" className="inline-flex min-h-11 items-center rounded-lg border border-line bg-white px-4 font-extrabold">Dashboard</Link>
+            <Link href={returnDestination.href} className="inline-flex min-h-11 items-center rounded-lg border border-line bg-white px-4 font-extrabold transition hover:border-forge">{returnDestination.label}</Link>
+            <Link href={practiceSubjectDestination(session.subjectId)} className="inline-flex min-h-11 items-center rounded-lg border border-line bg-white px-4 font-extrabold transition hover:border-forge">Subject</Link>
+            <Link href="/dashboard" className="inline-flex min-h-11 items-center rounded-lg border border-line bg-white px-4 font-extrabold transition hover:border-forge">Dashboard</Link>
           </div>
         </Card>
       </div>

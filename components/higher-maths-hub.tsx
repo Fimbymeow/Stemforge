@@ -5,7 +5,7 @@ import { ArrowRight, Calculator } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { AppTopbar } from "@/components/layout/app-topbar";
 import { SubjectRoadmapNavigator } from "@/components/learning/subject-roadmap-navigator";
-import { getActiveSubject } from "@/lib/learning-paths";
+import { getActiveSubject, getAllSkillPaths, getAvailableSkillPaths } from "@/lib/learning-paths";
 import { useLearnerNextAction } from "@/components/learning/use-learner-next-action";
 import { PracticeEntryCard } from "@/components/practice/practice-entry-card";
 import { ReviewEntryCard } from "@/components/review/review-entry-card";
@@ -16,6 +16,8 @@ export function HigherMathsHub() {
   const subject = getActiveSubject();
   const nextAction = useLearnerNextAction();
   const qualification = getQualificationPresentation(subject.level);
+  const availableSkillCount = getAvailableSkillPaths(subject).length;
+  const totalSkillCount = getAllSkillPaths(subject).length;
 
   return (
     <AppShell demo active="Subjects" workingContextPathId={nextAction.pathId}>
@@ -31,6 +33,7 @@ export function HigherMathsHub() {
               <span className={`mb-3 inline-flex rounded-full border px-3 py-1 text-xs font-extrabold ${qualification.className}`}>{qualification.label}</span>
               <h1 className="m-0 text-[32px] font-extrabold leading-none">Higher Maths</h1>
               <p className="mt-2 max-w-3xl text-base leading-relaxed text-muted">Learn in focused stages, then practise and review when you’re ready. Calculus is available now, with more areas being added.</p>
+              <p className="mt-1 text-xs font-bold text-muted" data-testid="higher-maths-coverage">{availableSkillCount} of {totalSkillCount} Higher Maths skills available</p>
             </div>
           </div>
         </header>

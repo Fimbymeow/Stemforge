@@ -60,7 +60,7 @@ export function TopicRoadmap({ skillPaths, showHeading = true }: { skillPaths: S
           ) : (
             <div className="mt-4 flex items-center gap-3 rounded-xl bg-[#f4f1eb] px-4 py-3 text-sm font-semibold text-muted">
               <Sparkles className="size-4 shrink-0" />
-              This planned path has no published questions or learning resources yet.
+              This topic is coming soon — no practice or notes here yet.
             </div>
           )}
         </div>

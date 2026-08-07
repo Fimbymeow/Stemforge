@@ -103,6 +103,85 @@ test("the learner's first full path completion is framed as a first-time milesto
   assert.equal(second?.title, `${skillPath.name} completed`);
 });
 
+test("coverage framing derives '2 of 49' from the live registry, not a hard-coded constant", () => {
+  const allSkillPaths = higherMaths.courseAreas.flatMap((area) => area.specAreas).flatMap((area) => area.skillPaths ?? []);
+  assert.equal(allSkillPaths.length, 49);
+  assert.equal(allSkillPaths.filter((path) => path.isAvailable).length, 2);
+
+  const model = deriveLearnerDashboardModel({ evidence: evidence(), now: now() });
+  assert.equal(model.course.availablePathCount, 2);
+  assert.equal(model.course.plannedPathCount, 47);
+  assert.equal(model.course.notice, "2 of 49 Higher Maths skills available, with more on the way.");
+});
+
+test("dashboard progress stays truthful when both skills are untouched", () => {
+  const model = deriveLearnerDashboardModel({ evidence: evidence(), now: now() });
+  assert.equal(model.paths.length, 2);
+  for (const path of model.paths) {
+    assert.equal(path.completedQuestions, 0);
+    assert.equal(path.completionPercentage, 0);
+  }
+  assert.equal(model.course.completedQuestions, 0);
+  assert.equal(model.course.totalQuestions, 42);
+});
+
+test("dashboard progress stays truthful when one skill is fully complete and the other is untouched", () => {
+  const attempts = questionIds.map((questionId, index) => attempt(questionId, index + 1, {
+    isCorrect: true,
+    answer: "correct",
+    attemptedAt: `2026-07-16T10:${String(index).padStart(2, "0")}:00.000Z`,
+  }));
+  const model = deriveLearnerDashboardModel({ evidence: evidence(attempts), now: now() });
+
+  const basic = model.paths.find((path) => path.skillPathId === "basic-differentiation");
+  const chain = model.paths.find((path) => path.skillPathId === "chain-rule");
+  assert.ok(basic);
+  assert.ok(chain);
+  assert.equal(basic.completedQuestions, basic.totalQuestions);
+  assert.equal(basic.completionPercentage, 100);
+  assert.equal(chain.completedQuestions, 0);
+  assert.equal(chain.completionPercentage, 0);
+  // The combined figure must never be presented as if it were per-skill or full-course completion.
+  assert.ok(model.course.completionPercentage < 100);
+  assert.equal(model.course.totalQuestions, 42);
+});
+
+test("dashboard progress stays truthful for a skill that is only partway complete", () => {
+  const model = deriveLearnerDashboardModel({
+    evidence: evidence([
+      attempt(questionIds[0], 1, { isCorrect: true }),
+      attempt(questionIds[1], 2, { isCorrect: true, attemptedAt: "2026-07-16T10:02:00.000Z" }),
+    ]),
+    now: now(),
+  });
+  const basic = model.paths.find((path) => path.skillPathId === "basic-differentiation");
+  assert.ok(basic);
+  assert.equal(basic.completedQuestions, 2);
+  assert.equal(basic.totalQuestions, 8);
+  assert.ok(basic.completionPercentage > 0 && basic.completionPercentage < 100);
+});
+
+test("weekly activity exposes the exact label/count the dashboard now renders", () => {
+  const recentNow = new Date("2026-07-17T12:00:00.000Z");
+  const model = deriveLearnerDashboardModel({
+    evidence: evidence([attempt(questionIds[0], 1, { attemptedAt: "2026-07-16T09:00:00.000Z", isCorrect: true })]),
+    now: recentNow,
+  });
+  assert.equal(model.weeklyActivity.activeDays, 1);
+  assert.equal(model.weeklyActivity.label, "1 active day in the last 7 days");
+});
+
+test("multi-skill next action still recommends the untouched skill once the first is mastered (no Sprint 1B regression)", () => {
+  const attempts = questionIds.map((questionId, index) => attempt(questionId, index + 1, {
+    isCorrect: true,
+    answer: "correct",
+    attemptedAt: `2026-07-16T10:${String(index).padStart(2, "0")}:00.000Z`,
+  }));
+  const model = deriveLearnerDashboardModel({ evidence: evidence(attempts), now: now() });
+  assert.equal(model.nextAction.kind, "start_learning");
+  assert.equal(model.nextAction.pathId, "chain-rule");
+});
+
 test("sync states are conservative and do not require public credentials", () => {
   const model = deriveLearnerDashboardModel({
     evidence: evidence(),

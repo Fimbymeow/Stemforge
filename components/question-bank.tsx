@@ -486,7 +486,7 @@ export function QuestionBank({ subjectSlug }: { subjectSlug: string }) {
 
         <details className="group rounded-xl border border-line bg-white">
           <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-5 py-3 font-bold text-muted"><span className="inline-flex items-center gap-2"><Lock className="size-4" />Future {subject.subjectName} coverage</span><ChevronDown className="size-4 group-open:rotate-180" /></summary>
-          <div className="grid gap-3 border-t border-line p-4"><p className="text-sm text-muted">Planned coverage is shown broadly. It cannot be filtered or selected until questions are published.</p>{futureCoverage.map((area) => <div key={area.slug} className="rounded-lg bg-paper px-4 py-3"><div className="flex justify-between gap-2"><strong>{area.name}</strong><span className="text-sm text-muted">{area.pathCount} planned paths</span></div><p className="mt-1 text-sm text-muted">{area.specAreas.map((item) => item.name).join(" · ")}</p></div>)}</div>
+          <div className="grid gap-3 border-t border-line p-4"><p className="text-sm text-muted">This is a preview of what&apos;s coming. You&apos;ll be able to search and practise it once it&apos;s ready.</p>{futureCoverage.map((area) => <div key={area.slug} className="rounded-lg bg-paper px-4 py-3"><div className="flex justify-between gap-2"><strong>{area.name}</strong><span className="text-sm text-muted">{area.pathCount} planned paths</span></div><p className="mt-1 text-sm text-muted">{area.specAreas.map((item) => item.name).join(" · ")}</p></div>)}</div>
         </details>
 
         {selected.size ? <section
@@ -589,9 +589,9 @@ function QuestionBankEmptyState({ hasAnyQuestions, scopedSkillPathName, hasSearc
   subjectHref: string;
 }) {
   if (!hasAnyQuestions) {
-    return <Card className="mt-3 p-5">
+    return <Card className="animate-fade-rise mt-3 p-5">
       <h3 className="font-extrabold">Questions are coming soon</h3>
-      <p className="mt-1 text-sm text-muted">This subject does not have published questions yet.</p>
+      <p className="mt-1 text-sm text-muted">This subject doesn&apos;t have practice questions yet.</p>
       <div className="mt-4 flex flex-wrap gap-2">
         <Link href={subjectHref} className="inline-flex min-h-10 items-center rounded-lg border border-line px-4 font-bold text-forge">Return to subject overview</Link>
         <Link href="/subjects" className="inline-flex min-h-10 items-center rounded-lg border border-line px-4 font-bold text-forge">Browse another available area</Link>
@@ -601,14 +601,14 @@ function QuestionBankEmptyState({ hasAnyQuestions, scopedSkillPathName, hasSearc
   if (scopedSkillPathName) {
     return <Card className="mt-3 p-5">
       <h3 className="font-extrabold">{scopedSkillPathName} has no available questions</h3>
-      <p className="mt-1 text-sm text-muted">This skill path does not have published questions yet.</p>
+      <p className="mt-1 text-sm text-muted">This topic doesn&apos;t have practice questions yet.</p>
       <div className="mt-4 flex flex-wrap gap-2">
         <button type="button" onClick={onResetFilters} className="min-h-10 rounded-lg border border-line px-4 font-bold text-forge">Browse all {subjectName}</button>
       </div>
     </Card>;
   }
   if (hasSearch) {
-    return <Card className="mt-3 p-5">
+    return <Card className="animate-fade-rise mt-3 p-5">
       <h3 className="font-extrabold">No questions match your search</h3>
       <div className="mt-4 flex flex-wrap gap-2">
         <button type="button" onClick={onClearSearch} className="min-h-10 rounded-lg border border-line px-4 font-bold text-forge">Clear search</button>
@@ -616,7 +616,7 @@ function QuestionBankEmptyState({ hasAnyQuestions, scopedSkillPathName, hasSearc
       </div>
     </Card>;
   }
-  return <Card className="mt-3 p-5">
+  return <Card className="animate-fade-rise mt-3 p-5">
     <h3 className="font-extrabold">No questions match these filters</h3>
     {activeChips.length ? <div className="mt-3 flex flex-wrap gap-2">{activeChips.map((chip) => <button key={chip.key} type="button" onClick={() => onRemoveChip(chip.key)} className="inline-flex min-h-8 items-center gap-1 rounded-full border border-line bg-white px-3 text-xs font-bold">{chip.label}<X className="size-3" /></button>)}</div> : null}
     {hasActiveFilters ? <button type="button" onClick={onResetFilters} className="mt-4 min-h-10 rounded-lg border border-line px-4 font-bold text-forge">Reset all filters</button> : null}

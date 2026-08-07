@@ -159,7 +159,7 @@ export function LocalSkillPathProgressOverview({ skillPath }: { skillPath: Skill
             <div>
               <p className="m-0 font-bold">{progress.completedQuestionIds.length} / {progress.totalQuestions} completed</p>
               <p className="mt-2 text-sm text-muted">{progress.completionPercentage}% complete</p>
-              <p className="mt-1 text-sm font-bold text-[#188246]">
+              <p className="mt-1 text-sm font-bold text-success">
                 First-attempt accuracy: {progress.firstAttemptAccuracyPercentage === null ? "Not enough data" : `${progress.firstAttemptAccuracyPercentage}%`}
               </p>
             </div>
@@ -201,14 +201,14 @@ function VersionProgressNotice({ progress }: { progress: SkillPathProgress }) {
   if (progress.reassessmentRequiredQuestionIds.length > 0) {
     return (
       <p data-testid="version-progress-notice" className="mb-4 rounded-lg border border-forge/20 bg-forge-soft px-3 py-2 text-sm font-bold text-forge">
-        Updated practice is available. Previous achievement is retained; reassessment is required for current readiness.
+        This topic has new practice. Your past results are safe — a quick recheck will confirm you&apos;ve still got it.
       </p>
     );
   }
   if (progress.reassessmentRecommendedQuestionIds.length > 0) {
     return (
       <p data-testid="version-progress-notice" className="mb-4 rounded-lg border border-line bg-paper px-3 py-2 text-sm font-bold text-muted">
-        Previous completion is retained. A short reassessment is recommended because the original question version is unknown.
+        Your earlier completion is saved. Since we can&apos;t confirm exactly which version you did, a short recheck is recommended.
       </p>
     );
   }

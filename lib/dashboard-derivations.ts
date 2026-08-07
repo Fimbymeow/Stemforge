@@ -224,7 +224,7 @@ export function deriveCourseDashboardSummary(
     stageCompletionPercentage: percentage(completedStages, totalStages),
     reviewRecommendedCount: paths.reduce((total, path) => total + path.reviewRecommendedCount, 0),
     notice: plannedPathCount > 0
-      ? `${available.length} ${subject.subjectName} path${available.length === 1 ? "" : "s"} ready to start, with more on the way.`
+      ? `${available.length} of ${skillPaths.length} ${subject.subjectName} skills available, with more on the way.`
       : `${subject.subjectName} course content is available.`,
     paths,
   };

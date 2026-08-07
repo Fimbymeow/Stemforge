@@ -57,7 +57,7 @@ export function DashboardLocalProgressSection() {
 
   return (
     <section className="grid gap-4" aria-label="Your learning dashboard">
-      <div className="grid grid-cols-[minmax(0,3fr)_minmax(240px,1fr)] items-stretch gap-4 max-[900px]:grid-cols-1">
+      <div className="grid grid-cols-[minmax(0,3fr)_minmax(240px,1fr)] items-stretch gap-4 max-lg:grid-cols-1">
         <Card data-testid="dashboard-progress-summary" aria-label="Learn" className="border-forge/30 bg-gradient-to-br from-forge/10 via-white to-white p-5 md:p-6">
           <div className="grid grid-cols-[64px_minmax(0,1fr)] items-start gap-4 max-md:grid-cols-1">
             <div className="grid size-16 place-items-center rounded-xl border border-forge-soft bg-forge-soft text-forge max-md:h-14 max-md:w-full">
@@ -74,12 +74,32 @@ export function DashboardLocalProgressSection() {
             </div>
           </div>
 
-          <div className="mt-5 grid gap-2 border-t border-forge/20 pt-4" data-testid="dashboard-course-progress">
-              <div className="flex flex-wrap items-center justify-between gap-2 text-sm font-bold text-muted">
-                <span>Progress across published Higher Maths skills</span>
-                <span>{model.course.completedQuestions} / {model.course.totalQuestions} completed</span>
+          <div className="mt-5 grid gap-3 border-t border-forge/20 pt-4" data-testid="dashboard-course-progress">
+              <div className="grid gap-2">
+                <div className="flex flex-wrap items-center justify-between gap-2 text-sm font-bold text-muted">
+                  <span>Combined progress across the Higher Maths skills available now</span>
+                  <span>{model.course.completedQuestions} / {model.course.totalQuestions} completed</span>
+                </div>
+                <ProgressBar value={model.course.completionPercentage} />
               </div>
-              <ProgressBar value={model.course.completionPercentage} />
+              {model.paths.length > 1 ? (
+                <div className="grid gap-2" data-testid="dashboard-per-skill-progress">
+                  {model.paths.map((path) => (
+                    <div key={path.skillPathId} className="grid gap-1">
+                      <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-muted">
+                        <span>{path.name}</span>
+                        <span>{path.completedQuestions} / {path.totalQuestions} completed</span>
+                      </div>
+                      <ProgressBar value={path.completionPercentage} />
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+              {model.weeklyActivity.activeDays > 0 ? (
+                <p className="text-xs font-bold text-muted" data-testid="dashboard-weekly-activity">
+                  {model.weeklyActivity.activeDays} active day{model.weeklyActivity.activeDays === 1 ? "" : "s"} this week
+                </p>
+              ) : null}
           </div>
 
           <div className="mt-5 flex flex-col gap-3 border-t border-forge/20 pt-4 sm:flex-row sm:flex-wrap sm:items-center">
