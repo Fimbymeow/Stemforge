@@ -281,6 +281,15 @@ export function validateContent(input: ContentValidationInput): ContentValidatio
     }
   }
 
+  if (skillPaths.size !== counts.activeSkillPaths) {
+    issue(
+      "error",
+      "active-path-resolution-count-mismatch",
+      `Canonical registry declares ${counts.activeSkillPaths} active skill paths, but only ${skillPaths.size} resolve through valid curriculum relationships.`,
+      "data/canonical-content.ts",
+    );
+  }
+
   const questions = new Map<string, Array<{ question: Question; location: string }>>();
   const activeQuestions = new Map<string, { question: Question; location: string }>();
   const questionVersions = new Map<string, string>();

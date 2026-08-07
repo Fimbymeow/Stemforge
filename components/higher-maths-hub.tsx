@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ArrowRight, Calculator } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { AppTopbar } from "@/components/layout/app-topbar";
-import { SubjectRoadmapNavigator } from "@/components/learning/subject-roadmap-navigator";
+import { CourseTracker } from "@/components/learning/course-tracker";
 import { getActiveSubject, getAllSkillPaths, getAvailableSkillPaths } from "@/lib/learning-paths";
 import { useLearnerNextAction } from "@/components/learning/use-learner-next-action";
 import { PracticeEntryCard } from "@/components/practice/practice-entry-card";
@@ -52,9 +52,8 @@ export function HigherMathsHub() {
         </section>
 
         <section aria-labelledby="course-coverage-title" className="min-w-0 max-w-full">
-          <h2 id="course-coverage-title" className="mb-2 text-lg font-extrabold">Roadmap</h2>
-          <p className="mb-4 max-w-3xl text-sm leading-relaxed text-muted">Navigate the course by strand, then choose a topic.</p>
-          <SubjectRoadmapNavigator subject={subject} />
+          <h2 id="course-coverage-title" className="sr-only">Qualification progress</h2>
+          <CourseTracker subject={subject} />
         </section>
       </div>
     </AppShell>

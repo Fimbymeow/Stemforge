@@ -30,23 +30,21 @@ test("Higher Maths orders Learn above aligned Practice and Review cards responsi
   await expectNoDocumentOverflow(page);
 });
 
-test("Roadmap keeps strand navigation visible and opens registered available topics", async ({ page }) => {
+test("Course tracker distinguishes official requirements from all canonical skills", async ({ page }) => {
   await page.goto("/subjects/higher-maths");
-  const roadmap = page.getByTestId("subject-roadmap");
-  await expect(page.getByRole("heading", { name: "Roadmap", exact: true })).toHaveCount(1);
-  const calculus = roadmap.getByRole("button", { name: "Calculus" });
-  await expect(calculus).toHaveAttribute("aria-pressed", "true");
-  await expect(calculus).toHaveAttribute("aria-current", "true");
-  const selectedIcon = calculus.locator("[data-roadmap-node-icon]");
-  await expect(selectedIcon).toHaveCSS("background-color", "rgb(36, 95, 145)");
-  await expect(selectedIcon).toHaveCSS("color", "rgb(255, 255, 255)");
-  await expect(calculus.locator("span").last()).toHaveCSS("font-weight", "800");
-  await expect(roadmap.getByRole("link", { name: /Basic differentiation.*Not started/ })).toHaveAttribute("href", "/subjects/higher-maths/calculus/differentiation/basic-differentiation");
-  await roadmap.getByRole("button", { name: "Vectors" }).click();
-  await expect(roadmap.getByRole("button", { name: "Vectors" })).toHaveAttribute("aria-pressed", "true");
-  await expect(roadmap.getByRole("button", { name: "Vectors" })).toHaveAttribute("aria-current", "true");
-  await expect(calculus).not.toHaveAttribute("aria-current", "true");
-  await expect(roadmap.getByText("Coming soon").first()).toBeVisible();
+  const tracker = page.getByTestId("course-tracker");
+  await expect(tracker.getByRole("heading", { name: "Course tracker" })).toBeVisible();
+  await expect(page.getByTestId("course-tracker-coverage")).toHaveText("2 of 49 Higher Maths skills available");
+  await expect(tracker.locator('[data-testid^="tracker-skill-"]')).toHaveCount(49);
+  await expect(page.getByTestId("tracker-skill-basic-differentiation")).toContainText("Progress: Not started");
+  await expect(page.getByTestId("tracker-skill-chain-rule")).toContainText("Progress: Not started");
+  const unavailable = page.getByTestId("tracker-skill-trigonometric-differentiation");
+  await expect(unavailable).toContainText("Coming soon");
+  await expect(unavailable.getByRole("link")).toHaveCount(0);
+  const disclosure = tracker.locator("summary").first();
+  await disclosure.focus();
+  await disclosure.press("Enter");
+  await expect(disclosure.locator("xpath=parent::details")).toHaveAttribute("open", "");
   await expectNoDocumentOverflow(page);
 });
 

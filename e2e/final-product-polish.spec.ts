@@ -50,15 +50,14 @@ test("practice summary retains the app shell and exact-session retry priority", 
   await expect(retry).toBeFocused();
 });
 
-test("course roadmap fits desktop and preserves intentional narrow scrolling", async ({ page }) => {
+test("course tracker remains overflow-free at desktop and mobile widths", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/subjects/higher-maths");
-  const desktopOverflow = await roadmapOverflow(page);
-  expect(desktopOverflow).toBe(0);
+  await expect(page.getByTestId("course-tracker")).toBeVisible();
+  await expectNoHorizontalOverflow(page);
 
-  await page.setViewportSize({ width: 390, height: 844 });
-  const mobileOverflow = await roadmapOverflow(page);
-  expect(mobileOverflow).toBeGreaterThan(0);
+  await page.setViewportSize({ width: 375, height: 812 });
+  await expect(page.getByTestId("tracker-skill-area-between-curves")).toBeVisible();
   await expectNoHorizontalOverflow(page);
 });
 
@@ -92,13 +91,4 @@ async function expectSeparated(
     && firstBox!.y < secondBox!.y + secondBox!.height
     && firstBox!.y + firstBox!.height > secondBox!.y;
   expect(intersects).toBe(false);
-}
-
-async function roadmapOverflow(page: import("@playwright/test").Page) {
-  return page.evaluate(() => {
-    const heading = [...document.querySelectorAll("h2")].find((item) => item.textContent === "Roadmap");
-    const scroller = heading?.parentElement?.querySelector(".overflow-x-auto");
-    if (!scroller) throw new Error("Roadmap scroller was not found.");
-    return scroller.scrollWidth - scroller.clientWidth;
-  });
 }

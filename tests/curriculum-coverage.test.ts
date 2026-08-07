@@ -15,8 +15,15 @@ function liveCalculusSkillPaths() {
 }
 
 function buildReport() {
+  const calculusPointIds = new Set(higherMathematicsCalculusCoverageClaims.map((claim) => claim.specPointId));
+  const calculusPoints = higherMathematicsSpecificationRegister.points.filter((point) => calculusPointIds.has(point.specPointId));
+  const calculusAreaIds = new Set(calculusPoints.map((point) => point.areaId));
   return computeCurriculumCoverageReport({
-    register: higherMathematicsSpecificationRegister,
+    register: {
+      ...higherMathematicsSpecificationRegister,
+      areas: higherMathematicsSpecificationRegister.areas.filter((area) => calculusAreaIds.has(area.areaId)),
+      points: calculusPoints,
+    },
     claims: higherMathematicsCalculusCoverageClaims,
     contracts: higherMathematicsCalculusSkillContracts,
     prerequisiteEdges: higherMathematicsCalculusPrerequisites,

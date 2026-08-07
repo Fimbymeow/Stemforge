@@ -38,11 +38,11 @@ test("the source-verified Higher Mathematics specification register has no error
   assert.deepEqual(report.errors, []);
 });
 
-test("the register has six active areas and nineteen active points, all verified", () => {
+test("the register has nineteen active areas and fifty-eight active points, all verified", () => {
   const register = cloneRegister();
-  assert.equal(register.areas.filter((area) => area.status === "active").length, 6);
+  assert.equal(register.areas.filter((area) => area.status === "active").length, 19);
   const activePoints = register.points.filter((point) => point.status === "active");
-  assert.equal(activePoints.length, 19);
+  assert.equal(activePoints.length, 58);
   assert.ok(activePoints.every((point) => point.verificationStatus === "verified"));
 });
 
