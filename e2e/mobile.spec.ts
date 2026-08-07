@@ -91,8 +91,13 @@ test("mobile question interaction reaches the task early and keeps feedback and 
   expect(hintBox!.y).toBeLessThan(blockedBox!.y);
 
   await answer.focus();
-  await page.getByRole("button", { name: "insert x squared" }).click();
+  await page.getByRole("button", { name: "Insert x squared" }).click();
   await expect(answer).toHaveValue("x^2");
+  await page.getByRole("button", { name: "Move cursor left" }).click();
+  await expect(answer).toBeFocused();
+  await page.getByRole("button", { name: "Move cursor right" }).click();
+  await page.getByRole("button", { name: "Delete previous character" }).click();
+  await expect(answer).toHaveValue("x^");
   await answer.fill("4x^5");
   await page.getByRole("button", { name: "Submit Answer" }).click();
   const feedback = page.getByTestId("question-status");
