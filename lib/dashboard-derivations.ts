@@ -21,6 +21,7 @@ import type {
 } from "@/lib/progress/types";
 import { deriveLearnerNextAction, type LearnerNextAction } from "@/lib/learning/next-action";
 import { deriveMistakeLog } from "@/lib/mistakes/derivation";
+import { deriveSkillAttention } from "@/lib/attention/derivation";
 
 export type DashboardSyncInput = {
   status:
@@ -255,7 +256,7 @@ export function deriveLearnerDashboardModel(input: {
     nextAction: deriveLearnerNextAction({ evidence: input.evidence }),
     paths,
     recentActivity: deriveRecentActivity(input.evidence, 6),
-    needsWork: deriveNeedsWork(paths),
+    needsWork: deriveNeedsWork(paths, input.evidence, now),
     mistakes: { openCount: mistakes.openCount, href: mistakes.href },
     secureAndMastered: deriveSecureAndMastered(paths, input.evidence),
     weeklyActivity: deriveWeeklyActivity(input.evidence, now),
@@ -311,18 +312,20 @@ function deriveRecentActivity(evidence: ProgressEvidence, limit: number): Dashbo
     .slice(0, limit);
 }
 
-function deriveNeedsWork(paths: DashboardPathSummary[]): DashboardFocusItem[] {
+function deriveNeedsWork(paths: DashboardPathSummary[], evidence: ProgressEvidence, now: Date): DashboardFocusItem[] {
   return paths
-    .filter((path) => path.started && (path.reviewRecommendedCount > 0 || path.status === "in_progress" || path.status === "completed"))
-    .filter((path) => path.status !== "secure" && path.status !== "mastered")
-    .sort((left, right) => right.reviewRecommendedCount - left.reviewRecommendedCount || right.completionPercentage - left.completionPercentage || left.name.localeCompare(right.name))
+    .map((path) => {
+      const skillPath = contentResolver.getPathContext(path.skillPathId)?.skillPath;
+      return { path, attention: skillPath ? deriveSkillAttention({ skillPath, evidence, now }) : null };
+    })
+    .filter((item) => item.attention?.needsAttention)
+    .filter((item) => item.path.status !== "secure" && item.path.status !== "mastered")
+    .sort((left, right) => right.path.reviewRecommendedCount - left.path.reviewRecommendedCount || right.path.completionPercentage - left.path.completionPercentage || left.path.name.localeCompare(right.path.name))
     .slice(0, 4)
-    .map((path) => ({
+    .map(({ path, attention }) => ({
       pathId: path.skillPathId,
       title: path.name,
-      detail: path.reviewRecommendedCount > 0
-        ? `${path.reviewRecommendedCount} question${path.reviewRecommendedCount === 1 ? " needs" : "s need"} more practice`
-        : `${path.completionPercentage}% complete · not secure yet`,
+      detail: attention!.primaryReason.detail,
       href: path.nextHref,
       status: path.status,
       reviewRecommendedCount: path.reviewRecommendedCount,

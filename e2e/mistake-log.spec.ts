@@ -43,8 +43,10 @@ test("a real Basic Differentiation error appears automatically across bounded di
 
   await page.goto("/dashboard");
   await expect(page.getByTestId("dashboard-mistakes-link")).toHaveText(/1 unresolved mistake/);
+  await expect(page.getByText("1 unresolved question", { exact: true })).toBeVisible();
   await page.goto(BASIC_SKILL_HREF);
-  await expect(page.getByTestId("skill-mistakes-link")).toHaveText("1 unresolved mistake");
+  await expect(page.getByTestId("skill-attention-reason")).toHaveText("1 unresolved question");
+  await expect(page.getByTestId("skill-mistakes-link")).toHaveText("Open Mistake Log");
 });
 
 test("solution-assisted correctness leaves the mistake unresolved", async ({ page }) => {
@@ -53,6 +55,7 @@ test("solution-assisted correctness leaves the mistake unresolved", async ({ pag
   await openWorkedSolution(page);
   await page.reload();
   await submitAnswer(page, "5x^4");
+  await expect(page.getByTestId("question-status")).not.toContainText("clears an earlier mistake");
   await page.goto(MISTAKES_HREF);
   await expect(page.getByTestId("mistake-item")).toHaveAttribute("data-mistake-state", "open");
 });
@@ -61,12 +64,36 @@ test("later independent success moves a mistake into resolved history", async ({
   await openQuestion(page, QUESTION_IDS[0]);
   await submitAnswer(page, "4x^5");
   await retryAnswer(page, "5x^4");
+  await expect(page.getByTestId("question-status")).toContainText("clears an earlier mistake");
   await page.goto(MISTAKES_HREF);
   await expect(page.getByTestId("mistake-log-empty-state")).toBeVisible();
   const history = page.getByTestId("mistake-history-disclosure");
   await history.getByText(/Show resolved/).click();
   await expect(history.getByTestId("mistake-item")).toHaveAttribute("data-mistake-state", "resolved");
   await expect(history.getByTestId("mistake-item")).toContainText("Resolved independently");
+});
+
+test("hint-assisted correctness stays unresolved and never announces a clear", async ({ page }) => {
+  await openQuestion(page, QUESTION_IDS[0]);
+  await submitAnswer(page, "4x^5");
+  await page.getByRole("button", { name: "Try again" }).click();
+  await page.getByTestId("hint-control").click();
+  await submitAnswer(page, "5x^4");
+  await expect(page.getByTestId("question-status")).not.toContainText("clears an earlier mistake");
+  await page.goto(MISTAKES_HREF);
+  await expect(page.getByTestId("mistake-item")).toHaveAttribute("data-mistake-state", "open");
+});
+
+test("updated content explanation preserves historical progress wording", async ({ page }) => {
+  await seedStoredProgress(page, payload([
+    currentAttempt(QUESTION_IDS[1], 1, {
+      versionEvidence: { kind: "known", questionVersion: QUESTION_VERSIONS[QUESTION_IDS[1]] - 1 },
+    }),
+  ]));
+  await page.goto("/dashboard");
+  await expect(page.getByText("Updated content needs a quick recheck. Your earlier progress is saved.")).toBeVisible();
+  await page.goto(BASIC_SKILL_HREF);
+  await expect(page.getByTestId("skill-attention-reason")).toContainText("earlier progress is saved");
 });
 
 test("a later real error reopens a resolved mistake", async ({ page }) => {

@@ -7,6 +7,7 @@ import type { PracticeSession } from "@/lib/practice/practice-types";
 import { deriveSkillReviewState } from "@/lib/review/derivation";
 import { deriveMistakeLog } from "@/lib/mistakes/derivation";
 import type { ReviewDueReason } from "@/lib/review/types";
+import { deriveSkillAttention, type AttentionReasonCode } from "@/lib/attention/derivation";
 
 export const WORKING_CONTEXT_NOTES_ORIGIN_PREFIX = "stemforge:working-context-notes-origin:";
 
@@ -41,6 +42,9 @@ export type WorkingContextModel = {
   questionBankHref: string;
   mistakesHref: string | null;
   openMistakeCount: number;
+  attentionReasonCode: AttentionReasonCode;
+  attentionDetail: string;
+  needsAttention: boolean;
   completed: number;
   total: number;
   isComplete: boolean;
@@ -114,6 +118,7 @@ export function deriveWorkingContextModel(input: {
     && progress.completedQuestionIds.length >= progress.totalQuestions;
   const reviewState = deriveSkillReviewState(context.skillPath, input.evidence);
   const mistakeLog = deriveMistakeLog(input.evidence, context.subject.subjectSlug);
+  const attention = deriveSkillAttention({ skillPath: context.skillPath, evidence: input.evidence });
   const openMistakeCount = mistakeLog.openGroups.find((group) =>
     group.skillPathId === input.pathId)?.items.length ?? 0;
   const reviewQuestionIds = [...new Set([
@@ -181,6 +186,9 @@ export function deriveWorkingContextModel(input: {
     questionBankHref: `/subjects/${context.subject.subjectSlug}/question-bank`,
     mistakesHref: openMistakeCount > 0 ? mistakeLog.href : null,
     openMistakeCount,
+    attentionReasonCode: attention.primaryReason.code,
+    attentionDetail: attention.primaryReason.detail,
+    needsAttention: attention.needsAttention,
     completed: progress.completedQuestionIds.length,
     total: progress.totalQuestions,
     isComplete,

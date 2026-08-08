@@ -1,6 +1,6 @@
 # Automatic mistake-log design
 
-Status: design only; not implemented in Sprint 2B.
+Status: implemented as a version-safe read-side projection in Sprint 4B, connected to remediation in Sprint 4C and learner explanation in Sprint 4D.
 
 ## Evidence rule
 
@@ -28,4 +28,3 @@ Open mistake evidence may feed the existing Review candidate derivation. A sched
 ## Future learner classification
 
 Optional classifications such as `Didn't know how`, `Forgot the method`, `Calculation error`, `Misread`, `Exam technique`, and `Ran out of time` require a separate evidence event and schema. They are not inferred and are not part of V1 automatic capture.
-

@@ -20,6 +20,7 @@ import { recordPathCelebrated, recordStageCelebrated } from "@/lib/completion-tr
 import { getQuestionContext, getQuestionHref } from "@/lib/learning-paths";
 import {
   getEmptyProgressEvidence,
+  getProgressEvidence,
   getQuestionProgress,
   getSkillPathProgress,
   recordGuidedSelfAssessment,
@@ -52,6 +53,7 @@ import {
   questionHelpNotesHref,
 } from "@/lib/working-context";
 import type { GuidedSelfAssessmentOutcome } from "@/lib/progress/types";
+import { didCurrentSubmissionResolveMistake } from "@/lib/mistakes/resolution-feedback";
 
 type SubmissionIntent = "keyboard" | "pointer";
 
@@ -84,6 +86,7 @@ export function QuestionWorkspace({
   const [solutionOpenedThisInteraction, setSolutionOpenedThisInteraction] = useState(false);
   const [selfAssessmentSaving, setSelfAssessmentSaving] = useState(false);
   const [selfAssessmentError, setSelfAssessmentError] = useState<string | null>(null);
+  const [clearedEarlierMistake, setClearedEarlierMistake] = useState(false);
   const [progressVersion, setProgressVersion] = useState(0);
   const [showCompletionPanel, setShowCompletionPanel] = useState(false);
   const [showStageCompletionPanel, setShowStageCompletionPanel] = useState(false);
@@ -165,6 +168,7 @@ export function QuestionWorkspace({
     setSolutionOpenedThisInteraction(false);
     setSelfAssessmentSaving(false);
     setSelfAssessmentError(null);
+    setClearedEarlierMistake(false);
     setShowCompletionPanel(false);
     setShowStageCompletionPanel(false);
   }, [draftKey, draftIdentity, mathInputCapabilities, shouldPersist, usesRichMathInput]);
@@ -259,6 +263,7 @@ export function QuestionWorkspace({
   async function handleSubmit() {
     if (submitted || submitting || session?.answerLocked) return;
     setSubmitting(true);
+    setClearedEarlierMistake(false);
     try {
       let answerForMarking = answer;
       if (usesRichMathInput) {
@@ -280,6 +285,7 @@ export function QuestionWorkspace({
         showFeedback(classified);
         return;
       }
+      const evidenceBefore = shouldPersist ? getProgressEvidence() : null;
       const saved = !shouldPersist || await saveQuestionAttempt({
         questionId: question.id,
         skillPathId: question.skillPathId ?? skillPath?.slug ?? "unknown",
@@ -296,6 +302,16 @@ export function QuestionWorkspace({
       if (!saved) {
         showFeedback(internalAnswerFailureFeedback());
         return;
+      }
+      if (evidenceBefore && marking.isCorrect === true) {
+        setClearedEarlierMistake(didCurrentSubmissionResolveMistake({
+          before: evidenceBefore,
+          after: getProgressEvidence(),
+          questionId: question.id,
+          questionVersion: question.questionVersion,
+          skillPathId: question.skillPathId ?? skillPath?.slug ?? "unknown",
+          subjectSlug: context?.subject.subjectSlug,
+        }));
       }
       setSubmittedAnswer(answerForMarking);
       setSubmitted(true);
@@ -357,6 +373,7 @@ export function QuestionWorkspace({
     setSubmitted(false);
     setFeedback(null);
     setSolutionOpenedThisInteraction(false);
+    setClearedEarlierMistake(false);
     window.requestAnimationFrame(() => {
       const input = document.getElementById("question-answer") as HTMLInputElement | HTMLTextAreaElement | HTMLElement | null;
       input?.focus();
@@ -376,7 +393,9 @@ export function QuestionWorkspace({
     : isCorrect
       ? hintViewed
         ? "Correct. Using support is a normal part of learning — answering on your own next time is even stronger practice for the exam."
-        : "Your answer matches an accepted result. You can compare it with the worked solution."
+        : clearedEarlierMistake
+          ? "Your answer matches an accepted result — and this clears an earlier mistake."
+          : "Your answer matches an accepted result. You can compare it with the worked solution."
       : completedWithCurrentSolution
         ? "You used the solution to complete this question. It remains recommended for review."
         : feedback?.message;

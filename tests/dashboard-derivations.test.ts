@@ -50,7 +50,7 @@ test("incomplete and review-recommended evidence drives the needs-work lane", ()
 
   assert.equal(model.nextAction.kind, "resume_question");
   assert.equal(model.needsWork[0]?.pathId, "basic-differentiation");
-  assert.match(model.needsWork[0]?.detail ?? "", /needs more practice/i);
+  assert.equal(model.needsWork[0]?.detail, "1 unresolved question");
 });
 
 test("current mastered evidence appears in the secure and mastered lane", () => {
