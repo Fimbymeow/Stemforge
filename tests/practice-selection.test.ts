@@ -78,7 +78,7 @@ test("needs-work uses canonical review/completion evidence and has a useful empt
   assert.equal(needsWork.session?.questionReferences[0]?.questionId, fixtureIds.questions[0]);
 });
 
-test("retry-incorrect uses latest current-version genuine attempt only", () => {
+test("retry-incorrect includes only currently open mistake groups", () => {
   const source = createTwoPathFixture();
   const incorrect = selectRetryIncorrectPractice({
     courseId: "calculus",
@@ -101,6 +101,99 @@ test("retry-incorrect uses latest current-version genuine attempt only", () => {
     source,
   });
   assert.equal(laterCorrect.session, null);
+});
+
+test("retry-incorrect counts grouped questions, keeps assisted success open and excludes malformed evidence", () => {
+  const source = createTwoPathFixture();
+  const firstQuestion = fixtureIds.questions[0];
+  const secondQuestion = fixtureIds.questions[1];
+  const result = selectRetryIncorrectPractice({
+    courseId: "calculus",
+    selectedPathIds: [fixtureIds.path],
+    requestedCount: 10,
+    seed: "grouped-open-mistakes",
+    evidence: evidence([
+      attempt({ questionId: firstQuestion, skillPathId: fixtureIds.path, stageId: fixtureIds.foundationsStage, isCorrect: false, sequence: 1, eventId: "grouped-wrong-1" }),
+      attempt({ questionId: firstQuestion, skillPathId: fixtureIds.path, stageId: fixtureIds.foundationsStage, isCorrect: false, sequence: 2, eventId: "grouped-wrong-2", attemptedAt: "2026-07-12T10:02:00.000Z" }),
+      attempt({ questionId: firstQuestion, skillPathId: fixtureIds.path, stageId: fixtureIds.foundationsStage, isCorrect: true, sequence: 3, eventId: "grouped-assisted-correct", attemptedAt: "2026-07-12T10:03:00.000Z", hintViewedBeforeSubmission: true }),
+      attempt({ questionId: secondQuestion, skillPathId: fixtureIds.path, stageId: fixtureIds.foundationsStage, isCorrect: false, sequence: 4, eventId: "malformed-wrong", attemptedAt: "2026-07-12T10:04:00.000Z", outcomeKind: "malformed" }),
+    ]),
+    source,
+  });
+
+  assert.equal(result.eligibleQuestions.length, 1);
+  assert.deepEqual(result.session?.questionReferences.map((reference) => reference.questionId), [firstQuestion]);
+});
+
+test("retry-incorrect excludes resolved and previous-version mistakes, then includes reopened and current-version mistakes", () => {
+  const source = createTwoPathFixture();
+  const questionId = fixtureIds.questions[0];
+  const base = {
+    questionId,
+    skillPathId: fixtureIds.path,
+    stageId: fixtureIds.foundationsStage,
+  };
+  const select = (attempts: ReturnType<typeof attempt>[]) => selectRetryIncorrectPractice({
+    courseId: "calculus",
+    selectedPathIds: [fixtureIds.path],
+    requestedCount: 10,
+    seed: "state-transitions",
+    evidence: evidence(attempts),
+    source,
+  });
+
+  assert.equal(select([
+    attempt({ ...base, isCorrect: false, sequence: 1, eventId: "resolved-wrong" }),
+    attempt({ ...base, isCorrect: true, sequence: 2, eventId: "resolved-correct", attemptedAt: "2026-07-12T10:02:00.000Z" }),
+  ]).session, null);
+  assert.equal(select([
+    attempt({ ...base, isCorrect: false, sequence: 1, eventId: "reopen-wrong-1" }),
+    attempt({ ...base, isCorrect: true, sequence: 2, eventId: "reopen-correct", attemptedAt: "2026-07-12T10:02:00.000Z" }),
+    attempt({ ...base, isCorrect: false, sequence: 3, eventId: "reopen-wrong-2", attemptedAt: "2026-07-12T10:03:00.000Z" }),
+  ]).eligibleQuestions.length, 1);
+  const versionedSource = structuredClone(source);
+  versionedSource.questions.find((question) => question.id === questionId)!.questionVersion = 2;
+  const selectVersioned = (attempts: ReturnType<typeof attempt>[]) => selectRetryIncorrectPractice({
+    courseId: "calculus",
+    selectedPathIds: [fixtureIds.path],
+    requestedCount: 10,
+    seed: "version-safety",
+    evidence: evidence(attempts),
+    source: versionedSource,
+  });
+  assert.equal(selectVersioned([
+    attempt({ ...base, isCorrect: false, sequence: 1, eventId: "old-version-wrong" }),
+  ]).session, null);
+  assert.equal(selectVersioned([
+    attempt({ ...base, isCorrect: false, sequence: 1, eventId: "old-version-wrong-2" }),
+    attempt({ ...base, isCorrect: false, sequence: 2, eventId: "current-version-wrong", attemptedAt: "2026-07-12T10:02:00.000Z", versionEvidence: { kind: "known", questionVersion: 2 } }),
+  ]).eligibleQuestions.length, 1);
+});
+
+test("retry-incorrect preserves deterministic ordering and strict skill scoping", () => {
+  const source = createTwoPathFixture();
+  const attempts = [
+    attempt({ questionId: fixtureIds.questions[0], skillPathId: fixtureIds.path, stageId: fixtureIds.foundationsStage, isCorrect: false, sequence: 1, eventId: "scope-fixture-1" }),
+    attempt({ questionId: fixtureIds.questions[1], skillPathId: fixtureIds.path, stageId: fixtureIds.foundationsStage, isCorrect: false, sequence: 2, eventId: "scope-fixture-2", attemptedAt: "2026-07-12T10:02:00.000Z" }),
+    attempt({ isCorrect: false, sequence: 3, eventId: "scope-basic", attemptedAt: "2026-07-12T10:03:00.000Z" }),
+  ];
+  const select = (selectedPathIds: string[]) => selectRetryIncorrectPractice({
+    courseId: "calculus",
+    selectedPathIds,
+    requestedCount: 10,
+    seed: "deterministic-scope",
+    evidence: evidence(attempts),
+    source,
+  });
+  const fixtureOnly = select([fixtureIds.path]);
+  const repeated = select([fixtureIds.path]);
+  const basicOnly = select(["basic-differentiation"]);
+  const subjectWide = select([]);
+
+  assert.deepEqual(fixtureOnly.session?.questionReferences, repeated.session?.questionReferences);
+  assert(fixtureOnly.session?.questionReferences.every((reference) => reference.pathId === fixtureIds.path));
+  assert.deepEqual(basicOnly.session?.questionReferences.map((reference) => reference.pathId), ["basic-differentiation"]);
+  assert.deepEqual(new Set(subjectWide.session?.questionReferences.map((reference) => reference.pathId)), new Set([fixtureIds.path, "basic-differentiation"]));
 });
 
 test("completed-session retry preserves only the supplied failures in original session order", () => {
@@ -146,9 +239,9 @@ test("practice setup hides choices over one while preserving future multi-option
     showPathChoice: true,
     showMixedMode: true,
   });
-  assert.deepEqual(deriveVisiblePracticeModes({ pathCount: 1, hasNeedsWork: false }), ["targeted"]);
-  assert.deepEqual(deriveVisiblePracticeModes({ pathCount: 1, hasNeedsWork: true }), ["targeted", "needs_work"]);
-  assert.deepEqual(deriveVisiblePracticeModes({ pathCount: 2, hasNeedsWork: true }), ["targeted", "needs_work", "mixed"]);
+  assert.deepEqual(deriveVisiblePracticeModes({ pathCount: 1, hasNeedsWork: false, hasRetryIncorrect: false }), ["targeted"]);
+  assert.deepEqual(deriveVisiblePracticeModes({ pathCount: 1, hasNeedsWork: true, hasRetryIncorrect: false }), ["targeted", "needs_work"]);
+  assert.deepEqual(deriveVisiblePracticeModes({ pathCount: 2, hasNeedsWork: true, hasRetryIncorrect: true }), ["targeted", "needs_work", "retry_incorrect", "mixed"]);
 });
 
 test("archived questions are excluded and supported graph questions are adopted generically", () => {

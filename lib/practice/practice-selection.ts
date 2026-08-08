@@ -1,4 +1,5 @@
 import { canonicalContent, type CanonicalContentSource } from "@/data/canonical-content";
+import { deriveMistakeLog } from "@/lib/mistakes/derivation";
 import { getQuestionProgressForVersion } from "@/lib/progress/calculations";
 import type { ProgressEvidence } from "@/lib/progress/types";
 import { isGradedAttempt, isGradedIncorrectAttempt } from "@/lib/progress/attempt-outcomes";
@@ -33,7 +34,7 @@ export function createPracticeSessionSelection(
   const pathFiltered = input.selectedPathIds.length
     ? courseFiltered.filter((item) => input.selectedPathIds.includes(item.reference.pathId))
     : courseFiltered;
-  const candidates = filterForMode(input.mode, pathFiltered, input.evidence);
+  const candidates = filterForMode(input.mode, pathFiltered, input.evidence, source);
   const selected = selectForMode(input.mode, candidates, requestedCount, input.seed, input.evidence);
   const shortageReason = selected.length === 0
     ? emptyReason(input.mode)
@@ -158,7 +159,12 @@ function createSessionSubsetRetry(
   };
 }
 
-function filterForMode(mode: PracticeMode, candidates: EligiblePracticeQuestion[], evidence: ProgressEvidence) {
+function filterForMode(
+  mode: PracticeMode,
+  candidates: EligiblePracticeQuestion[],
+  evidence: ProgressEvidence,
+  source: CanonicalContentSource,
+) {
     if (mode === "needs_work") {
       return candidates.filter((item) => {
         const progress = getQuestionProgressForVersion(item.reference.questionId, item.reference.questionVersion, evidence, item.reference.pathId);
@@ -167,10 +173,13 @@ function filterForMode(mode: PracticeMode, candidates: EligiblePracticeQuestion[
     });
   }
   if (mode === "retry_incorrect") {
-    return candidates.filter((item) => {
-      const attempt = latestCurrentGradedAttempt(item, evidence);
-      return Boolean(attempt && isGradedIncorrectAttempt(attempt));
-    });
+    const openMistakes = new Set(
+      unique(candidates.map((item) => item.reference.subjectId)).flatMap((subjectSlug) =>
+        deriveMistakeLog(evidence, subjectSlug, source).openGroups.flatMap((group) =>
+          group.items.map((item) => `${item.questionId}\0${item.questionVersion}`))),
+    );
+    return candidates.filter((item) =>
+      openMistakes.has(`${item.reference.questionId}\0${item.reference.questionVersion}`));
   }
   return candidates;
 }

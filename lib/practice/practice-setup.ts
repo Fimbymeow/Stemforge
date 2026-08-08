@@ -12,10 +12,15 @@ export function derivePracticeSetupVisibility(courseCount: number, pathCount: nu
   };
 }
 
-export function deriveVisiblePracticeModes(input: { pathCount: number; hasNeedsWork: boolean }) {
+export function deriveVisiblePracticeModes(input: {
+  pathCount: number;
+  hasNeedsWork: boolean;
+  hasRetryIncorrect: boolean;
+}): Array<"targeted" | "needs_work" | "retry_incorrect" | "mixed"> {
   return [
     "targeted",
     ...(input.hasNeedsWork ? ["needs_work"] as const : []),
+    ...(input.hasRetryIncorrect ? ["retry_incorrect"] as const : []),
     ...(input.pathCount > 1 ? ["mixed"] as const : []),
   ];
 }

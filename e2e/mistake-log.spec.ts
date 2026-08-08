@@ -1,4 +1,5 @@
 import { contentResolver } from "../lib/content-resolver";
+import { PRACTICE_SESSIONS_STORAGE_KEY } from "../lib/practice/practice-types";
 import type { ProgressPayload, QuestionAttempt } from "../lib/progress/types";
 import { expect, test } from "./fixtures/test";
 import {
@@ -24,6 +25,7 @@ test("fresh learner sees a calm empty Mistake Log", async ({ page }) => {
   await expect(page.getByRole("heading", { level: 1, name: "Mistake Log" })).toBeVisible();
   await expect(page.getByTestId("mistake-log-empty-state")).toContainText("No unresolved mistakes right now");
   await expect(page.getByTestId("mistake-item")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /Practise .* mistakes/ })).toHaveCount(0);
   await page.goto("/dashboard");
   await expect(page.getByTestId("dashboard-mistakes-link")).toHaveCount(0);
 });
@@ -86,6 +88,67 @@ test("two Chain Rule errors remain two questions in one skill group", async ({ p
   await expect(group).toHaveCount(1);
   await expect(group).toHaveAttribute("data-skill-path-id", "chain-rule");
   await expect(group.getByTestId("mistake-item")).toHaveCount(2);
+  await expect(group).toContainText("2 unresolved questions");
+  await group.getByRole("button", { name: "Practise Chain rule mistakes" }).click();
+  await expect(page).toHaveURL(/\/practice\/session\//);
+  const session = await readActiveSession(page);
+  expect(session.mode).toBe("retry_incorrect");
+  expect(session.origin).toBe("retry_incorrect");
+  expect(session.questionIds).toEqual(expect.arrayContaining(CHAIN_IDS));
+  expect(session.questionIds).toHaveLength(2);
+  expect(new Set(session.pathIds)).toEqual(new Set(["chain-rule"]));
+});
+
+test("Practice setup exposes one grouped Retry mistakes mode only while a mistake is open", async ({ page }) => {
+  await page.goto("/practice?path=basic-differentiation");
+  await page.getByText("Choose practice options", { exact: true }).click();
+  await expect(page.getByRole("button", { name: /Retry mistakes/ })).toHaveCount(0);
+
+  await seedStoredProgress(page, payload([
+    currentAttempt(QUESTION_IDS[0], 1, { isCorrect: false, answer: "wrong" }),
+    currentAttempt(QUESTION_IDS[0], 2, { isCorrect: false, answer: "wrong again" }),
+  ]));
+  await page.goto("/practice?path=basic-differentiation");
+  await page.getByText("Choose practice options", { exact: true }).click();
+  const retryMode = page.getByRole("button", { name: /Retry mistakes/ });
+  await expect(retryMode).toContainText("1 unresolved mistake");
+  await retryMode.click();
+  await page.getByRole("button", { name: "Start mistake practice" }).click();
+  await expect(page).toHaveURL(/\/practice\/session\//);
+  expect((await readActiveSession(page)).questionIds).toEqual([QUESTION_IDS[0]]);
+});
+
+test("solution-assisted success in remediation remains open and independently correct work resolves it", async ({ page }) => {
+  await openQuestion(page, QUESTION_IDS[0]);
+  await submitAnswer(page, "4x^5");
+  await page.goto(MISTAKES_HREF);
+  await page.getByRole("button", { name: "Practise Basic differentiation mistakes" }).click();
+  await expect(page).toHaveURL(/\/practice\/session\//);
+  await openWorkedSolution(page);
+  await page.reload();
+  await submitAnswer(page, "5x^4");
+  await page.goto(MISTAKES_HREF);
+  await expect(page.getByTestId("mistake-item")).toHaveAttribute("data-mistake-state", "open");
+  await expect(page.getByRole("button", { name: "Practise Basic differentiation mistakes" })).toBeVisible();
+
+  await page.getByRole("link", { name: "Retry Basic differentiation question 1" }).click();
+  await submitAnswer(page, "5x^4");
+  await page.goto(MISTAKES_HREF);
+  await expect(page.getByTestId("mistake-log-empty-state")).toBeVisible();
+  await expect(page.getByRole("button", { name: /Practise .* mistakes/ })).toHaveCount(0);
+});
+
+test("Basic-scoped remediation excludes an open Chain Rule mistake", async ({ page }) => {
+  await seedStoredProgress(page, payload([
+    currentAttempt(QUESTION_IDS[0], 1, { isCorrect: false, answer: "wrong" }),
+    canonicalAttempt(CHAIN_IDS[0], 2, false),
+  ]));
+  await page.goto(MISTAKES_HREF);
+  await page.getByRole("button", { name: "Practise Basic differentiation mistakes" }).click();
+  await expect(page).toHaveURL(/\/practice\/session\//);
+  const session = await readActiveSession(page);
+  expect(session.questionIds).toEqual([QUESTION_IDS[0]]);
+  expect(session.pathIds).toEqual(["basic-differentiation"]);
 });
 
 test("Basic and Chain mistakes are separated by skill and remain clean at 375px and 320px", async ({ page }) => {
@@ -99,6 +162,7 @@ test("Basic and Chain mistakes are separated by skill and remain clean at 375px 
     await page.goto(MISTAKES_HREF);
     await expect(page.getByTestId("mistake-skill-group")).toHaveCount(2);
     await expect(page.getByRole("link", { name: /^Retry / })).toHaveCount(2);
+    await expect(page.getByRole("button", { name: /Practise .* mistakes/ })).toHaveCount(2);
     await expectNoHorizontalOverflow(page);
   }
 });
@@ -116,6 +180,7 @@ test("an older question-version error stays history and does not appear unresolv
   const item = page.getByTestId("mistake-item");
   await expect(item).toHaveAttribute("data-mistake-state", "historical");
   await expect(item).toContainText("Previous version");
+  await expect(page.getByRole("button", { name: /Practise .* mistakes/ })).toHaveCount(0);
 });
 
 test("malformed evidence cannot substitute an unavailable or different skill", async ({ page }) => {
@@ -154,4 +219,17 @@ function canonicalAttempt(questionId: string, sequence: number, isCorrect: boole
     versionEvidence: { kind: "known", questionVersion: context.question.questionVersion },
     eventId: `attempt_mistake_e2e_${questionId}_${sequence}`,
   };
+}
+
+async function readActiveSession(page: import("@playwright/test").Page) {
+  return page.evaluate((key) => {
+    const store = JSON.parse(localStorage.getItem(key)!);
+    const session = store.sessions.find((item: { sessionId: string }) => item.sessionId === store.activeSessionId);
+    return {
+      mode: session.mode as string,
+      origin: session.origin as string,
+      questionIds: session.questionReferences.map((reference: { questionId: string }) => reference.questionId) as string[],
+      pathIds: session.questionReferences.map((reference: { pathId: string }) => reference.pathId) as string[],
+    };
+  }, PRACTICE_SESSIONS_STORAGE_KEY);
 }

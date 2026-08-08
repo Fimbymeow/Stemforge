@@ -2,9 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, BookOpen, CheckCircle2, RotateCcw } from "lucide-react";
+import { ArrowLeft, BookOpen, CheckCircle2, Dumbbell, RotateCcw } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { AppTopbar } from "@/components/layout/app-topbar";
+import { usePracticeActivation } from "@/components/practice/use-practice-activation";
 import { getEmptyProgressEvidence, getProgressEvidence } from "@/lib/local-progress";
 import {
   deriveMistakeLog,
@@ -12,8 +13,11 @@ import {
   type MistakeSkillGroup,
 } from "@/lib/mistakes/derivation";
 import type { ProgressEvidence } from "@/lib/progress/types";
+import { selectRetryIncorrectPractice } from "@/lib/practice/practice-selection";
+import { MAX_PRACTICE_QUESTIONS } from "@/lib/practice/practice-types";
 
 export function MistakeLogPage() {
+  const activation = usePracticeActivation();
   const [evidence, setEvidence] = useState<ProgressEvidence>(() => getEmptyProgressEvidence());
 
   useEffect(() => {
@@ -31,6 +35,19 @@ export function MistakeLogPage() {
 
   const model = useMemo(() => deriveMistakeLog(evidence), [evidence]);
   const historyCount = model.historyGroups.reduce((total, group) => total + group.items.length, 0);
+
+  function startMistakePractice(group: MistakeSkillGroup) {
+    const latestEvidence = getProgressEvidence();
+    const result = selectRetryIncorrectPractice({
+      origin: "retry_incorrect",
+      courseId: group.items[0].courseId,
+      selectedPathIds: [group.skillPathId],
+      requestedCount: MAX_PRACTICE_QUESTIONS,
+      seed: `mistake-log:${group.skillPathId}`,
+      evidence: latestEvidence,
+    });
+    if (result.session) void activation.begin(result.session);
+  }
 
   return (
     <AppShell demo active="Subjects">
@@ -61,7 +78,14 @@ export function MistakeLogPage() {
 
           {model.openGroups.length ? (
             <div className="grid gap-7">
-              {model.openGroups.map((group) => <MistakeGroup key={group.skillPathId} group={group} />)}
+              {model.openGroups.map((group) => (
+                <MistakeGroup
+                  key={group.skillPathId}
+                  group={group}
+                  practiceBusy={activation.busy}
+                  onPractice={() => startMistakePractice(group)}
+                />
+              ))}
             </div>
           ) : (
             <div className="rounded-xl border border-line bg-white px-5 py-7" data-testid="mistake-log-empty-state">
@@ -81,25 +105,49 @@ export function MistakeLogPage() {
             </div>
           </details>
         ) : null}
+        {activation.error ? <p role="alert" className="text-sm font-bold text-danger">{activation.error}</p> : null}
       </main>
+      {activation.activationUi}
     </AppShell>
   );
 }
 
-function MistakeGroup({ group, history = false }: { group: MistakeSkillGroup; history?: boolean }) {
+function MistakeGroup({
+  group,
+  history = false,
+  practiceBusy = false,
+  onPractice,
+}: {
+  group: MistakeSkillGroup;
+  history?: boolean;
+  practiceBusy?: boolean;
+  onPractice?: () => void;
+}) {
   const headingId = `${history ? "history" : "open"}-mistakes-${group.skillPathId}`;
   return (
     <section aria-labelledby={headingId} data-testid="mistake-skill-group" data-skill-path-id={group.skillPathId}>
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
+      <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h3 id={headingId} className="text-lg font-extrabold">{group.skillName}</h3>
           <p className="mt-1 text-sm font-semibold text-muted">{mistakeCount(group.items.length, history ? "history item" : "unresolved question")}</p>
         </div>
-        {group.officialRequirementCount > 0 ? (
-          <Link href="/subjects/higher-maths/course-tracker" className="min-h-10 py-2 text-sm font-bold text-muted underline-offset-4 hover:text-forge hover:underline">
-            View official requirements ({group.officialRequirementCount})
-          </Link>
-        ) : null}
+        <div className="flex flex-wrap items-center gap-2">
+          {!history && onPractice ? (
+            <button
+              type="button"
+              onClick={onPractice}
+              disabled={practiceBusy}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-forge px-4 text-sm font-extrabold text-forge disabled:opacity-45"
+            >
+              <Dumbbell aria-hidden="true" className="size-4" /> Practise {group.skillName} mistakes
+            </button>
+          ) : null}
+          {group.officialRequirementCount > 0 ? (
+            <Link href="/subjects/higher-maths/course-tracker" className="min-h-10 py-2 text-sm font-bold text-muted underline-offset-4 hover:text-forge hover:underline">
+              View official requirements ({group.officialRequirementCount})
+            </Link>
+          ) : null}
+        </div>
       </div>
       <ul className="mt-3 divide-y divide-line border-y border-line bg-white" aria-label={`${group.skillName} ${history ? "mistake history" : "unresolved mistakes"}`}>
         {group.items.map((item) => <MistakeRow key={item.groupId} item={item} />)}

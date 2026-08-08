@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, ChevronDown, Clock, SlidersHorizontal, Target } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
@@ -12,15 +12,17 @@ import { contentResolver } from "@/lib/content-resolver";
 import { getEmptyProgressEvidence, getProgressEvidence } from "@/lib/local-progress";
 import { createPracticeSessionSelection } from "@/lib/practice/practice-selection";
 import { derivePracticeSetupVisibility, deriveVisiblePracticeModes } from "@/lib/practice/practice-setup";
-import type { PracticeMode, PracticeTiming } from "@/lib/practice/practice-types";
+import { MAX_PRACTICE_QUESTIONS, type PracticeMode, type PracticeTiming } from "@/lib/practice/practice-types";
 import { useHasMounted } from "@/lib/use-mounted";
 import { createReviewSessionSelection } from "@/lib/review/selection";
 
-const modeCopy: Record<Exclude<PracticeMode, "retry_incorrect">, { title: string; detail: string }> = {
+type ConfigurablePracticeMode = Exclude<PracticeMode, "review">;
+
+const modeCopy: Record<ConfigurablePracticeMode, { title: string; detail: string }> = {
   targeted: { title: "Path practice", detail: "Practise available questions from one path." },
   mixed: { title: "Mixed practice", detail: "Balance questions across multiple available paths." },
   needs_work: { title: "Needs more practice", detail: "Revisit unfinished questions and questions that would benefit from another attempt." },
-  review: { title: "Review", detail: "Complete due scheduled Review through a focused Practice Session." },
+  retry_incorrect: { title: "Retry mistakes", detail: "Practise unresolved questions you previously got wrong." },
 };
 
 export function PracticeSetup({
@@ -38,7 +40,7 @@ export function PracticeSetup({
   const paths = useMemo(() => contentResolver.getAllPathContexts().filter((context) => context.skillPath.isAvailable), []);
   const workingContextPath = paths.find((context) => context.skillPath.slug === workingContextPathId);
   const courses = [...new Map(paths.map((context) => [context.courseArea.slug, context.courseArea])).values()];
-  const [mode, setMode] = useState<Exclude<PracticeMode, "retry_incorrect">>("targeted");
+  const [mode, setMode] = useState<ConfigurablePracticeMode>("targeted");
   const [courseId, setCourseId] = useState(courses[0]?.slug ?? "");
   const availablePaths = paths.filter((context) => context.courseArea.slug === courseId);
   const hasWorkingContextPrefill = availablePaths.some((item) => item.skillPath.slug === workingContextPathId);
@@ -63,19 +65,37 @@ export function PracticeSetup({
     evidence,
     now: new Date("2026-01-01T00:00:00.000Z"),
   });
+  const retryIncorrectPreview = createPracticeSessionSelection({
+    origin: "retry_incorrect",
+    mode: "retry_incorrect",
+    courseId,
+    selectedPathIds: selectedPathId ? [selectedPathId] : [],
+    requestedCount: MAX_PRACTICE_QUESTIONS,
+    seed: "practice-preview:retry-incorrect",
+    evidence,
+    now: new Date("2026-01-01T00:00:00.000Z"),
+  });
   const visibleModes = deriveVisiblePracticeModes({
     pathCount: availablePaths.length,
     hasNeedsWork: Boolean(needsWorkPreview.session),
-  }) as Exclude<PracticeMode, "retry_incorrect">[];
+    hasRetryIncorrect: Boolean(retryIncorrectPreview.session),
+  });
+  const retryIncorrectCount = retryIncorrectPreview.eligibleQuestions.length;
+  useEffect(() => {
+    if (!visibleModes.includes(mode)) setMode("targeted");
+  }, [mode, visibleModes]);
+  const configuredTiming = mode === "targeted" || mode === "mixed"
+    ? timing(timed, timeLimitMinutes)
+    : { type: "untimed" as const };
   const preview = createPracticeSessionSelection({
-    origin: sessionOrigin,
+    origin: mode === "retry_incorrect" ? "retry_incorrect" : sessionOrigin,
     mode,
     courseId,
     selectedPathIds,
     requestedCount: questionCount,
     seed: `practice-preview:${mode}`,
     evidence,
-    timing: timing(timed, timeLimitMinutes),
+    timing: configuredTiming,
     now: new Date("2026-01-01T00:00:00.000Z"),
   });
   const reviewPreview = createReviewSessionSelection({
@@ -85,14 +105,14 @@ export function PracticeSetup({
 
   function startConfiguredSession() {
     const result = createPracticeSessionSelection({
-      origin: sessionOrigin,
+      origin: mode === "retry_incorrect" ? "retry_incorrect" : sessionOrigin,
       mode,
       courseId,
       selectedPathIds,
       requestedCount: questionCount,
       seed: `practice:${mode}:${courseId}:${selectedPathIds.join(",")}:${questionCount}`,
       evidence: getProgressEvidence(),
-      timing: timing(timed, timeLimitMinutes),
+      timing: configuredTiming,
     });
     if (!result.session) return;
     void activation.begin(result.session);
@@ -202,7 +222,11 @@ export function PracticeSetup({
                       className={`rounded-xl border p-4 text-left ${mode === item ? "border-forge bg-forge-soft" : "border-line bg-white"}`}
                     >
                       <strong>{modeCopy[item].title}</strong>
-                      <span className="mt-1 block text-sm text-muted">{modeCopy[item].detail}</span>
+                      <span className="mt-1 block text-sm text-muted">
+                        {item === "retry_incorrect"
+                          ? `${mistakeCount(retryIncorrectCount)}. ${modeCopy[item].detail}`
+                          : modeCopy[item].detail}
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -259,7 +283,7 @@ export function PracticeSetup({
                 <p className="mt-1 text-sm text-muted">{preview.shortageReason ?? `${preview.session?.questionReferences.length ?? 0} question${preview.session?.questionReferences.length === 1 ? "" : "s"} selected from available content.`}</p>
               </div>
               <button type="button" onClick={startConfiguredSession} disabled={!preview.session || activation.busy} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-forge px-4 font-extrabold text-white disabled:opacity-45 max-md:w-full">
-                Start configured practice <ArrowRight className="size-5" />
+                {mode === "retry_incorrect" ? "Start mistake practice" : "Start configured practice"} <ArrowRight className="size-5" />
               </button>
             </div>
           </div>
@@ -276,6 +300,10 @@ export function PracticeSetup({
 
 function timing(timed: boolean, minutes: number): PracticeTiming {
   return timed ? { type: "timed", timeLimitSeconds: Math.max(60, Math.min(10800, Math.floor(minutes * 60))), elapsedSeconds: 0 } : { type: "untimed" };
+}
+
+function mistakeCount(count: number) {
+  return `${count} unresolved mistake${count === 1 ? "" : "s"}`;
 }
 
 function reviewReasonCopy(reason: ReturnType<typeof createReviewSessionSelection>["dueStates"][number]["reason"] | undefined) {

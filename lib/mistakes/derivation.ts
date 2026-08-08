@@ -1,5 +1,6 @@
 import { higherMathematicsOfficialSkillMappings } from "@/data/curriculum/higher-mathematics/official-skill-mappings";
-import { contentResolver } from "@/lib/content-resolver";
+import { canonicalContent, type CanonicalContentSource } from "@/data/canonical-content";
+import { contentResolver, createContentResolver } from "@/lib/content-resolver";
 import { isGradedCorrectAttempt, isGradedIncorrectAttempt } from "@/lib/progress/attempt-outcomes";
 import { isIndependentOrdinaryAttempt } from "@/lib/progress/independent-attempt";
 import type { ProgressEvidence, QuestionAttempt } from "@/lib/progress/types";
@@ -21,6 +22,7 @@ export type MistakeItem = {
   skillPathId: string;
   skillName: string;
   skillHref: string;
+  courseId: string;
   stageId: string;
   stageName: string;
   incorrectAttemptCount: number;
@@ -66,11 +68,13 @@ type TimelineEvent = {
 export function deriveMistakeLog(
   evidence: ProgressEvidence,
   subjectSlug = "higher-maths",
+  source: CanonicalContentSource = canonicalContent,
 ): MistakeLogModel {
-  const contexts = contentResolver.getAllPathContexts().filter((context) =>
+  const resolver = source === canonicalContent ? contentResolver : createContentResolver(source);
+  const contexts = resolver.getAllPathContexts().filter((context) =>
     context.subject.subjectSlug === subjectSlug && context.skillPath.isAvailable);
   const contextByPath = new Map(contexts.map((context) => [context.skillPath.slug, context]));
-  const activeVersions = contentResolver.getQuestionVersions();
+  const activeVersions = resolver.getQuestionVersions();
   const reviewSourceIds = new Set(evidence.reviewEvents.map((event) => event.source.sourceId));
   const attemptById = new Map(evidence.attempts.map((attempt) => [attempt.eventId, attempt]));
   const reviewRecoveryBySkill = new Map(contexts.map((context) => [
@@ -80,7 +84,7 @@ export function deriveMistakeLog(
   const attemptsByGroup = new Map<string, QuestionAttempt[]>();
 
   for (const attempt of evidence.attempts) {
-    if (!isTrustworthyAttempt(attempt, contextByPath, activeVersions)) continue;
+    if (!isTrustworthyAttempt(attempt, contextByPath, activeVersions, resolver)) continue;
     const version = attempt.versionEvidence.kind === "known" ? attempt.versionEvidence.questionVersion : null;
     if (version === null) continue;
     const key = groupKey(attempt.questionId, version);
@@ -97,7 +101,7 @@ export function deriveMistakeLog(
     const first = incorrect[0];
     const version = first.versionEvidence.kind === "known" ? first.versionEvidence.questionVersion : null;
     if (version === null) continue;
-    const questionContext = contentResolver.getQuestionContext(first.questionId);
+    const questionContext = resolver.getQuestionContext(first.questionId);
     const pathContext = contextByPath.get(first.skillPathId);
     if (!questionContext || !pathContext) continue;
     const currentVersion = activeVersions[first.questionId];
@@ -160,6 +164,7 @@ export function deriveMistakeLog(
       skillPathId: pathContext.skillPath.slug,
       skillName: pathContext.skillPath.name,
       skillHref: pathContext.skillPath.href,
+      courseId: pathContext.courseArea.slug,
       stageId: stage.id,
       stageName: stage.name,
       incorrectAttemptCount: incorrect.length,
@@ -198,9 +203,10 @@ function isTrustworthyAttempt(
   attempt: QuestionAttempt,
   contextByPath: ReadonlyMap<string, ReturnType<typeof contentResolver.getAllPathContexts>[number]>,
   activeVersions: Readonly<Record<string, number>>,
+  resolver: ReturnType<typeof createContentResolver>,
 ) {
   if (!attempt.isGenuine || attempt.versionEvidence.kind !== "known") return false;
-  const context = contentResolver.getQuestionContext(attempt.questionId);
+  const context = resolver.getQuestionContext(attempt.questionId);
   const path = contextByPath.get(attempt.skillPathId);
   return Boolean(
     context && path &&
