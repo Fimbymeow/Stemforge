@@ -121,8 +121,7 @@ test("a fully-correct practice session is acknowledged without inventing mastery
   }, PRACTICE_SESSIONS_STORAGE_KEY);
 
   for (const id of references) {
-    await page.getByLabel("Your answer").fill(QUESTION_ANSWERS[id as keyof typeof QUESTION_ANSWERS]);
-    await page.getByRole("button", { name: "Submit Answer" }).click();
+    await submitAnswer(page, QUESTION_ANSWERS[id as keyof typeof QUESTION_ANSWERS]);
     await expect(page.getByTestId("question-status")).toContainText("Correct");
     const nextButton = page.getByTestId("practice-session-panel").getByRole("button", { name: "Next" });
     if (await nextButton.isEnabled()) await nextButton.click();

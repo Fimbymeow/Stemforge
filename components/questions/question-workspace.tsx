@@ -67,9 +67,11 @@ export type QuestionWorkspaceSessionConfig = {
 export function QuestionWorkspace({
   question,
   session,
+  persistenceMode = "persistent",
 }: {
   question: Question;
   session?: QuestionWorkspaceSessionConfig;
+  persistenceMode?: "persistent" | "ephemeral";
 }) {
   const [answer, setAnswer] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -92,6 +94,7 @@ export function QuestionWorkspace({
   const solutionHeadingRef = useRef<HTMLHeadingElement | null>(null);
   const submissionIntentRef = useRef<SubmissionIntent>("keyboard");
   const hasMounted = useHasMounted();
+  const shouldPersist = persistenceMode === "persistent";
   const nextAction = useLearnerNextAction();
   const context = useMemo(() => getQuestionContext(question.id), [question.id]);
   const skillPath = context?.skillPath;
@@ -146,7 +149,7 @@ export function QuestionWorkspace({
   const stageStatus = stageLocalProgress?.status;
 
   useEffect(() => {
-    const draft = loadAnswerDraft(browserStorage(), draftIdentity);
+    const draft = shouldPersist ? loadAnswerDraft(browserStorage(), draftIdentity) : null;
     const restoredAnswer = draft?.kind === "rich-math"
       ? draft.source
       : draft?.kind === "plain" && usesRichMathInput
@@ -164,7 +167,7 @@ export function QuestionWorkspace({
     setSelfAssessmentError(null);
     setShowCompletionPanel(false);
     setShowStageCompletionPanel(false);
-  }, [draftKey, draftIdentity, mathInputCapabilities, usesRichMathInput]);
+  }, [draftKey, draftIdentity, mathInputCapabilities, shouldPersist, usesRichMathInput]);
 
   useEffect(() => {
     const update = () => setProgressVersion((current) => current + 1);
@@ -195,8 +198,8 @@ export function QuestionWorkspace({
   }, [feedback, feedbackSequence, submitted]);
 
   useEffect(() => {
-    if (submitted && markedSubmission?.isCorrect === true) clearAnswerDraft(browserStorage(), draftIdentity);
-  }, [draftIdentity, markedSubmission?.isCorrect, submitted]);
+    if (shouldPersist && submitted && markedSubmission?.isCorrect === true) clearAnswerDraft(browserStorage(), draftIdentity);
+  }, [draftIdentity, markedSubmission?.isCorrect, shouldPersist, submitted]);
 
   useEffect(() => {
     if (!hasMounted) return;
@@ -243,6 +246,7 @@ export function QuestionWorkspace({
   function updateAnswer(nextAnswer: string) {
     setAnswer(nextAnswer);
     if (feedback?.isInputError) setFeedback(null);
+    if (!shouldPersist) return;
     if (usesRichMathInput) saveRichMathAnswerDraft(browserStorage(), draftIdentity, nextAnswer);
     else saveAnswerDraft(browserStorage(), draftIdentity, nextAnswer);
   }
@@ -276,7 +280,7 @@ export function QuestionWorkspace({
         showFeedback(classified);
         return;
       }
-      const saved = await saveQuestionAttempt({
+      const saved = !shouldPersist || await saveQuestionAttempt({
         questionId: question.id,
         skillPathId: question.skillPathId ?? skillPath?.slug ?? "unknown",
         stageId: question.stageId ?? stage?.id ?? question.stage,
@@ -297,7 +301,7 @@ export function QuestionWorkspace({
       setSubmitted(true);
       showFeedback(classified);
       await session?.onEvidenceRecorded?.();
-      if (marking.isCorrect === true) clearAnswerDraft(browserStorage(), draftIdentity);
+      if (shouldPersist && marking.isCorrect === true) clearAnswerDraft(browserStorage(), draftIdentity);
     } catch {
       showFeedback(internalAnswerFailureFeedback());
     } finally {
@@ -336,13 +340,13 @@ export function QuestionWorkspace({
   }
 
   async function handleHintViewed() {
-    if (!hintViewed) await recordHintViewed(supportEventInput());
+    if (shouldPersist && !hintViewed) await recordHintViewed(supportEventInput());
     setHintViewed(true);
   }
 
     async function handleSolutionViewed() {
       if (questionProgress.attempted) {
-        const recorded = await recordWorkedSolutionViewed(supportEventInput());
+        const recorded = shouldPersist ? await recordWorkedSolutionViewed(supportEventInput()) : true;
         if (!recorded && !submissionInteractionCompleted) return;
       } else if (!submissionInteractionCompleted) return;
       setSolutionOpenedThisInteraction(true);

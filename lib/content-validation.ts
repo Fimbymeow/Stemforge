@@ -14,6 +14,7 @@ import type {
 } from "@/data/types";
 import { markQuestionAnswer } from "@/lib/answer-engine";
 import { MARKING_STRATEGIES, type MarkingFixture, type MarkingFixtures } from "@/lib/marking/types";
+import { validateElementaryExpressionContract } from "@/lib/marking/elementary-expression";
 import { parseNumericLiteral } from "@/lib/marking/numeric";
 import { parsePolynomial } from "@/lib/marking/polynomial";
 import { parseCompositeAlgebraicExpression } from "@/lib/marking/composite-algebraic";
@@ -431,7 +432,7 @@ function validateQuestion(question: Question, location: string, issue: IssueWrit
 function validateMarkingContract(question: Question, location: string, issue: IssueWriter) {
   const contract = question.marking;
   if (!contract || !MARKING_STRATEGIES.includes(contract.strategy)) {
-    issue("error", "invalid-marking-strategy", `Question "${question.id}" must declare one of the five implemented Alpha marking strategies.`, location);
+    issue("error", "invalid-marking-strategy", `Question "${question.id}" must declare an implemented Alpha marking strategy.`, location);
     return;
   }
   const allowedStrategyVersions = contract.strategy === "composite_algebraic_equivalence" ? [1, 2] : [1];
@@ -442,7 +443,7 @@ function validateMarkingContract(question: Question, location: string, issue: Is
     issue("error", "alpha-units-deferred", `Question "${question.id}" cannot declare active unit marking during Alpha.`, location);
   }
   const legalStrategies: readonly string[] = question.answerType === "numerical" ? ["numeric"]
-    : question.answerType === "algebraic" ? ["polynomial_form", "composite_algebraic_equivalence"]
+    : question.answerType === "algebraic" ? ["polynomial_form", "composite_algebraic_equivalence", "elementary_expression_equivalence"]
       : question.answerType === "multiple_choice" ? ["multiple_choice"]
         : question.answerType === "written" || question.answerType === "multi_step" ? ["guided_self_check", "closed_vocabulary_text_answer"]
           : ["structured_graph"];
@@ -493,6 +494,9 @@ function validateMarkingContract(question: Question, location: string, issue: Is
     if (contract.variable === "e" || !/^[a-z]$/i.test(contract.variable)) issue("error", "invalid-composite-variable", `Question "${question.id}" has an invalid composite algebraic variable.`, location);
     const targetParse = parseCompositeAlgebraicExpression(contract.target, contract.variable, contract.strategyVersion as 1 | 2);
     if (targetParse.status !== "v1" && targetParse.status !== "v2") issue("error", "invalid-composite-target", `Question "${question.id}" has an invalid composite algebraic target.`, location);
+    validateFixtures(question, contract.fixtures, location, issue);
+  } else if (contract.strategy === "elementary_expression_equivalence") {
+    if (!validateElementaryExpressionContract(contract)) issue("error", "invalid-elementary-expression-contract", `Question "${question.id}" has an invalid elementary-expression target or capability subset.`, location);
     validateFixtures(question, contract.fixtures, location, issue);
   } else if (contract.strategy === "closed_vocabulary_text_answer") {
     const vocabulary = buildVocabulary({ target: contract.target, acceptedAnswers: contract.acceptedAnswers });

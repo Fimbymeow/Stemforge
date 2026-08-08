@@ -24,7 +24,9 @@ test("Chain Rule V1 keeps course access bounded and marks a rendered composite a
   const keyboard = page.getByRole("group", { name: "Maths keyboard" });
   await expect(keyboard.getByRole("button", { name: "Negative power" })).toHaveCount(0);
   await expect(keyboard.getByRole("button", { name: "Reciprocal square root" })).toHaveCount(0);
-  await expect(keyboard.getByRole("button", { name: /pi/i })).toHaveCount(0);
+  for (const name of ["Insert sine", "Insert cosine", "Insert tangent", "Insert pi", "Insert e", "Insert natural logarithm", "Insert logarithm"]) {
+    await expect(keyboard.getByRole("button", { name, exact: true })).toHaveCount(0);
+  }
 });
 
 for (const example of [
@@ -92,6 +94,16 @@ test("rich maths keyboard is accessible, non-submitting and overflow-free at 375
   }
   await keyboard.getByRole("button", { name: "Power", exact: true }).click();
   await expect(page.getByTestId("question-status")).toHaveCount(0);
+  const geometry = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, client: document.documentElement.clientWidth }));
+  expect(geometry.scroll).toBeLessThanOrEqual(geometry.client);
+});
+
+test("rich maths keyboard remains overflow-free at 320px", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 700 });
+  await page.goto("/question/hm-calc-diff-chain-f-008");
+  await richField(page);
+  await page.getByRole("button", { name: "Show maths keyboard" }).click();
+  await expect(page.getByRole("group", { name: "Maths keyboard" })).toBeVisible();
   const geometry = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, client: document.documentElement.clientWidth }));
   expect(geometry.scroll).toBeLessThanOrEqual(geometry.client);
 });

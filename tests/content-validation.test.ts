@@ -53,3 +53,34 @@ test("mismatched question relationships fail validation", () => {
   const report = validateContent({ subjects: [cloneSubject()], questions });
   assert.ok(report.errors.some((issue) => issue.code === "invalid-stage-reference"));
 });
+
+test("a bounded elementary-expression contract validates and unsupported subsets fail clearly", () => {
+  const questions = cloneQuestions();
+  const question = questions[0];
+  question.correctAnswer = "3sin(x)";
+  question.acceptedAnswers = ["3sin(x)"];
+  question.finalAnswer = "3sin(x)";
+  question.marking = {
+    strategy: "elementary_expression_equivalence",
+    strategyVersion: 1,
+    target: "3sin(x)",
+    variable: "x",
+    allowedFunctions: ["sin", "cos"],
+    allowedConstants: [],
+    fixtures: {
+      correct: [{ input: "3sin(x)" }],
+      incorrect: [{ input: "3cos(x)", reason: "value_wrong" }],
+      malformed: [{ input: "sin(", reason: "malformed_elementary_expression" }],
+      unmarkable: [{ input: "tan(x)", reason: "unsupported_mathematical_form" }],
+    },
+  };
+  assert.deepEqual(validateContent({ subjects: [cloneSubject()], questions }).errors, []);
+
+  question.marking.target = "tan(x)";
+  const report = validateContent({ subjects: [cloneSubject()], questions });
+  assert.ok(report.errors.some((issue) => issue.code === "invalid-elementary-expression-contract"));
+
+  question.marking.target = "3sin(x)";
+  question.marking.allowedFunctions = ["sin", "sec" as "sin"];
+  assert.ok(validateContent({ subjects: [cloneSubject()], questions }).errors.some((issue) => issue.code === "invalid-elementary-expression-contract"));
+});

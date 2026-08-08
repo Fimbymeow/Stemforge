@@ -10,10 +10,21 @@ import {
   RICH_MATH_MAX_DEPTH,
   RICH_MATH_SOURCE_MAX_LENGTH,
 } from "../lib/questions/rich-math-normalization";
+import type { ElementaryExpressionEquivalenceMarkingContract } from "../lib/marking/types";
 
 const basic = requiredQuestion("hm-calc-diff-basic-f-001");
 const compositeV1 = requiredQuestion("hm-calc-diff-chain-f-003");
 const compositeV2 = requiredQuestion("hm-calc-diff-chain-f-008");
+const elementaryContract: ElementaryExpressionEquivalenceMarkingContract = {
+  strategy: "elementary_expression_equivalence",
+  strategyVersion: 1,
+  target: "sin(x)",
+  variable: "x",
+  allowedFunctions: ["sin", "cos", "tan", "ln", "log"],
+  allowedConstants: ["pi", "e"],
+  allowedLogBases: [2, 10],
+  fixtures: { correct: [], incorrect: [], malformed: [], unmarkable: [] },
+};
 
 test("normalizes the bounded current polynomial and composite grammar", () => {
   const cases = [
@@ -30,6 +41,54 @@ test("normalizes the bounded current polynomial and composite grammar", () => {
     assert.deepEqual(normalizeRichMathSource(source, deriveMathInputCapabilities(question)), {
       status: "ready", canonical, version: 1,
     }, source);
+  }
+});
+
+test("normalizes and restores the bounded elementary-expression vocabulary", () => {
+  const capabilities = deriveMathInputCapabilities({ marking: elementaryContract });
+  const cases = [
+    ["\\sin x", "sin(x)"], ["3\\sin x", "3sin(x)"], ["\\sin(2x)", "sin(2x)"],
+    ["\\cos(x)", "cos(x)"], ["-4\\cos(3x)", "-4cos(3x)"], ["\\tan(x)", "tan(x)"],
+    ["\\tan\\left(x+\\frac{\\pi}{4}\\right)", "tan(x+pi/4)"], ["\\pi", "pi"],
+    ["\\frac{\\pi}{4}", "pi/4"], ["\\frac{3\\pi}{2}", "3pi/2"], ["e", "e"], ["e^x", "e^x"], ["e^{2x}", "e^(2x)"],
+    ["\\ln(x)", "ln(x)"], ["3\\ln(2x+1)", "3ln(2x+1)"], ["\\log_{2}(x)", "log_2(x)"],
+    ["\\sqrt{3}", "sqrt(3)"], ["\\frac{\\sqrt{3}}{2}", "sqrt(3)/2"],
+    ["\\sin\\left(\\cos(x)\\right)", "sin(cos(x))"], ["\\sin(x)^2", "sin(x)^2"],
+  ] as const;
+  for (const [source, canonical] of cases) {
+    assert.deepEqual(normalizeRichMathSource(source, capabilities), { status: "ready", canonical, version: 1 }, source);
+    const restored = canonicalMathToLatex(canonical, capabilities);
+    assert.ok(restored, canonical);
+    assert.equal(normalizeRichMathSource(restored, capabilities).status, "ready", canonical);
+  }
+});
+
+test("elementary capabilities fail closed and honour question-level subsets", () => {
+  const capabilities = deriveMathInputCapabilities({ marking: elementaryContract });
+  for (const source of ["\\sec(x)", "\\arcsin(x)", "\\text{answer}", "\\unknown{x}", "y", "x=1", "\\int x"] ) {
+    assert.equal(normalizeRichMathSource(source, capabilities).status, "unsupported", source);
+  }
+  for (const source of ["\\log_{3}(x)", "\\log_{1}(x)", "\\log_{x}(x)"]) {
+    assert.equal(normalizeRichMathSource(source, capabilities).status, "unsupported", source);
+  }
+  assert.equal(normalizeRichMathSource("\\sin(", capabilities).status, "incomplete");
+  assert.equal(normalizeRichMathSource("\\log_{}(x)", capabilities).status, "incomplete");
+  assert.equal(normalizeRichMathSource("\\sin(\\cos(\\tan(x)))", capabilities).status, "unsupported");
+
+  const sineOnly = deriveMathInputCapabilities({ marking: { ...elementaryContract, allowedFunctions: ["sin"], allowedConstants: [] } });
+  assert.deepEqual(sineOnly.allowedFunctions, ["sin"]);
+  assert.deepEqual(sineOnly.allowedConstants, []);
+  assert.equal(normalizeRichMathSource("\\sin(x)", sineOnly).status, "ready");
+  assert.equal(normalizeRichMathSource("\\cos(x)", sineOnly).status, "unsupported");
+  assert.equal(normalizeRichMathSource("\\pi", sineOnly).status, "unsupported");
+});
+
+test("existing strategies expose no elementary function or constant controls", () => {
+  for (const question of [basic, compositeV1, compositeV2]) {
+    const capabilities = deriveMathInputCapabilities(question);
+    assert.deepEqual(capabilities.allowedFunctions, []);
+    assert.deepEqual(capabilities.allowedConstants, []);
+    assert.equal(capabilities.directSquareRoots, false);
   }
 });
 

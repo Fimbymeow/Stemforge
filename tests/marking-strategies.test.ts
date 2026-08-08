@@ -21,6 +21,7 @@ test("numeric literal grammar accepts exact rational equivalents", () => {
   }
   assert.equal(markNumeric(numeric("0"), "-0").isCorrect, true);
   assert.equal(markNumeric(numeric("-1/2"), "1/-2").isCorrect, true);
+  assert.equal(markNumeric(numeric("6800000"), "6.8e6").isCorrect, true);
 });
 
 test("numeric malformed and unmarkable classes fail without an incorrect judgement", () => {
@@ -107,7 +108,7 @@ test("polynomial canonicalisation is exact and bounded", () => {
   assert.deepEqual({ POLYNOMIAL_INPUT_MAX_LENGTH, POLYNOMIAL_TERM_LIMIT, POLYNOMIAL_EXPONENT_LIMIT, POLYNOMIAL_COEFFICIENT_DIGIT_LIMIT }, { POLYNOMIAL_INPUT_MAX_LENGTH: 512, POLYNOMIAL_TERM_LIMIT: 64, POLYNOMIAL_EXPONENT_LIMIT: 100, POLYNOMIAL_COEFFICIENT_DIGIT_LIMIT: 128 });
 });
 
-test("all five strategy results carry universal metadata", () => {
+test("representative strategy results carry universal metadata", () => {
   const numerical = higherMathsDifferentiationQuestions[2];
   const results = [
     markQuestionAnswer(numerical, "14"),
@@ -115,10 +116,15 @@ test("all five strategy results carry universal metadata", () => {
     markQuestionAnswer({ marking: { strategy: "multiple_choice", strategyVersion: 1, correctOptionId: "a" } }, "a"),
     markQuestionAnswer({ marking: { strategy: "guided_self_check", strategyVersion: 1 } }, "working"),
     markQuestionAnswer({ marking: { strategy: "structured_graph", strategyVersion: 1 } }, "{broken"),
+    markQuestionAnswer({ marking: {
+      strategy: "elementary_expression_equivalence", strategyVersion: 1, target: "sin(x)", variable: "x",
+      allowedFunctions: ["sin"], allowedConstants: [], fixtures: { correct: [], incorrect: [], malformed: [], unmarkable: [] },
+    } }, "sin(x)"),
   ];
-  assert.deepEqual(results.map((result) => result.strategy), ["numeric", "polynomial_form", "multiple_choice", "guided_self_check", "structured_graph"]);
+  assert.deepEqual(results.map((result) => result.strategy), ["numeric", "polynomial_form", "multiple_choice", "guided_self_check", "structured_graph", "elementary_expression_equivalence"]);
   assert.ok(results.every((result) => result.strategyVersion === 1));
   assert.equal(results[4].outcomeKind, "malformed");
+  assert.equal(results[5].outcomeKind, "graded");
 });
 
 test("bounded legacy collision audit justifies only demonstrated production version bumps", () => {

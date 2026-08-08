@@ -22,6 +22,16 @@ test("official Higher Mathematics requirements and all 49 canonical skills form 
   }).errors, []);
 });
 
+test("official requirement identity, order and wording remain stable", () => {
+  const points = higherMathematicsSpecificationRegister.points;
+  assert.equal(points.length, 58);
+  assert.equal(points[0].specPointId, "hm-alg-factorising-polynomials");
+  assert.equal(points[28].specPointId, "hm-calc-diff-power-rule");
+  assert.equal(points[57].specPointId, "hm-reason-explain-solution");
+  assert.ok(points.every((point) => point.verificationStatus === "verified" && point.officialStatement?.trim()));
+  assert.equal(new Set(points.map((point) => point.specPointId)).size, 58);
+});
+
 test("every available skill has a valid official mapping and every mandatory point is covered", () => {
   const mappedSkills = new Set(higherMathematicsOfficialSkillMappings.map((mapping) => mapping.skillPathId));
   assert.ok(contexts.filter((context) => context.skillPath.isAvailable).every((context) => mappedSkills.has(context.skillPath.slug)));
@@ -48,4 +58,3 @@ test("a stale specification strand fails validation and cannot disappear silentl
   assert.ok(report.errors.some((issue) => issue.code === "active-path-resolution-count-mismatch"));
   assert.equal(createContentResolver({ subjects: [subject], questions: canonicalContent.questions }).getAllPathContexts().length, 48);
 });
-

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { MathfieldElement } from "mathlive";
 import type { MathInputCapabilities } from "@/lib/questions/math-input-capabilities";
+import { deriveElementaryMathKeyboardControls } from "@/lib/questions/math-keyboard-controls";
 
 type Props = {
   value: string;
@@ -22,6 +23,7 @@ export function RichMathAnswerField({ value, onChange, capabilities, disabled, i
   const [fallback, setFallback] = useState(false);
   const [ready, setReady] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const elementaryControls = deriveElementaryMathKeyboardControls(capabilities);
 
   useEffect(() => { valueRef.current = value; }, [value]);
   useEffect(() => { onChangeRef.current = onChange; }, [onChange]);
@@ -151,7 +153,9 @@ export function RichMathAnswerField({ value, onChange, capabilities, disabled, i
               {capabilities.negativeIntegerPowers ? <Key label="x⁻ⁿ" accessibleLabel="Negative power" onClick={() => insert("^{-#0}")} /> : null}
               {capabilities.halfPowers ? <Key label="x⁻¹⁄²" accessibleLabel="Negative half power" onClick={() => insert("^{-\\frac{1}{2}}")}/> : null}
               {capabilities.numericFractions ? <Key label="a⁄b" accessibleLabel="Fraction" onClick={() => insert("\\frac{#0}{#?}")} /> : null}
+              {capabilities.directSquareRoots ? <Key label="√" accessibleLabel="Insert square root" onClick={() => insert("\\sqrt{#0}")} /> : null}
               {capabilities.boundedReciprocalSquareRoots ? <Key label="1⁄√x" accessibleLabel="Reciprocal square root" onClick={() => insert("\\frac{1}{\\sqrt{#0}}")}/> : null}
+              {elementaryControls.map((control) => <Key key={control.id} label={control.label} accessibleLabel={control.accessibleLabel} onClick={() => insert(control.latex)} />)}
               <Key label="←" accessibleLabel="Move left" onClick={() => command("moveToPreviousChar")} />
               <Key label="→" accessibleLabel="Move right" onClick={() => command("moveToNextChar")} />
               <Key label="⌫" accessibleLabel="Backspace" onClick={() => command("deleteBackward")} />

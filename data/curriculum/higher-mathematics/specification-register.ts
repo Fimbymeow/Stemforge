@@ -34,6 +34,7 @@ export const higherMathematicsReasoningAreaIds = {
   explainingSolution: "reasoning-explaining-solution",
 } as const;
 const DOCUMENT_ID = "sqa-h-course-spec-mathematics-2023-v3";
+const SOURCE_SECTION_PREFIX = "Skills, knowledge and understanding for the course assessment";
 
 const areas: SpecificationArea[] = [
   { areaId: ALGEBRA_IDS.manipulatingAlgebraicExpressions, courseId: "higher-maths", title: "Manipulating algebraic expressions", order: 1, status: "active" },
@@ -72,7 +73,7 @@ function verified(
     areaId,
     officialReference: {
       documentId: DOCUMENT_ID,
-      section: "Skills, knowledge and understanding for the course assessment > Calculus skills",
+      section: `${SOURCE_SECTION_PREFIX} > ${sourceCategoryForArea(areaId)}`,
       page,
       itemLabel,
     },
@@ -81,6 +82,38 @@ function verified(
     mandatory: true,
     status: "active",
   };
+}
+
+function sourceCategoryForArea(areaId: string) {
+  const algebraAreaIds: readonly string[] = [
+    ALGEBRA_IDS.manipulatingAlgebraicExpressions,
+    ALGEBRA_IDS.manipulatingTrigonometricExpressions,
+    ALGEBRA_IDS.identifyingSketchingRelatedFunctions,
+    ALGEBRA_IDS.determiningCompositeInverseFunctions,
+    ALGEBRA_IDS.solvingAlgebraicEquations,
+    ALGEBRA_IDS.solvingTrigonometricEquations,
+  ];
+  if (algebraAreaIds.includes(areaId)) return "Algebraic and trigonometric skills";
+  const vectorAreaIds: readonly string[] = [VECTOR_IDS.determiningVectorConnections, VECTOR_IDS.workingWithVectors];
+  if (vectorAreaIds.includes(areaId)) return "Geometric skills";
+  const calculusAreaIds: readonly string[] = [
+    AREA_IDS.differentiatingFunctions,
+    AREA_IDS.investigatingFunctions,
+    AREA_IDS.integratingFunctions,
+    AREA_IDS.definiteIntegrals,
+    AREA_IDS.applyingDifferentialCalculus,
+    AREA_IDS.applyingIntegralCalculus,
+  ];
+  if (calculusAreaIds.includes(areaId)) return "Calculus skills";
+  const algebraicGeometryAreaIds: readonly string[] = [GEOMETRY_IDS.rectilinearShapes, GEOMETRY_IDS.circlesAndGraphs, GEOMETRY_IDS.modellingSequences];
+  if (algebraicGeometryAreaIds.includes(areaId)) {
+    return "Algebraic and geometric skills";
+  }
+  const reasoningAreaIds: readonly string[] = [higherMathematicsReasoningAreaIds.selectingStrategy, higherMathematicsReasoningAreaIds.explainingSolution];
+  if (reasoningAreaIds.includes(areaId)) {
+    return "Reasoning skills";
+  }
+  throw new Error(`Unknown Higher Mathematics source category for area "${areaId}".`);
 }
 
 const points: VerifiedSpecificationPoint[] = [

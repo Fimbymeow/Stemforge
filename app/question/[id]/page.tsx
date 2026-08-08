@@ -5,10 +5,18 @@ import { getMathsQuestionById, getAnyQuestionById } from "@/data/question-regist
 
 export default async function QuestionById({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ case?: string }>;
 }) {
   const { id } = await params;
+  if (id === "__e2e-elementary-expression" && process.env.STEMFORGE_E2E_FIXTURES === "true") {
+    const fixture = await import("@/e2e/fixtures/elementary-expression-question");
+    const requestedCase = (await searchParams).case;
+    if (!fixture.isElementaryExpressionE2ECase(requestedCase)) notFound();
+    return <QuestionWorkspace question={fixture.createElementaryExpressionE2EQuestion(requestedCase)} persistenceMode="ephemeral" />;
+  }
   const mathsQuestion = getMathsQuestionById(id);
 
   if (mathsQuestion) {

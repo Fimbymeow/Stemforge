@@ -56,6 +56,29 @@ test("every verified point carries non-empty official wording and a structured r
   }
 });
 
+test("official source sections match the five assessment-table categories", () => {
+  const register = cloneRegister();
+  const expectedByPrefix = new Map([
+    ["hm-alg-", "Algebraic and trigonometric skills"],
+    ["hm-trig-", "Algebraic and trigonometric skills"],
+    ["hm-func-", "Algebraic and trigonometric skills"],
+    ["hm-vector-", "Geometric skills"],
+    ["hm-calc-", "Calculus skills"],
+    ["hm-geom-", "Algebraic and geometric skills"],
+    ["hm-seq-", "Algebraic and geometric skills"],
+    ["hm-reason-", "Reasoning skills"],
+  ]);
+  for (const point of register.points) {
+    if (point.verificationStatus !== "verified") continue;
+    const match = [...expectedByPrefix].find(([prefix]) => point.specPointId.startsWith(prefix));
+    assert.ok(match, point.specPointId);
+    assert.equal(point.officialReference.section, `Skills, knowledge and understanding for the course assessment > ${match[1]}`, point.specPointId);
+    assert.ok(Number.isInteger(point.officialReference.page) && (point.officialReference.page ?? 0) >= 5 && (point.officialReference.page ?? 0) <= 9, point.specPointId);
+    assert.ok(point.officialReference.itemLabel?.trim(), point.specPointId);
+  }
+  assert.equal(register.points.filter((point) => point.verificationStatus === "verified" && point.officialReference.section.endsWith("Calculus skills")).length, 19);
+});
+
 test("the official statement never mentions a normal line — only tangents are specified", () => {
   const register = cloneRegister();
   const tangentPoint = register.points.find((point) => point.specPointId === "hm-calc-tangent");

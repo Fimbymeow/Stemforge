@@ -28,10 +28,11 @@ test("remote validation accepts legal new outcomes alongside legacy attempts", (
   const malformed = attempt({ eventId: "new_malformed", isCorrect: null, outcomeKind: "malformed", outcomeReason: "malformed_numeric", strategy: "numeric", strategyVersion: 1 });
   const unmarkable = attempt({ eventId: "new_unmarkable", isCorrect: null, outcomeKind: "unmarkable", outcomeReason: "expression_not_permitted", strategy: "numeric", strategyVersion: 1 });
   const guided = attempt({ eventId: "new_guided", isCorrect: null, outcomeKind: "guided_pending", strategy: "guided_self_check", strategyVersion: 1 });
+  const elementary = attempt({ eventId: "new_elementary", answer: "3sin(x)", isCorrect: true, outcomeKind: "graded", strategy: "elementary_expression_equivalence", strategyVersion: 1 });
   const legacy = attempt({ eventId: "legacy" });
-  const result = validateRemoteEvidenceBatch(payload({ attempts: [graded, malformed, unmarkable, guided, legacy], supportEvents: [] }));
+  const result = validateRemoteEvidenceBatch(payload({ attempts: [graded, malformed, unmarkable, guided, elementary, legacy], supportEvents: [] }));
   assert.deepEqual(result.rejected, []);
-  assert.deepEqual(result.payload.data.attempts, [graded, malformed, unmarkable, guided, legacy]);
+  assert.deepEqual(result.payload.data.attempts, [graded, malformed, unmarkable, guided, elementary, legacy]);
 });
 
 test("remote validation rejects incomplete metadata, illegal reasons and unknown keys", () => {

@@ -30,6 +30,7 @@ test("fresh learner gets real production entry points with no activation query",
 test("expanding Current Path on the Question Workspace does not move the question", async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
   await page.goto(`/question/${QUESTION_IDS[0]}`);
+  await expect(page.getByTestId("rich-math-field")).toBeVisible();
   const question = page.getByTestId("question-interaction");
   const before = await question.boundingBox();
   await page.getByRole("button", { name: "Current Path: Basic differentiation" }).click();
