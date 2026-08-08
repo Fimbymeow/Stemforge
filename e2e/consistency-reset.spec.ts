@@ -38,8 +38,9 @@ test("dashboard, Higher Maths hub and path agree for mixed outcomes", async ({ p
 
   await page.goto("/subjects/higher-maths/calculus/differentiation/basic-differentiation");
   await expect(page.getByTestId("skill-path-hero-progress")).toContainText("In Progress");
-  await expect(page.getByText("3 / 3 complete", { exact: true })).toBeVisible();
-  await expect(page.getByText("0 / 3 complete", { exact: true })).toBeVisible();
+  const journey = page.getByTestId("skill-learning-journey");
+  await expect(journey.locator('[data-journey-kind="stage"]').filter({ hasText: "Foundations" })).toHaveAttribute("data-journey-state", "complete");
+  await expect(journey.locator('[data-journey-kind="stage"]').filter({ hasText: "Applications" })).toContainText("0 of 3 complete");
 });
 
 test("path reset clears only Basic differentiation and remains valid after refresh", async ({ page }) => {
@@ -53,6 +54,7 @@ test("path reset clears only Basic differentiation and remains valid after refre
   const resetRoute = page.url();
   await expect(page.getByTestId("skill-path-hero-progress").getByRole("progressbar")).toHaveAttribute("aria-valuenow", "13");
 
+  await page.getByText("Progress options", { exact: true }).click();
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByTestId("reset-progress").click();
   await expect(page).toHaveURL(resetRoute);

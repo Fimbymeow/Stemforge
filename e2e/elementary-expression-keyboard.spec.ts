@@ -17,6 +17,9 @@ test("the synthetic contract exposes its complete structured keyboard through th
   await page.getByRole("button", { name: "Show maths keyboard" }).click();
   const keyboard = page.getByRole("group", { name: "Maths keyboard" });
   await expect(keyboard).toBeVisible();
+  for (const group of ["basic", "structures", "functions", "editing"]) {
+    await expect(page.getByTestId(`maths-keyboard-group-${group}`)).toBeVisible();
+  }
   for (const name of [
     ...elementaryControls,
     "Power", "Negative power", "Negative half power", "Fraction", "Insert square root",
@@ -64,6 +67,7 @@ test("real algebraic questions remain gated while the synthetic contract receive
     await richField(page);
     await page.getByRole("button", { name: "Show maths keyboard" }).click();
     const keyboard = page.getByRole("group", { name: "Maths keyboard" });
+    await expect(page.getByTestId("maths-keyboard-group-functions")).toHaveCount(0);
     for (const name of elementaryControls) {
       await expect(keyboard.getByRole("button", { name, exact: true })).toHaveCount(0);
     }
@@ -73,6 +77,7 @@ test("real algebraic questions remain gated while the synthetic contract receive
   await richField(page);
   await page.getByRole("button", { name: "Show maths keyboard" }).click();
   const fixtureKeyboard = page.getByRole("group", { name: "Maths keyboard" });
+  await expect(page.getByTestId("maths-keyboard-group-functions")).toBeVisible();
   for (const name of elementaryControls) {
     await expect(fixtureKeyboard.getByRole("button", { name, exact: true })).toBeVisible();
   }
@@ -85,6 +90,7 @@ test("elementary controls remain touch-sized and overflow-free at 375px and 320p
     await richField(page);
     await page.getByRole("button", { name: "Show maths keyboard" }).click();
     const keyboard = page.getByRole("group", { name: "Maths keyboard" });
+    await expect(keyboard.locator("section")).toHaveCount(4);
     for (const name of elementaryControls) {
       const button = keyboard.getByRole("button", { name, exact: true });
       const box = await button.boundingBox();

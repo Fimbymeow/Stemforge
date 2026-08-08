@@ -18,6 +18,7 @@ test("mobile student can navigate, answer, use support and continue without over
 
   await page.goto("/subjects/higher-maths/calculus/differentiation/basic-differentiation");
   await expect(page.getByTestId("path-mastery-status")).toContainText("Not Started");
+  await page.getByText("Progress options", { exact: true }).click();
   await expect(page.getByTestId("reset-progress")).toBeVisible();
   await expectNoHorizontalOverflow(page);
 

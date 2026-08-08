@@ -218,7 +218,7 @@ function VersionProgressNotice({ progress }: { progress: SkillPathProgress }) {
   return null;
 }
 
-export function LocalProgressControls({ skillPath }: { skillPath: SkillPath }) {
+export function LocalProgressControls({ skillPath, compact = false }: { skillPath: SkillPath; compact?: boolean }) {
   async function handleReset() {
     const confirmed = window.confirm(`This resets current attempts and support activity for ${skillPath.name} on this browser. Historical achievement records may remain. Progress already synced to your account is not deleted, other devices are unaffected, and remote evidence may return during recovery.`);
     if (!confirmed) return;
@@ -227,21 +227,37 @@ export function LocalProgressControls({ skillPath }: { skillPath: SkillPath }) {
     for (const stage of skillPath.learningStages ?? []) clearStageCelebration(skillPath.slug, stage.id);
   }
 
+  const resetButton = (
+    <button
+      type="button"
+      data-testid="reset-progress"
+      onClick={handleReset}
+      className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-line bg-white px-3 py-2 text-sm font-bold text-muted transition hover:border-forge hover:text-forge max-md:w-full"
+    >
+      <RotateCcw className="size-4" />
+      Reset local progress
+    </button>
+  );
+
+  if (compact) {
+    return (
+      <details className="border-t border-line pt-2 text-sm text-muted">
+        <summary className="inline-flex min-h-10 cursor-pointer items-center font-bold text-forge">Progress options</summary>
+        <div className="mt-2 flex items-center justify-between gap-4 rounded-lg bg-paper p-3 max-md:grid">
+          <p className="leading-relaxed">Reset current progress for this skill on this browser. Historical achievements may remain, and progress already synced to your account is not deleted.</p>
+          {resetButton}
+        </div>
+      </details>
+    );
+  }
+
   return (
     <Card className="bg-paper p-4">
       <div className="flex items-center justify-between gap-4 max-md:grid">
         <p className="m-0 text-sm leading-relaxed text-muted">
           This resets current progress for this path on this browser. Historical achievements may remain, and progress already synced to your account is not deleted.
         </p>
-        <button
-          type="button"
-          data-testid="reset-progress"
-          onClick={handleReset}
-          className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-line bg-white px-3 py-2 text-sm font-bold text-muted transition hover:border-forge hover:text-forge max-md:w-full"
-        >
-          <RotateCcw className="size-4" />
-          Reset local progress
-        </button>
+        {resetButton}
       </div>
     </Card>
   );

@@ -25,6 +25,7 @@ test("path reset preserves historical snapshots while current readiness resets",
   await openQuestion(page, QUESTION_IDS.at(-1)!);
   await submitAnswer(page, QUESTION_ANSWERS[QUESTION_IDS.at(-1)!]);
   await page.goto("/subjects/higher-maths/calculus/differentiation/basic-differentiation");
+  await page.getByText("Progress options", { exact: true }).click();
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByTestId("reset-progress").click();
   await expect(page.getByTestId("path-mastery-status")).toContainText("Not Started");

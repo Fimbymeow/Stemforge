@@ -103,9 +103,43 @@ test("rich maths keyboard remains overflow-free at 320px", async ({ page }) => {
   await page.goto("/question/hm-calc-diff-chain-f-008");
   await richField(page);
   await page.getByRole("button", { name: "Show maths keyboard" }).click();
-  await expect(page.getByRole("group", { name: "Maths keyboard" })).toBeVisible();
+  const keyboard = page.getByRole("group", { name: "Maths keyboard" });
+  await expect(keyboard).toBeVisible();
   const geometry = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, client: document.documentElement.clientWidth }));
   expect(geometry.scroll).toBeLessThanOrEqual(geometry.client);
+  const keyboardGeometry = await keyboard.evaluate((element) => ({ scroll: element.scrollWidth, client: element.clientWidth }));
+  expect(keyboardGeometry.scroll).toBeLessThanOrEqual(keyboardGeometry.client);
+  for (const name of ["0", "x", "Minus", "Multiply"]) {
+    const box = await keyboard.getByRole("button", { name, exact: true }).boundingBox();
+    expect(box?.height).toBeGreaterThanOrEqual(44);
+    expect(box?.width).toBeGreaterThanOrEqual(44);
+  }
+});
+
+test("maths keyboard groups structure and editing controls without affecting Submit or canonical marking", async ({ page }) => {
+  await page.goto("/question/hm-calc-diff-basic-f-001");
+  const field = await richField(page);
+  await page.getByRole("button", { name: "Show maths keyboard" }).click();
+  const keyboard = page.getByRole("group", { name: "Maths keyboard" });
+  const structures = page.getByTestId("maths-keyboard-group-structures");
+  const editing = page.getByTestId("maths-keyboard-group-editing");
+  await expect(structures.getByRole("button", { name: "Power" })).toHaveAttribute("data-key-tier", "structure");
+  await expect(editing.getByRole("button", { name: "Move left" })).toHaveAttribute("data-key-tier", "utility");
+  await expect(page.getByTestId("maths-keyboard-group-functions")).toHaveCount(0);
+  await keyboard.getByRole("button", { name: "5", exact: true }).click();
+  await keyboard.getByRole("button", { name: "x", exact: true }).click();
+  await keyboard.getByRole("button", { name: "Power", exact: true }).click();
+  await keyboard.getByRole("button", { name: "4", exact: true }).click();
+  await editing.getByRole("button", { name: "Move left" }).click();
+  await editing.getByRole("button", { name: "Move right" }).click();
+  await editing.getByRole("button", { name: "Hide maths keyboard" }).click();
+  await expect(keyboard).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Show maths keyboard" })).toBeVisible();
+  await expect.poll(() => latex(field)).toMatch(/5x\^\{?4/);
+  await page.getByRole("button", { name: "Submit Answer" }).click();
+  await expect(page.getByTestId("question-status")).toContainText("Correct");
+  const stored = await page.evaluate(() => Object.values(localStorage).join("\n"));
+  expect(stored).toContain('"answer":"5x^4"');
 });
 
 test("rich maths surface stays absent for numerical and multiple-choice answers", async ({ page }) => {

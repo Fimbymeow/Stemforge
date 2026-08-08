@@ -25,7 +25,7 @@ test("new learner gets calm course access before the one-click learning entry", 
   await page.goto(PATH_ROUTE);
   await expectPrimaryAction(page, "Start", `/question/${QUESTION_IDS[0]}`);
   await expect(page.locator('[data-recommended="true"]')).toContainText("Foundations");
-  await expect(page.locator("article").filter({ hasText: "Applications" }).getByRole("link", { name: "Start" })).toHaveAttribute("href", `/question/${QUESTION_IDS[3]}`);
+  await expect(page.getByTestId("skill-learning-journey").locator('[data-journey-kind="stage"]').filter({ hasText: "Applications" }).getByRole("link", { name: "Start" })).toHaveAttribute("href", `/question/${QUESTION_IDS[3]}`);
 
   await page.goto(BANK_ROUTE);
   await expect(page.getByText("Best next step")).toHaveCount(0);
@@ -90,8 +90,9 @@ test("stage completion advances to the next recommended stage without hard-locki
   await expectPrimaryAction(page, "Continue", `/question/${QUESTION_IDS[3]}`);
   const recommended = page.locator('[data-recommended="true"]');
   await expect(recommended).toContainText("Applications");
-  await expect(page.locator("article").filter({ hasText: "Exam practice (PPQ)" }).getByRole("link", { name: "Start" })).toHaveAttribute("href", `/question/${QUESTION_IDS[6]}`);
-  await expect(page.locator("article").filter({ hasText: "Foundations" }).getByRole("link", { name: "Revisit" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
+  const journey = page.getByTestId("skill-learning-journey");
+  await expect(journey.locator('[data-journey-kind="stage"]').filter({ hasText: "Exam practice" }).getByRole("link", { name: "Start" })).toHaveAttribute("href", `/question/${QUESTION_IDS[6]}`);
+  await expect(journey.locator('[data-journey-kind="stage"]').filter({ hasText: "Foundations" }).getByRole("link", { name: "Revisit" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
 });
 
 test("completed Basic Differentiation advances Learn to Chain Rule while scheduled Review remains separately available", async ({ page }) => {

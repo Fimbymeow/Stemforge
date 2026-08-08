@@ -50,7 +50,9 @@ test("real evidence drives Continue and stage progress across hub, overview and 
 
   await page.goto(overview);
   await expect(page.getByRole("link", { name: "Continue", exact: true }).first()).toHaveAttribute("href", `/question/${QUESTION_IDS[1]}`);
-  await expect(page.getByText("1 / 3 complete", { exact: true })).toBeVisible();
+  const foundations = page.getByTestId("skill-learning-journey").locator('[data-journey-kind="stage"]').filter({ hasText: "Foundations" });
+  await expect(foundations).toHaveAttribute("aria-current", "step");
+  await expect(foundations).toContainText("1 of 3 complete");
 
   await page.goto(`/question/${QUESTION_IDS[1]}`);
   const trigger = page.getByRole("button", { name: "Current Path: Basic differentiation" });
@@ -64,23 +66,52 @@ test("stage transition is deterministic and stage rows remain directly explorabl
     QUESTION_IDS.slice(0, 3).map((id, index) => currentAttempt(id, index + 1)),
   ));
   await page.goto(overview);
-  await expect(page.getByText("Applications · 0 of 3 complete")).toBeVisible();
-  const currentStageCard = page.locator('[data-recommended="true"]');
-  await expect(currentStageCard).toContainText("Applications");
-  await expect(currentStageCard).toHaveClass(/bg-forge-soft/);
-  await expect(page.locator("article").filter({ hasText: "Exam practice (PPQ)" }).getByRole("link", { name: "Start" })).toHaveAttribute("href", `/question/${QUESTION_IDS[6]}`);
+  const journey = page.getByTestId("skill-learning-journey");
+  const currentStage = journey.locator('[data-journey-kind="stage"][aria-current="step"]');
+  await expect(currentStage).toContainText("Applications");
+  await expect(currentStage).toContainText("0 of 3 complete");
+  await expect(journey.locator('[data-journey-kind="stage"]').filter({ hasText: "Foundations" })).toHaveAttribute("data-journey-state", "complete");
+  await expect(journey.locator('[data-journey-kind="stage"]').filter({ hasText: "Exam practice" }).getByRole("link", { name: "Start" })).toHaveAttribute("href", `/question/${QUESTION_IDS[6]}`);
 });
 
-test("overview uses a compact header and equal direct stage cards", async ({ page }) => {
+test("overview uses one honest compact journey instead of repeated stage cards", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(overview);
   await expect(page.getByTestId("skill-path-compact-header")).toBeVisible();
   await expect(page.getByText("Skill overview", { exact: true })).toHaveCount(0);
-  const cards = page.locator("article").filter({ has: page.getByRole("link", { name: /Start|Continue/ }) });
-  const boxes = await Promise.all([0, 1, 2].map((index) => cards.nth(index).boundingBox()));
-  expect(boxes.every(Boolean)).toBe(true);
-  expect(Math.max(...boxes.map((box) => box!.height)) - Math.min(...boxes.map((box) => box!.height))).toBeLessThan(2);
-  await expect(page.getByText("Next stage", { exact: true })).toHaveCount(0);
+  const journey = page.getByTestId("skill-learning-journey");
+  await expect(journey.getByRole("listitem")).toHaveCount(5);
+  const notes = journey.locator('[data-journey-kind="notes"]');
+  await expect(notes).not.toHaveAttribute("aria-current", "step");
+  await expect(notes).toHaveAttribute("data-journey-state", "available");
+  await expect(notes).not.toContainText("Complete");
+  await expect(journey.locator('[data-journey-kind="stage"]').filter({ hasText: "Foundations" })).toHaveAttribute("aria-current", "step");
+  await expect(journey.locator('[data-journey-kind="review"]')).toContainText("After learning");
+  await expect(page.getByRole("progressbar")).toHaveCount(1);
+});
+
+test("Chain Rule uses the same truthful journey with its real 34-question progress", async ({ page }) => {
+  await page.goto("/subjects/higher-maths/calculus/differentiation/chain-rule");
+  await expect(page.getByRole("heading", { name: "Chain rule", level: 1 })).toBeVisible();
+  await expect(page.getByTestId("skill-path-hero-progress")).toContainText("0 of 34 questions complete");
+  const journey = page.getByTestId("skill-learning-journey");
+  await expect(journey.getByRole("listitem")).toHaveCount(5);
+  await expect(journey.locator('[data-journey-kind="notes"]')).toHaveAttribute("data-journey-state", "available");
+  await expect(journey.locator('[data-journey-kind="notes"]')).not.toContainText("Complete");
+  await expect(journey.locator('[data-journey-kind="stage"]').filter({ hasText: "Foundations" })).toHaveAttribute("aria-current", "step");
+  await expect(journey.locator('[data-journey-kind="stage"]')).toHaveCount(3);
+});
+
+test("skill journey stays ordered and overflow-free at 375px and 320px", async ({ page }) => {
+  for (const width of [375, 320]) {
+    await page.setViewportSize({ width, height: 720 });
+    await page.goto(overview);
+    const journey = page.getByTestId("skill-learning-journey");
+    await expect(journey.getByRole("listitem")).toHaveCount(5);
+    await expect(journey.getByRole("listitem").first()).toContainText("Notes");
+    await expect(journey.getByRole("listitem").last()).toContainText("Review");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
+  }
 });
 
 test("completed overview stays compact and renders exactly one primary action", async ({ page }) => {
@@ -89,7 +120,7 @@ test("completed overview stays compact and renders exactly one primary action", 
   await expect(page.getByTestId("completed-path-card")).toBeVisible();
   await expect(page.getByTestId("skill-path-hero-progress")).toContainText("8 of 8 questions complete");
   await expect(page.getByTestId("completed-path-card").getByRole("link", { name: "Start learning" })).toHaveAttribute("href", "/question/hm-calc-diff-chain-f-001");
-  await expect(page.locator("article").filter({ hasText: "Foundations" }).getByRole("link", { name: "Revisit" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
+  await expect(page.getByTestId("skill-learning-journey").locator('[data-journey-kind="stage"]').filter({ hasText: "Foundations" }).getByRole("link", { name: "Revisit" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
 });
 
 test("completed overview links its secondary action to the compact stage list", async ({ page }) => {
@@ -101,7 +132,7 @@ test("completed overview links its secondary action to the compact stage list", 
   });
   expect(ids).toContain("stages");
   expect(duplicateIds).toHaveLength(0);
-  await expect(page.getByRole("heading", { name: "Learning stages", level: 2 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Your learning journey", level: 2 })).toBeVisible();
   await expect(page.getByTestId("completed-path-card").getByRole("link", { name: "Review a stage" })).toHaveAttribute("href", "#stages");
 });
 
@@ -112,7 +143,10 @@ test("completed overview with genuine review due shows one review-aware primary 
   const primaryActions = page.getByRole("link", { name: "Start Review" });
   await expect(primaryActions).toHaveCount(1);
   await expect(primaryActions).toHaveAttribute("href", "/practice?review=1&path=basic-differentiation");
-  await expect(page.locator("article").filter({ hasText: "Foundations" }).getByRole("link", { name: "Revisit" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
+  const journey = page.getByTestId("skill-learning-journey");
+  await expect(journey.locator('[data-journey-kind="review"]')).toHaveAttribute("aria-current", "step");
+  await expect(journey.locator('[data-journey-kind="review"]')).toContainText("Review 1 skill due");
+  await expect(journey.locator('[data-journey-kind="stage"]').filter({ hasText: "Foundations" }).getByRole("link", { name: "Revisit" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
 });
 
 test("hub skill title has a visible resting underline and Current Path rows are affordant at rest", async ({ page }) => {

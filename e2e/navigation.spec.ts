@@ -19,8 +19,11 @@ test("fresh student reaches the Basic differentiation path through the app", asy
   await expect(page.getByRole("heading", { name: "Basic differentiation", level: 1 })).toBeVisible();
   await expect(page.getByTestId("skill-path-hero-progress")).toContainText("8");
   await expect(page.getByTestId("path-mastery-status")).toContainText("Not Started");
-  await expect(page.getByText("0 / 3 complete", { exact: true })).toHaveCount(2);
-  await expect(page.getByText("0 / 2 complete", { exact: true })).toHaveCount(1);
+  const journey = page.getByTestId("skill-learning-journey");
+  await expect(journey.locator('[data-journey-kind="stage"]')).toHaveCount(3);
+  await expect(journey.locator('[data-journey-kind="stage"]').filter({ hasText: "Foundations" })).toContainText("0 of 3 complete");
+  await expect(journey.locator('[data-journey-kind="stage"]').filter({ hasText: "Applications" })).toContainText("Not started");
+  await expect(journey.locator('[data-journey-kind="stage"]').filter({ hasText: "Exam practice" })).toContainText("Not started");
   expect(await readStoredProgress(page)).toBeNull();
 });
 

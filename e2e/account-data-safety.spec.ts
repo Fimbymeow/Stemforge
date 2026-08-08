@@ -14,6 +14,7 @@ test("auth-disabled learning records anonymous provenance and keeps reset wordin
   expect(sources.every((source) => source === "local_anonymous")).toBe(true);
 
   await page.goto("/subjects/higher-maths/calculus/differentiation/basic-differentiation");
+  await page.getByText("Progress options", { exact: true }).click();
   await expect(page.getByText(/Historical achievements may remain/)).toBeVisible();
   page.once("dialog", async (dialog) => {
     expect(dialog.message()).toContain("Progress already synced to your account is not deleted");

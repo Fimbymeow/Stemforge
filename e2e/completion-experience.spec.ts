@@ -211,6 +211,7 @@ test("path reset clears only its acknowledgement and permits a future celebratio
   await page.goto(PATH_ROUTE);
   await expect(page.getByTestId("completed-path-card")).toBeVisible();
 
+  await page.getByText("Progress options", { exact: true }).click();
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByTestId("reset-progress").click();
   await expect(page.getByTestId("path-mastery-status")).toContainText("Not Started");
