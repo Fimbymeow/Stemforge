@@ -103,12 +103,18 @@ export function DashboardLocalProgressSection() {
         authStateReady={sync.status === "authentication_required"}
       />
 
-      {model.needsWork.length > 0 || model.secureAndMastered.length > 0 ? (
+      {model.needsWork.length > 0 || model.mistakes.openCount > 0 || model.secureAndMastered.length > 0 ? (
         <div className="grid grid-cols-2 gap-4 max-lg:grid-cols-1">
-          {model.needsWork.length > 0 ? (
+          {model.needsWork.length > 0 || model.mistakes.openCount > 0 ? (
             <Card className="p-5">
               <h2 className="m-0 flex items-center gap-2 text-xl font-extrabold"><TrendingUp className="size-5 text-forge" /> Needs work</h2>
-              <FocusList items={model.needsWork} />
+              {model.mistakes.openCount > 0 ? (
+                <Link href={model.mistakes.href} data-testid="dashboard-mistakes-link" className="mt-4 flex min-h-11 items-center justify-between gap-3 rounded-xl border border-line bg-white px-3 text-sm font-extrabold transition hover:border-forge">
+                  <span>{model.mistakes.openCount} unresolved mistake{model.mistakes.openCount === 1 ? "" : "s"}</span>
+                  <ArrowRight aria-hidden="true" className="size-4 text-forge" />
+                </Link>
+              ) : null}
+              {model.needsWork.length > 0 ? <FocusList items={model.needsWork} /> : null}
             </Card>
           ) : null}
 

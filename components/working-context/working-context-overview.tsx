@@ -42,6 +42,7 @@ export function WorkingContextOverview({ pathId }: { pathId: string }) {
           {model.notesHref ? <Link href={model.notesHref} className="inline-flex min-h-10 items-center rounded-lg px-3 font-bold hover:bg-forge-soft">Notes</Link> : null}
           <Link href={model.practiceHref} className="inline-flex min-h-10 items-center rounded-lg px-3 font-bold hover:bg-forge-soft">Practice</Link>
           <Link href={model.questionBankHref} className="inline-flex min-h-10 items-center rounded-lg px-3 font-bold hover:bg-forge-soft">Browse Questions</Link>
+          {model.mistakesHref ? <Link href={model.mistakesHref} data-testid="skill-mistakes-link" className="inline-flex min-h-10 items-center rounded-lg px-3 font-bold text-forge hover:bg-forge-soft">{model.openMistakeCount} unresolved mistake{model.openMistakeCount === 1 ? "" : "s"}</Link> : null}
           {model.reviewHref ? <Link href={model.reviewHref} className="inline-flex min-h-10 items-center rounded-lg px-3 font-bold text-forge hover:bg-forge-soft">{formatReviewDueLabel(model.reviewCount)}</Link> : null}
         </nav>
         {skillPath ? <LocalProgressControls skillPath={skillPath} compact /> : null}

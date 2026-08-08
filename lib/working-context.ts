@@ -5,6 +5,7 @@ import { calculateSkillPathProgress } from "@/lib/progress/calculations";
 import type { ProgressEvidence, ProgressStatus } from "@/lib/progress/types";
 import type { PracticeSession } from "@/lib/practice/practice-types";
 import { deriveSkillReviewState } from "@/lib/review/derivation";
+import { deriveMistakeLog } from "@/lib/mistakes/derivation";
 import type { ReviewDueReason } from "@/lib/review/types";
 
 export const WORKING_CONTEXT_NOTES_ORIGIN_PREFIX = "stemforge:working-context-notes-origin:";
@@ -38,6 +39,8 @@ export type WorkingContextModel = {
   practiceHref: string;
   overviewHref: string;
   questionBankHref: string;
+  mistakesHref: string | null;
+  openMistakeCount: number;
   completed: number;
   total: number;
   isComplete: boolean;
@@ -110,6 +113,9 @@ export function deriveWorkingContextModel(input: {
   const isComplete = progress.totalQuestions > 0
     && progress.completedQuestionIds.length >= progress.totalQuestions;
   const reviewState = deriveSkillReviewState(context.skillPath, input.evidence);
+  const mistakeLog = deriveMistakeLog(input.evidence, context.subject.subjectSlug);
+  const openMistakeCount = mistakeLog.openGroups.find((group) =>
+    group.skillPathId === input.pathId)?.items.length ?? 0;
   const reviewQuestionIds = [...new Set([
     ...reviewState.reassessmentQuestionIds,
     ...reviewState.ordinaryRecoveryQuestionIds,
@@ -173,6 +179,8 @@ export function deriveWorkingContextModel(input: {
     practiceHref,
     overviewHref: context.skillPath.href,
     questionBankHref: `/subjects/${context.subject.subjectSlug}/question-bank`,
+    mistakesHref: openMistakeCount > 0 ? mistakeLog.href : null,
+    openMistakeCount,
     completed: progress.completedQuestionIds.length,
     total: progress.totalQuestions,
     isComplete,

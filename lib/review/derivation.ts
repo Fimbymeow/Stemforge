@@ -2,6 +2,7 @@ import type { SkillPath } from "@/data/types";
 import { contentResolver } from "@/lib/content-resolver";
 import { calculateSkillPathProgress, getQuestionProgressForVersion } from "@/lib/progress/calculations";
 import { isGradedAttempt, isGradedCorrectAttempt, isGradedIncorrectAttempt } from "@/lib/progress/attempt-outcomes";
+import { isIndependentOrdinaryAttempt } from "@/lib/progress/independent-attempt";
 import type { ProgressEvidence, QuestionAttempt, QuestionSupportEvent, VersionEvidence } from "@/lib/progress/types";
 import { compareCoordinate, compareEvidence } from "@/lib/review/outcomes";
 import { resolveCanonicalReviewTip } from "@/lib/review/replay";
@@ -293,26 +294,6 @@ function canCompleteQuestion(
 
 function isReviewSessionId(sessionId: string) {
   return sessionId.startsWith(REVIEW_SESSION_ID_PREFIX);
-}
-
-function isIndependentOrdinaryAttempt(
-  attempt: QuestionAttempt,
-  evidence: ProgressEvidence,
-  orderedAttempts: readonly QuestionAttempt[],
-) {
-  if (attempt.hintViewedBeforeSubmission) return false;
-  const previous = orderedAttempts.filter((candidate) => compareEvidence(candidate, attempt) < 0).at(-1);
-  return !evidence.supportEvents.some((event) => {
-    if (event.questionId !== attempt.questionId || event.type !== "solution_viewed") return false;
-    if (attempt.practiceSessionId) return event.practiceSessionId === attempt.practiceSessionId &&
-      compareCoordinate(event.occurredAt, event.sequence, event.eventId, attempt.attemptedAt, attempt.sequence, attempt.eventId) < 0;
-    const afterPrevious = !previous || compareCoordinate(
-      event.occurredAt, event.sequence, event.eventId,
-      previous.attemptedAt, previous.sequence, previous.eventId,
-    ) > 0;
-    return !event.practiceSessionId && afterPrevious &&
-      compareCoordinate(event.occurredAt, event.sequence, event.eventId, attempt.attemptedAt, attempt.sequence, attempt.eventId) < 0;
-  });
 }
 
 function emptyEvidence(): ProgressEvidence {

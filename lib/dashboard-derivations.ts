@@ -20,6 +20,7 @@ import type {
   SkillPathProgress,
 } from "@/lib/progress/types";
 import { deriveLearnerNextAction, type LearnerNextAction } from "@/lib/learning/next-action";
+import { deriveMistakeLog } from "@/lib/mistakes/derivation";
 
 export type DashboardSyncInput = {
   status:
@@ -146,6 +147,7 @@ export type LearnerDashboardModel = {
   paths: DashboardPathSummary[];
   recentActivity: DashboardActivityItem[];
   needsWork: DashboardFocusItem[];
+  mistakes: { openCount: number; href: string };
   secureAndMastered: DashboardAchievementItem[];
   weeklyActivity: DashboardWeeklyActivity;
   sync: DashboardSyncSummary;
@@ -245,6 +247,7 @@ export function deriveLearnerDashboardModel(input: {
   const availablePaths = allPaths.filter((path) => path.isAvailable);
   const paths = availablePaths.map((path) => derivePathDashboardSummary(path, input.evidence, questionVersions));
   const course = deriveCourseDashboardSummary(allPaths, input.evidence, questionVersions, subject);
+  const mistakes = deriveMistakeLog(input.evidence, subject.subjectSlug);
 
   return {
     generatedAt: now.toISOString(),
@@ -253,6 +256,7 @@ export function deriveLearnerDashboardModel(input: {
     paths,
     recentActivity: deriveRecentActivity(input.evidence, 6),
     needsWork: deriveNeedsWork(paths),
+    mistakes: { openCount: mistakes.openCount, href: mistakes.href },
     secureAndMastered: deriveSecureAndMastered(paths, input.evidence),
     weeklyActivity: deriveWeeklyActivity(input.evidence, now),
     sync: deriveSyncSummary(sync),
