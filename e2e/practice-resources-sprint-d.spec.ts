@@ -45,10 +45,11 @@ test("Higher Maths orders Start Here above a balanced destination grid responsiv
 test("Course tracker distinguishes official requirements from all canonical skills", async ({ page }) => {
   await page.goto("/subjects/higher-maths/course-tracker");
   const tracker = page.getByTestId("course-tracker");
-  await expect(tracker.getByRole("heading", { name: "Course tracker" })).toBeVisible();
+  await expect(tracker.getByRole("heading", { name: "Skills by course area" })).toBeVisible();
   await expect(page.getByTestId("course-tracker-coverage")).toHaveText("2 of 49 Higher Maths skills available");
   await expect(tracker.locator('[data-testid^="tracker-skill-"]')).toHaveCount(49);
-  await expect(tracker.getByTestId("course-tracker-official-point")).toHaveCount(58);
+  const representedRequirementIds = await tracker.getByTestId("course-tracker-official-point").evaluateAll((points) => [...new Set(points.map((point) => point.getAttribute("data-official-point-id")))]);
+  expect(representedRequirementIds).toHaveLength(58);
   await expect(page.getByTestId("tracker-skill-basic-differentiation")).toContainText("Progress: Not started");
   await expect(page.getByTestId("tracker-skill-chain-rule")).toContainText("Progress: Not started");
   const unavailable = page.getByTestId("tracker-skill-trigonometric-differentiation");

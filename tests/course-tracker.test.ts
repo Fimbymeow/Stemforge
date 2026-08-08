@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { higherMaths } from "../data/higher-maths";
+import { higherMathematicsOfficialSkillMappings } from "../data/curriculum/higher-mathematics/official-skill-mappings";
+import { higherMathematicsSpecificationRegister } from "../data/curriculum/higher-mathematics/specification-register";
 import { contentResolver } from "../lib/content-resolver";
 import { deriveHigherMathsCourseTracker } from "../lib/course-tracker";
 import { deriveSkillPathNextAction } from "../lib/learning/next-action";
@@ -8,6 +10,7 @@ import type { ProgressEvidence, QuestionAttempt } from "../lib/progress/types";
 
 const empty = (): ProgressEvidence => ({ attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [] });
 const findSkill = (model: ReturnType<typeof deriveHigherMathsCourseTracker>, id: string) => model.areas.flatMap((area) => area.requirements).flatMap((requirement) => requirement.skills).find((skill) => skill.skillPathId === id);
+const allSkills = (model: ReturnType<typeof deriveHigherMathsCourseTracker>) => model.areas.flatMap((area) => area.requirements).flatMap((requirement) => requirement.skills);
 
 function attemptsFor(pathId: string, date: string, only = Number.POSITIVE_INFINITY): QuestionAttempt[] {
   const context = contentResolver.getPathContext(pathId);
@@ -30,6 +33,22 @@ test("fresh tracker derives honest availability, progress and coverage from the 
   }
   const unavailable = findSkill(model, "trigonometric-differentiation"); assert.ok(unavailable);
   assert.equal(unavailable.availability, "Coming soon"); assert.equal(unavailable.action, null); assert.equal(unavailable.knowledgeStatus, null);
+  assert.equal(allSkills(model).length, 49);
+  assert.ok(allSkills(model).every((skill) => skill.officialPoints.length > 0));
+});
+
+test("skill disclosures preserve the canonical many-to-many official mapping and all 58 active requirements", () => {
+  const model = deriveHigherMathsCourseTracker(higherMaths, empty());
+  for (const mapping of higherMathematicsOfficialSkillMappings) {
+    const skill = findSkill(model, mapping.skillPathId); assert.ok(skill);
+    assert.deepEqual(skill.officialPoints.map((point) => point.id).sort(), [...mapping.officialSpecificationPointIds].sort());
+  }
+  const representedPointIds = new Set([
+    ...allSkills(model).flatMap((skill) => skill.officialPoints.map((point) => point.id)),
+    ...model.courseWideRequirements.flatMap((requirement) => requirement.officialPoints.map((point) => point.id)),
+  ]);
+  assert.equal(representedPointIds.size, 58);
+  assert.equal(representedPointIds.size, higherMathematicsSpecificationRegister.points.filter((point) => point.status === "active").length);
 });
 
 test("partial weak evidence is in progress and explains needs-practice from real evidence", () => {

@@ -9,6 +9,7 @@ import { createReviewDerivationCache, deriveSkillReviewState } from "@/lib/revie
 
 export type TrackerStructuralStatus = "Not started" | "In progress" | "Completed";
 export type TrackerKnowledgeStatus = "Needs practice" | "Healthy";
+export type CourseTrackerOfficialPoint = { id: string; reference: string; text: string };
 
 export type CourseTrackerSkill = {
   skillPathId: string;
@@ -20,12 +21,13 @@ export type CourseTrackerSkill = {
   reviewDue: boolean;
   reviewReason: string | null;
   action: { label: string; href: string } | null;
+  officialPoints: CourseTrackerOfficialPoint[];
 };
 
 export type CourseTrackerRequirement = {
   areaId: string;
   title: string;
-  officialPoints: Array<{ id: string; reference: string; text: string }>;
+  officialPoints: CourseTrackerOfficialPoint[];
   skills: CourseTrackerSkill[];
 };
 
@@ -61,6 +63,7 @@ export function deriveHigherMathsCourseTracker(
   }
   const pointOrder = new Map(higherMathematicsSpecificationRegister.points.map((point, index) => [point.specPointId, index]));
   const activePoints = higherMathematicsSpecificationRegister.points.filter((point) => point.status === "active");
+  const activePointById = new Map(activePoints.map((point) => [point.specPointId, point]));
   const reviewCache = createReviewDerivationCache();
 
   const areas = subject.courseAreas.map((courseArea) => ({
@@ -102,10 +105,16 @@ export function deriveHigherMathsCourseTracker(
 
   function deriveTrackerSkill(skillPathId: string, progressEvidence: ProgressEvidence, at: Date, cache: ReturnType<typeof createReviewDerivationCache>): CourseTrackerSkill {
     const context = contextById.get(skillPathId);
-    if (!context || !mappingBySkill.has(skillPathId)) throw new Error(`Course tracker cannot resolve mapped skill ${skillPathId}.`);
+    const mapping = mappingBySkill.get(skillPathId);
+    if (!context || !mapping) throw new Error(`Course tracker cannot resolve mapped skill ${skillPathId}.`);
     const path = context.skillPath;
+    const officialPoints = mapping.officialSpecificationPointIds
+      .map((pointId) => activePointById.get(pointId))
+      .filter((point): point is NonNullable<typeof point> => Boolean(point))
+      .sort((left, right) => (pointOrder.get(left.specPointId) ?? 0) - (pointOrder.get(right.specPointId) ?? 0))
+      .map((point) => pointView(point, wordingMode));
     if (!path.isAvailable) {
-      return { skillPathId, name: path.name, availability: "Coming soon", structuralStatus: null, knowledgeStatus: null, knowledgeReason: null, reviewDue: false, reviewReason: null, action: null };
+      return { skillPathId, name: path.name, availability: "Coming soon", structuralStatus: null, knowledgeStatus: null, knowledgeReason: null, reviewDue: false, reviewReason: null, action: null, officialPoints };
     }
     const progress = getSkillPathProgress(path, progressEvidence);
     const structuralStatus: TrackerStructuralStatus = progress.status === "not_started" ? "Not started"
@@ -123,6 +132,7 @@ export function deriveHigherMathsCourseTracker(
       reviewDue: review.due && review.reason !== "history_unavailable",
       reviewReason: review.due ? review.reason : null,
       action: nextAction.href ? { label: nextAction.label, href: nextAction.href } : null,
+      officialPoints,
     };
   }
 }

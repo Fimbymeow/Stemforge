@@ -14,7 +14,7 @@ test("Higher Maths hub prioritises the live path and links to the full course st
   await trackerLink.click();
   await expect(page).toHaveURL("/subjects/higher-maths/course-tracker");
   for (const area of ["Algebra and Trigonometry", "Vectors", "Calculus", "Lines, Circles and Sequences"]) {
-    await expect(page.getByRole("region", { name: area })).toBeVisible();
+    await expect(page.getByRole("region", { name: area, exact: true })).toBeVisible();
   }
 });
 
