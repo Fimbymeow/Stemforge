@@ -5,7 +5,7 @@ test("enabled account navigation hydrates without console or page errors", async
   await page.goto("/dashboard");
 
   await expect(page.getByRole("link", { name: "Account" })).toBeVisible();
-  await expect(page.getByTestId("dashboard-progress-summary")).toContainText("0 / 42 completed");
+  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Foundations \u00b7 0 of 3 complete");
   expect(seriousBrowserErrors).toEqual([]);
 });
 

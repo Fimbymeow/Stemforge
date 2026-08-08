@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, ShieldCheck, Target, TrendingUp } from "lucide-react";
-import { Card, ProgressBar } from "@/components/ui";
+import { Card } from "@/components/ui";
 import { useProgressSync } from "@/components/progress-sync-provider";
 import { PracticeEntryCard } from "@/components/practice/practice-entry-card";
 import {
@@ -54,6 +54,10 @@ export function DashboardLocalProgressSection() {
   ]);
 
   const meaningfulEvidenceCount = evidence.attempts.length + evidence.achievementSnapshots.length;
+  const recommendedPath = model.paths.find((path) => path.skillPathId === recommendation.pathId) ?? null;
+  const recommendedStage = recommendation.stageId
+    ? recommendedPath?.stageSummaries.find((stage) => stage.stageId === recommendation.stageId) ?? null
+    : null;
 
   return (
     <section className="grid gap-4" aria-label="Your learning dashboard">
@@ -65,53 +69,25 @@ export function DashboardLocalProgressSection() {
             </div>
             <div className="min-w-0">
               <p className="text-xs font-extrabold uppercase tracking-wide text-forge">Learn · Higher Maths</p>
-              <h2 className="mt-1 text-2xl font-extrabold md:text-3xl">
-                <Link href={HIGHER_MATHS_HREF} className="rounded-sm hover:text-forge focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-forge">
-                  Higher Maths
-                </Link>
-              </h2>
-              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">{model.course.notice}</p>
+              <h2 className="mt-1 text-2xl font-extrabold md:text-3xl">{recommendedPath?.name ?? "Higher Maths"}</h2>
+              {recommendedStage ? (
+                <p className="mt-2 text-sm font-bold text-muted" data-testid="dashboard-current-stage">
+                  {recommendedStage.name} &middot; {recommendedStage.completedQuestions} of {recommendedStage.totalQuestions} complete
+                </p>
+              ) : null}
+              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">{recommendation.reason}</p>
             </div>
           </div>
 
-          <div className="mt-5 grid gap-3 border-t border-forge/20 pt-4" data-testid="dashboard-course-progress">
-              <div className="grid gap-2">
-                <div className="flex flex-wrap items-center justify-between gap-2 text-sm font-bold text-muted">
-                  <span>Combined progress across the Higher Maths skills available now</span>
-                  <span>{model.course.completedQuestions} / {model.course.totalQuestions} completed</span>
-                </div>
-                <ProgressBar value={model.course.completionPercentage} />
-              </div>
-              {model.paths.length > 1 ? (
-                <div className="grid gap-2" data-testid="dashboard-per-skill-progress">
-                  {model.paths.map((path) => (
-                    <div key={path.skillPathId} className="grid gap-1">
-                      <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-muted">
-                        <span>{path.name}</span>
-                        <span>{path.completedQuestions} / {path.totalQuestions} completed</span>
-                      </div>
-                      <ProgressBar value={path.completionPercentage} />
-                    </div>
-                  ))}
-                </div>
-              ) : null}
-              {model.weeklyActivity.activeDays > 0 ? (
-                <p className="text-xs font-bold text-muted" data-testid="dashboard-weekly-activity">
-                  {model.weeklyActivity.activeDays} active day{model.weeklyActivity.activeDays === 1 ? "" : "s"} this week
-                </p>
-              ) : null}
-          </div>
-
           <div className="mt-5 flex flex-col gap-3 border-t border-forge/20 pt-4 sm:flex-row sm:flex-wrap sm:items-center">
-            <Link href={HIGHER_MATHS_HREF} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-forge px-5 text-sm font-extrabold text-white">
-              Open Higher Maths
-              <ArrowRight className="size-4" />
-            </Link>
-            {recommendation.href && recommendation.kind !== "start_learning" ? (
-              <Link href={recommendation.href} className="inline-flex min-h-11 items-center justify-center rounded-lg border border-forge bg-white px-5 text-sm font-extrabold text-forge">
-                {recommendation.label}
+            {recommendation.href ? (
+              <Link href={recommendation.href} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-forge px-5 text-sm font-extrabold text-white">
+                {recommendation.label}<ArrowRight className="size-4" />
               </Link>
             ) : null}
+            <Link href={HIGHER_MATHS_HREF} className="inline-flex min-h-11 items-center justify-center rounded-lg border border-line bg-white px-5 text-sm font-extrabold text-ink">
+              Open Higher Maths
+            </Link>
             <span className="text-sm font-bold text-muted sm:ml-auto">
               {model.sync.label}
             </span>

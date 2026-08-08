@@ -9,8 +9,12 @@ test("guest learner dashboard hydrates without errors and presents calm course a
   const summary = page.getByTestId("dashboard-progress-summary");
   await expect(summary.getByText("Recommended next")).toHaveCount(0);
   await expect(summary.getByRole("link", { name: "Open Higher Maths" })).toHaveAttribute("href", "/subjects/higher-maths");
-  await expect(summary.getByRole("link", { name: "Start learning" })).toHaveCount(0);
-  await expect(summary).toContainText("0 / 42 completed");
+  await expect(summary.getByRole("link", { name: "Start learning" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
+  await expect(summary).toContainText("Basic differentiation");
+  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Foundations \u00b7 0 of 3 complete");
+  await expect(page.getByTestId("dashboard-course-progress")).toHaveCount(0);
+  await expect(page.getByTestId("dashboard-per-skill-progress")).toHaveCount(0);
+  await expect(page.getByTestId("dashboard-weekly-activity")).toHaveCount(0);
   await expect(page.getByText("Saved on this browser")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Course progress" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Recent activity" })).toHaveCount(0);
@@ -33,17 +37,18 @@ test("dashboard updates from stored evidence with compact course context and a r
   await page.goto("/dashboard");
 
   const summary = page.getByTestId("dashboard-progress-summary");
-  await expect(summary).toContainText("Combined progress across the Higher Maths skills available now");
+  await expect(summary).not.toContainText("Combined progress across the Higher Maths skills available now");
   await expect(summary.getByRole("link", { name: "Open Higher Maths" })).toHaveAttribute("href", "/subjects/higher-maths");
   await expect(summary.getByRole("link", { name: "Resume question" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
-  await expect(summary).toContainText("1 / 42 completed");
-  await expect(page.getByTestId("dashboard-course-progress").getByRole("progressbar").first()).toHaveAttribute("aria-valuenow", "2");
-  await expect(page.getByTestId("dashboard-per-skill-progress")).toBeVisible();
+  await expect(summary).toContainText("Basic differentiation");
+  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Foundations \u00b7 1 of 3 complete");
+  await expect(page.getByTestId("dashboard-course-progress")).toHaveCount(0);
+  await expect(page.getByTestId("dashboard-per-skill-progress")).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Recent activity" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Weekly activity" })).toHaveCount(0);
 });
 
-test("dashboard surfaces the existing weekly-activity signal without turning it into a streak or goal", async ({ page }) => {
+test("dashboard keeps weekly activity out of the primary recommendation", async ({ page }) => {
   const today = new Date().toISOString();
   await seedStoredProgress(page, v3Payload([
     currentAttempt(QUESTION_IDS[0], 1, { isCorrect: true, attemptedAt: today }),
@@ -51,8 +56,7 @@ test("dashboard surfaces the existing weekly-activity signal without turning it 
 
   await page.goto("/dashboard");
 
-  const activity = page.getByTestId("dashboard-weekly-activity");
-  await expect(activity).toBeVisible();
-  await expect(activity).toContainText("1 active day this week");
+  await expect(page.getByTestId("dashboard-weekly-activity")).toHaveCount(0);
+  await expect(page.getByTestId("dashboard-progress-summary")).not.toContainText("active day");
   await expect(page.getByRole("heading", { name: "Weekly activity" })).toHaveCount(0);
 });

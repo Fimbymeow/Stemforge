@@ -2,20 +2,30 @@ import { expect, test } from "./fixtures/test";
 import { PRACTICE_SESSIONS_STORAGE_KEY } from "../lib/practice/practice-types";
 import { getStudentResourceCapabilities } from "../lib/resource-capabilities";
 
-test("Higher Maths orders Learn above aligned Practice and Review cards responsively", async ({ page }) => {
+test("Higher Maths orders Start Here above a balanced destination grid responsively", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/subjects/higher-maths");
   const learn = page.getByTestId("working-context-hub");
   const practice = page.getByTestId("higher-maths-practice");
   const review = page.getByTestId("review-entry-card");
+  const tracker = page.getByTestId("course-tracker-destination");
+  const pastPapers = page.getByTestId("past-papers-destination");
   await expect(learn).toBeVisible();
   await expect(practice).toBeVisible();
   await expect(review).toBeVisible();
+  await expect(tracker.getByRole("link", { name: "Open Course Tracker" })).toHaveAttribute("href", "/subjects/higher-maths/course-tracker");
+  await expect(pastPapers).toContainText("Coming soon");
+  await expect(pastPapers.getByRole("link")).toHaveCount(0);
+  await expect(pastPapers.getByRole("button")).toHaveCount(0);
   const wide = await cardBoxes(learn, practice, review);
   expect(wide.practice.y).toBeGreaterThanOrEqual(wide.learn.y + wide.learn.height);
   expect(Math.abs(wide.practice.y - wide.review.y)).toBeLessThan(8);
   expect(Math.abs(wide.practice.width - wide.review.width)).toBeLessThan(2);
   expect(Math.abs(wide.practice.height - wide.review.height)).toBeLessThan(2);
+  const trackerBox = await tracker.boundingBox();
+  const pastPapersBox = await pastPapers.boundingBox();
+  expect(Math.abs(trackerBox!.y - pastPapersBox!.y)).toBeLessThan(8);
+  expect(Math.abs(trackerBox!.width - pastPapersBox!.width)).toBeLessThan(2);
   await expectNoDocumentOverflow(page);
 
   await page.setViewportSize({ width: 390, height: 844 });
@@ -27,15 +37,18 @@ test("Higher Maths orders Learn above aligned Practice and Review cards responsi
   );
   expect(stacked.practice.y).toBeGreaterThanOrEqual(stacked.learn.y + stacked.learn.height);
   expect(stacked.review.y).toBeGreaterThanOrEqual(stacked.practice.y + stacked.practice.height);
+  await expect(page.getByTestId("course-tracker-destination")).toBeVisible();
+  await expect(page.getByTestId("past-papers-destination")).toBeVisible();
   await expectNoDocumentOverflow(page);
 });
 
 test("Course tracker distinguishes official requirements from all canonical skills", async ({ page }) => {
-  await page.goto("/subjects/higher-maths");
+  await page.goto("/subjects/higher-maths/course-tracker");
   const tracker = page.getByTestId("course-tracker");
   await expect(tracker.getByRole("heading", { name: "Course tracker" })).toBeVisible();
   await expect(page.getByTestId("course-tracker-coverage")).toHaveText("2 of 49 Higher Maths skills available");
   await expect(tracker.locator('[data-testid^="tracker-skill-"]')).toHaveCount(49);
+  await expect(tracker.getByTestId("course-tracker-official-point")).toHaveCount(58);
   await expect(page.getByTestId("tracker-skill-basic-differentiation")).toContainText("Progress: Not started");
   await expect(page.getByTestId("tracker-skill-chain-rule")).toContainText("Progress: Not started");
   const unavailable = page.getByTestId("tracker-skill-trigonometric-differentiation");
@@ -46,6 +59,9 @@ test("Course tracker distinguishes official requirements from all canonical skil
   await disclosure.press("Enter");
   await expect(disclosure.locator("xpath=parent::details")).toHaveAttribute("open", "");
   await expectNoDocumentOverflow(page);
+  await expect(page.getByRole("link", { name: "Back to Higher Maths" })).toHaveAttribute("href", "/subjects/higher-maths");
+  await page.goto("/subjects/higher-maths");
+  await expect(page.getByTestId("course-tracker")).toHaveCount(0);
 });
 
 test("shared Practice chooser has exactly two modes, traps focus and restores its trigger", async ({ page }) => {
@@ -165,7 +181,7 @@ test("Sprint D surfaces have no document overflow at required widths or 200% zoo
   ];
   for (const viewport of viewports) {
     await page.setViewportSize(viewport);
-    for (const route of ["/dashboard", "/subjects/higher-maths", "/subjects/higher-maths/revision-notes"]) {
+    for (const route of ["/dashboard", "/subjects/higher-maths", "/subjects/higher-maths/course-tracker", "/subjects/higher-maths/revision-notes"]) {
       await page.goto(route);
       await expectNoDocumentOverflow(page);
     }

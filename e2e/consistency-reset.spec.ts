@@ -29,8 +29,8 @@ test("dashboard, Higher Maths hub and path agree for mixed outcomes", async ({ p
   await expect(page.getByTestId("next-question-locked")).toBeVisible();
 
   await page.goto("/dashboard");
-  await expect(page.getByTestId("dashboard-progress-summary")).toContainText("3 / 42 completed");
-  await expect(page.getByTestId("dashboard-course-progress").getByRole("progressbar").first()).toHaveAttribute("aria-valuenow", "7");
+  await expect(page.getByTestId("dashboard-progress-summary")).toContainText("Basic differentiation");
+  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Applications \u00b7 0 of 3 complete");
 
   await page.goto("/subjects/higher-maths");
   await expect(page.getByText("3 / 8 completed", { exact: true })).toBeVisible();
@@ -68,8 +68,8 @@ test("path reset clears only Basic differentiation and remains valid after refre
   await expect(page.getByTestId("path-mastery-status")).toContainText("Not Started");
   await page.goto("/dashboard");
   await expect(page).toHaveURL(/\/dashboard$/);
-  await expect(page.getByTestId("dashboard-progress-summary")).toContainText("0 / 42 completed");
-  await expect(page.getByTestId("dashboard-progress-summary").getByRole("link", { name: "Start learning" })).toHaveCount(0);
+  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Foundations \u00b7 0 of 3 complete");
+  await expect(page.getByTestId("dashboard-progress-summary").getByRole("link", { name: "Start learning" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
   await expect(page.getByRole("navigation", { name: "Main" })).toBeVisible();
   stored = await readStoredProgress(page) as ProgressPayload;
   expect(stored.data.attempts.some((item) => item.skillPathId === PATH_ID)).toBe(false);

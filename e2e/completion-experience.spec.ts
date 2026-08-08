@@ -164,9 +164,12 @@ test("mastered completion stays consistent while the hub advances to the next li
   expect(calculateSkillPathProgress(skillPath, (await readStoredProgress(page) as ProgressPayload).data, QUESTION_VERSIONS).status).toBe("mastered");
 
   await page.goto("/dashboard");
-  await expect(page.getByTestId("dashboard-progress-summary")).toContainText("8 / 42 completed");
+  await expect(page.getByTestId("dashboard-progress-summary")).toContainText("Chain rule");
+  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Foundations \u00b7 0 of 10 complete");
   await page.goto(HUB_ROUTE);
   await expect(page.getByTestId("working-context-hub")).toContainText("Chain rule");
+  await page.getByRole("link", { name: "Open Course Tracker" }).click();
+  await expect(page).toHaveURL("/subjects/higher-maths/course-tracker");
   const completedSkill = page.getByRole("listitem").filter({ hasText: "Basic differentiation" });
   await expect(completedSkill).toContainText("Progress: Completed");
   await expect(completedSkill).toContainText("Knowledge: Healthy");

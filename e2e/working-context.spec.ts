@@ -213,7 +213,7 @@ test("dashboard does not duplicate the contextual navigation surface", async ({ 
   await page.evaluate(() => localStorage.clear());
   await page.goto(overview);
   await page.goto("/dashboard");
-  await expect(page.getByTestId("dashboard-progress-summary").getByRole("link", { name: "Start learning" })).toHaveCount(0);
+  await expect(page.getByTestId("dashboard-progress-summary").getByRole("link", { name: "Start learning" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
 });
 
 test("mobile Current Path opens a trapped modal and closes with Escape", async ({ page }) => {

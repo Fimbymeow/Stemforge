@@ -8,21 +8,22 @@ import { useWorkingContextModel } from "@/components/working-context/use-working
 import { getEmptyProgressEvidence, getProgressEvidence } from "@/lib/local-progress";
 import { deriveSubjectReviewSummary } from "@/lib/review/derivation";
 
-export function ReviewEntryCard({ pathId }: { pathId?: string }) {
-  return pathId ? <ScopedReviewEntryCard pathId={pathId} /> : <HigherMathsReviewEntryCard />;
+export function ReviewEntryCard({ pathId, headingLevel = 2 }: { pathId?: string; headingLevel?: 2 | 3 }) {
+  return pathId ? <ScopedReviewEntryCard pathId={pathId} headingLevel={headingLevel} /> : <HigherMathsReviewEntryCard headingLevel={headingLevel} />;
 }
 
-function ScopedReviewEntryCard({ pathId }: { pathId: string }) {
+function ScopedReviewEntryCard({ pathId, headingLevel }: { pathId: string; headingLevel: 2 | 3 }) {
   const model = useWorkingContextModel(pathId);
   if (!model) return null;
   return <ReviewCard
     dueCount={model.reviewCount}
     detail={model.reviewHref ? `${model.skillName} is ready to review.` : null}
     href={model.reviewHref}
+    headingLevel={headingLevel}
   />;
 }
 
-function HigherMathsReviewEntryCard() {
+function HigherMathsReviewEntryCard({ headingLevel }: { headingLevel: 2 | 3 }) {
   const [summary, setSummary] = useState(() =>
     deriveSubjectReviewSummary("higher-maths", getEmptyProgressEvidence()));
 
@@ -44,16 +45,17 @@ function HigherMathsReviewEntryCard() {
     : summary.dueSkillCount > 1
       ? `Review is due across ${summary.dueSkillCount} skills.`
       : null;
-  return <ReviewCard dueCount={summary.dueSkillCount} detail={detail} href={summary.href} />;
+  return <ReviewCard dueCount={summary.dueSkillCount} detail={detail} href={summary.href} headingLevel={headingLevel} />;
 }
 
-function ReviewCard({ dueCount, detail, href }: { dueCount: number; detail: string | null; href: string | null }) {
+function ReviewCard({ dueCount, detail, href, headingLevel }: { dueCount: number; detail: string | null; href: string | null; headingLevel: 2 | 3 }) {
+  const Heading = headingLevel === 3 ? "h3" : "h2";
   return (
     <Card data-testid="review-entry-card" aria-label="Review" className="flex h-full flex-col p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-extrabold uppercase tracking-wide text-forge">Review</p>
-          <h2 className="mt-1 text-xl font-extrabold">Keep learning secure</h2>
+          <Heading className="mt-1 text-xl font-extrabold">Keep learning secure</Heading>
         </div>
         <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-forge-soft text-forge">
           <RefreshCcw aria-hidden="true" className="size-5" />

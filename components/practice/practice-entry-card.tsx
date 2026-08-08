@@ -12,10 +12,12 @@ export function PracticeEntryCard({
   preferredPathId,
   className = "",
   testId = "practice-entry-card",
+  headingLevel = 2,
 }: {
   preferredPathId?: string | null;
   className?: string;
   testId?: string;
+  headingLevel?: 2 | 3;
 }) {
   const [open, setOpen] = useState(false);
   const titleId = useId();
@@ -25,6 +27,7 @@ export function PracticeEntryCard({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
+  const Heading = headingLevel === 3 ? "h3" : "h2";
 
   useModalFocusTrap({
     open,
@@ -38,7 +41,7 @@ export function PracticeEntryCard({
     <>
       <Card data-testid={testId} aria-label="Practice" className={`flex h-full flex-col p-5 ${className}`}>
         <p className="text-xs font-extrabold uppercase tracking-wide text-forge">Practice</p>
-        <h2 className="mt-1 text-xl font-extrabold">Practise your way</h2>
+        <Heading className="mt-1 text-xl font-extrabold">Practise your way</Heading>
         <p id={`${testId}-description`} className="mt-2 flex-1 text-sm leading-relaxed text-muted">
           Start straight away or choose the questions you want to work on.
         </p>

@@ -46,7 +46,7 @@ export function CourseTracker({ subject }: { subject: Subject }) {
                 <details className="mt-2 text-sm text-muted">
                   <summary className="min-h-10 cursor-pointer py-2 font-bold text-ink">Read official requirements ({requirement.officialPoints.length})</summary>
                   <ul className="grid gap-2 border-t border-line pt-3">
-                    {requirement.officialPoints.map((point) => <li key={point.id}><span className="font-bold text-ink">{point.reference}:</span> {point.text}</li>)}
+                    {requirement.officialPoints.map((point) => <li key={point.id} data-testid="course-tracker-official-point"><span className="font-bold text-ink">{point.reference}:</span> {point.text}</li>)}
                   </ul>
                 </details>
               </div>
@@ -70,7 +70,7 @@ export function CourseTracker({ subject }: { subject: Subject }) {
             <details key={requirement.areaId} className="rounded-lg border border-line px-3">
               <summary className="min-h-11 cursor-pointer py-3 font-bold">{requirement.title}</summary>
               <div className="border-t border-line py-3 text-sm text-muted">
-                {requirement.officialPoints.map((point) => <p key={point.id}>{point.text}</p>)}
+                {requirement.officialPoints.map((point) => <p key={point.id} data-testid="course-tracker-official-point">{point.text}</p>)}
                 <p className="mt-2"><span className="font-bold text-ink">Mapped through:</span> {requirement.mappedSkillNames.join(", ")}.</p>
               </div>
             </details>

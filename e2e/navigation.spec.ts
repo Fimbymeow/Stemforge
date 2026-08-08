@@ -4,7 +4,7 @@ import { readStoredProgress } from "./fixtures/progress";
 test("fresh student reaches the Basic differentiation path through the app", async ({ page }) => {
   await page.goto("/dashboard");
   await expect(page.getByRole("heading", { name: "STEM Forge", level: 1 })).toBeVisible();
-  await expect(page.getByTestId("dashboard-progress-summary")).toContainText("0 / 42 completed");
+  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Foundations \u00b7 0 of 3 complete");
 
   await page.getByRole("link", { name: "Subjects" }).click();
   await expect(page).toHaveURL(/\/subjects$/);
@@ -45,6 +45,6 @@ test("disabled account navigation hydrates without console or page errors and fa
   await expect(page.getByRole("heading", { name: "Accounts are not available" })).toBeVisible();
   await page.getByRole("link", { name: "Continue as a guest" }).click();
   await expect(page).toHaveURL(/\/dashboard$/);
-  await expect(page.getByTestId("dashboard-progress-summary")).toContainText("0 / 42 completed");
+  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Foundations \u00b7 0 of 3 complete");
   expect(seriousBrowserErrors).toEqual([]);
 });

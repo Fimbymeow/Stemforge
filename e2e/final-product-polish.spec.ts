@@ -52,7 +52,7 @@ test("practice summary retains the app shell and exact-session retry priority", 
 
 test("course tracker remains overflow-free at desktop and mobile widths", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto("/subjects/higher-maths");
+  await page.goto("/subjects/higher-maths/course-tracker");
   await expect(page.getByTestId("course-tracker")).toBeVisible();
   await expectNoHorizontalOverflow(page);
 

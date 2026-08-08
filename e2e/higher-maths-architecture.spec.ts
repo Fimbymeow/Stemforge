@@ -1,15 +1,21 @@
 import { test, expect } from "./fixtures/test";
 
-test("Higher Maths hub presents four broad areas and prioritises the live path", async ({ page }) => {
+test("Higher Maths hub prioritises the live path and links to the full course structure", async ({ page }) => {
   await page.goto("/subjects/higher-maths");
   await expect(page.getByRole("heading", { level: 1, name: "Higher Maths" })).toBeVisible();
   await expect(page.getByText(/Calculus is available now, with more areas being added/)).toBeVisible();
-  for (const area of ["Algebra and Trigonometry", "Vectors", "Calculus", "Lines, Circles and Sequences"]) {
-    await expect(page.getByRole("region", { name: area })).toBeVisible();
-  }
+  const trackerLink = page.getByRole("link", { name: "Open Course Tracker" });
+  await expect(trackerLink).toHaveAttribute("href", "/subjects/higher-maths/course-tracker");
+  await expect(page.getByRole("region", { name: "Algebra and Trigonometry" })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Start", exact: true })).toHaveAttribute("href", "/subjects/higher-maths/revision-notes?path=basic-differentiation");
   await expect(page.getByText(/1 of 51|1 \/ 51|1 of 50|1 \/ 50/i)).toHaveCount(0);
   await expect(page.getByTestId("higher-maths-coverage")).toHaveText("2 of 49 Higher Maths skills available");
+
+  await trackerLink.click();
+  await expect(page).toHaveURL("/subjects/higher-maths/course-tracker");
+  for (const area of ["Algebra and Trigonometry", "Vectors", "Calculus", "Lines, Circles and Sequences"]) {
+    await expect(page.getByRole("region", { name: area })).toBeVisible();
+  }
 });
 
 test("generic course and spec-area hubs distinguish published and planned coverage", async ({ page }) => {

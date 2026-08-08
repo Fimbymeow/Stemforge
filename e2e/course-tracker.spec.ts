@@ -20,7 +20,7 @@ function attempt(overrides: Partial<QuestionAttempt> = {}): QuestionAttempt {
 
 test("tracker keeps Basic and Chain evidence independent and exposes the correct action", async ({ page }) => {
   await seedStoredProgress(page, payload([attempt()]));
-  await page.goto("/subjects/higher-maths");
+  await page.goto("/subjects/higher-maths/course-tracker");
   const basic = page.getByTestId("tracker-skill-basic-differentiation");
   const chain = page.getByTestId("tracker-skill-chain-rule");
   await expect(basic).toContainText("Progress: In progress");
@@ -34,7 +34,7 @@ test("tracker keeps Basic and Chain evidence independent and exposes the correct
     questionId: "hm-calc-diff-chain-f-001", skillPathId: "chain-rule", stageId: "chain-rule-stage-foundations",
     versionEvidence: { kind: "known", questionVersion: chainFirst!.questionVersion }, eventId: "tracker-chain-1",
   })]));
-  await page.goto("/subjects/higher-maths");
+  await page.goto("/subjects/higher-maths/course-tracker");
   await expect(page.getByTestId("tracker-skill-chain-rule")).toContainText("Progress: In progress");
   await expect(page.getByTestId("tracker-skill-chain-rule").getByRole("link", { name: "Continue Foundations" })).toHaveAttribute("href", "/question/hm-calc-diff-chain-f-002");
 });
@@ -45,7 +45,7 @@ test("Review due remains an independent label on a completed healthy skill", asy
     attemptedAt: "2026-06-01T10:00:00.000Z", sequence: index + 1, eventId: `tracker-complete-${index}`,
   }));
   await seedStoredProgress(page, payload(attempts));
-  await page.goto("/subjects/higher-maths");
+  await page.goto("/subjects/higher-maths/course-tracker");
   const basic = page.getByTestId("tracker-skill-basic-differentiation");
   await expect(basic).toContainText("Progress: Completed");
   await expect(basic).toContainText("Knowledge: Healthy");
@@ -54,7 +54,7 @@ test("Review due remains an independent label on a completed healthy skill", asy
 
 test("tracker is keyboard-usable and overflow-free at 375px", async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 });
-  await page.goto("/subjects/higher-maths");
+  await page.goto("/subjects/higher-maths/course-tracker");
   const disclosure = page.getByTestId("course-tracker").locator("summary").first();
   await disclosure.focus(); await expect(disclosure).toBeFocused(); await disclosure.press("Enter");
   await expect(disclosure.locator("xpath=parent::details")).toHaveAttribute("open", "");

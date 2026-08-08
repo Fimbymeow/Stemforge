@@ -25,7 +25,7 @@ test("revised dashboard and subject access remain distinct, ordered and overflow
       if (route === "/dashboard") {
         const learn = page.getByTestId("dashboard-progress-summary");
         await expect(learn.getByText("Recommended next")).toHaveCount(0);
-        await expect(learn.getByRole("link", { name: "Start learning" })).toHaveCount(0);
+        await expect(learn.getByRole("link", { name: "Start learning" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
       } else {
         await expect(page.getByRole("link", { name: /^(Start learning|Continue|Resume question|Resume practice|Review \d+)/ })).toHaveCount(0);
       }
@@ -35,7 +35,7 @@ test("revised dashboard and subject access remain distinct, ordered and overflow
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/dashboard");
-  const primary = page.getByRole("link", { name: "Open Higher Maths", exact: true });
+  const primary = page.getByRole("link", { name: "Start learning", exact: true });
   await primary.focus();
   await expect(primary).toBeFocused();
   expect(seriousBrowserErrors).toEqual([]);
