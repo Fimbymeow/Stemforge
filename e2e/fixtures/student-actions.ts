@@ -8,7 +8,15 @@ export async function openQuestion(page: Page, questionId: string) {
 export async function submitAnswer(page: Page, answer: string, expectPersisted = true) {
   const field = page.getByLabel("Your answer");
   await expect(field).toBeVisible();
-  await field.fill(answer);
+  if (await field.evaluate((element) => element.tagName.toLowerCase() === "math-field")) {
+    await field.evaluate((element, source) => {
+      const mathfield = element as HTMLElement & { setValue(value: string, options?: object): void };
+      mathfield.setValue(source, { selectionMode: "after" });
+      mathfield.dispatchEvent(new Event("input", { bubbles: true }));
+    }, answer);
+  } else {
+    await field.fill(answer);
+  }
   await page.getByRole("button", { name: "Submit Answer" }).click();
   if (expectPersisted) await expect(page.getByTestId("question-status")).toBeVisible();
 }

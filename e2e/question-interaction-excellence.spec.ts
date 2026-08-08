@@ -22,7 +22,7 @@ test("the question and answer dominate first arrival with accurate stage context
   expect(interaction!.y).toBeLessThan(430);
 });
 
-test("empty stays draft-only while malformed and unmarkable answers retain non-graded evidence", async ({ page }) => {
+test("empty, incomplete and unsupported rich maths stay draft-only and never reach evidence", async ({ page }) => {
   await openQuestion(page, QUESTION_IDS[0]);
   const input = page.getByLabel("Your answer");
 
@@ -33,25 +33,18 @@ test("empty stays draft-only while malformed and unmarkable answers retain non-g
 
   await input.fill("5x^");
   await page.getByRole("button", { name: "Submit Answer" }).click();
-  await expect(page.getByTestId("question-status")).toContainText("Answer format could not be read");
+  await expect(page.getByTestId("question-status")).toContainText("Finish the expression");
   await expect(page.getByTestId("question-status")).toHaveAttribute("data-feedback-state", "warning");
   await expect(page.getByTestId("question-status")).toHaveAccessibleName("Answer feedback: format warning");
-  await expect(page.getByRole("button", { name: "Try again" })).not.toHaveClass(/text-danger/);
   await expect(input).toHaveAttribute("aria-invalid", "true");
-  let stored = await readStoredProgress(page) as { data: { attempts: Array<{ isCorrect: boolean | null; outcomeKind: string }> } };
-  expect(stored.data.attempts).toHaveLength(1);
-  expect(stored.data.attempts[0]).toMatchObject({ isCorrect: null, outcomeKind: "malformed" });
+  expect(await readStoredProgress(page)).toBeNull();
 
-  await page.getByRole("button", { name: "Try again" }).click();
   await input.fill("y=5x^4");
   await page.getByRole("button", { name: "Submit Answer" }).click();
-  await expect(page.getByTestId("question-status")).toContainText("This form cannot be checked safely");
+  await expect(page.getByTestId("question-status")).toContainText("not supported");
   await expect(page.getByTestId("question-status")).toHaveAttribute("data-feedback-state", "neutral");
   await expect(page.getByTestId("question-status")).toHaveAccessibleName("Answer feedback: not marked");
-  await expect(page.getByRole("button", { name: "Try again" })).not.toHaveClass(/text-danger/);
-  stored = await readStoredProgress(page) as { data: { attempts: Array<{ isCorrect: boolean | null; outcomeKind: string }> } };
-  expect(stored.data.attempts).toHaveLength(2);
-  expect(stored.data.attempts[1]).toMatchObject({ isCorrect: null, outcomeKind: "unmarkable" });
+  expect(await readStoredProgress(page)).toBeNull();
 });
 
 test("safe numeric equivalents pass while legacy multiplication collisions are never correct", async ({ page }) => {
@@ -94,12 +87,12 @@ test("incorrect submission stays visible, Retry focuses the retained answer, and
   await expect(page.getByTestId("question-status")).toHaveAccessibleName("Answer feedback: incorrect");
   await expect(page.getByRole("button", { name: "Try again" })).toHaveClass(/text-danger/);
   await expect(page.getByTestId("submitted-answer")).toContainText("4x^5");
-  await expect(input).toHaveValue("4x^5");
+  await expectMathValue(input, "4x^5");
 
   await page.getByRole("button", { name: "Try again" }).click();
   await expect(input).toBeFocused();
-  await expect(input).toHaveValue("4x^5");
-  await input.fill(QUESTION_ANSWERS[QUESTION_IDS[0]]);
+  await expectMathValue(input, "4x^5");
+  await setMathValue(input, QUESTION_ANSWERS[QUESTION_IDS[0]]);
   await input.press("Enter");
   await expect(page.getByRole("heading", { name: "Correct", level: 2 })).toBeFocused();
   await expect(page.getByTestId("submitted-answer")).toContainText(QUESTION_ANSWERS[QUESTION_IDS[0]]);
@@ -120,7 +113,7 @@ test("hint evidence survives refresh and still qualifies the later submission as
   await openQuestion(page, QUESTION_IDS[0]);
   await openHint(page);
   await page.reload();
-  await page.getByLabel("Your answer").fill(QUESTION_ANSWERS[QUESTION_IDS[0]]);
+  await setMathValue(page.getByLabel("Your answer"), QUESTION_ANSWERS[QUESTION_IDS[0]]);
   await page.getByRole("button", { name: "Submit Answer" }).click();
   await expect(page.getByTestId("question-status")).toContainText("Correct");
   const stored = await readStoredProgress(page) as { data: { attempts: Array<{ hintViewedBeforeSubmission: boolean }> } };
@@ -143,13 +136,13 @@ test("a local draft survives refresh and navigation, stays out of evidence, and 
   const input = page.getByLabel("Your answer");
   await input.fill("5x^");
   await page.reload();
-  await expect(page.getByLabel("Your answer")).toHaveValue("5x^");
+  await expectMathValue(page.getByLabel("Your answer"), "5x^{}");
   expect(await readStoredProgress(page)).toBeNull();
 
   await page.goto("/dashboard");
   await openQuestion(page, QUESTION_IDS[0]);
-  await expect(page.getByLabel("Your answer")).toHaveValue("5x^");
-  await page.getByLabel("Your answer").fill(QUESTION_ANSWERS[QUESTION_IDS[0]]);
+  await expectMathValue(page.getByLabel("Your answer"), "5x^{}");
+  await setMathValue(page.getByLabel("Your answer"), QUESTION_ANSWERS[QUESTION_IDS[0]]);
   await page.getByRole("button", { name: "Submit Answer" }).click();
   await expect(page.getByTestId("question-status")).toContainText("Correct");
   const matchingKey = createAnswerDraftKey({
@@ -185,9 +178,21 @@ test("a stale-version draft is not restored into current content and corrupted s
     }));
   }, { storageKey: ANSWER_DRAFT_STORAGE_KEY, version: ANSWER_DRAFT_SCHEMA_VERSION, key: staleKey, question: firstQuestion });
   await openQuestion(page, QUESTION_IDS[0]);
-  await expect(page.getByLabel("Your answer")).toHaveValue("");
+  await expectMathValue(page.getByLabel("Your answer"), "");
 
   await page.evaluate((storageKey) => localStorage.setItem(storageKey, "{corrupted"), ANSWER_DRAFT_STORAGE_KEY);
   await page.reload();
-  await expect(page.getByLabel("Your answer")).toHaveValue("");
+  await expectMathValue(page.getByLabel("Your answer"), "");
 });
+
+async function expectMathValue(field: import("@playwright/test").Locator, expected: string) {
+  await expect.poll(() => field.evaluate((element) => (element as HTMLElement & { getValue(format: string): string }).getValue("latex"))).toBe(expected);
+}
+
+async function setMathValue(field: import("@playwright/test").Locator, value: string) {
+  await field.evaluate((element, source) => {
+    const mathfield = element as HTMLElement & { setValue(value: string, options?: object): void };
+    mathfield.setValue(source, { selectionMode: "after" });
+    mathfield.dispatchEvent(new Event("input", { bubbles: true }));
+  }, value);
+}

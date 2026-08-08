@@ -4,6 +4,7 @@ import { AuthFeatureProvider } from "@/components/auth-feature-provider";
 import { isAuthFeatureAvailable } from "@/lib/auth/config";
 import { ProgressSyncProvider } from "@/components/progress-sync-provider";
 import "katex/dist/katex.min.css";
+import "mathlive/fonts.css";
 import "./globals.css";
 
 const inter = Inter({

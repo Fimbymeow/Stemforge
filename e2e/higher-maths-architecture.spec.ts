@@ -4,10 +4,9 @@ test("Higher Maths hub presents four broad areas and prioritises the live path",
   await page.goto("/subjects/higher-maths");
   await expect(page.getByRole("heading", { level: 1, name: "Higher Maths" })).toBeVisible();
   await expect(page.getByText(/Calculus is available now, with more areas being added/)).toBeVisible();
-  await expect(page.getByRole("button", { name: "Algebra and Trigonometry" }).last()).toBeVisible();
-  await expect(page.getByRole("button", { name: "Vectors" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Calculus" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Lines, Circles and Sequences" })).toBeVisible();
+  for (const area of ["Algebra and Trigonometry", "Vectors", "Calculus", "Lines, Circles and Sequences"]) {
+    await expect(page.getByRole("region", { name: area })).toBeVisible();
+  }
   await expect(page.getByRole("link", { name: "Start", exact: true })).toHaveAttribute("href", "/subjects/higher-maths/revision-notes?path=basic-differentiation");
   await expect(page.getByText(/1 of 51|1 \/ 51|1 of 50|1 \/ 50/i)).toHaveCount(0);
   await expect(page.getByTestId("higher-maths-coverage")).toHaveText("2 of 49 Higher Maths skills available");

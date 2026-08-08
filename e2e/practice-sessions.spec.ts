@@ -12,7 +12,7 @@ test("guest targeted practice starts, uses the canonical question workspace, per
   await expect(page.getByTestId("practice-session-panel")).toContainText(/Question 1 of/);
   await expect(page.getByRole("heading", { name: "Differentiate a power" })).toBeVisible();
 
-  await page.getByLabel("Your answer").fill("5x^4");
+  await setMathAnswer(page, "5x^4");
   await page.getByRole("button", { name: "Submit Answer" }).click();
   await expect(page.getByTestId("question-status")).toContainText("Correct");
   const progress = await readStoredProgress(page);
@@ -61,21 +61,17 @@ test("question list, reversible Skip and 320px session chrome remain usable with
   expect(geometry).toEqual({ overflow: false, finishVisible: true });
 });
 
-test("Practice Session retains malformed and unmarkable interactions without treating them as incorrect", async ({ page }) => {
+test("Practice Session keeps incomplete and unsupported rich maths out of learner evidence", async ({ page }) => {
   await page.goto("/practice");
   await page.getByTestId("quick-practice-action").click();
-  const input = page.getByLabel("Your answer");
-  await input.fill("5x^");
+  await setMathAnswer(page, "5x^");
   await page.getByRole("button", { name: "Submit Answer" }).click();
-  await expect(page.getByTestId("question-status")).toContainText("Answer format could not be read");
-  await page.getByRole("button", { name: "Try again" }).click();
-  await input.fill("y=5x^4");
+  await expect(page.getByTestId("question-status")).toContainText("Finish the expression");
+  await setMathAnswer(page, "y=5x^4");
   await page.getByRole("button", { name: "Submit Answer" }).click();
-  await expect(page.getByTestId("question-status")).toContainText("This form cannot be checked safely");
+  await expect(page.getByTestId("question-status")).toContainText("not supported");
 
-  const stored = await readStoredProgress(page) as { data: { attempts: Array<{ outcomeKind: string; practiceSessionId?: string }> } };
-  expect(stored.data.attempts.map((attempt) => attempt.outcomeKind)).toEqual(["malformed", "unmarkable"]);
-  expect(stored.data.attempts.every((attempt) => Boolean(attempt.practiceSessionId))).toBe(true);
+  expect(await readStoredProgress(page)).toBeNull();
 
   await page.getByRole("button", { name: "Finish session" }).click();
   await page.getByRole("dialog", { name: "Finish this session?" }).getByRole("button", { name: "Finish session" }).click();
@@ -87,7 +83,7 @@ test("standalone Question Workspace keeps its footer and writes no session ident
   await page.goto("/question/hm-calc-diff-basic-f-001");
   await expect(page.getByTestId("practice-session-panel")).toHaveCount(0);
   await expect(page.getByTestId("next-question-locked")).toBeVisible();
-  await page.getByLabel("Your answer").fill("5x^4");
+  await setMathAnswer(page, "5x^4");
   await page.getByRole("button", { name: "Submit Answer" }).click();
   await expect(page.getByTestId("question-status")).toContainText("Correct");
   const progress = await readStoredProgress(page) as { data: { attempts: Array<Record<string, unknown>> } };
@@ -106,11 +102,11 @@ test("completed-session retry contains exactly that session's incorrect question
     return store.sessions[0].questionReferences.map((reference: { questionId: string }) => reference.questionId) as string[];
   }, PRACTICE_SESSIONS_STORAGE_KEY);
 
-  await page.getByLabel("Your answer").fill("4x^5");
+  await setMathAnswer(page, "4x^5");
   await page.getByRole("button", { name: "Submit Answer" }).click();
   await expect(page.getByTestId("question-status")).toContainText("Not quite");
   await page.getByTestId("practice-session-panel").getByRole("button", { name: "Next" }).click();
-  await page.getByLabel("Your answer").fill(QUESTION_ANSWERS[references[1] as keyof typeof QUESTION_ANSWERS]);
+  await setMathAnswer(page, QUESTION_ANSWERS[references[1] as keyof typeof QUESTION_ANSWERS]);
   await page.getByRole("button", { name: "Submit Answer" }).click();
   await expect(page.getByTestId("question-status")).toContainText("Correct");
   await page.getByRole("button", { name: /Finish session/i }).click();
@@ -149,7 +145,7 @@ test("Needs more practice appears only after relevant progress and later correct
   await page.getByText("Choose practice options", { exact: true }).click();
   await expect(page.getByRole("button", { name: /Needs more practice/i })).toHaveCount(0);
   await page.goto("/question/hm-calc-diff-basic-f-001");
-  await page.getByLabel("Your answer").fill("x^4");
+  await setMathAnswer(page, "x^4");
   await page.getByRole("button", { name: "Submit Answer" }).click();
   await expect(page.getByTestId("question-status")).toContainText("Not quite");
   await page.goto("/practice");
@@ -157,7 +153,7 @@ test("Needs more practice appears only after relevant progress and later correct
   await page.getByRole("button", { name: /Needs more practice/i }).click();
   await expect(page.getByText(/1 question is currently available/i)).toBeVisible();
   await page.goto("/question/hm-calc-diff-basic-f-001");
-  await page.getByLabel("Your answer").fill("5x^4");
+  await setMathAnswer(page, "5x^4");
   await page.getByRole("button", { name: "Submit Answer" }).click();
   await expect(page.getByTestId("question-status")).toContainText("Correct");
   await page.goto("/practice");
@@ -192,4 +188,16 @@ test("timed practice expires without submitting blank answers and mobile layout 
 function watchErrors(page: import("@playwright/test").Page, errors: string[]) {
   page.on("pageerror", (error) => errors.push(`pageerror: ${error.message}`));
   page.on("console", (message) => { if (message.type() === "error") errors.push(`console: ${message.text()}`); });
+}
+
+async function setMathAnswer(page: import("@playwright/test").Page, value: string) {
+  const field = page.getByLabel("Your answer");
+  await expect(field).toBeVisible();
+  if (await field.evaluate((element) => element.tagName.toLowerCase() === "math-field")) {
+    await field.evaluate((element, source) => {
+      const mathfield = element as HTMLElement & { setValue(value: string, options?: object): void };
+      mathfield.setValue(source, { selectionMode: "after" });
+      mathfield.dispatchEvent(new Event("input", { bubbles: true }));
+    }, value);
+  } else await field.fill(value);
 }

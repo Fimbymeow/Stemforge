@@ -167,7 +167,10 @@ test("mastered completion stays consistent while the hub advances to the next li
   await expect(page.getByTestId("dashboard-progress-summary")).toContainText("8 / 42 completed");
   await page.goto(HUB_ROUTE);
   await expect(page.getByTestId("working-context-hub")).toContainText("Chain rule");
-  await expect(page.getByRole("link", { name: "Basic differentiation Complete" })).toBeVisible();
+  const completedSkill = page.getByRole("listitem").filter({ hasText: "Basic differentiation" });
+  await expect(completedSkill).toContainText("Progress: Completed");
+  await expect(completedSkill).toContainText("Knowledge: Healthy");
+  await expect(completedSkill.getByRole("link", { name: "Practise again" })).toBeVisible();
   await page.goto(PATH_ROUTE);
   await expect(page.getByTestId("path-mastery-status")).toContainText("Mastered");
   await expect(page.getByTestId("completed-path-card")).toContainText("8 / 8 questions");

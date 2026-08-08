@@ -1,11 +1,10 @@
 ﻿"use client";
 
-import { useRef } from "react";
 import { MathContent } from "@/components/questions/math-content";
-import { MathKeypad } from "@/components/questions/math-keypad";
 import { GraphAnswerInput } from "@/components/questions/graph-answer-input";
+import { RichMathAnswerField } from "@/components/questions/rich-math-answer-field";
 import type { Question, QuestionOption } from "@/data/types";
-import { deriveMathInputCapabilities, type MathInputCapabilities } from "@/lib/questions/math-input-capabilities";
+import { deriveMathInputCapabilities } from "@/lib/questions/math-input-capabilities";
 
 type InputProps = {
   question: Question;
@@ -44,7 +43,7 @@ export function NumericalInput(props: InputProps) {
 }
 
 export function AlgebraicInput(props: InputProps) {
-  return <TextInput {...props} placeholder="Example: 5x^4" helper="Type powers with ^, for example 5x^4. You can also use * for multiplication." showKeypad keypadCapabilities={deriveMathInputCapabilities(props.question)} />;
+  return <RichMathAnswerField value={props.value} onChange={props.onChange} capabilities={deriveMathInputCapabilities(props.question)} disabled={props.submitted} inputId={props.inputId ?? "question-answer"} describedBy={props.describedBy} invalid={props.invalid} />;
 }
 
 export function WrittenAnswerInput(props: InputProps) {
@@ -55,13 +54,10 @@ export function MultiStepInput(props: InputProps) {
   return <TextAreaInput {...props} placeholder="Show your working, then compare it with the worked solution." />;
 }
 
-function TextInput({ value, submitted, onChange, placeholder, helper, showKeypad = false, keypadCapabilities, inputId = "question-answer", describedBy, invalid }: InputProps & { placeholder: string; helper?: string; showKeypad?: boolean; keypadCapabilities?: MathInputCapabilities }) {
-  const inputRef = useRef<HTMLInputElement | null>(null);
-
+function TextInput({ value, submitted, onChange, placeholder, helper, inputId = "question-answer", describedBy, invalid }: InputProps & { placeholder: string; helper?: string }) {
   return (
     <div>
       <input
-        ref={inputRef}
         id={inputId}
         aria-label="Your answer"
         value={value}
@@ -74,7 +70,6 @@ function TextInput({ value, submitted, onChange, placeholder, helper, showKeypad
         className="min-h-12 w-full rounded-lg border border-line bg-white px-4 text-lg outline-none transition focus:border-forge focus:ring-2 focus:ring-forge/15 disabled:bg-line/40"
       />
       {helper ? <p className="mt-2 text-sm leading-relaxed text-muted">{helper}</p> : null}
-      {showKeypad ? <MathKeypad value={value} onChange={onChange} inputRef={inputRef} disabled={submitted} capabilities={keypadCapabilities} /> : null}
     </div>
   );
 }

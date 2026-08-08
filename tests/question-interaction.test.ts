@@ -13,6 +13,7 @@ import {
   loadAnswerDraft,
   MAX_DRAFT_LENGTH,
   saveAnswerDraft,
+  saveRichMathAnswerDraft,
   type AnswerDraftIdentity,
 } from "../lib/questions/answer-drafts";
 import { deriveStageQuestionPosition } from "../lib/questions/question-context";
@@ -108,7 +109,7 @@ test("draft keys are canonical and version scoped", () => {
 test("drafts round-trip, remain local-only data, and clear explicitly", () => {
   const storage = memoryStorage();
   assert.equal(saveAnswerDraft(storage, identity, "5x^", "2026-07-21T10:00:00.000Z"), true);
-  assert.equal(loadAnswerDraft(storage, identity)?.answer, "5x^");
+  assert.deepEqual(loadAnswerDraft(storage, identity), { ...identity, kind: "plain", answer: "5x^", updatedAt: "2026-07-21T10:00:00.000Z" });
   assert.equal(clearAnswerDraft(storage, identity), true);
   assert.equal(loadAnswerDraft(storage, identity), null);
   assert.ok(storage.getItem(ANSWER_DRAFT_STORAGE_KEY));
@@ -117,7 +118,8 @@ test("drafts round-trip, remain local-only data, and clear explicitly", () => {
 test("empty drafts remove entries and long drafts are bounded", () => {
   const storage = memoryStorage();
   saveAnswerDraft(storage, identity, "x".repeat(MAX_DRAFT_LENGTH + 50));
-  assert.equal(loadAnswerDraft(storage, identity)?.answer.length, MAX_DRAFT_LENGTH);
+  const draft = loadAnswerDraft(storage, identity);
+  assert.equal(draft?.kind === "plain" ? draft.answer.length : 0, MAX_DRAFT_LENGTH);
   saveAnswerDraft(storage, identity, "   ");
   assert.equal(loadAnswerDraft(storage, identity), null);
 });
@@ -138,8 +140,27 @@ test("two-tab style writes preserve other questions and the latest matching draf
   saveAnswerDraft(storage, identity, "first", "2026-07-21T10:00:00.000Z");
   saveAnswerDraft(storage, other, "other question", "2026-07-21T10:01:00.000Z");
   saveAnswerDraft(storage, identity, "latest", "2026-07-21T10:02:00.000Z");
-  assert.equal(loadAnswerDraft(storage, identity)?.answer, "latest");
-  assert.equal(loadAnswerDraft(storage, other)?.answer, "other question");
+  const latest = loadAnswerDraft(storage, identity);
+  const otherDraft = loadAnswerDraft(storage, other);
+  assert.equal(latest?.kind === "plain" ? latest.answer : null, "latest");
+  assert.equal(otherDraft?.kind === "plain" ? otherDraft.answer : null, "other question");
+});
+
+test("rich maths drafts preserve bounded editor source and legacy v1 drafts migrate only in memory", () => {
+  const storage = memoryStorage();
+  assert.equal(saveRichMathAnswerDraft(storage, identity, "5x^{#0}", "2026-07-21T10:03:00.000Z"), true);
+  assert.deepEqual(loadAnswerDraft(storage, identity), {
+    ...identity, kind: "rich-math", sourceFormat: "mathlive-latex-v1", source: "5x^{#0}", updatedAt: "2026-07-21T10:03:00.000Z",
+  });
+
+  const legacy = memoryStorage();
+  const key = createAnswerDraftKey(identity);
+  const raw = JSON.stringify({ version: 1, drafts: { [key]: { ...identity, answer: "5x^4", updatedAt: "2026-07-21T10:04:00.000Z" } } });
+  legacy.setItem(ANSWER_DRAFT_STORAGE_KEY, raw);
+  const migrated = loadAnswerDraft(legacy, identity);
+  assert.equal(migrated?.kind, "plain");
+  assert.equal(migrated?.kind === "plain" ? migrated.answer : null, "5x^4");
+  assert.equal(legacy.getItem(ANSWER_DRAFT_STORAGE_KEY), raw, "reads must not rewrite browser storage");
 });
 
 test("structured solutions progress while unstructured live Maths content remains a full fallback", () => {

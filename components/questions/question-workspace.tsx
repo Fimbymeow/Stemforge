@@ -37,8 +37,11 @@ import {
   createAnswerDraftKey,
   loadAnswerDraft,
   saveAnswerDraft,
+  saveRichMathAnswerDraft,
   type AnswerDraftIdentity,
 } from "@/lib/questions/answer-drafts";
+import { deriveMathInputCapabilities } from "@/lib/questions/math-input-capabilities";
+import { canonicalMathToLatex, normalizeRichMathSource } from "@/lib/questions/rich-math-normalization";
 import { deriveStageQuestionPosition } from "@/lib/questions/question-context";
 import { describeReviewReason } from "@/lib/questions/review-reason";
 import { deriveQuestionSupportPresentation } from "@/lib/questions/question-support";
@@ -128,6 +131,8 @@ export function QuestionWorkspace({
     solutionViewed: solutionVisible,
   });
   const usesGuidedMarking = question.answerType === "written" || question.answerType === "multi_step";
+  const usesRichMathInput = question.answerType === "algebraic";
+  const mathInputCapabilities = useMemo(() => deriveMathInputCapabilities(question), [question]);
   const markedSubmission = submitted && submittedAnswer !== null ? markQuestionAnswer(question, submittedAnswer) : null;
   const isCorrect = markedSubmission?.isCorrect === true;
   const completedWithCurrentSolution = submitted && solutionOpenedThisInteraction;
@@ -141,7 +146,13 @@ export function QuestionWorkspace({
   const stageStatus = stageLocalProgress?.status;
 
   useEffect(() => {
-    setAnswer(loadAnswerDraft(browserStorage(), draftIdentity)?.answer ?? "");
+    const draft = loadAnswerDraft(browserStorage(), draftIdentity);
+    const restoredAnswer = draft?.kind === "rich-math"
+      ? draft.source
+      : draft?.kind === "plain" && usesRichMathInput
+        ? canonicalMathToLatex(draft.answer, mathInputCapabilities) ?? draft.answer
+        : draft?.kind === "plain" ? draft.answer : "";
+    setAnswer(restoredAnswer);
     setSubmitted(false);
     setSubmittedAnswer(null);
     setFeedback(null);
@@ -153,7 +164,7 @@ export function QuestionWorkspace({
     setSelfAssessmentError(null);
     setShowCompletionPanel(false);
     setShowStageCompletionPanel(false);
-  }, [draftKey, draftIdentity]);
+  }, [draftKey, draftIdentity, mathInputCapabilities, usesRichMathInput]);
 
   useEffect(() => {
     const update = () => setProgressVersion((current) => current + 1);
@@ -232,7 +243,8 @@ export function QuestionWorkspace({
   function updateAnswer(nextAnswer: string) {
     setAnswer(nextAnswer);
     if (feedback?.isInputError) setFeedback(null);
-    saveAnswerDraft(browserStorage(), draftIdentity, nextAnswer);
+    if (usesRichMathInput) saveRichMathAnswerDraft(browserStorage(), draftIdentity, nextAnswer);
+    else saveAnswerDraft(browserStorage(), draftIdentity, nextAnswer);
   }
 
   function showFeedback(nextFeedback: StudentAnswerFeedback) {
@@ -244,9 +256,22 @@ export function QuestionWorkspace({
     if (submitted || submitting || session?.answerLocked) return;
     setSubmitting(true);
     try {
-      const marking = markQuestionAnswer(question, answer);
-      const classified = classifyAnswerFeedback(question, answer, marking);
-      if (answer.trim()) setSubmissionInteractionCompleted(true);
+      let answerForMarking = answer;
+      if (usesRichMathInput) {
+        if (!answer.trim()) {
+          showFeedback({ category: "empty", title: "Enter an answer", message: "Add an answer before submitting.", tone: "neutral", shouldRecordAttempt: false, isInputError: true });
+          return;
+        }
+        const normalization = normalizeRichMathSource(answer, mathInputCapabilities);
+        if (normalization.status !== "ready") {
+          showFeedback(richMathInputFeedback(normalization.status));
+          return;
+        }
+        answerForMarking = normalization.canonical;
+      }
+      const marking = markQuestionAnswer(question, answerForMarking);
+      const classified = classifyAnswerFeedback(question, answerForMarking, marking);
+      if (answerForMarking.trim()) setSubmissionInteractionCompleted(true);
       if (!classified.shouldRecordAttempt) {
         showFeedback(classified);
         return;
@@ -260,7 +285,7 @@ export function QuestionWorkspace({
         ...(marking.outcomeReason ? { outcomeReason: marking.outcomeReason } : {}),
         strategy: marking.strategy,
         strategyVersion: marking.strategyVersion,
-        answer,
+        answer: answerForMarking,
         attemptedAt: new Date().toISOString(),
         ...(session ? { practiceSessionId: session.practiceSessionId } : {}),
       });
@@ -268,7 +293,7 @@ export function QuestionWorkspace({
         showFeedback(internalAnswerFailureFeedback());
         return;
       }
-      setSubmittedAnswer(answer);
+      setSubmittedAnswer(answerForMarking);
       setSubmitted(true);
       showFeedback(classified);
       await session?.onEvidenceRecorded?.();
@@ -329,9 +354,9 @@ export function QuestionWorkspace({
     setFeedback(null);
     setSolutionOpenedThisInteraction(false);
     window.requestAnimationFrame(() => {
-      const input = document.getElementById("question-answer") as HTMLInputElement | HTMLTextAreaElement | null;
+      const input = document.getElementById("question-answer") as HTMLInputElement | HTMLTextAreaElement | HTMLElement | null;
       input?.focus();
-      input?.select();
+      if (input instanceof HTMLInputElement || input instanceof HTMLTextAreaElement) input.select();
     });
   }
 
@@ -710,6 +735,21 @@ function PanelProgress({ label, value, valueLabel, secondary = false }: { label:
 function browserStorage() {
   if (typeof window === "undefined") return null;
   try { return window.localStorage; } catch { return null; }
+}
+
+function richMathInputFeedback(status: "incomplete" | "unsupported" | "invalid"): StudentAnswerFeedback {
+  if (status === "incomplete") return {
+    category: "empty", title: "Finish the expression", message: "Complete the highlighted maths slots before submitting.",
+    guidance: "Use the maths keyboard or type the missing part.", tone: "neutral", shouldRecordAttempt: false, isInputError: true,
+  };
+  if (status === "unsupported") return {
+    category: "unmarkable", title: "This form is not supported here", message: "This answer has not been sent for marking.",
+    guidance: "Use the maths controls shown for this question, or rewrite the expression in a supported form.", tone: "constructive", shouldRecordAttempt: false, isInputError: true,
+  };
+  return {
+    category: "malformed", title: "Check the maths expression", message: "We could not safely read this expression, so it has not been marked.",
+    guidance: "Check the brackets and operators, then try again.", tone: "constructive", shouldRecordAttempt: false, isInputError: true,
+  };
 }
 
 function prefersReducedMotion() {

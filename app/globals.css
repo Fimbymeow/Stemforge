@@ -38,8 +38,32 @@ a {
 button,
 input,
 textarea,
-select {
+select,
+math-field {
   font: inherit;
+}
+
+math-field {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 1.3rem;
+  outline: none;
+  --caret-color: #234b6e;
+  --selection-background-color: rgba(35, 75, 110, 0.18);
+  --contains-highlight-background-color: rgba(35, 75, 110, 0.1);
+}
+
+math-field::part(virtual-keyboard-toggle),
+math-field::part(menu-toggle) {
+  display: none;
+}
+
+.mathlive-host:focus-within {
+  border-color: #234b6e;
+  box-shadow: 0 0 0 2px rgba(35, 75, 110, 0.15);
 }
 
 .math-content p {
@@ -169,6 +193,25 @@ select {
 
 .lesson-reading-serif {
   font-family: Georgia, "Times New Roman", serif;
+}
+
+.mathlive-host math-field {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 2.5rem;
+  border: 0;
+  background: transparent;
+  font-size: 1.25rem;
+  outline: none;
+  --caret-color: var(--color-forge);
+  --selection-background-color: color-mix(in srgb, var(--color-forge) 18%, transparent);
+  --contains-highlight-background-color: transparent;
+}
+
+.mathlive-host math-field::part(menu-toggle),
+.mathlive-host math-field::part(virtual-keyboard-toggle) {
+  display: none;
 }
 
 @media print {

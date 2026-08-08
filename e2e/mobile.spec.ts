@@ -23,7 +23,7 @@ test("mobile student can navigate, answer, use support and continue without over
 
   await openQuestion(page, QUESTION_IDS[0]);
   await expect(page.getByLabel("Your answer")).toBeVisible();
-  await expect(page.getByText("Optional keypad")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Show maths keyboard" })).toBeVisible();
   await expect(page.getByTestId("hint-control")).toBeVisible();
   await expectNoHorizontalOverflow(page);
   await submitAnswer(page, "4x^5");
@@ -91,13 +91,15 @@ test("mobile question interaction reaches the task early and keeps feedback and 
   expect(hintBox!.y).toBeLessThan(blockedBox!.y);
 
   await answer.focus();
-  await page.getByRole("button", { name: "Insert x squared" }).click();
-  await expect(answer).toHaveValue("x^2");
-  await page.getByRole("button", { name: "Move cursor left" }).click();
+  await page.getByRole("button", { name: "Show maths keyboard" }).click();
+  await page.getByRole("group", { name: "Maths keyboard" }).getByRole("button", { name: "x", exact: true }).click();
+  await page.getByRole("button", { name: "Power", exact: true }).click();
+  await page.getByRole("group", { name: "Maths keyboard" }).getByRole("button", { name: "2", exact: true }).click();
+  await expectMathFieldValue(answer, "x^2");
+  await page.getByRole("button", { name: "Move left" }).click();
   await expect(answer).toBeFocused();
-  await page.getByRole("button", { name: "Move cursor right" }).click();
-  await page.getByRole("button", { name: "Delete previous character" }).click();
-  await expect(answer).toHaveValue("x^");
+  await page.getByRole("button", { name: "Move right" }).click();
+  await page.getByRole("button", { name: "Backspace" }).click();
   await answer.fill("4x^5");
   await page.getByRole("button", { name: "Submit Answer" }).click();
   const feedback = page.getByTestId("question-status");
@@ -240,3 +242,7 @@ test("a same-subject skill path pre-scopes the Bank and the broaden action clear
   await expect(page).toHaveURL("/subjects/higher-maths/question-bank");
   await expect(page.getByText("Scoped to")).toHaveCount(0);
 });
+
+async function expectMathFieldValue(field: import("@playwright/test").Locator, expected: string) {
+  await expect.poll(() => field.evaluate((element) => (element as HTMLElement & { getValue(format: string): string }).getValue("latex"))).toBe(expected);
+}
