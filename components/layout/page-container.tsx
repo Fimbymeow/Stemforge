@@ -11,7 +11,7 @@ export function PageContainer({ children, className = "" }: { children: ReactNod
       id="main-content"
       tabIndex={-1}
       style={bottomReservationStyle}
-      className={`ml-[268px] px-[clamp(20px,3vw,42px)] pt-8 max-xl:ml-0 max-md:px-4 max-md:pt-5 ${className}`}
+      className={`ml-[240px] px-[clamp(20px,3vw,42px)] pt-8 max-xl:ml-0 max-md:px-4 max-md:pt-5 ${className}`}
     >
       {children}
     </main>

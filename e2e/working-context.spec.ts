@@ -131,11 +131,16 @@ test("hub skill title has a visible resting underline and Current Path rows are 
   await expect(exitRow).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
 });
 
-test("mobile Path shows the active rule only while a working context exists", async ({ page }) => {
+test("mobile Path shows the active rule only on the Current Path surface", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/dashboard");
   const noModelTab = page.getByRole("link", { name: "Path" });
   await expect(noModelTab).toHaveCSS("border-bottom-width", "0px");
+
+  await page.goto(hub);
+  const contextualButInactiveTab = page.getByTestId("working-context-trigger");
+  await expect(contextualButInactiveTab).toHaveCSS("border-bottom-width", "0px");
+  await expect(contextualButInactiveTab).not.toHaveAttribute("aria-current", "page");
 
   await page.goto(`/question/${QUESTION_IDS[0]}`);
   const activeTab = page.getByTestId("working-context-trigger");

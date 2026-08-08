@@ -11,8 +11,10 @@ import { formatReviewDueLabel, type WorkingContextModel } from "@/lib/working-co
 
 export function WorkingContextNavigation({
   pathId,
+  active = false,
 }: {
   pathId: string;
+  active?: boolean;
 }) {
   const pathname = usePathname();
   const deepFocus = pathname.startsWith("/question/") || pathname.startsWith("/practice/session/");
@@ -29,8 +31,16 @@ export function WorkingContextNavigation({
 
   if (!model) {
     return (
-      <Link href="/subjects" className="flex min-h-[58px] flex-1 items-center justify-center rounded-xl px-5 text-lg font-semibold text-ink max-xl:min-h-11 max-xl:px-2 max-xl:text-sm">
-        <Compass className="mr-4 size-6 max-xl:hidden" strokeWidth={2} />
+      <Link
+        href="/subjects"
+        aria-current={active ? "page" : undefined}
+        className={`flex min-h-12 flex-1 items-center rounded-lg border-l-2 px-3 text-sm font-bold transition-colors max-xl:min-h-11 max-xl:justify-center max-xl:border-l-0 max-xl:px-1 max-xl:text-xs sm:max-xl:text-sm ${
+          active
+            ? "border-forge bg-forge-soft text-forge max-xl:border-b-2 max-xl:border-b-forge"
+            : "border-transparent text-ink hover:bg-white hover:text-forge max-xl:border-b-0"
+        }`}
+      >
+        <Compass aria-hidden="true" className="mr-3 size-5 max-xl:hidden" strokeWidth={2} />
         <span className="max-xl:hidden">Current Path</span>
         <span className="hidden max-xl:inline">Path</span>
       </Link>
@@ -51,11 +61,16 @@ export function WorkingContextNavigation({
         aria-expanded={sheetOpen || expanded}
         aria-controls={panelId}
         aria-haspopup="dialog"
+        aria-current={active ? "page" : undefined}
         onClick={openForViewport}
         data-testid="working-context-trigger"
-        className="flex min-h-[58px] w-full items-center rounded-xl bg-forge-soft px-2 text-left font-semibold text-forge max-xl:min-h-11 max-xl:justify-center max-xl:rounded-b-none max-xl:border-b-2 max-xl:border-forge max-xl:text-sm"
+        className={`flex min-h-12 w-full items-center rounded-lg border-l-2 px-3 text-left text-sm font-bold transition-colors max-xl:min-h-11 max-xl:justify-center max-xl:rounded-b-none max-xl:border-l-0 max-xl:px-1 max-xl:text-xs sm:max-xl:text-sm ${
+          active
+            ? "border-forge bg-forge-soft text-forge max-xl:border-b-2 max-xl:border-b-forge"
+            : "border-transparent text-ink hover:bg-white hover:text-forge max-xl:border-b-0"
+        }`}
       >
-        <Compass aria-hidden="true" className="mr-1 size-5 shrink-0 fill-forge/15 max-xl:mr-0" strokeWidth={2} />
+        <Compass aria-hidden="true" className="mr-3 size-5 shrink-0 max-xl:mr-0" strokeWidth={2} />
         <span className="min-w-0 flex-1 max-xl:hidden">
           <span className="block break-words text-[13px] font-extrabold leading-tight">{model.skillName}</span>
           {!deepFocus ? <span className="mt-0.5 block break-words text-[11px] font-semibold leading-tight text-muted">{model.collapsedSummary}</span> : null}
@@ -68,7 +83,7 @@ export function WorkingContextNavigation({
         <section
           id={panelId}
           aria-label={`${model.skillName} working context`}
-          className="mt-2 grid gap-3 rounded-xl border border-line bg-white p-3 shadow-card max-xl:hidden"
+          className="mt-2 grid gap-3 rounded-lg border border-line bg-white p-3 max-xl:hidden"
           data-testid="working-context-desktop-panel"
         >
           <WorkingContextActions model={model} />
