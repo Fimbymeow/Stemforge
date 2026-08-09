@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Calculator, FileClock, ListChecks } from "lucide-react";
+import { ArrowRight, Calculator, Files, ListChecks } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { AppTopbar } from "@/components/layout/app-topbar";
 import { Card } from "@/components/ui";
@@ -61,16 +61,18 @@ export function HigherMathsHub() {
                 Open Course Tracker <ArrowRight aria-hidden="true" className="size-4" />
               </Link>
             </Card>
-            <Card aria-label="Past Papers, coming soon" className="flex h-full flex-col border-line/80 bg-paper/60 p-5 text-muted" data-testid="past-papers-destination">
+            <Card aria-label="Past Papers" className="flex h-full flex-col p-5" data-testid="past-papers-destination">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-xs font-extrabold uppercase tracking-wide">Past Papers</p>
+                  <p className="text-xs font-extrabold uppercase tracking-wide text-forge">Past Papers</p>
                   <h3 className="mt-1 text-xl font-extrabold text-ink">Exam practice</h3>
                 </div>
-                <span className="grid size-10 shrink-0 place-items-center rounded-xl border border-line bg-white"><FileClock aria-hidden="true" className="size-5" /></span>
+                <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-forge-soft text-forge"><Files aria-hidden="true" className="size-5" /></span>
               </div>
-              <p className="mt-2 flex-1 text-sm leading-relaxed">Past-paper practice is planned, but it is not available yet.</p>
-              <span className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-line bg-white px-4 text-sm font-extrabold" aria-label="Past Papers coming soon">Coming soon</span>
+              <p className="mt-2 flex-1 text-sm leading-relaxed text-muted">Open official Qualifications Scotland papers and marking instructions from 2022–2025.</p>
+              <Link href="/subjects/higher-maths/past-papers" className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-forge bg-white px-4 text-sm font-extrabold text-forge">
+                Open Past Papers <ArrowRight aria-hidden="true" className="size-4" />
+              </Link>
             </Card>
           </div>
         </section>

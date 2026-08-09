@@ -22,6 +22,9 @@ import { buildVocabulary } from "@/lib/marking/closed-vocabulary-text";
 import { validateMathExpression } from "@/lib/maths/expression-core";
 import { getSubjectFamily, getStudentResourceCapabilities } from "@/lib/resource-capabilities";
 import { validateLessonDocument } from "@/lib/lessons/lesson-document";
+import { pastPapers } from "@/data/past-papers";
+import type { PastPaperRecord } from "@/lib/past-papers/types";
+import { validatePastPapers } from "@/lib/past-papers/validation";
 
 export type ContentValidationIssue = {
   severity: "error" | "warning";
@@ -49,6 +52,7 @@ export type ContentValidationCounts = {
   versionedQuestions: number;
   activeResources: number;
   archivedResources: number;
+  pastPapers: number;
 };
 
 export type ContentValidationReport = {
@@ -62,6 +66,7 @@ export type ContentValidationInput = {
   subjects: Subject[];
   questions: Question[];
   legacyQuestions?: StemForgeQuestion[];
+  pastPapers?: readonly PastPaperRecord[];
 };
 
 type IssueWriter = (
@@ -92,6 +97,7 @@ const AUTO_MARKED_TYPES = new Set<Question["answerType"]>(["algebraic", "multipl
 export function validateContent(input: ContentValidationInput): ContentValidationReport {
   const issues: ContentValidationIssue[] = [];
   const legacyQuestions = input.legacyQuestions ?? [];
+  const pastPaperRecords = input.pastPapers ?? pastPapers;
   const counts: ContentValidationCounts = {
     subjects: input.subjects.length,
     courses: 0,
@@ -111,6 +117,7 @@ export function validateContent(input: ContentValidationInput): ContentValidatio
     versionedQuestions: 0,
     activeResources: 0,
     archivedResources: 0,
+    pastPapers: pastPaperRecords.length,
   };
   const declaredIds = new Map<string, string>();
   const declaredSkillPathSlugs = new Map<string, string>();
@@ -355,6 +362,9 @@ export function validateContent(input: ContentValidationInput): ContentValidatio
   }
 
   validateLegacyQuestions(legacyQuestions, issue);
+  for (const pastPaperIssue of validatePastPapers(pastPaperRecords)) {
+    issue("error", pastPaperIssue.code, pastPaperIssue.message, pastPaperIssue.location);
+  }
   if (legacyQuestions.length) {
     issue("warning", "legacy-question-system", `${legacyQuestions.length} Higher Physics questions use the retained legacy schema and receive compatibility checks only.`, "data/questions.ts");
   }
@@ -383,6 +393,7 @@ export function formatValidationReport(report: ContentValidationReport) {
     `Archived canonical questions: ${report.counts.archivedQuestions}`,
     `Versioned canonical questions: ${report.counts.versionedQuestions}`,
     `Legacy questions: ${report.counts.legacyQuestions}`,
+    `Past papers: ${report.counts.pastPapers}`,
     `Resources: ${report.counts.resources}`,
     `Active resources: ${report.counts.activeResources}`,
     `Archived resources: ${report.counts.archivedResources}`,

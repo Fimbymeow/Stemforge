@@ -14,8 +14,7 @@ test("Higher Maths orders Start Here above a balanced destination grid responsiv
   await expect(practice).toBeVisible();
   await expect(review).toBeVisible();
   await expect(tracker.getByRole("link", { name: "Open Course Tracker" })).toHaveAttribute("href", "/subjects/higher-maths/course-tracker");
-  await expect(pastPapers).toContainText("Coming soon");
-  await expect(pastPapers.getByRole("link")).toHaveCount(0);
+  await expect(pastPapers.getByRole("link", { name: "Open Past Papers" })).toHaveAttribute("href", "/subjects/higher-maths/past-papers");
   await expect(pastPapers.getByRole("button")).toHaveCount(0);
   const wide = await cardBoxes(learn, practice, review);
   expect(wide.practice.y).toBeGreaterThanOrEqual(wide.learn.y + wide.learn.height);
