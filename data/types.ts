@@ -123,6 +123,7 @@ export type SkillPath = {
   notes?: NoteBlock[];
   formulaCards?: FormulaCard[];
   workedExamples?: WorkedExample[];
+  /** @deprecated Static path Flashcards are not the canonical Flashcard contract. */
   flashcards?: Flashcard[];
   practiceSets?: PracticeSet[];
   learningStages?: LearningStage[];

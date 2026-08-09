@@ -51,7 +51,7 @@ export function inspectLocalProgress(raw: string | null): LocalImportInspection 
   }
   if (evidenceCount(result.payload) === 0) return { status: "empty", payload: result.payload, loadStatus: result.status };
   const dropped = result.droppedAttempts + result.droppedEvents + result.droppedSelfAssessments +
-    result.droppedSnapshots + result.droppedReviewEvents;
+    result.droppedSnapshots + result.droppedReviewEvents + result.droppedFlashcardReviews;
   const migrated = result.status.startsWith("migrated-");
   const warning = dropped > 0
     ? `${dropped} invalid saved record${dropped === 1 ? "" : "s"} could not be recovered and will not be uploaded.`
@@ -108,13 +108,14 @@ export function mergeImportResponse(
 export function pendingEvidence(payload: ProgressPayload, metadata: ProgressImportMetadata, accountFingerprint: string): ProgressPayload {
   const acknowledged = metadata.accounts[accountFingerprint]?.acknowledged ?? {};
   return {
-    version: 6,
+    version: 7,
     data: {
       attempts: payload.data.attempts.filter((item) => !acknowledged[acknowledgementKey("attempt", item.eventId)]),
       supportEvents: payload.data.supportEvents.filter((item) => !acknowledged[acknowledgementKey("support_event", item.eventId)]),
       guidedSelfAssessments: payload.data.guidedSelfAssessments.filter((item) => !acknowledged[acknowledgementKey("guided_self_assessment", item.eventId)]),
       achievementSnapshots: payload.data.achievementSnapshots.filter((item) => !acknowledged[acknowledgementKey("achievement_snapshot", item.snapshotId)]),
       reviewEvents: payload.data.reviewEvents.filter((item) => !acknowledged[acknowledgementKey("review_event", item.eventId)]),
+      flashcardReviews: payload.data.flashcardReviews.filter((item) => !acknowledged[acknowledgementKey("flashcard_review", item.eventId)]),
     },
   };
 }
@@ -132,6 +133,7 @@ export function evidenceSummary(payload: ProgressPayload) {
     selfAssessments: payload.data.guidedSelfAssessments.length,
     achievements: payload.data.achievementSnapshots.length,
     reviewEvents: payload.data.reviewEvents.length,
+    flashcardReviews: payload.data.flashcardReviews.length,
     total: evidenceCount(payload),
   };
 }
@@ -163,7 +165,7 @@ function validAcknowledgement(value: unknown): value is ProgressImportAcknowledg
 }
 
 function validAcknowledgementKey(value: string) {
-  return /^(attempt|support_event|guided_self_assessment|achievement_snapshot|review_event):[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/.test(value);
+  return /^(attempt|support_event|guided_self_assessment|achievement_snapshot|review_event|flashcard_review):[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/.test(value);
 }
 
 function validFingerprint(value: unknown): value is string {
@@ -177,9 +179,9 @@ function isIsoTimestamp(value: unknown): value is string {
 function evidenceCount(payload: ProgressPayload) {
   return payload.data.attempts.length + payload.data.supportEvents.length +
     payload.data.guidedSelfAssessments.length + payload.data.achievementSnapshots.length +
-    payload.data.reviewEvents.length;
+    payload.data.reviewEvents.length + payload.data.flashcardReviews.length;
 }
 
 function emptyPayload(): ProgressPayload {
-  return { version: 6, data: { attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [] } };
+  return { version: 7, data: { attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [], flashcardReviews: [] } };
 }

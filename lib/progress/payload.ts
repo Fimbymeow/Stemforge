@@ -7,6 +7,7 @@ import {
   type ProgressLoadResult,
   type ProgressPayload,
   type ProgressPayloadV5,
+  type ProgressPayloadV6,
   type QuestionAttempt,
   type QuestionAttemptV2,
   type QuestionAttemptV3,
@@ -18,11 +19,12 @@ import {
 } from "@/lib/progress/types";
 import { hasCompleteMarkerMetadata, isLegalPersistedMarkerMetadata } from "@/lib/marking/types";
 import { isReviewEvent } from "@/lib/review/validation";
+import { isFlashcardReviewEvent } from "@/lib/flashcards/validation";
 
 export function createDefaultProgressPayload(): ProgressPayload {
   return {
     version: CURRENT_PROGRESS_VERSION,
-    data: { attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [] },
+    data: { attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [], flashcardReviews: [] },
   };
 }
 
@@ -132,7 +134,8 @@ export function isCurrentProgressPayload(value: unknown): value is ProgressPaylo
     Array.isArray(candidate.data?.supportEvents) && candidate.data.supportEvents.every(isQuestionSupportEvent) &&
     Array.isArray(candidate.data?.guidedSelfAssessments) && candidate.data.guidedSelfAssessments.every(isGuidedSelfAssessmentEvent) &&
     Array.isArray(candidate.data?.achievementSnapshots) && candidate.data.achievementSnapshots.every(isAchievementSnapshot) &&
-    Array.isArray(candidate.data?.reviewEvents) && candidate.data.reviewEvents.every((event) => isReviewEvent(event));
+    Array.isArray(candidate.data?.reviewEvents) && candidate.data.reviewEvents.every((event) => isReviewEvent(event)) &&
+    Array.isArray(candidate.data?.flashcardReviews) && candidate.data.flashcardReviews.every((event) => isFlashcardReviewEvent(event));
 }
 
 export function migrateProgressPayload(value: unknown): ProgressLoadResult {
@@ -146,6 +149,7 @@ export function migrateProgressPayload(value: unknown): ProgressLoadResult {
       guidedSelfAssessments?: unknown;
       achievementSnapshots?: unknown;
       reviewEvents?: unknown;
+      flashcardReviews?: unknown;
     };
   };
   if (candidate.version === 1) {
@@ -155,10 +159,11 @@ export function migrateProgressPayload(value: unknown): ProgressLoadResult {
   if (candidate.version === 2 || candidate.version === 3) return migrateV2OrV3(candidate, candidate.version);
   if (candidate.version === 4) return migrateV4(candidate);
   if (candidate.version === 5) return migrateV5(candidate as { data?: ProgressPayloadV5["data"] });
+  if (candidate.version === 6) return migrateV6(candidate as { data?: ProgressPayloadV6["data"] });
   if (candidate.version !== CURRENT_PROGRESS_VERSION) return fallback("unsupported-version");
   if (!candidate.data || !Array.isArray(candidate.data.attempts) || !Array.isArray(candidate.data.supportEvents) ||
       !Array.isArray(candidate.data.guidedSelfAssessments) || !Array.isArray(candidate.data.achievementSnapshots) ||
-      !Array.isArray(candidate.data.reviewEvents)) {
+      !Array.isArray(candidate.data.reviewEvents) || !Array.isArray(candidate.data.flashcardReviews)) {
     return fallback("invalid-structure");
   }
   const attempts = candidate.data.attempts.filter(isQuestionAttempt);
@@ -167,20 +172,44 @@ export function migrateProgressPayload(value: unknown): ProgressLoadResult {
   const achievementSnapshots = candidate.data.achievementSnapshots.filter(isAchievementSnapshot);
   const reviewEvents = candidate.data.reviewEvents.filter((event): event is ProgressPayload["data"]["reviewEvents"][number] =>
     isReviewEvent(event));
+  const flashcardReviews = candidate.data.flashcardReviews.filter((event): event is ProgressPayload["data"]["flashcardReviews"][number] =>
+    isFlashcardReviewEvent(event));
   const counts = {
     droppedAttempts: candidate.data.attempts.length - attempts.length,
     droppedEvents: candidate.data.supportEvents.length - supportEvents.length,
     droppedSelfAssessments: candidate.data.guidedSelfAssessments.length - guidedSelfAssessments.length,
     droppedSnapshots: candidate.data.achievementSnapshots.length - achievementSnapshots.length,
     droppedReviewEvents: candidate.data.reviewEvents.length - reviewEvents.length,
+    droppedFlashcardReviews: candidate.data.flashcardReviews.length - flashcardReviews.length,
   };
   return {
     payload: {
       version: CURRENT_PROGRESS_VERSION,
-      data: { attempts, supportEvents, guidedSelfAssessments, achievementSnapshots, reviewEvents },
+      data: { attempts, supportEvents, guidedSelfAssessments, achievementSnapshots, reviewEvents, flashcardReviews },
     },
     status: Object.values(counts).some(Boolean) ? "current-repaired" : "current",
     ...counts,
+  };
+}
+
+function migrateV6(candidate: { data?: ProgressPayloadV6["data"] }): ProgressLoadResult {
+  if (!candidate.data || !Array.isArray(candidate.data.attempts) || !Array.isArray(candidate.data.supportEvents) ||
+      !Array.isArray(candidate.data.guidedSelfAssessments) || !Array.isArray(candidate.data.achievementSnapshots) ||
+      !Array.isArray(candidate.data.reviewEvents)) return fallback("invalid-structure");
+  const attempts = candidate.data.attempts.filter(isQuestionAttempt);
+  const supportEvents = candidate.data.supportEvents.filter(isQuestionSupportEvent);
+  const guidedSelfAssessments = candidate.data.guidedSelfAssessments.filter(isGuidedSelfAssessmentEvent);
+  const achievementSnapshots = candidate.data.achievementSnapshots.filter(isAchievementSnapshot);
+  const reviewEvents = candidate.data.reviewEvents.filter((event) => isReviewEvent(event));
+  return {
+    payload: { version: CURRENT_PROGRESS_VERSION, data: { attempts, supportEvents, guidedSelfAssessments, achievementSnapshots, reviewEvents, flashcardReviews: [] } },
+    status: "migrated-v6",
+    droppedAttempts: candidate.data.attempts.length - attempts.length,
+    droppedEvents: candidate.data.supportEvents.length - supportEvents.length,
+    droppedSelfAssessments: candidate.data.guidedSelfAssessments.length - guidedSelfAssessments.length,
+    droppedSnapshots: candidate.data.achievementSnapshots.length - achievementSnapshots.length,
+    droppedReviewEvents: candidate.data.reviewEvents.length - reviewEvents.length,
+    droppedFlashcardReviews: 0,
   };
 }
 
@@ -196,7 +225,7 @@ function migrateV5(candidate: { data?: ProgressPayloadV5["data"] }): ProgressLoa
   return {
     payload: {
       version: CURRENT_PROGRESS_VERSION,
-      data: { attempts, supportEvents, guidedSelfAssessments, achievementSnapshots, reviewEvents: [] },
+      data: { attempts, supportEvents, guidedSelfAssessments, achievementSnapshots, reviewEvents: [], flashcardReviews: [] },
     },
     status: "migrated-v5",
     droppedAttempts: candidate.data.attempts.length - attempts.length,
@@ -204,6 +233,7 @@ function migrateV5(candidate: { data?: ProgressPayloadV5["data"] }): ProgressLoa
     droppedSelfAssessments: candidate.data.guidedSelfAssessments.length - guidedSelfAssessments.length,
     droppedSnapshots: candidate.data.achievementSnapshots.length - achievementSnapshots.length,
     droppedReviewEvents: 0,
+    droppedFlashcardReviews: 0,
   };
 }
 
@@ -218,7 +248,7 @@ function migrateV4(candidate: {
   return {
     payload: {
       version: CURRENT_PROGRESS_VERSION,
-      data: { attempts, supportEvents, guidedSelfAssessments: [], achievementSnapshots, reviewEvents: [] },
+      data: { attempts, supportEvents, guidedSelfAssessments: [], achievementSnapshots, reviewEvents: [], flashcardReviews: [] },
     },
     status: "migrated-v4",
     droppedAttempts: candidate.data.attempts.length - attempts.length,
@@ -226,6 +256,7 @@ function migrateV4(candidate: {
     droppedSelfAssessments: 0,
     droppedSnapshots: candidate.data.achievementSnapshots.length - achievementSnapshots.length,
     droppedReviewEvents: 0,
+    droppedFlashcardReviews: 0,
   };
 }
 
@@ -251,7 +282,7 @@ function migrateV2OrV3(
   return {
     payload: {
       version: CURRENT_PROGRESS_VERSION,
-      data: { attempts, supportEvents, guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [] },
+      data: { attempts, supportEvents, guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [], flashcardReviews: [] },
     },
     status: version === 2 ? "migrated-v2" : "migrated-v3",
     droppedAttempts: candidate.data.attempts.length - attempts.length,
@@ -259,6 +290,7 @@ function migrateV2OrV3(
     droppedSelfAssessments: 0,
     droppedSnapshots: 0,
     droppedReviewEvents: 0,
+    droppedFlashcardReviews: 0,
   };
 }
 
@@ -279,7 +311,7 @@ function migrateLegacyAttempts(
   return {
     payload: {
       version: CURRENT_PROGRESS_VERSION,
-      data: { attempts, supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [] },
+      data: { attempts, supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [], flashcardReviews: [] },
     },
     status,
     droppedAttempts: values.length - attempts.length,
@@ -287,6 +319,7 @@ function migrateLegacyAttempts(
     droppedSelfAssessments: 0,
     droppedSnapshots: 0,
     droppedReviewEvents: 0,
+    droppedFlashcardReviews: 0,
   };
 }
 
@@ -299,5 +332,6 @@ function fallback(status: ProgressLoadResult["status"]): ProgressLoadResult {
     droppedSelfAssessments: 0,
     droppedSnapshots: 0,
     droppedReviewEvents: 0,
+    droppedFlashcardReviews: 0,
   };
 }

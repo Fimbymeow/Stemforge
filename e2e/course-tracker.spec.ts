@@ -6,8 +6,8 @@ import { higherMathematicsSpecificationRegister } from "../data/curriculum/highe
 import type { ProgressPayload, QuestionAttempt, QuestionSupportEvent } from "../lib/progress/types";
 
 const payload = (attempts: QuestionAttempt[], supportEvents: QuestionSupportEvent[] = []): ProgressPayload => ({
-  version: 6,
-  data: { attempts, supportEvents, guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [] },
+  version: 7,
+  data: { attempts, supportEvents, guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [], flashcardReviews: [] },
 });
 
 function attempt(overrides: Partial<QuestionAttempt> = {}): QuestionAttempt {

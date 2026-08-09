@@ -23,8 +23,8 @@ function v2Event(overrides: Partial<QuestionSupportEventV2> = {}): QuestionSuppo
   return record;
 }
 
-test("creates an empty version 6 payload", () => {
-  assert.deepEqual(createDefaultProgressPayload(), { version: 6, data: { attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [] } });
+test("creates an empty version 7 payload", () => {
+  assert.deepEqual(createDefaultProgressPayload(), { version: 7, data: { attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [], flashcardReviews: [] } });
 });
 
 test("loads valid V3 known and unknown evidence without semantic mutation", () => {
@@ -40,7 +40,7 @@ test("loads valid V3 known and unknown evidence without semantic mutation", () =
   };
   const result = migrateProgressPayload(payload);
   assert.equal(result.status, "migrated-v3");
-  assert.equal(result.payload.version, 6);
+  assert.equal(result.payload.version, 7);
   assert.deepEqual(result.payload.data.attempts.map(({ eventId: _id, ...item }) => item), payload.data.attempts);
   assert.deepEqual(result.payload.data.supportEvents.map(({ eventId: _id, ...item }) => item), payload.data.supportEvents);
   assert.deepEqual(result.payload.data.achievementSnapshots, []);
@@ -50,7 +50,7 @@ test("migrates V2 attempts and support events to explicit unknown evidence", () 
   const source = { version: 2, data: { attempts: [v2Attempt()], supportEvents: [v2Event()] } };
   const result = migrateProgressPayload(source);
   assert.equal(result.status, "migrated-v2");
-  assert.equal(result.payload.version, 6);
+  assert.equal(result.payload.version, 7);
   const { eventId: _attemptId, ...migratedAttempt } = result.payload.data.attempts[0];
   const { eventId: _supportId, ...migratedSupport } = result.payload.data.supportEvents[0];
   assert.deepEqual(migratedAttempt, {
@@ -73,7 +73,7 @@ test("V2 repeated attempts remain repeated and never receive invented version 1"
 test("migrates V1 without deleting historical completion or inventing version evidence", () => {
   const result = migrateProgressPayload({ version: 1, data: { attempts: [legacyAttempt] } });
   assert.equal(result.status, "migrated-v1");
-  assert.equal(result.payload.version, 6);
+  assert.equal(result.payload.version, 7);
   assert.equal(result.payload.data.attempts[0].legacyCompleted, true);
   assert.equal(result.payload.data.attempts[0].supportKnowledge, "unknown_legacy");
   assert.deepEqual(result.payload.data.attempts[0].versionEvidence, { kind: "unknown_legacy", questionVersion: null });
@@ -121,7 +121,7 @@ test("malformed V2 subrecords are dropped during migration", () => {
 });
 
 test("future, null and invalid payloads fail safely", () => {
-  assert.equal(migrateProgressPayload({ version: 7, data: {} }).status, "unsupported-version");
+  assert.equal(migrateProgressPayload({ version: 8, data: {} }).status, "unsupported-version");
   assert.equal(migrateProgressPayload(null).status, "invalid-structure");
   assert.equal(migrateProgressPayload({ version: 3, data: { attempts: [] } }).status, "invalid-structure");
 });
@@ -158,7 +158,7 @@ test("V4 migrates snapshots individually and preserves structurally valid orphan
   assert.deepEqual(result.payload.data.achievementSnapshots, [valid]);
 });
 
-test("V4 migrates through V6 with empty newer streams and V5 repairs while migrating", () => {
+test("older payloads migrate through V7 with empty newer streams", () => {
   const migrated = migrateProgressPayload({ version: 4, data: {
     attempts: [attempt()], supportEvents: [supportEvent()], achievementSnapshots: [],
   } });
@@ -173,4 +173,10 @@ test("V4 migrates through V6 with empty newer streams and V5 repairs while migra
   assert.equal(repaired.droppedSelfAssessments, 1);
   assert.deepEqual(repaired.payload.data.guidedSelfAssessments, [valid]);
   assert.deepEqual(repaired.payload.data.reviewEvents, []);
+  const v6 = migrateProgressPayload({ version: 6, data: {
+    attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [],
+  } });
+  assert.equal(v6.status, "migrated-v6");
+  assert.equal(v6.payload.version, 7);
+  assert.deepEqual(v6.payload.data.flashcardReviews, []);
 });

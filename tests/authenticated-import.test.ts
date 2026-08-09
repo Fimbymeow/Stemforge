@@ -5,7 +5,7 @@ import { isProgressImportJson, isProgressImportSameOrigin, parseProgressImportBo
 import { attempt } from "./progress-fixtures";
 import type { ProgressPayload } from "../lib/progress/types";
 
-const evidence: ProgressPayload = { version: 6, data: { attempts: [attempt()], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [] } };
+const evidence: ProgressPayload = { version: 7, data: { attempts: [attempt()], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [], flashcardReviews: [] } };
 const receivedAt = "2026-07-16T12:00:00.000Z";
 
 test("HTTP boundary requires JSON, same origin and a strict owner-free envelope", () => {

@@ -130,7 +130,7 @@ function completedEvidence() {
 }
 
 function empty(): ProgressEvidence {
-  return { attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [] };
+  return { attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [], flashcardReviews: [] };
 }
 
 function withAttempts(...attempts: QuestionAttempt[]): ProgressEvidence {

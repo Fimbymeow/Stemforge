@@ -17,6 +17,7 @@ type RequestRow = {
   deleted_support_event_count: string | null; deleted_achievement_snapshot_count: string | null;
   deleted_guided_self_assessment_count: string | null;
   deleted_review_event_count: string | null;
+  deleted_flashcard_review_count: string | null;
   deleted_conflict_count: string | null; failure_code: string | null;
 };
 
@@ -161,6 +162,7 @@ const requestColumns = `request_id::text, status, generation_before::text, gener
   updated_at, cancellation_deadline, irreversible_at, completed_at, cancelled_at, deleted_attempt_count::text,
   deleted_support_event_count::text, deleted_guided_self_assessment_count::text,
   deleted_achievement_snapshot_count::text, deleted_review_event_count::text,
+  deleted_flashcard_review_count::text,
   deleted_conflict_count::text, failure_code`;
 const requestSelect = `SELECT ${requestColumns} FROM stemforge_account_data.requests`;
 const requestInsert = `INSERT INTO stemforge_account_data.requests (owner_id,status,generation_before)`;
@@ -175,6 +177,7 @@ function toRequest(row: RequestRow): SafeErasureRequest {
     guidedSelfAssessments: Number(row.deleted_guided_self_assessment_count),
     achievementSnapshots: Number(row.deleted_achievement_snapshot_count), conflicts: Number(row.deleted_conflict_count),
     reviewEvents: Number(row.deleted_review_event_count),
+    flashcardReviews: Number(row.deleted_flashcard_review_count),
   };
   return { requestId: row.request_id, status: row.status, generationBefore: row.generation_before,
     generationAfter: row.generation_after, createdAt: row.created_at.toISOString(), updatedAt: row.updated_at.toISOString(),

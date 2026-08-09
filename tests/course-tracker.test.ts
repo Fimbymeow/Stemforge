@@ -8,7 +8,7 @@ import { deriveHigherMathsCourseTracker } from "../lib/course-tracker";
 import { deriveSkillPathNextAction } from "../lib/learning/next-action";
 import type { ProgressEvidence, QuestionAttempt } from "../lib/progress/types";
 
-const empty = (): ProgressEvidence => ({ attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [] });
+const empty = (): ProgressEvidence => ({ attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [], flashcardReviews: [] });
 const findSkill = (model: ReturnType<typeof deriveHigherMathsCourseTracker>, id: string) => model.areas.flatMap((area) => area.requirements).flatMap((requirement) => requirement.skills).find((skill) => skill.skillPathId === id);
 const allSkills = (model: ReturnType<typeof deriveHigherMathsCourseTracker>) => model.areas.flatMap((area) => area.requirements).flatMap((requirement) => requirement.skills);
 

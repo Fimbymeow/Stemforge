@@ -219,40 +219,6 @@ export const higherMaths: Subject = {
                   displayOrder: 1,
                 },
               ],
-              flashcards: [
-                {
-                  id: "basic-diff-flash-gradient-function",
-                  contentRevision: INITIAL_CONTENT_REVISION,
-                  contentStatus: ACTIVE_CONTENT_STATUS,
-                  front: "What does differentiation find?",
-                  back: "The gradient function.",
-                  displayOrder: 1,
-                },
-                {
-                  id: "basic-diff-flash-power-rule",
-                  contentRevision: INITIAL_CONTENT_REVISION,
-                  contentStatus: ACTIVE_CONTENT_STATUS,
-                  front: "What is the power rule?",
-                  back: "Bring the power down, then reduce the power by 1.",
-                  displayOrder: 2,
-                },
-                {
-                  id: "basic-diff-flash-constants",
-                  contentRevision: INITIAL_CONTENT_REVISION,
-                  contentStatus: ACTIVE_CONTENT_STATUS,
-                  front: "What happens to constants when differentiating?",
-                  back: "They differentiate to 0.",
-                  displayOrder: 3,
-                },
-                {
-                  id: "basic-diff-flash-derivative-at-a",
-                  contentRevision: INITIAL_CONTENT_REVISION,
-                  contentStatus: ACTIVE_CONTENT_STATUS,
-                  front: "What does $$f'(a)$$ mean?",
-                  back: "The gradient of the function at $$x=a$$.",
-                  displayOrder: 4,
-                },
-              ],
               practiceSets: [
                 {
                   id: "basic-diff-practice-set-1",

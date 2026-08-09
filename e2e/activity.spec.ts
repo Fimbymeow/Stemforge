@@ -1,6 +1,6 @@
 import { expect, test } from "./fixtures/test";
 import { currentAttempt, QUESTION_IDS, seedStoredProgress } from "./fixtures/progress";
-import type { ProgressPayloadV6 } from "../lib/progress/types";
+import type { ProgressPayload } from "../lib/progress/types";
 import type { ReviewEvent } from "../lib/review/types";
 
 test("fresh learner sees a calm empty state with the real next action", async ({ page, seriousBrowserErrors }) => {
@@ -91,8 +91,8 @@ test("Activity remains naturally readable without page overflow at 390, 375 and 
   expect(seriousBrowserErrors).toEqual([]);
 });
 
-function payload(attempts: ProgressPayloadV6["data"]["attempts"], reviewEvents: ReviewEvent[] = []): ProgressPayloadV6 {
-  return { version: 6, data: { attempts, supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents } };
+function payload(attempts: ProgressPayload["data"]["attempts"], reviewEvents: ReviewEvent[] = []): ProgressPayload {
+  return { version: 7, data: { attempts, supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents, flashcardReviews: [] } };
 }
 function recentTimes() {
   const today = new Date(Date.now() - 60 * 60 * 1000);

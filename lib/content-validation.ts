@@ -646,6 +646,9 @@ function validateResources(
   validateId: (id: unknown, kind: string, location: string, uniquenessKey?: string) => void,
   issue: IssueWriter,
 ) {
+  if ((skillPath.flashcards?.length ?? 0) > 0) {
+    issue("error", "legacy-static-flashcards", `Skill path "${skillPath.slug}" uses the retired static Flashcard contract.`, pathLocation);
+  }
   const resources: Array<{ resource: ContentResource; kind: string }> = [
     ...(skillPath.notes ?? []).map((resource) => ({ resource, kind: "Note" })),
     ...(skillPath.formulaCards ?? []).map((resource) => ({ resource, kind: "Formula card" })),

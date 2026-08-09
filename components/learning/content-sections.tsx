@@ -1,7 +1,6 @@
 ﻿import Link from "next/link";
 import { Card } from "@/components/ui";
 
-export { FlashcardsPreview as FlashcardPreview, FlashcardsPreview } from "@/components/learning/flashcards-preview";
 export { LearningStageCard, LearningStagesSection } from "@/components/learning/learning-stages-section";
 export { PracticeSetCard, PracticeSetsSection } from "@/components/learning/practice-sets-section";
 

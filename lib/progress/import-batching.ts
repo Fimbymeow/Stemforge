@@ -1,6 +1,7 @@
 import { createDefaultProgressPayload } from "@/lib/progress/payload";
 import type { AchievementSnapshot, GuidedSelfAssessmentEvent, ProgressPayload, QuestionAttempt, QuestionSupportEvent } from "@/lib/progress/types";
 import type { ReviewEvent } from "@/lib/review/types";
+import type { FlashcardReviewEvent } from "@/lib/flashcards/types";
 import {
   MAX_REMOTE_EVIDENCE_BATCH_BYTES,
   MAX_REMOTE_EVIDENCE_BATCH_ITEMS,
@@ -11,7 +12,8 @@ type EvidenceRecord =
   | { kind: "support_event"; value: QuestionSupportEvent }
   | { kind: "guided_self_assessment"; value: GuidedSelfAssessmentEvent }
   | { kind: "achievement_snapshot"; value: AchievementSnapshot }
-  | { kind: "review_event"; value: ReviewEvent };
+  | { kind: "review_event"; value: ReviewEvent }
+  | { kind: "flashcard_review"; value: FlashcardReviewEvent };
 
 export function batchProgressEvidence(
   payload: ProgressPayload,
@@ -27,6 +29,7 @@ export function batchProgressEvidence(
     ...payload.data.guidedSelfAssessments.map((value) => ({ kind: "guided_self_assessment" as const, value })),
     ...payload.data.achievementSnapshots.map((value) => ({ kind: "achievement_snapshot" as const, value })),
     ...payload.data.reviewEvents.map((value) => ({ kind: "review_event" as const, value })),
+    ...payload.data.flashcardReviews.map((value) => ({ kind: "flashcard_review" as const, value })),
   ];
   const batches: ProgressPayload[] = [];
   let current = createDefaultProgressPayload();
@@ -49,7 +52,8 @@ export function batchProgressEvidence(
 
 export function countEvidence(payload: ProgressPayload) {
   return payload.data.attempts.length + payload.data.supportEvents.length +
-    payload.data.guidedSelfAssessments.length + payload.data.achievementSnapshots.length + payload.data.reviewEvents.length;
+    payload.data.guidedSelfAssessments.length + payload.data.achievementSnapshots.length + payload.data.reviewEvents.length +
+    payload.data.flashcardReviews.length;
 }
 
 function append(payload: ProgressPayload, record: EvidenceRecord): ProgressPayload {
@@ -58,7 +62,8 @@ function append(payload: ProgressPayload, record: EvidenceRecord): ProgressPaylo
   else if (record.kind === "support_event") next.data.supportEvents.push(record.value);
   else if (record.kind === "guided_self_assessment") next.data.guidedSelfAssessments.push(record.value);
   else if (record.kind === "achievement_snapshot") next.data.achievementSnapshots.push(record.value);
-  else next.data.reviewEvents.push(record.value);
+  else if (record.kind === "review_event") next.data.reviewEvents.push(record.value);
+  else next.data.flashcardReviews.push(record.value);
   return next;
 }
 

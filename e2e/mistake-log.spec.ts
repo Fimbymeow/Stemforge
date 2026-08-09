@@ -225,8 +225,8 @@ test("malformed evidence cannot substitute an unavailable or different skill", a
 
 function payload(attempts: QuestionAttempt[]): ProgressPayload {
   return {
-    version: 6,
-    data: { attempts, supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [] },
+    version: 7,
+    data: { attempts, supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [], flashcardReviews: [] },
   };
 }
 

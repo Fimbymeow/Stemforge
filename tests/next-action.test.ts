@@ -173,11 +173,11 @@ test("empty and invalid catalogue conditions return an explicit unavailable resu
 });
 
 function emptyEvidence(): ProgressEvidence {
-  return { attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [] };
+  return { attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [], flashcardReviews: [] };
 }
 
 function evidence(attempts: QuestionAttempt[] = [], supportEvents: QuestionSupportEvent[] = []): ProgressEvidence {
-  return { attempts, supportEvents, guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [] };
+  return { attempts, supportEvents, guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [], flashcardReviews: [] };
 }
 
 function attempt(

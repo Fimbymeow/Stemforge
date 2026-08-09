@@ -77,6 +77,7 @@ Expected forward-only chain:
 6. `1753266400000_beta_report_triage`
 7. `1753352800000_guided-self-assessment-evidence`
 8. `1753439200000_review-evidence`
+9. `1753525600000_flashcard-review-evidence`
 
 Never reset schemas, edit production tables manually, or reverse a forward-only migration destructively. Client/Public privileges remain revoked by the committed migrations; internal tables remain server-only.
 
@@ -147,7 +148,7 @@ Production CSP excludes `unsafe-eval`; inline scripts/styles remain the document
 - [ ] Correct environment scopes; test/migration credentials absent from runtime.
 - [ ] Canonical HTTPS origin and exact Supabase Site/redirect URLs confirmed.
 - [ ] Production Supabase project, SSL, restricted runtime role and migration role confirmed.
-- [ ] Migration status current through `1753439200000_review-evidence`.
+- [ ] Migration status current through `1753525600000_flashcard-review-evidence`.
 - [ ] Google enabled in Supabase; Supabase `/auth/v1/callback` registered in Google; exact canonical app callback registered in Supabase; no production wildcard.
 - [x] Liveness 200; readiness 200 with every bounded category `ok`. Confirmed live against `https://stemforge-6an8.vercel.app` during Programme 6 Phase 1 and independently reconfirmed since.
 - [x] Chromium, Firefox and WebKit production smoke pass without CSP/asset/browser errors. `pnpm run test:production:smoke` reported passing against the production origin.

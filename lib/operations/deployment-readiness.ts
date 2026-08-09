@@ -3,7 +3,7 @@ import { getInternalOperationsConfigurationStatus } from "@/lib/beta-reports/int
 import { authOriginMatchesCanonical, canonicalProductionOrigin } from "@/lib/operations/canonical-origin";
 import { databaseCaCertificateStatus } from "@/lib/remote-evidence/postgres-config";
 
-export const LATEST_DATABASE_MIGRATION = "1753439200000";
+export const LATEST_DATABASE_MIGRATION = "1753525600000";
 
 type Environment = Record<string, string | undefined>;
 export type DeploymentCheck = { code: string; status: "pass" | "warning" | "fail"; message: string };

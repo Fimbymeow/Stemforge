@@ -174,6 +174,7 @@ function payloadReferences(payload: ProgressPayload) {
     ...payload.data.guidedSelfAssessments.map((item) => [`guided_self_assessment:${item.eventId}`, item.occurredAt] as const),
     ...payload.data.achievementSnapshots.map((item) => [`achievement_snapshot:${item.snapshotId}`, item.achievedAt] as const),
     ...payload.data.reviewEvents.map((item) => [`review_event:${item.eventId}`, item.occurredAt] as const),
+    ...payload.data.flashcardReviews.map((item) => [`flashcard_review:${item.eventId}`, item.occurredAt] as const),
   ]);
 }
 

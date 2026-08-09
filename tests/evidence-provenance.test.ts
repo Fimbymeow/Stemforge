@@ -52,11 +52,12 @@ test("malformed provenance recovers conservatively and future versions fail clos
 });
 
 function payload(): ProgressPayload {
-  return { version: 6, data: {
+  return { version: 7, data: {
     attempts: [attempt({ eventId: "attempt_a" }), attempt({ eventId: "attempt_b", attemptedAt: "2026-07-12T10:02:00.000Z" })],
     supportEvents: [supportEvent({ eventId: "support_a" })],
     guidedSelfAssessments: [selfAssessment({ eventId: "self_a" })],
     achievementSnapshots: [],
     reviewEvents: [],
+    flashcardReviews: [],
   } };
 }

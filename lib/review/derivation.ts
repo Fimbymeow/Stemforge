@@ -303,5 +303,6 @@ function emptyEvidence(): ProgressEvidence {
     guidedSelfAssessments: [],
     achievementSnapshots: [],
     reviewEvents: [],
+    flashcardReviews: [],
   };
 }

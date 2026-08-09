@@ -14,6 +14,7 @@ import { validateOwnerId, validateRemoteEvidenceBatch } from "@/lib/remote-evide
 import type { AchievementSnapshot, GuidedSelfAssessmentEvent, ProgressPayload, QuestionAttempt, QuestionSupportEvent } from "@/lib/progress/types";
 import { PostgresAccountDataRepository, ownerLock } from "@/lib/account-data/postgres-account-data.server";
 import type { ReviewEvent } from "@/lib/review/types";
+import type { FlashcardReviewEvent } from "@/lib/flashcards/types";
 
 const TABLES: Record<RemoteEvidenceKind, string> = {
   attempt: "stemforge_remote.question_attempts",
@@ -21,9 +22,10 @@ const TABLES: Record<RemoteEvidenceKind, string> = {
   guided_self_assessment: "stemforge_remote.guided_self_assessments",
   achievement_snapshot: "stemforge_remote.achievement_snapshots",
   review_event: "stemforge_remote.review_events",
+  flashcard_review: "stemforge_remote.flashcard_reviews",
 };
 
-type EvidenceItem = QuestionAttempt | QuestionSupportEvent | GuidedSelfAssessmentEvent | AchievementSnapshot | ReviewEvent;
+type EvidenceItem = QuestionAttempt | QuestionSupportEvent | GuidedSelfAssessmentEvent | AchievementSnapshot | ReviewEvent | FlashcardReviewEvent;
 type StoredRow = { payload: EvidenceItem; payload_hash: string; receive_order: string; received_at: Date };
 
 export class PostgresRemoteEvidenceRepository {
@@ -52,6 +54,7 @@ export class PostgresRemoteEvidenceRepository {
       for (const item of validated.payload.data.guidedSelfAssessments) await this.appendOne(client, ownerId, state.generation, "guided_self_assessment", item, result);
       for (const item of validated.payload.data.achievementSnapshots) await this.appendOne(client, ownerId, state.generation, "achievement_snapshot", item, result);
       for (const item of validated.payload.data.reviewEvents) await this.appendOne(client, ownerId, state.generation, "review_event", item, result);
+      for (const item of validated.payload.data.flashcardReviews) await this.appendOne(client, ownerId, state.generation, "flashcard_review", item, result);
       await client.query("COMMIT");
       return result;
     } catch (error) {
@@ -82,19 +85,23 @@ export class PostgresRemoteEvidenceRepository {
         UNION ALL
         SELECT 'review_event'::text, event_id, payload, receive_order, received_at
           FROM stemforge_remote.review_events WHERE owner_id = $1
+        UNION ALL
+        SELECT 'flashcard_review'::text, event_id, payload, receive_order, received_at
+          FROM stemforge_remote.flashcard_reviews WHERE owner_id = $1
       ) evidence
       WHERE ($2::bigint IS NULL OR receive_order > $2::bigint)
       ORDER BY receive_order, evidence_kind, event_id
     `, [ownerId, afterCursor ?? null]);
 
-    const payload: ProgressPayload = { version: 6, data: { attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [] } };
+    const payload: ProgressPayload = { version: 7, data: { attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [], flashcardReviews: [] } };
     const records: AcceptedRemoteEvidence[] = [];
     for (const row of query.rows) {
       if (row.evidence_kind === "attempt") payload.data.attempts.push(row.payload as QuestionAttempt);
       else if (row.evidence_kind === "support_event") payload.data.supportEvents.push(row.payload as QuestionSupportEvent);
       else if (row.evidence_kind === "guided_self_assessment") payload.data.guidedSelfAssessments.push(row.payload as GuidedSelfAssessmentEvent);
       else if (row.evidence_kind === "achievement_snapshot") payload.data.achievementSnapshots.push(row.payload as AchievementSnapshot);
-      else payload.data.reviewEvents.push(row.payload as ReviewEvent);
+      else if (row.evidence_kind === "review_event") payload.data.reviewEvents.push(row.payload as ReviewEvent);
+      else payload.data.flashcardReviews.push(row.payload as FlashcardReviewEvent);
       records.push({ kind: row.evidence_kind, eventId: row.event_id, receiveCursor: row.receive_order, receivedAt: row.received_at.toISOString() });
     }
     return { payload, records, nextCursor: records.at(-1)?.receiveCursor ?? afterCursor ?? null };
@@ -128,6 +135,9 @@ export class PostgresRemoteEvidenceRepository {
         UNION ALL
         SELECT 'review_event'::text, event_id, payload, 'accepted'::text, receive_order, received_at
           FROM stemforge_remote.review_events WHERE owner_id = $1 AND account_generation = $4
+        UNION ALL
+        SELECT 'flashcard_review'::text, event_id, payload, 'accepted'::text, receive_order, received_at
+          FROM stemforge_remote.flashcard_reviews WHERE owner_id = $1 AND account_generation = $4
         UNION ALL
         SELECT evidence_kind, event_id, incoming_payload, 'conflict_retained'::text, receive_order, received_at
           FROM stemforge_remote.evidence_conflicts WHERE owner_id = $1 AND account_generation = $4

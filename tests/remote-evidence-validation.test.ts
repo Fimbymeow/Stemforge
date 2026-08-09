@@ -11,11 +11,11 @@ import { assertSafeTestDatabaseUrl } from "../scripts/database/safety";
 import { attempt, selfAssessment, supportEvent } from "./progress-fixtures";
 
 const payload = (overrides: Record<string, unknown> = {}) => ({
-  version: 6,
-  data: { attempts: [attempt()], supportEvents: [supportEvent()], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [], ...overrides },
+  version: 7,
+  data: { attempts: [attempt()], supportEvents: [supportEvent()], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [], flashcardReviews: [], ...overrides },
 });
 
-test("remote validation accepts canonical V6 and unknown legacy version evidence", () => {
+test("remote validation accepts canonical V7 and unknown legacy version evidence", () => {
   const unknown = attempt({ eventId: "migrated_attempt_0_deadbeef", versionEvidence: { kind: "unknown_legacy", questionVersion: null }, legacyCompleted: true });
   const result = validateRemoteEvidenceBatch(payload({ attempts: [unknown] }));
   assert.equal(result.fatal, false);
@@ -56,7 +56,7 @@ test("remote validation rejects malformed evidence item-by-item without discardi
 });
 
 test("future and malformed payload shapes are rejected without migration", () => {
-  assert.equal(validateRemoteEvidenceBatch({ version: 6, data: {} }).fatal, true);
+  assert.equal(validateRemoteEvidenceBatch({ version: 7, data: {} }).fatal, true);
   assert.equal(validateRemoteEvidenceBatch({ version: 4, data: { attempts: [] } }).fatal, true);
   assert.equal(validateRemoteEvidenceBatch({ ...payload(), unexpected: true }).fatal, true);
   assert.equal(validateRemoteEvidenceBatch(null).fatal, true);

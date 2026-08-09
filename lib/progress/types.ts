@@ -1,6 +1,7 @@
 import type { ReviewEvent } from "@/lib/review/types";
+import type { FlashcardReviewEvent } from "@/lib/flashcards/types";
 
-export const CURRENT_PROGRESS_VERSION = 6 as const;
+export const CURRENT_PROGRESS_VERSION = 7 as const;
 
 export type LegacyQuestionAttempt = {
   questionId: string;
@@ -150,14 +151,21 @@ export type ProgressPayloadV5 = {
 };
 
 export type ProgressPayloadV6 = {
-  version: typeof CURRENT_PROGRESS_VERSION;
+  version: 6;
   data: ProgressPayloadV5["data"] & {
     reviewEvents: ReviewEvent[];
   };
 };
 
-export type ProgressPayload = ProgressPayloadV6;
-export type ProgressEvidence = ProgressPayloadV6["data"];
+export type ProgressPayloadV7 = {
+  version: typeof CURRENT_PROGRESS_VERSION;
+  data: ProgressPayloadV6["data"] & {
+    flashcardReviews: FlashcardReviewEvent[];
+  };
+};
+
+export type ProgressPayload = ProgressPayloadV7;
+export type ProgressEvidence = ProgressPayloadV7["data"];
 
 export type ProgressLoadStatus =
   | "current"
@@ -171,6 +179,7 @@ export type ProgressLoadStatus =
   | "migrated-v3"
   | "migrated-v4"
   | "migrated-v5"
+  | "migrated-v6"
   | "unavailable"
   | "unsupported-version";
 
@@ -182,6 +191,7 @@ export type ProgressLoadResult = {
   droppedSelfAssessments: number;
   droppedSnapshots: number;
   droppedReviewEvents: number;
+  droppedFlashcardReviews: number;
 };
 
 export type QuestionOutcome =

@@ -97,12 +97,13 @@ function response(
 }
 
 function validateRecord(kind: string, eventId: string, evidence: unknown) {
-  const payload: ProgressPayload = { version: 6, data: { attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [] } };
+  const payload: ProgressPayload = { version: 7, data: { attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [], flashcardReviews: [] } };
   if (kind === "attempt") payload.data.attempts.push(evidence as ProgressPayload["data"]["attempts"][number]);
   else if (kind === "support_event") payload.data.supportEvents.push(evidence as ProgressPayload["data"]["supportEvents"][number]);
   else if (kind === "guided_self_assessment") payload.data.guidedSelfAssessments.push(evidence as ProgressPayload["data"]["guidedSelfAssessments"][number]);
   else if (kind === "achievement_snapshot") payload.data.achievementSnapshots.push(evidence as ProgressPayload["data"]["achievementSnapshots"][number]);
   else if (kind === "review_event") payload.data.reviewEvents.push(evidence as ProgressPayload["data"]["reviewEvents"][number]);
+  else if (kind === "flashcard_review") payload.data.flashcardReviews.push(evidence as ProgressPayload["data"]["flashcardReviews"][number]);
   else return false;
   const validated = validateRemoteEvidenceBatch(payload);
   if (validated.fatal || validated.rejected.length > 0) return false;
@@ -114,7 +115,9 @@ function validateRecord(kind: string, eventId: string, evidence: unknown) {
         ? validated.payload.data.supportEvents[0]?.eventId
         : kind === "guided_self_assessment"
           ? validated.payload.data.guidedSelfAssessments[0]?.eventId
-          : validated.payload.data.reviewEvents[0]?.eventId;
+          : kind === "review_event"
+            ? validated.payload.data.reviewEvents[0]?.eventId
+            : validated.payload.data.flashcardReviews[0]?.eventId;
   return storedId === eventId;
 }
 

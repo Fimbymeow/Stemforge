@@ -123,13 +123,14 @@ function removeImportAccount(metadata: ProgressImportMetadata, fingerprint: stri
 
 function filterPayload(payload: ProgressPayload, keep: (reference: string) => boolean): ProgressPayload {
   return {
-    version: 6,
+    version: 7,
     data: {
       attempts: payload.data.attempts.filter((item) => keep(`attempt:${item.eventId}`)),
       supportEvents: payload.data.supportEvents.filter((item) => keep(`support_event:${item.eventId}`)),
       guidedSelfAssessments: payload.data.guidedSelfAssessments.filter((item) => keep(`guided_self_assessment:${item.eventId}`)),
       achievementSnapshots: payload.data.achievementSnapshots.filter((item) => keep(`achievement_snapshot:${item.snapshotId}`)),
       reviewEvents: payload.data.reviewEvents.filter((item) => keep(`review_event:${item.eventId}`)),
+      flashcardReviews: payload.data.flashcardReviews.filter((item) => keep(`flashcard_review:${item.eventId}`)),
     },
   };
 }

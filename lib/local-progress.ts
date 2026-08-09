@@ -40,6 +40,7 @@ export type {
   ProgressPayloadV4,
   ProgressPayloadV5,
   ProgressPayloadV6,
+  ProgressPayloadV7,
   ProgressStatus,
   QuestionAttempt,
   QuestionOutcome,
@@ -52,6 +53,7 @@ export type {
   StageProgress,
 } from "@/lib/progress/types";
 import type { ReviewEvent } from "@/lib/review/types";
+import type { FlashcardReviewEvent } from "@/lib/flashcards/types";
 
 type SubmissionInput = LegacyQuestionAttempt & NewAttemptMarkerFields & {
   practiceSessionId?: string;
@@ -69,7 +71,7 @@ function readEvidence(): ProgressEvidence {
 }
 
 function emptyEvidence(): ProgressEvidence {
-  return { attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [] };
+  return { attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [], flashcardReviews: [] };
 }
 
 function dispatchProgressUpdate() {
@@ -83,6 +85,7 @@ function nextSequence(evidence: ProgressEvidence) {
     ...evidence.supportEvents.map((item) => item.sequence),
     ...evidence.guidedSelfAssessments.map((item) => item.sequence),
     ...evidence.reviewEvents.map((item) => item.sequence),
+    ...evidence.flashcardReviews.map((item) => item.sequence),
   ) + 1;
 }
 
@@ -226,6 +229,23 @@ export async function recordReviewEvent(event: ReviewEvent) {
     const repository = createRepository();
     const before = repository.load().payload;
     const saved = repository.recordReviewEvent(event);
+    if (saved) {
+      try { recordLocalEvidenceProvenance(before, repository.load().payload); } catch { /* Preserve local-first learning. */ }
+      dispatchProgressUpdate();
+    }
+    return saved;
+  });
+}
+
+export async function recordFlashcardReviewEvent(input: Omit<FlashcardReviewEvent, "eventId" | "sequence">) {
+  return withLocalProgressTransaction(() => {
+    const repository = createRepository();
+    const before = repository.load().payload;
+    const saved = repository.recordFlashcardReview({
+      ...input,
+      sequence: nextSequence(before.data),
+      eventId: createEventId("flashcard_review"),
+    });
     if (saved) {
       try { recordLocalEvidenceProvenance(before, repository.load().payload); } catch { /* Preserve local-first learning. */ }
       dispatchProgressUpdate();

@@ -14,6 +14,7 @@ import type {
 } from "@/lib/progress/types";
 import { effectiveAttemptOutcome, isGradedAttempt, isGradedCorrectAttempt, isGradedIncorrectAttempt } from "@/lib/progress/attempt-outcomes";
 import type { ReviewEvent } from "@/lib/review/types";
+import type { FlashcardReviewEvent } from "@/lib/flashcards/types";
 
 export const MASTERY_CONTRIBUTIONS: Readonly<Record<QuestionOutcome, number>> = {
   not_attempted: 0,
@@ -65,6 +66,11 @@ export function recordReviewEvent(payload: ProgressPayload, event: ReviewEvent):
   };
 }
 
+export function recordFlashcardReview(payload: ProgressPayload, event: FlashcardReviewEvent): ProgressPayload {
+  if (payload.data.flashcardReviews.some((item) => item.eventId === event.eventId)) return payload;
+  return { ...payload, data: { ...payload.data, flashcardReviews: [...payload.data.flashcardReviews, structuredClone(event)] } };
+}
+
 export function resetPathProgress(payload: ProgressPayload, skillPathId: string): ProgressPayload {
   return {
     ...payload,
@@ -75,6 +81,7 @@ export function resetPathProgress(payload: ProgressPayload, skillPathId: string)
       achievementSnapshots: payload.data.achievementSnapshots,
       reviewEvents: payload.data.reviewEvents.filter((event) =>
         !(event.target.targetType === "skill" && event.target.targetId === skillPathId)),
+      flashcardReviews: payload.data.flashcardReviews,
     },
   };
 }

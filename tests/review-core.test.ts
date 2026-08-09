@@ -106,7 +106,7 @@ test("scheduler uses exact UTC instants, preserves historical versions and expos
   const testRegistry = new Map(REVIEW_SCHEDULERS);
   testRegistry.set(9, {
     version: 9,
-    intervalMilliseconds: () => 123,
+    intervals: new Map([[0, 123]]),
     transition: () => 0,
     migrateFrom: { 1: (event) => event.stageAfter },
   });

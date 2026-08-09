@@ -1,7 +1,8 @@
 import type { AchievementSnapshot, GuidedSelfAssessmentEvent, ProgressPayload, QuestionAttempt, QuestionSupportEvent } from "@/lib/progress/types";
 import type { ReviewEvent } from "@/lib/review/types";
+import type { FlashcardReviewEvent } from "@/lib/flashcards/types";
 
-export type RemoteEvidenceKind = "attempt" | "support_event" | "guided_self_assessment" | "achievement_snapshot" | "review_event";
+export type RemoteEvidenceKind = "attempt" | "support_event" | "guided_self_assessment" | "achievement_snapshot" | "review_event" | "flashcard_review";
 
 export type RemoteEvidenceRef = {
   kind: RemoteEvidenceKind;
@@ -42,7 +43,7 @@ export type RemoteEvidenceRead = {
 
 export type RemoteEvidencePageRecord = AcceptedRemoteEvidence & {
   disposition: "accepted" | "conflict_retained";
-  evidence: QuestionAttempt | QuestionSupportEvent | GuidedSelfAssessmentEvent | AchievementSnapshot | ReviewEvent;
+  evidence: QuestionAttempt | QuestionSupportEvent | GuidedSelfAssessmentEvent | AchievementSnapshot | ReviewEvent | FlashcardReviewEvent;
 };
 
 export type RemoteEvidencePage = {

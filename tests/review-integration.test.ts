@@ -169,6 +169,7 @@ test("Review selector prioritises current-version reassessment and never fills w
     guidedSelfAssessments: [],
     achievementSnapshots: withoutCurrent.achievementSnapshots,
     reviewEvents: [],
+    flashcardReviews: [],
   };
   assert.equal(createReviewSessionSelection({
     evidence: onlySnapshot,
@@ -291,14 +292,14 @@ test("unknown scheduler history fails closed instead of fabricating a baseline s
   assert.deepEqual(readPayload(browser).data.reviewEvents.map((event) => event.eventId), ["review_unknown_scheduler"]);
 });
 
-test("V5 migrates to V6, malformed Review events repair individually, and older chains still reach V6", () => {
+test("V5 migrates to V7, malformed Review events repair individually, and older chains still reach V7", () => {
   const v5 = {
     version: 5,
     data: { attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [] },
   };
   const migrated = migrateProgressPayload(v5);
   assert.equal(migrated.status, "migrated-v5");
-  assert.equal(migrated.payload.version, 6);
+  assert.equal(migrated.payload.version, 7);
   assert.deepEqual(migrated.payload.data.reviewEvents, []);
   for (const legacy of [
     [{ questionId: "q", skillPathId: "p", stageId: "s", isCorrect: true, answer: "1", attemptedAt: "2026-07-01T10:00:00.000Z" }],
@@ -307,7 +308,7 @@ test("V5 migrates to V6, malformed Review events repair individually, and older 
     { version: 3, data: { attempts: [], supportEvents: [] } },
     { version: 4, data: { attempts: [], supportEvents: [], achievementSnapshots: [] } },
   ]) {
-    assert.equal(migrateProgressPayload(legacy).payload.version, 6);
+    assert.equal(migrateProgressPayload(legacy).payload.version, 7);
   }
   const valid = readPayload(installStandalonePayload(payloadWithReview())).data.reviewEvents[0];
   const repaired = migrateProgressPayload({
@@ -361,6 +362,7 @@ function combineEvidence(...items: ProgressEvidence[]): ProgressEvidence {
     guidedSelfAssessments: items.flatMap((item) => item.guidedSelfAssessments),
     achievementSnapshots: items.flatMap((item) => item.achievementSnapshots),
     reviewEvents: items.flatMap((item) => item.reviewEvents),
+    flashcardReviews: items.flatMap((item) => item.flashcardReviews),
   };
 }
 

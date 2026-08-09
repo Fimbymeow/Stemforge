@@ -14,6 +14,8 @@ import type {
 import type { RejectedRemoteEvidence, RemoteEvidenceKind } from "@/lib/remote-evidence/types";
 import type { ReviewEvent } from "@/lib/review/types";
 import { isReviewEvent, safeId } from "@/lib/review/validation";
+import { isFlashcardReviewEvent } from "@/lib/flashcards/validation";
+import type { FlashcardReviewEvent } from "@/lib/flashcards/types";
 
 export const MAX_REMOTE_EVIDENCE_BATCH_ITEMS = 500;
 export const MAX_REMOTE_EVIDENCE_BATCH_BYTES = 1_000_000;
@@ -32,21 +34,21 @@ export function validateOwnerId(ownerId: unknown): ownerId is string {
 }
 
 export function validateRemoteEvidenceBatch(value: unknown): ValidatedRemoteEvidenceBatch {
-  const empty = (): ProgressPayload => ({ version: 6, data: { attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [] } });
-  if (!value || typeof value !== "object") return fatal(empty(), "A canonical V6 evidence payload is required.");
+  const empty = (): ProgressPayload => ({ version: 7, data: { attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [], flashcardReviews: [] } });
+  if (!value || typeof value !== "object") return fatal(empty(), "A canonical V7 evidence payload is required.");
   const candidate = value as { version?: unknown; data?: unknown };
-  if (!hasExactKeys(candidate, ["version", "data"])) return fatal(empty(), "Only canonical V6 payload fields are accepted.");
-  if (candidate.version !== 6) return fatal(empty(), "Only canonical V6 evidence payloads are accepted.");
-  if (!candidate.data || typeof candidate.data !== "object") return fatal(empty(), "The V6 data object is required.");
-  const data = candidate.data as { attempts?: unknown; supportEvents?: unknown; guidedSelfAssessments?: unknown; achievementSnapshots?: unknown; reviewEvents?: unknown };
-  if (!hasExactKeys(data, ["attempts", "supportEvents", "guidedSelfAssessments", "achievementSnapshots", "reviewEvents"])) return fatal(empty(), "Only canonical V6 data fields are accepted.");
+  if (!hasExactKeys(candidate, ["version", "data"])) return fatal(empty(), "Only canonical V7 payload fields are accepted.");
+  if (candidate.version !== 7) return fatal(empty(), "Only canonical V7 evidence payloads are accepted.");
+  if (!candidate.data || typeof candidate.data !== "object") return fatal(empty(), "The V7 data object is required.");
+  const data = candidate.data as { attempts?: unknown; supportEvents?: unknown; guidedSelfAssessments?: unknown; achievementSnapshots?: unknown; reviewEvents?: unknown; flashcardReviews?: unknown };
+  if (!hasExactKeys(data, ["attempts", "supportEvents", "guidedSelfAssessments", "achievementSnapshots", "reviewEvents", "flashcardReviews"])) return fatal(empty(), "Only canonical V7 data fields are accepted.");
   if (!Array.isArray(data.attempts) || !Array.isArray(data.supportEvents) ||
       !Array.isArray(data.guidedSelfAssessments) || !Array.isArray(data.achievementSnapshots) ||
-      !Array.isArray(data.reviewEvents)) {
-    return fatal(empty(), "V6 evidence arrays are required.");
+      !Array.isArray(data.reviewEvents) || !Array.isArray(data.flashcardReviews)) {
+    return fatal(empty(), "V7 evidence arrays are required.");
   }
   const total = data.attempts.length + data.supportEvents.length + data.guidedSelfAssessments.length +
-    data.achievementSnapshots.length + data.reviewEvents.length;
+    data.achievementSnapshots.length + data.reviewEvents.length + data.flashcardReviews.length;
   if (total > MAX_REMOTE_EVIDENCE_BATCH_ITEMS) return fatal(empty(), `Evidence batches may contain at most ${MAX_REMOTE_EVIDENCE_BATCH_ITEMS} records.`);
   let bytes: number;
   try { bytes = new TextEncoder().encode(JSON.stringify(value)).length; } catch { return fatal(empty(), "Evidence payload must be JSON serializable."); }
@@ -58,7 +60,8 @@ export function validateRemoteEvidenceBatch(value: unknown): ValidatedRemoteEvid
   const guidedSelfAssessments = data.guidedSelfAssessments.filter((item): item is GuidedSelfAssessmentEvent => validateItem(item, "guided_self_assessment", rejected));
   const achievementSnapshots = data.achievementSnapshots.filter((item): item is AchievementSnapshot => validateItem(item, "achievement_snapshot", rejected));
   const reviewEvents = data.reviewEvents.filter((item): item is ReviewEvent => validateItem(item, "review_event", rejected));
-  return { payload: { version: 6, data: { attempts, supportEvents, guidedSelfAssessments, achievementSnapshots, reviewEvents } }, rejected, fatal: false };
+  const flashcardReviews = data.flashcardReviews.filter((item): item is FlashcardReviewEvent => validateItem(item, "flashcard_review", rejected));
+  return { payload: { version: 7, data: { attempts, supportEvents, guidedSelfAssessments, achievementSnapshots, reviewEvents, flashcardReviews } }, rejected, fatal: false };
 }
 
 function validateItem(value: unknown, kind: RemoteEvidenceKind, rejected: RejectedRemoteEvidence[]) {
@@ -88,13 +91,15 @@ function validateItem(value: unknown, kind: RemoteEvidenceKind, rejected: Reject
       : !validSnapshotFields(value)
         ? "Achievement snapshot contains an unsafe ID."
         : null;
-  } else {
+  } else if (kind === "review_event") {
     reason = !isReviewEvent(value, true)
       ? "Invalid canonical Review event."
       : !validReviewFields(value)
         ? "Review event contains an unsafe ID or timestamp."
         : null;
-  }
+  } else reason = !isFlashcardReviewEvent(value, true)
+    ? "Invalid canonical Flashcard review event."
+    : !safeId(value.cardId) ? "Flashcard review contains an unsafe ID." : null;
   if (!reason) return true;
   rejected.push({ kind, eventId, reason });
   return false;

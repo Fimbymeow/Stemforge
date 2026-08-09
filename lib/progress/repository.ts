@@ -2,6 +2,7 @@ import {
   recordGuidedSelfAssessment,
   recordQuestionSubmission,
   recordReviewEvent,
+  recordFlashcardReview,
   recordSupportEvent,
   resetPathProgress,
 } from "@/lib/progress/calculations";
@@ -15,6 +16,7 @@ import type {
   QuestionSupportEvent,
 } from "@/lib/progress/types";
 import type { ReviewEvent } from "@/lib/review/types";
+import type { FlashcardReviewEvent } from "@/lib/flashcards/types";
 
 export class ProgressRepository {
   constructor(private readonly storage: ProgressStorage, private readonly idFactory: EventIdFactory = createEventId) {}
@@ -65,6 +67,14 @@ export class ProgressRepository {
       return stableStringify(existing) === stableStringify(event);
     }
     return this.storage.save(recordReviewEvent(loaded.payload, event));
+  }
+
+  recordFlashcardReview(event: FlashcardReviewEvent) {
+    const loaded = this.load();
+    if (!canWriteLoadedProgress(loaded)) return false;
+    const existing = loaded.payload.data.flashcardReviews.find((item) => item.eventId === event.eventId);
+    if (existing) return stableStringify(existing) === stableStringify(event);
+    return this.storage.save(recordFlashcardReview(loaded.payload, event));
   }
 
   resetPath(skillPathId: string) {

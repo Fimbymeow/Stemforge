@@ -184,7 +184,7 @@ function today(attempts: QuestionAttempt[]) {
   return currentDay(deriveActivityHistory(evidence, NOW));
 }
 function currentDay(model: ReturnType<typeof deriveActivityHistory>) { return model.days.at(-1)!; }
-function emptyEvidence(): ProgressEvidence { return { attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [] }; }
+function emptyEvidence(): ProgressEvidence { return { attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [], flashcardReviews: [] }; }
 function attempt(overrides: Partial<QuestionAttempt> = {}): QuestionAttempt {
   return { questionId: "q1", skillPathId: "path", stageId: "stage", isCorrect: false, answer: "answer", attemptedAt: NOW.toISOString(), sequence: 1, isGenuine: true, hintViewedBeforeSubmission: false, supportKnowledge: "known", versionEvidence: { kind: "known", questionVersion: 1 }, eventId: "attempt_1", outcomeKind: "graded", strategy: "closed_vocabulary_text_answer", strategyVersion: 1, ...overrides };
 }

@@ -1,11 +1,10 @@
 import type { ReviewEvent, ReviewOutcome, ReviewStage } from "@/lib/review/types";
+import { dueAtFromInterval, transitionStage, type StageTransitionConfiguration } from "@/lib/scheduling/stage-transition";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 export type ReviewSchedulerDefinition = {
-  version: number;
-  intervalMilliseconds(stage: ReviewStage): number;
-  transition(previous: ReviewStage | null, outcome: ReviewOutcome): ReviewStage;
+} & StageTransitionConfiguration<ReviewStage, ReviewOutcome> & {
   migrateFrom?: Readonly<Record<number, (event: ReviewEvent) => ReviewStage | null>>;
 };
 
@@ -27,9 +26,7 @@ export const REVIEW_SCHEDULER_VERSION = 1;
 export const REVIEW_SCHEDULERS: ReviewSchedulerRegistry = new Map([
   [REVIEW_SCHEDULER_VERSION, {
     version: REVIEW_SCHEDULER_VERSION,
-    intervalMilliseconds(stage: ReviewStage) {
-      return V1_INTERVALS[String(stage)];
-    },
+    intervals: new Map(Object.entries(V1_INTERVALS).map(([stage, interval]) => [parseStage(stage), interval])),
     transition(previous: ReviewStage | null, outcome: ReviewOutcome): ReviewStage {
       if (outcome === "incorrect") return "recovery";
       if (outcome === "solution_assisted") return "relearning";
@@ -53,7 +50,8 @@ export function transitionReviewStage(
   version = REVIEW_SCHEDULER_VERSION,
   registry: ReviewSchedulerRegistry = REVIEW_SCHEDULERS,
 ) {
-  return getReviewScheduler(version, registry)?.transition(previous, outcome) ?? null;
+  const scheduler = getReviewScheduler(version, registry);
+  return scheduler ? transitionStage(scheduler, previous, outcome) : null;
 }
 
 export function reviewDueAt(
@@ -64,9 +62,12 @@ export function reviewDueAt(
 ) {
   const scheduler = getReviewScheduler(version, registry);
   if (!scheduler) return null;
-  const timestamp = Date.parse(anchor);
-  if (!Number.isFinite(timestamp)) return null;
-  return new Date(timestamp + scheduler.intervalMilliseconds(stage)).toISOString();
+  return dueAtFromInterval(scheduler, anchor, stage);
+}
+
+function parseStage(value: string): ReviewStage {
+  if (value === "recovery" || value === "relearning") return value;
+  return Number(value) as ReviewStage;
 }
 
 export function migrateReviewStage(

@@ -38,7 +38,7 @@ export function supportEvent(overrides: Partial<QuestionSupportEvent> = {}): Que
 }
 
 export function evidence(attempts: QuestionAttempt[] = [], supportEvents: QuestionSupportEvent[] = []): ProgressEvidence {
-  return { attempts, supportEvents, guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [] };
+  return { attempts, supportEvents, guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [], flashcardReviews: [] };
 }
 
 export function selfAssessment(overrides: Partial<GuidedSelfAssessmentEvent> = {}): GuidedSelfAssessmentEvent {

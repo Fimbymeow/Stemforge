@@ -26,6 +26,7 @@ import { assertSafeTestDatabaseUrl } from "../scripts/database/safety";
 import { attempt, selfAssessment, supportEvent } from "./progress-fixtures";
 import type { AchievementSnapshot, GuidedSelfAssessmentEvent, ProgressPayload } from "../lib/progress/types";
 import type { ReviewEvent } from "../lib/review/types";
+import type { FlashcardReviewEvent } from "../lib/flashcards/types";
 
 let postgres: EmbeddedPostgres;
 let pool: Pool;
@@ -79,7 +80,7 @@ test("clean migrations create the append-only evidence schema", async () => {
     WHERE table_schema = 'stemforge_remote' ORDER BY table_name
   `);
   assert.deepEqual(result.rows.map((row) => row.table_name), [
-    "achievement_snapshots", "evidence_conflicts", "guided_self_assessments", "question_attempts", "review_events", "support_events",
+    "achievement_snapshots", "evidence_conflicts", "flashcard_reviews", "guided_self_assessments", "question_attempts", "review_events", "support_events",
   ]);
 });
 
@@ -392,7 +393,7 @@ test("owner creation has no remote evidence side effect", async () => {
   assert.equal(await evidenceRowCount(), before);
 });
 
-test("all five accepted evidence kinds round-trip without payload loss", async () => {
+test("all six accepted evidence kinds round-trip without payload loss", async () => {
   const owner = await ownerId();
   const source = batch(
     [attempt({
@@ -406,9 +407,10 @@ test("all five accepted evidence kinds round-trip without payload loss", async (
     [snapshot({ snapshotId: "snapshot_round_trip" })],
     [selfAssessment({ eventId: "self_round_trip" })],
     [reviewEvent({ eventId: "review_round_trip" })],
+    [flashcardReview({ eventId: "flashcard_round_trip" })],
   );
   const appended = await repository.append(owner, source);
-  assert.equal(appended.accepted.length, 5);
+  assert.equal(appended.accepted.length, 6);
   assert.deepEqual(appended.rejected, []);
   const stored = await repository.read(owner);
   assert.deepEqual(stored.payload, source);
@@ -624,6 +626,7 @@ test("processing erasure hard-deletes retained evidence and advances generation"
     [snapshot({ snapshotId: "snapshot_erasure_delete" })],
     [selfAssessment({ eventId: "self_erasure_delete" })],
     [reviewEvent({ eventId: "review_erasure_delete" })],
+    [flashcardReview({ eventId: "flashcard_erasure_delete" })],
   ), "1");
   await repository.append(owner, batch([conflict]), "1");
 
@@ -638,7 +641,7 @@ test("processing erasure hard-deletes retained evidence and advances generation"
   const completed = await accountDataRepository.latestRequest(owner);
   const state = await accountDataRepository.readState(owner);
   assert.equal(completed?.status, "completed");
-  assert.deepEqual(completed?.deletedCounts, { attempts: 1, supportEvents: 1, guidedSelfAssessments: 1, achievementSnapshots: 1, reviewEvents: 1, conflicts: 1 });
+  assert.deepEqual(completed?.deletedCounts, { attempts: 1, supportEvents: 1, guidedSelfAssessments: 1, achievementSnapshots: 1, reviewEvents: 1, flashcardReviews: 1, conflicts: 1 });
   assert.equal(state.status, "active");
   assert.equal(state.generation, "2");
   assert.equal(await evidenceRowCountForOwner(owner), "0");
@@ -659,8 +662,15 @@ function batch(
   achievementSnapshots = [] as AchievementSnapshot[],
   guidedSelfAssessments = [] as GuidedSelfAssessmentEvent[],
   reviewEvents = [] as ReviewEvent[],
+  flashcardReviews = [] as FlashcardReviewEvent[],
 ): ProgressPayload {
-  return { version: 6, data: { attempts, supportEvents, guidedSelfAssessments, achievementSnapshots, reviewEvents } };
+  return { version: 7, data: { attempts, supportEvents, guidedSelfAssessments, achievementSnapshots, reviewEvents, flashcardReviews } };
+}
+
+function flashcardReview(overrides: Partial<FlashcardReviewEvent> = {}): FlashcardReviewEvent {
+  return { eventId: "flashcard_database_1", cardId: "test-card", cardVersion: 1, outcome: "remembered",
+    outcomeSource: "self_rated", occurredAt: "2026-07-14T10:20:00.000Z", sequence: 6,
+    schedulerVersion: 1, ...overrides };
 }
 
 function reviewEvent(overrides: Partial<ReviewEvent> = {}): ReviewEvent {
@@ -760,6 +770,7 @@ async function evidenceRowCount() {
       (SELECT count(*) FROM stemforge_remote.guided_self_assessments) +
       (SELECT count(*) FROM stemforge_remote.achievement_snapshots) +
       (SELECT count(*) FROM stemforge_remote.review_events) +
+      (SELECT count(*) FROM stemforge_remote.flashcard_reviews) +
       (SELECT count(*) FROM stemforge_remote.evidence_conflicts)
     )::text AS count
   `);
@@ -774,6 +785,7 @@ async function evidenceRowCountForOwner(owner: string) {
       (SELECT count(*) FROM stemforge_remote.guided_self_assessments WHERE owner_id = $1) +
       (SELECT count(*) FROM stemforge_remote.achievement_snapshots WHERE owner_id = $1) +
       (SELECT count(*) FROM stemforge_remote.review_events WHERE owner_id = $1) +
+      (SELECT count(*) FROM stemforge_remote.flashcard_reviews WHERE owner_id = $1) +
       (SELECT count(*) FROM stemforge_remote.evidence_conflicts WHERE owner_id = $1)
     )::text AS count
   `, [owner]);

@@ -15,20 +15,20 @@ export class LocalStorageProgressStorage implements ProgressStorage {
   constructor(private readonly storage: StorageLike | null) {}
 
   load(): ProgressLoadResult {
-    if (!this.storage) return { payload: createDefaultProgressPayload(), status: "unavailable", droppedAttempts: 0, droppedEvents: 0, droppedSelfAssessments: 0, droppedSnapshots: 0, droppedReviewEvents: 0 };
+    if (!this.storage) return unavailable("unavailable");
 
     let raw: string | null;
     try {
       raw = this.storage.getItem(PROGRESS_STORAGE_KEY);
     } catch {
-      return { payload: createDefaultProgressPayload(), status: "unavailable", droppedAttempts: 0, droppedEvents: 0, droppedSelfAssessments: 0, droppedSnapshots: 0, droppedReviewEvents: 0 };
+      return unavailable("unavailable");
     }
-    if (raw === null) return { payload: createDefaultProgressPayload(), status: "empty", droppedAttempts: 0, droppedEvents: 0, droppedSelfAssessments: 0, droppedSnapshots: 0, droppedReviewEvents: 0 };
+    if (raw === null) return unavailable("empty");
 
     try {
       return migrateProgressPayload(JSON.parse(raw));
     } catch {
-      return { payload: createDefaultProgressPayload(), status: "malformed-json", droppedAttempts: 0, droppedEvents: 0, droppedSelfAssessments: 0, droppedSnapshots: 0, droppedReviewEvents: 0 };
+      return unavailable("malformed-json");
     }
   }
 
@@ -51,6 +51,11 @@ export class LocalStorageProgressStorage implements ProgressStorage {
       return false;
     }
   }
+}
+
+function unavailable(status: ProgressLoadResult["status"]): ProgressLoadResult {
+  return { payload: createDefaultProgressPayload(), status, droppedAttempts: 0, droppedEvents: 0,
+    droppedSelfAssessments: 0, droppedSnapshots: 0, droppedReviewEvents: 0, droppedFlashcardReviews: 0 };
 }
 
 export function createBrowserProgressStorage(): ProgressStorage {
