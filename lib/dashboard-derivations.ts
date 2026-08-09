@@ -22,6 +22,7 @@ import type {
 import { deriveLearnerNextAction, type LearnerNextAction } from "@/lib/learning/next-action";
 import { deriveMistakeLog } from "@/lib/mistakes/derivation";
 import { deriveSkillAttention } from "@/lib/attention/derivation";
+import { deriveWeeklyActivity, utcDayKey } from "@/lib/activity/derivation";
 
 export type DashboardSyncInput = {
   status:
@@ -272,7 +273,7 @@ export function deriveLearnerDashboardModel(input: {
 function deriveRecentActivity(evidence: ProgressEvidence, limit: number): DashboardActivityItem[] {
   const attemptGroups = new Map<string, QuestionAttempt[]>();
   for (const attempt of evidence.attempts.filter((item) => item.isGenuine)) {
-    const key = `${attempt.skillPathId}:${dayKey(attempt.attemptedAt)}`;
+    const key = `${attempt.skillPathId}:${utcDayKey(attempt.attemptedAt)}`;
     attemptGroups.set(key, [...(attemptGroups.get(key) ?? []), attempt]);
   }
   const attemptItems: DashboardActivityItem[] = [...attemptGroups.entries()].map(([key, attempts]) => {
@@ -355,33 +356,6 @@ function deriveSecureAndMastered(paths: DashboardPathSummary[], evidence: Progre
       current: false,
     }));
   return [...current, ...historical].sort((left, right) => compareNullableDates(right.achievedAt, left.achievedAt)).slice(0, 4);
-}
-
-function deriveWeeklyActivity(evidence: ProgressEvidence, now: Date): DashboardWeeklyActivity {
-  const start = new Date(now);
-  start.setUTCDate(start.getUTCDate() - 6);
-  start.setUTCHours(0, 0, 0, 0);
-  const activeDays = new Set<string>();
-  let attempts = 0;
-  for (const attempt of evidence.attempts) {
-    if (!attempt.isGenuine || !isWithinWindow(attempt.attemptedAt, start, now)) continue;
-    attempts += 1;
-    activeDays.add(dayKey(attempt.attemptedAt));
-  }
-  let achievements = 0;
-  for (const snapshot of evidence.achievementSnapshots) {
-    if (!isWithinWindow(snapshot.achievedAt, start, now)) continue;
-    achievements += 1;
-    activeDays.add(dayKey(snapshot.achievedAt));
-  }
-  return {
-    activeDays: activeDays.size,
-    attempts,
-    achievements,
-    label: activeDays.size === 0
-      ? "No activity in the last 7 days"
-      : `${activeDays.size} active day${activeDays.size === 1 ? "" : "s"} in the last 7 days`,
-  };
 }
 
 function deriveSyncSummary(sync: DashboardSyncInput): DashboardSyncSummary {
@@ -510,10 +484,6 @@ function compareNullableDates(left: string | null, right: string | null) {
   if (!left) return 1;
   if (!right) return -1;
   return Date.parse(left) - Date.parse(right);
-}
-
-function dayKey(iso: string) {
-  return new Date(iso).toISOString().slice(0, 10);
 }
 
 function isWithinWindow(iso: string, start: Date, end: Date) {

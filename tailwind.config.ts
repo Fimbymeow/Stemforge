@@ -14,6 +14,8 @@ const config: Config = {
         line: "#e2dfd7",
         forge: "#234b6e",
         "forge-soft": "#e4ebf1",
+        "activity-moderate": "#a9c0d3",
+        "activity-strong": "#5f84a3",
         success: "#2f7a4d",
         "success-soft": "#e4f1e8",
         danger: "#b23a34",

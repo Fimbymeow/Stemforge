@@ -103,6 +103,13 @@ export function DashboardLocalProgressSection() {
         authStateReady={sync.status === "authentication_required"}
       />
 
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-1 text-sm text-muted" data-testid="dashboard-activity-line">
+        {model.weeklyActivity.activeDays > 0 ? <span className="font-semibold">{model.weeklyActivity.label}</span> : null}
+        <Link href="/activity" className="font-bold text-forge underline decoration-forge/30 underline-offset-4 hover:decoration-forge">
+          View your activity <span aria-hidden="true">→</span>
+        </Link>
+      </div>
+
       {model.needsWork.length > 0 || model.mistakes.openCount > 0 || model.secureAndMastered.length > 0 ? (
         <div className="grid grid-cols-2 gap-4 max-lg:grid-cols-1">
           {model.needsWork.length > 0 || model.mistakes.openCount > 0 ? (
