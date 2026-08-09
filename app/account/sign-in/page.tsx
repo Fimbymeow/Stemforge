@@ -5,14 +5,17 @@ import { SubmitButton } from "@/components/account/submit-button";
 import { AccountLearningReturn } from "@/components/account/account-learning-return";
 import { getAuthFeatureConfiguration } from "@/lib/auth/config";
 import { safeLearningReturnDestination } from "@/lib/auth/redirects";
+import { GoogleSignInOption } from "@/components/account/google-sign-in-option";
 
 export default async function SignInPage({ searchParams }: { searchParams: Promise<{ result?: string; next?: string }> }) {
-  if (getAuthFeatureConfiguration().status !== "enabled") return <AccountUnavailable />;
+  const config = getAuthFeatureConfiguration();
+  if (config.status !== "enabled") return <AccountUnavailable />;
   const { result, next: requestedNext } = await searchParams;
   const next = safeLearningReturnDestination(requestedNext) ?? "/account";
   const nextQuery = next === "/account" ? "" : `?next=${encodeURIComponent(next)}`;
   return (
     <AccountShell title="Sign in" introduction="Sign in without changing the progress already stored on this browser." result={result}>
+      {config.googleEnabled ? <GoogleSignInOption next={next} /> : null}
       <form action={signIn} className="mt-6">
         <input type="hidden" name="next" value={next} />
         <label className="block font-bold" htmlFor="email">Email address</label>

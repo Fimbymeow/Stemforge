@@ -36,6 +36,8 @@ let isolatedEnvironment: NodeJS.ProcessEnv = {
     MOZ_WEBRENDER: "0",
   } : {}),
   STEMFORGE_AUTH_ENABLED: enabledMode ? "true" : "false",
+  STEMFORGE_GOOGLE_AUTH_ENABLED: enabledMode ? "true" : "false",
+  STEMFORGE_AUTH_ALLOWED_REDIRECT_URLS: enabledMode ? `${baseURL}/auth/callback` : "",
   NEXT_PUBLIC_SUPABASE_URL: enabledMode ? "https://test-project.supabase.co" : "",
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: enabledMode ? "test-publishable-key" : "",
   STEMFORGE_AUTH_SITE_URL: enabledMode ? baseURL : "",

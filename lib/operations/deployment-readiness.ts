@@ -37,6 +37,19 @@ export function evaluateDeploymentReadiness(environment: Environment, input: boo
   if (production && auth.status === "enabled") checks.push(authOriginMatchesCanonical(environment)
     ? pass("auth_origin", "Authentication uses the exact canonical production origin.")
     : fail("auth_origin", "STEMFORGE_AUTH_SITE_URL must exactly match NEXT_PUBLIC_SITE_URL."));
+  if (production && auth.status === "enabled") {
+    checks.push(auth.googleEnabled
+      ? pass("google_authentication", "Google authentication is explicitly enabled in the application runtime.")
+      : fail("google_authentication", "Google authentication must be explicitly enabled for public-beta production readiness."));
+    const callback = `${auth.siteUrl}/auth/callback`;
+    const allowedRedirects = parseAllowedRedirects(environment.STEMFORGE_AUTH_ALLOWED_REDIRECT_URLS);
+    checks.push(allowedRedirects?.includes(callback)
+      ? pass("auth_redirect_allowlist", "The exact application callback is declared in the production authentication redirect allowlist.")
+      : fail("auth_redirect_allowlist", "STEMFORGE_AUTH_ALLOWED_REDIRECT_URLS must declare the exact canonical HTTPS application callback without wildcards."));
+    checks.push(auth.supabaseUrl.startsWith("https://")
+      ? pass("provider_callback", "The Supabase HTTPS origin can supply the Google provider callback endpoint.")
+      : fail("provider_callback", "The Google provider callback requires a valid HTTPS Supabase origin."));
+  }
 
   const internal = getInternalOperationsConfigurationStatus(environment);
   checks.push(internal === "misconfigured" || (internal === "enabled" && auth.status !== "enabled")
@@ -68,6 +81,12 @@ function parseLocalOrProductionOrigin(value: string | undefined) {
 function validPostgresUrl(value: string | undefined) {
   if (!value?.trim()) return false;
   try { return /^postgres(?:ql)?:$/.test(new URL(value).protocol); } catch { return false; }
+}
+function parseAllowedRedirects(value: string | undefined) {
+  if (!value?.trim()) return null;
+  const entries = value.split(",").map((entry) => entry.trim()).filter(Boolean);
+  if (entries.some((entry) => entry.includes("*") || !entry.startsWith("https://"))) return null;
+  return entries;
 }
 function pass(code: string, message: string): DeploymentCheck { return { code, status: "pass", message }; }
 function warning(code: string, message: string): DeploymentCheck { return { code, status: "warning", message }; }

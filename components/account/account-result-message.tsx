@@ -6,6 +6,9 @@ import type { AuthResultCode } from "@/lib/auth/results";
 const ERROR_RESULTS = new Set<AuthResultCode>([
   "callback_invalid",
   "invalid_credentials",
+  "oauth_cancelled",
+  "oauth_identity_conflict",
+  "oauth_unavailable",
   "password_invalid",
   "unverified_email",
   "unexpected",

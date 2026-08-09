@@ -14,7 +14,7 @@ export function createReportDiagnosticContext(input: {
   const nav = typeof navigator === "undefined" ? null : navigator;
   const width = typeof window === "undefined" ? 1200 : window.innerWidth;
   return {
-    appVersion: "private-beta",
+    appVersion: "public-beta",
     buildCommit: null,
     environmentLabel: process.env.NODE_ENV === "production" ? "production" : "development",
     route: typeof window === "undefined" ? "/" : window.location.pathname,

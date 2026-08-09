@@ -143,7 +143,7 @@ test("mobile Functional Honesty surfaces remain compact, semantic and error-free
 test("at 320x568 the beta notice and feedback dock never visually overlap each other or obscure the answer input", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 568 });
   await openQuestion(page, QUESTION_IDS[0]);
-  const notice = page.getByLabel("Private beta notice", { exact: true });
+  const notice = page.getByLabel("Public beta notice", { exact: true });
   const dock = page.getByRole("button", { name: "Send feedback" });
   await expect(notice).toBeVisible();
   await expect(dock).toBeVisible();
@@ -203,7 +203,7 @@ test("at 320px practice, questions and resources have no document overflow", asy
 
 test("dismiss controls meet the established 40px mobile touch-target floor", async ({ page }) => {
   await page.goto("/dashboard");
-  const dismissNotice = page.getByRole("button", { name: "Dismiss private beta notice" });
+  const dismissNotice = page.getByRole("button", { name: "Dismiss public beta notice" });
   await expect(dismissNotice).toBeVisible();
   const noticeBox = await dismissNotice.boundingBox();
   expect(noticeBox).not.toBeNull();

@@ -55,6 +55,19 @@ export async function signIn(formData: FormData) {
   redirect(next);
 }
 
+export async function signInWithGoogle(formData: FormData) {
+  const next = returnDestination(formData);
+  const config = enabledConfig(next);
+  if (!config.googleEnabled) result("/account/sign-in", "oauth_unavailable", next);
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: { redirectTo: `${config.siteUrl}/auth/callback?next=${encodeURIComponent(next)}` },
+  });
+  if (error || !data.url) result("/account/sign-in", "oauth_unavailable", next);
+  redirect(data.url);
+}
+
 export async function requestPasswordRecovery(formData: FormData) {
   const config = enabledConfig();
   const email = field(formData, "email");

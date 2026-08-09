@@ -66,6 +66,7 @@
         "test:e2e:auth-rendering": "tsx scripts/run-playwright-suite.ts --auth-enabled",
         "test:e2e:hardening": "tsx scripts/run-playwright-suite.ts --hardening",
         "test:production:smoke": "playwright test --config playwright.production.config.ts",
+        "test:production:smoke:authenticated": "playwright test --config playwright.production-authenticated.config.ts",
         "test:e2e:import:real": "tsx scripts/run-playwright-suite.ts --real-import",
         "test:e2e:sync:real": "tsx scripts/run-playwright-suite.ts --real-sync",
         "test:e2e:account-safety:real": "tsx scripts/run-playwright-suite.ts --real-account-safety",

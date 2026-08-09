@@ -8,13 +8,15 @@ export function Footer() {
         <Link href="#about">About</Link>
         <Link href="/tuition">Tuition</Link>
         <Link href="/subjects">Subjects</Link>
+        <Link href="/privacy">Privacy</Link>
+        <Link href="/terms">Terms</Link>
         <Link href={getActiveSkillPathHref()}>Basic differentiation</Link>
       </nav>
       <p className="m-0 max-w-3xl text-xs leading-relaxed">
         STEM Forge creates original Qualifications Scotland-style practice materials and is not affiliated with or endorsed by Qualifications Scotland.
       </p>
       <p className="m-0 max-w-3xl text-xs leading-relaxed">
-        Private-beta testers should use the feedback instructions supplied with their test invitation.
+        Public beta. Learning and account features may continue to change as they are validated with learners.
       </p>
     </footer>
   );

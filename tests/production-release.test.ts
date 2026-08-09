@@ -24,6 +24,8 @@ const productionEnvironment = {
   NEXT_PUBLIC_SUPABASE_URL: "https://project.supabase.co",
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_test",
   STEMFORGE_AUTH_SITE_URL: "https://stemforge.example",
+  STEMFORGE_GOOGLE_AUTH_ENABLED: "true",
+  STEMFORGE_AUTH_ALLOWED_REDIRECT_URLS: "https://stemforge.example/auth/callback",
   STEMFORGE_INTERNAL_REPORTS_ENABLED: "false",
   VERCEL_ENV: "production",
   VERCEL_GIT_COMMIT_SHA: "a".repeat(40),
@@ -68,6 +70,16 @@ test("production readiness rejects canonical/auth origin drift without exposing 
   }, { production: true });
   assert.equal(deploymentIsReady(checks), false);
   assert.equal(JSON.stringify(checks).includes(marker), false);
+});
+
+test("production readiness fails closed when Google or the exact callback declaration is absent", () => {
+  const googleDisabled = evaluateDeploymentReadiness({ ...productionEnvironment, STEMFORGE_GOOGLE_AUTH_ENABLED: "false" }, { production: true });
+  assert.equal(deploymentIsReady(googleDisabled), false);
+  assert.equal(googleDisabled.find((check) => check.code === "google_authentication")?.status, "fail");
+
+  const wildcard = evaluateDeploymentReadiness({ ...productionEnvironment, STEMFORGE_AUTH_ALLOWED_REDIRECT_URLS: "https://stemforge.example/**" }, { production: true });
+  assert.equal(deploymentIsReady(wildcard), false);
+  assert.equal(wildcard.find((check) => check.code === "auth_redirect_allowlist")?.status, "fail");
 });
 
 test("migration status fails closed for pending or unexpected schema history", () => {

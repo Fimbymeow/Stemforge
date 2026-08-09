@@ -26,7 +26,7 @@ test("production guest surface, health, security and internal denial are operati
   const health = await page.request.get("/api/health");
   expect(health.status()).toBe(200);
   expect(health.headers()["cache-control"]).toContain("no-store");
-  expect(await health.json()).toMatchObject({ status: "ok", appVersion: "private-beta" });
+  expect(await health.json()).toMatchObject({ status: "ok", appVersion: "public-beta" });
   const readiness = await page.request.get("/api/health/ready");
   expect(readiness.headers()["cache-control"]).toContain("no-store");
   expect(readiness.status()).toBe(expectReady ? 200 : 503);
@@ -51,6 +51,11 @@ test("production guest surface, health, security and internal denial are operati
 
   await visit("/account/sign-in");
   await expect(page.locator("h1")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Continue with Google" })).toBeVisible();
+  await visit("/privacy");
+  await expect(page.getByRole("heading", { name: "Privacy Notice", level: 1 })).toBeVisible();
+  await visit("/terms");
+  await expect(page.getByRole("heading", { name: "Terms of Use", level: 1 })).toBeVisible();
   const callback = await page.request.get("/auth/callback?next=%2F%2Fevil.example", { maxRedirects: 0 });
   expect([307, 308]).toContain(callback.status());
   const location = callback.headers().location;

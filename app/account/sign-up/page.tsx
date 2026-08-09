@@ -5,14 +5,20 @@ import { SubmitButton } from "@/components/account/submit-button";
 import { AccountLearningReturn } from "@/components/account/account-learning-return";
 import { getAuthFeatureConfiguration } from "@/lib/auth/config";
 import { safeLearningReturnDestination } from "@/lib/auth/redirects";
+import { GoogleSignInOption } from "@/components/account/google-sign-in-option";
 
 export default async function SignUpPage({ searchParams }: { searchParams: Promise<{ result?: string; next?: string }> }) {
-  if (getAuthFeatureConfiguration().status !== "enabled") return <AccountUnavailable />;
+  const config = getAuthFeatureConfiguration();
+  if (config.status !== "enabled") return <AccountUnavailable />;
   const { result, next: requestedNext } = await searchParams;
   const next = safeLearningReturnDestination(requestedNext) ?? "/account";
   const nextQuery = next === "/account" ? "" : `?next=${encodeURIComponent(next)}`;
   return (
     <AccountShell title="Create an account" introduction="An account is optional. It lets you protect progress after you explicitly choose what to add or sync." result={result}>
+      <p className="mb-0 mt-5 text-sm leading-relaxed text-muted">
+        By creating an account, you agree to the <Link href="/terms" className="font-semibold text-forge underline">Terms</Link> and acknowledge the <Link href="/privacy" className="font-semibold text-forge underline">Privacy Notice</Link>.
+      </p>
+      {config.googleEnabled ? <GoogleSignInOption next={next} /> : null}
       <form action={signUp} className="mt-6">
         <input type="hidden" name="next" value={next} />
         <label className="block font-bold" htmlFor="email">Email address</label>

@@ -6,7 +6,7 @@ import { parseWorkflowUpdate, validateWorkflowChange, type WorkflowState } from 
 
 const trustedOwner = "owner_1234567890abcdef1234567890abcdef";
 const otherOwner = "owner_abcdef1234567890abcdef1234567890";
-const enabledAuth = { status: "enabled" as const, supabaseUrl: "https://test.supabase.co", publishableKey: "test", siteUrl: "http://localhost:3000" };
+const enabledAuth = { status: "enabled" as const, supabaseUrl: "https://test.supabase.co", publishableKey: "test", siteUrl: "http://localhost:3000", googleEnabled: false };
 
 test("internal authorization is disabled unless explicitly enabled", async () => {
   assert.deepEqual(await authorizeInternalOperations({ environment: {}, authConfiguration: enabledAuth, resolveOwner: async () => ({ authenticated: true, ownerId: trustedOwner }) }), { status: "disabled" });

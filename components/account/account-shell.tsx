@@ -36,6 +36,10 @@ export function AccountShell({
         Accounts are optional. Signing in does not upload this browser&apos;s progress automatically.
         Adding browser progress and turning on cross-device sync are separate choices.
       </p>
+      <nav aria-label="Account legal information" className="mt-3 flex justify-center gap-5 text-sm font-semibold text-forge underline">
+        <Link href="/privacy">Privacy</Link>
+        <Link href="/terms">Terms</Link>
+      </nav>
     </FocusedProductShell>
   );
 }

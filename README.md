@@ -4,7 +4,7 @@ Platform performance, accessibility, security, reliability, browser support, and
 
 Production provider, environment, migration-status, smoke-test, rollback and release procedures are documented in [STEM_FORGE_PRODUCTION_DEPLOYMENT_AND_RELEASE_VERIFICATION.md](./STEM_FORGE_PRODUCTION_DEPLOYMENT_AND_RELEASE_VERIFICATION.md). The stable release target is `https://stemforge-6an8.vercel.app`; production readiness (application, configuration, authentication, database, migration and reporting) is confirmed live via `/api/health/ready`, and the non-destructive production smoke suite passes. A separate credentialed authenticated smoke pass remains outstanding — see [STEM_FORGE_ALPHA_READINESS.md](./STEM_FORGE_ALPHA_READINESS.md).
 
-STEM Forge is a calm, structured learning platform for Scottish SQA STEM students. It is currently a private beta with one complete Higher Maths learning path, a generic multi-path content runtime, optional Supabase accounts, explicitly confirmed browser-progress import, opt-in incremental cross-device evidence synchronization, shared-device-safe account data controls, an evidence-driven learner dashboard, interactive maths graphs/nature tables, and a generic local revision/practice-session engine.
+STEM Forge is a calm, structured learning platform for Scottish Qualifications Scotland STEM students. It is currently a public beta with a generic multi-path content runtime, optional Supabase accounts, explicitly confirmed browser-progress import, opt-in incremental cross-device evidence synchronization, shared-device-safe account data controls, an evidence-driven learner dashboard, interactive maths graphs/nature tables, and a generic local revision/practice-session engine.
 
 ## Current Beta Status
 

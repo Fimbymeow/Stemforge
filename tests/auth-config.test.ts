@@ -25,7 +25,19 @@ test("complete safe configuration enables the account surface", () => {
     supabaseUrl: "https://project.supabase.co",
     publishableKey: "sb_publishable_test",
     siteUrl: "http://localhost:3000",
+    googleEnabled: false,
   });
+});
+
+test("Google sign-in is an explicit server-controlled account capability", () => {
+  const config = getAuthFeatureConfiguration({
+    STEMFORGE_AUTH_ENABLED: "true",
+    STEMFORGE_GOOGLE_AUTH_ENABLED: "true",
+    NEXT_PUBLIC_SUPABASE_URL: "https://project.supabase.co",
+    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_test",
+    STEMFORGE_AUTH_SITE_URL: "https://stemforge.example",
+  });
+  assert.equal(config.status === "enabled" && config.googleEnabled, true);
 });
 
 test("authentication rejects non-origin site URLs", () => {

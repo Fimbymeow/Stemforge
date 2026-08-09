@@ -7,14 +7,14 @@ test("beta notice stays in flow beside desktop question feedback and mobile dash
   await openQuestion(page, QUESTION_IDS[0]);
   await submitAnswer(page, "4x^5");
   await expectSeparated(
-    page.getByLabel("Private beta notice", { exact: true }),
+    page.getByLabel("Public beta notice", { exact: true }),
     page.getByTestId("question-status"),
   );
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/dashboard");
   await expectSeparated(
-    page.getByLabel("Private beta notice", { exact: true }),
+    page.getByLabel("Public beta notice", { exact: true }),
     page.getByTestId("dashboard-progress-summary"),
   );
   await expectNoHorizontalOverflow(page);

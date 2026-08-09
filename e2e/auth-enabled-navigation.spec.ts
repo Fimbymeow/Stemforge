@@ -31,10 +31,12 @@ test("sign-in and sign-up preserve a safe learning return with accessible mobile
   await page.goto(`/account/sign-in?next=${encodeURIComponent(destination)}`);
 
   await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Continue with Google" })).toBeVisible();
   await expect(page.getByLabel("Email address")).toHaveAttribute("autocomplete", "email");
   await expect(page.getByLabel("Password")).toHaveAttribute("autocomplete", "current-password");
   await expectAccountActionStyle(page.getByRole("button", { name: "Sign in" }));
-  await expect(page.locator('input[name="next"]')).toHaveValue(destination);
+  const emailSignInForm = page.locator("form").filter({ has: page.getByRole("button", { name: "Sign in", exact: true }) });
+  await expect(emailSignInForm.locator('input[name="next"]')).toHaveValue(destination);
   await expect(page.getByRole("link", { name: "Continue where you left off" })).toHaveAttribute("href", destination);
   await expect(page.getByRole("link", { name: "Create an account" })).toHaveAttribute("href", `/account/sign-up?next=${encodeURIComponent(destination)}`);
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
@@ -42,8 +44,12 @@ test("sign-in and sign-up preserve a safe learning return with accessible mobile
   await page.getByRole("link", { name: "Create an account" }).click();
   await expect(page.getByRole("heading", { name: "Create an account" })).toBeVisible();
   await expect(page.getByText("not stored in STEM Forge learning data")).toBeVisible();
+  const accountCard = page.getByRole("article");
+  await expect(accountCard.getByRole("link", { name: "Terms" })).toHaveAttribute("href", "/terms");
+  await expect(accountCard.getByRole("link", { name: "Privacy Notice" })).toHaveAttribute("href", "/privacy");
   await expectAccountActionStyle(page.getByRole("button", { name: "Create account" }));
-  await expect(page.locator('input[name="next"]')).toHaveValue(destination);
+  const emailSignUpForm = page.locator("form").filter({ has: page.getByRole("button", { name: "Create account", exact: true }) });
+  await expect(emailSignUpForm.locator('input[name="next"]')).toHaveValue(destination);
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
 
   await page.goto(`/account/sign-in?result=invalid_credentials&next=${encodeURIComponent(destination)}`);
@@ -53,6 +59,18 @@ test("sign-in and sign-up preserve a safe learning return with accessible mobile
 
   await page.goto("/account/forgot-password");
   await expectAccountActionStyle(page.getByRole("button", { name: "Send recovery link" }));
+  expect(seriousBrowserErrors).toEqual([]);
+});
+
+test("OAuth cancellation is calm, sanitized and preserves only a safe return", async ({ page, seriousBrowserErrors }) => {
+  const destination = `/question/${QUESTION_IDS[0]}`;
+  await page.goto(`/auth/callback?error=access_denied&error_description=${encodeURIComponent("raw provider detail")}&next=${encodeURIComponent(destination)}`);
+  await expect(page).toHaveURL(new RegExp(`/account/sign-in\\?result=oauth_cancelled&next=`));
+  await expect(page.locator("#account-result")).toHaveText("Google sign-in was cancelled. You can try again or use email and password.");
+  await expect(page.getByText("raw provider detail")).toHaveCount(0);
+
+  await page.goto("/auth/callback?error=access_denied&next=%2F%2Fevil.example");
+  await expect(page).toHaveURL(/\/account\/sign-in\?result=oauth_cancelled$/);
   expect(seriousBrowserErrors).toEqual([]);
 });
 

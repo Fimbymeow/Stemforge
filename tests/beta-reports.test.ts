@@ -87,7 +87,7 @@ test("beta report status transitions are deterministic and conservative", () => 
 
 function diagnostic(overrides: Partial<ReportDiagnosticContext> = {}): ReportDiagnosticContext {
   return {
-    appVersion: "private-beta",
+    appVersion: "public-beta",
     buildCommit: null,
     environmentLabel: "development",
     route: "/dashboard",

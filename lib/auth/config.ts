@@ -1,7 +1,7 @@
 export type AuthFeatureConfiguration =
   | { status: "disabled" }
   | { status: "misconfigured"; missing: string[] }
-  | { status: "enabled"; supabaseUrl: string; publishableKey: string; siteUrl: string };
+  | { status: "enabled"; supabaseUrl: string; publishableKey: string; siteUrl: string; googleEnabled: boolean };
 
 type Environment = Record<string, string | undefined>;
 
@@ -30,6 +30,7 @@ export function getAuthFeatureConfiguration(env: Environment = process.env): Aut
       supabaseUrl: supabaseUrl.origin,
       publishableKey: required.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
       siteUrl: siteUrl.origin,
+      googleEnabled: env.STEMFORGE_GOOGLE_AUTH_ENABLED === "true",
     };
   } catch {
     return { status: "misconfigured", missing: ["valid authentication URLs"] };

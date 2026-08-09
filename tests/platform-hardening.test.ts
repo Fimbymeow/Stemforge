@@ -48,6 +48,8 @@ test("deployment checks fail closed without leaking configured values", () => {
     NEXT_PUBLIC_SUPABASE_URL: "https://project.supabase.co",
     NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_test",
     STEMFORGE_AUTH_SITE_URL: "https://stemforge.example",
+    STEMFORGE_GOOGLE_AUTH_ENABLED: "true",
+    STEMFORGE_AUTH_ALLOWED_REDIRECT_URLS: "https://stemforge.example/auth/callback",
   }, true);
   assert.equal(deploymentIsReady(ready), true);
 });
