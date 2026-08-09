@@ -44,7 +44,7 @@
         "test:internal-operations": "tsx --test tests/internal-beta-operations.test.ts",
         "test:dashboard": "tsx --test tests/dashboard-derivations.test.ts",
         "test:activity": "tsx --test tests/activity-derivation.test.ts",
-        "test:flashcards": "tsx --test tests/flashcard-foundation.test.ts",
+        "test:flashcards": "tsx --test tests/flashcard-foundation.test.ts tests/flashcard-experience.test.ts",
         "test:next-action": "tsx --test tests/next-action.test.ts",
         "test:question-interaction": "tsx --test tests/question-interaction.test.ts tests/rich-math-normalization.test.ts tests/math-input-capabilities.test.ts",
         "test:review-reason": "tsx --test tests/review-reason.test.ts",

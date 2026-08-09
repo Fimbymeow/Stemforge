@@ -17,19 +17,24 @@ export function SubjectResourceLinks({
   hrefs,
   current,
   variant = "navigation",
+  available,
 }: {
   family: SubjectFamily;
   hrefs: Record<StudentResourceCapability, string>;
   current?: StudentResourceCapability;
   variant?: "navigation" | "tiles";
+  available?: readonly StudentResourceCapability[];
 }) {
-  const capabilities = getStudentResourceCapabilities(family);
+  const familyCapabilities = getStudentResourceCapabilities(family);
+  const capabilities = available
+    ? familyCapabilities.filter((capability) => available.includes(capability))
+    : familyCapabilities;
 
   return (
     <nav
       aria-label="Learning resources"
       data-subject-family={family}
-      className={`grid gap-2 ${capabilities.length === 3 ? "grid-cols-3" : "grid-cols-2"} max-sm:grid-cols-1`}
+      className={`grid gap-2 ${capabilities.length === 3 ? "grid-cols-3" : capabilities.length === 2 ? "grid-cols-2" : "grid-cols-1"} max-sm:grid-cols-1`}
     >
       {capabilities.map((capability) => {
         const item = resourcePresentation[capability];
@@ -52,4 +57,3 @@ export function SubjectResourceLinks({
     </nav>
   );
 }
-

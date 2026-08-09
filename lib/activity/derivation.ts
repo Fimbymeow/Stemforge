@@ -4,6 +4,8 @@ import type { ProgressEvidence, QuestionAttempt, QuestionOutcome, QuestionSuppor
 
 export const ACTIVITY_RANGE_DAYS = 84;
 export const ACTIVITY_DISPLAY_CAP = 4;
+/** Recall work is meaningful but deliberately lighter than the weakest independent question outcome. */
+export const FLASHCARD_ACTIVITY_WEIGHTS = { forgot: 0.1, remembered: 0.25 } as const;
 
 export type ActivityIntensityLevel = 0 | 1 | 2 | 3 | 4;
 export type ActivityIntensityLabel = "No activity" | "Light" | "Moderate" | "Strong" | "Very strong";
@@ -21,6 +23,7 @@ export type ActivityDay = {
   independentlyCompletedQuestionCount: number;
   milestoneCount: number;
   independentReviewSuccessCount: number;
+  distinctFlashcardsReviewed: number;
   detailHeading: string;
   detailCounts: string;
   additionalFact: string | null;
@@ -44,6 +47,7 @@ export type ActivityHistory = {
   totalIndependentCompletions: number;
   totalMilestones: number;
   totalIndependentReviewSuccesses: number;
+  totalDistinctFlashcardsReviewed: number;
   hasActivity: boolean;
   summaryText: string;
 };
@@ -53,6 +57,7 @@ type DayAccumulator = {
   supportEvents: Map<string, QuestionSupportEvent[]>;
   milestoneIds: Set<string>;
   independentReviewIds: Set<string>;
+  flashcards: Map<string, "forgot" | "remembered">;
 };
 
 export function deriveActivityHistory(
@@ -96,6 +101,13 @@ export function deriveActivityHistory(
     if (event.outcome !== "independent_success" || !withinRange(event.occurredAt, start, end)) continue;
     accumulators.get(utcDayKey(event.occurredAt))?.independentReviewIds.add(event.eventId);
   }
+  for (const event of evidence.flashcardReviews) {
+    if (!withinRange(event.occurredAt, start, end)) continue;
+    const day = accumulators.get(utcDayKey(event.occurredAt));
+    if (!day) continue;
+    const key = `${event.cardId}:${event.cardVersion}`;
+    if (event.outcome === "remembered" || !day.flashcards.has(key)) day.flashcards.set(key, event.outcome);
+  }
 
   const attemptOutcomes = deriveAttemptOutcomes(evidence.attempts);
   const days = [...accumulators.entries()].map(([dayKey, accumulator], index) =>
@@ -120,6 +132,7 @@ export function deriveActivityHistory(
     totalIndependentCompletions: sum(days, "independentlyCompletedQuestionCount"),
     totalMilestones: sum(days, "milestoneCount"),
     totalIndependentReviewSuccesses: sum(days, "independentReviewSuccessCount"),
+    totalDistinctFlashcardsReviewed: sum(days, "distinctFlashcardsReviewed"),
     hasActivity: activeDayCount > 0,
     summaryText: `Activity over the last ${rangeDays / 7} weeks: ${activeDayCount} active day${activeDayCount === 1 ? "" : "s"} out of ${rangeDays}.`,
   };
@@ -164,15 +177,21 @@ function buildDay(dayKey: string, accumulator: DayAccumulator, attemptOutcomes: 
   }
   const milestoneCount = accumulator.milestoneIds.size;
   const independentReviewSuccessCount = accumulator.independentReviewIds.size;
-  const rawScore = roundScore(questionScore + milestoneCount * 0.5 + independentReviewSuccessCount * 0.5);
+  const flashcardScore = [...accumulator.flashcards.values()].reduce((total, outcome) => total + FLASHCARD_ACTIVITY_WEIGHTS[outcome], 0);
+  const distinctFlashcardsReviewed = accumulator.flashcards.size;
+  const rawScore = roundScore(questionScore + milestoneCount * 0.5 + independentReviewSuccessCount * 0.5 + flashcardScore);
   const intensity = activityIntensity(rawScore);
   const date = `${dayKey}T00:00:00.000Z`;
   const detailHeading = `${formatFullDate(date)} — ${intensity.level === 0 ? "No activity" : `${intensity.label} activity`}`;
   const distinctQuestionsWorkedOn = accumulator.attempts.size;
-  const detailCounts = `${distinctQuestionsWorkedOn} question${distinctQuestionsWorkedOn === 1 ? "" : "s"} worked on · ${independentlyCompletedQuestionCount} completed independently`;
+  const questionCounts = `${distinctQuestionsWorkedOn} question${distinctQuestionsWorkedOn === 1 ? "" : "s"} worked on · ${independentlyCompletedQuestionCount} completed independently`;
+  const detailCounts = distinctFlashcardsReviewed > 0
+    ? `${questionCounts} · ${distinctFlashcardsReviewed} flashcard${distinctFlashcardsReviewed === 1 ? "" : "s"} reviewed`
+    : questionCounts;
   const additionalFact = independentReviewSuccessCount > 0
     ? `Review completed${independentReviewSuccessCount > 1 ? ` (${independentReviewSuccessCount})` : ""}`
-    : milestoneCount > 0 ? `Milestone completed${milestoneCount > 1 ? ` (${milestoneCount})` : ""}` : null;
+    : milestoneCount > 0 ? `Milestone completed${milestoneCount > 1 ? ` (${milestoneCount})` : ""}`
+      : distinctFlashcardsReviewed > 0 ? `Flashcards reviewed${distinctFlashcardsReviewed > 1 ? ` (${distinctFlashcardsReviewed})` : ""}` : null;
   const accessibleText = [detailHeading, detailCounts, additionalFact].filter(Boolean).join(". ");
   return {
     dayKey,
@@ -187,6 +206,7 @@ function buildDay(dayKey: string, accumulator: DayAccumulator, attemptOutcomes: 
     independentlyCompletedQuestionCount,
     milestoneCount,
     independentReviewSuccessCount,
+    distinctFlashcardsReviewed,
     detailHeading,
     detailCounts,
     additionalFact,
@@ -195,7 +215,7 @@ function buildDay(dayKey: string, accumulator: DayAccumulator, attemptOutcomes: 
 }
 
 function emptyAccumulator(): DayAccumulator {
-  return { attempts: new Map(), supportEvents: new Map(), milestoneIds: new Set(), independentReviewIds: new Set() };
+  return { attempts: new Map(), supportEvents: new Map(), milestoneIds: new Set(), independentReviewIds: new Set(), flashcards: new Map() };
 }
 function questionVersionKey(questionId: string, version: VersionEvidence) {
   return `${questionId}:${version.kind === "known" ? version.questionVersion : "unknown"}`;
@@ -232,7 +252,7 @@ function isIndependentOutcome(outcome: QuestionOutcome) {
   return outcome === "independently_correct_first_attempt" || outcome === "independently_correct_after_error";
 }
 function roundScore(value: number) { return Math.round(value * 100) / 100; }
-function sum(days: ActivityDay[], key: "distinctQuestionsWorkedOn" | "independentlyCompletedQuestionCount" | "milestoneCount" | "independentReviewSuccessCount") {
+function sum(days: ActivityDay[], key: "distinctQuestionsWorkedOn" | "independentlyCompletedQuestionCount" | "milestoneCount" | "independentReviewSuccessCount" | "distinctFlashcardsReviewed") {
   return days.reduce((total, day) => total + day[key], 0);
 }
 function formatFullDate(iso: string) {

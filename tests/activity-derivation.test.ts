@@ -3,6 +3,7 @@ import test from "node:test";
 import { activityIntensity, deriveActivityHistory, deriveWeeklyActivity } from "../lib/activity/derivation";
 import type { AchievementSnapshot, ProgressEvidence, QuestionAttempt, QuestionSupportEvent } from "../lib/progress/types";
 import type { ReviewEvent, ReviewOutcome } from "../lib/review/types";
+import type { FlashcardReviewEvent } from "../lib/flashcards/types";
 
 const NOW = new Date("2026-09-12T12:00:00.000Z");
 
@@ -72,6 +73,32 @@ test("only distinct independent Review successes add a 0.5 bonus", () => {
   const day = currentDay(deriveActivityHistory(evidence, NOW));
   assert.equal(day.rawScore, 0.5);
   assert.equal(day.independentReviewSuccessCount, 1);
+});
+
+test("Flashcards use conservative best-outcome-per-card/version daily credit", () => {
+  const evidence = emptyEvidence();
+  evidence.flashcardReviews.push(
+    flashcard({ eventId: "forgot_1", outcome: "forgot" }),
+    flashcard({ eventId: "forgot_repeat", sequence: 2, outcome: "forgot" }),
+    flashcard({ eventId: "remembered_best", sequence: 3, outcome: "remembered" }),
+  );
+  const day = currentDay(deriveActivityHistory(evidence, NOW));
+  assert.equal(day.rawScore, 0.25);
+  assert.equal(day.distinctFlashcardsReviewed, 1);
+  assert.equal(day.intensityLabel, "Light");
+});
+
+test("different Flashcards accumulate while the unchanged daily display cap still applies", () => {
+  const evidence = emptyEvidence();
+  evidence.flashcardReviews.push(
+    flashcard({ eventId: "card_1" }),
+    flashcard({ eventId: "card_2", cardId: "card-2", sequence: 2 }),
+  );
+  evidence.attempts.push(...Array.from({ length: 5 }, (_, index) => attempt({ questionId: `cap-${index}`, eventId: `cap-${index}`, sequence: index + 3, isCorrect: true })));
+  const day = currentDay(deriveActivityHistory(evidence, NOW));
+  assert.equal(day.rawScore, 5.5);
+  assert.equal(day.displayScore, 4);
+  assert.equal(day.distinctFlashcardsReviewed, 2);
 });
 
 test("support, guided assessment and other non-scored events create no activity alone", () => {
@@ -196,4 +223,7 @@ function achievement(overrides: Partial<AchievementSnapshot> = {}): AchievementS
 }
 function review(overrides: Partial<ReviewEvent> & { outcome?: ReviewOutcome } = {}): ReviewEvent {
   return { eventId: "review_1", source: { sourceType: "practice_session", sourceId: "session_1" }, target: { targetType: "skill", targetId: "path" }, targetVersion: { versionType: "skill_path", version: 1 }, outcome: "independent_success", occurredAt: NOW.toISOString(), sequence: 3, priorEventId: null, schedulerVersion: 1, stageAfter: 1, evidenceRefs: [], questionIds: ["q1"], ...overrides };
+}
+function flashcard(overrides: Partial<FlashcardReviewEvent> = {}): FlashcardReviewEvent {
+  return { eventId: "flashcard_1", cardId: "card-1", cardVersion: 1, outcome: "remembered", outcomeSource: "self_rated", occurredAt: NOW.toISOString(), sequence: 1, schedulerVersion: 1, ...overrides };
 }

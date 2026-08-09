@@ -14,7 +14,10 @@ export type VocabularyValidationResult =
   | { status: "valid"; vocabulary: ClosedVocabulary }
   | { status: "invalid"; reason: "empty_vocabulary" | "too_many_entries" | "entry_too_long" | "empty_entry" | "ambiguous_duplicate" };
 
-export function markClosedVocabularyTextAnswer(contract: ClosedVocabularyTextAnswerMarkingContract, input: string): MarkingResult {
+export function markClosedVocabularyTextAnswer(
+  contract: Pick<ClosedVocabularyTextAnswerMarkingContract, "strategy" | "strategyVersion" | "target" | "acceptedAnswers">,
+  input: string,
+): MarkingResult {
   const base = { strategy: contract.strategy, strategyVersion: contract.strategyVersion };
   if (!input || input.length > CLOSED_VOCABULARY_INPUT_MAX_LENGTH) {
     return { ...base, outcomeKind: "malformed", isCorrect: null, normalizedStudentAnswer: input, outcomeReason: "malformed_closed_vocabulary_text" };
