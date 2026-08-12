@@ -8,7 +8,7 @@ export function AboutBand() {
         Practise the skills that matter.
       </h2>
       <p className="m-0 text-[22px] leading-[1.45] text-[#d7d1c4]">
-        STEM Forge is built around Qualifications Scotland courses, giving students a focused place to
+        Orthic is built around Qualifications Scotland courses, giving students a focused place to
         navigate topics, complete questions, view solutions and track progress.
       </p>
     </section>

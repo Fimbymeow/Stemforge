@@ -13,7 +13,7 @@ export function buildCurrentBrowserExport(storage: Storage, generatedAt = new Da
     schemaVersion: 1,
     generatedAt,
     scope: "current_browser_only",
-    scopeDescription: "This file contains only progress and account-related information stored by STEM Forge in this browser.",
+    scopeDescription: "This file contains only progress and account-related information stored by Orthic in this browser.",
     progress: progress.payload,
     provenance: provenance.metadata,
     importMetadata: readProgressImportMetadata(storage.getItem(PROGRESS_IMPORT_METADATA_KEY)),
@@ -27,7 +27,7 @@ export function downloadCurrentBrowserExport(storage: Storage, now = new Date())
   const url = URL.createObjectURL(new Blob([contents], { type: "application/json;charset=utf-8" }));
   const anchor = document.createElement("a");
   anchor.href = url;
-  anchor.download = `stem-forge-browser-data-${now.toISOString().slice(0, 10)}.json`;
+  anchor.download = `orthic-browser-data-${now.toISOString().slice(0, 10)}.json`;
   anchor.click();
   URL.revokeObjectURL(url);
 }

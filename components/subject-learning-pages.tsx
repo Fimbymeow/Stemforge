@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { ArrowRight, BookOpen, CheckCircle2, ClipboardList, GraduationCap, Layers3, Lock, PenLine, type LucideIcon } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { AppTopbar } from "@/components/layout/app-topbar";
@@ -218,7 +218,7 @@ export function SpecAreaLearningPathPage({
           <Card className="bg-paper p-4">
             <h2 className="mb-4 text-xl font-extrabold">Why this order?</h2>
             <p className="leading-relaxed text-muted">
-              STEM Forge keeps each topic structured: learn the rule, apply it to standard problems, then practise exam-style questions.
+              Orthic keeps each topic structured: learn the rule, apply it to standard problems, then practise exam-style questions.
             </p>
           </Card>
         </aside>

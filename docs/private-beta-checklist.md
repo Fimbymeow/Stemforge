@@ -1,4 +1,4 @@
-# STEM Forge Private-Beta Checklist
+# Orthic Private-Beta Checklist
 
 Use one copy per test session. The facilitator should supply the public beta URL and `private-beta-feedback-template.md`; testers need no repository access.
 
@@ -57,7 +57,7 @@ Result: ______  Notes: ________________________________________________
 
 ## First 30 seconds and navigation
 
-- [ ] The homepage identifies STEM Forge as structured Scottish SQA STEM learning.
+- [ ] The homepage identifies Orthic as structured Scottish SQA STEM learning.
 - [ ] It says Higher Maths Basic differentiation is available in the private beta.
 - [ ] Other subjects/paths do not appear available.
 - [ ] The original SQA-style/non-affiliation statement is visible.

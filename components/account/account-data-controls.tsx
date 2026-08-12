@@ -34,7 +34,7 @@ export function AccountDataControls() {
         setMessage(`${removed} item${removed === 1 ? " was" : "s were"} removed from this browser. Progress that might belong to another account, or whose origin isn't known, was left alone to avoid deleting anything by mistake.`);
       } else {
         await sync.clearAllBrowserProgress();
-        setMessage("All STEM Forge progress and account information was cleared from this browser. Your account's progress, already kept in sync, was not deleted.");
+        setMessage("All Orthic progress and account information was cleared from this browser. Your account's progress, already kept in sync, was not deleted.");
       }
       setConfirmation(null);
     } catch {
@@ -62,7 +62,7 @@ export function AccountDataControls() {
       <div className="mt-4 grid gap-2">
         <button type="button" className={secondaryButton} onClick={() => setConfirmation("association")}>{"Remove this account's sync information from this browser"}</button>
         <button type="button" className={dangerButton} onClick={() => setConfirmation("account_progress")}>{"Remove this account's progress from this browser"}</button>
-        <button type="button" className={dangerButton} onClick={() => setConfirmation("all_progress")}>Clear all STEM Forge progress from this browser</button>
+        <button type="button" className={dangerButton} onClick={() => setConfirmation("all_progress")}>Clear all Orthic progress from this browser</button>
       </div>
 
       {confirmation ? (
@@ -77,7 +77,7 @@ export function AccountDataControls() {
       ) : null}
       {message ? <p role="status" className="mb-0 mt-4 rounded-lg border border-line bg-paper p-3 text-sm leading-relaxed">{message}</p> : null}
 
-      <p className="mb-0 mt-4 text-xs leading-relaxed text-muted">Removing browser data does not remove account data stored by STEM Forge or progress on other devices.</p>
+      <p className="mb-0 mt-4 text-xs leading-relaxed text-muted">Removing browser data does not remove account data stored by Orthic or progress on other devices.</p>
     </section>
   );
 }
@@ -89,7 +89,7 @@ function Metric({ label, value }: { label: string; value: number }) {
 function confirmationCopy(action: Exclude<Confirmation, null>) {
   if (action === "association") return "This turns off sync for this account on this browser. Your progress stays on this browser, and nothing is deleted from your account.";
   if (action === "account_progress") return "This removes progress on this browser that belongs to this account. Progress that might belong to someone else, or whose origin isn't known, is left alone. It does not delete progress stored in your account or on other devices.";
-  return "This clears all STEM Forge progress and account information from this browser, including anything already added to or kept in sync with your account. Your account's own progress is not deleted.";
+  return "This clears all Orthic progress and account information from this browser, including anything already added to or kept in sync with your account. Your account's own progress is not deleted.";
 }
 
 const secondaryButton = "min-h-11 w-full rounded-lg border border-ink bg-white px-4 text-sm font-extrabold text-ink";

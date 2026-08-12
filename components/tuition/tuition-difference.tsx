@@ -21,8 +21,8 @@ const points = [
   },
   {
     icon: TrendingUp,
-    title: "Original STEM Forge practice",
-    copy: "Where useful, sessions can draw on original staged questions developed through STEM Forge, progressing from direct fluency to harder applications.",
+    title: "Original Orthic practice",
+    copy: "Where useful, sessions can draw on original staged questions developed through Orthic, progressing from direct fluency to harder applications.",
   },
 ] as const;
 
@@ -31,7 +31,7 @@ export function TuitionDifference() {
     <section className="bg-forge-soft/40 px-5 py-20">
       <div className="mx-auto w-[min(1000px,100%)]">
         <TuitionReveal className="text-center">
-          <TuitionKicker>The STEM Forge difference</TuitionKicker>
+          <TuitionKicker>The Orthic difference</TuitionKicker>
         </TuitionReveal>
         <TuitionReveal delayMs={60}>
           <h2 className={`${lora.className} mx-auto mb-4 mt-5 max-w-[680px] text-center text-[clamp(28px,3.6vw,40px)] font-bold leading-[1.15]`}>

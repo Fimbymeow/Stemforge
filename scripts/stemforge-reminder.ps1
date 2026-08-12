@@ -1,5 +1,5 @@
 $message = @"
-STEM Forge reminder:
+Orthic reminder:
 
 Product improvement backlog:
 - Add estimated completion times for stages.
@@ -15,4 +15,4 @@ Immediate next build priorities:
 "@
 
 Add-Type -AssemblyName PresentationFramework
-[System.Windows.MessageBox]::Show($message, "STEM Forge priorities", "OK", "Information") | Out-Null
+[System.Windows.MessageBox]::Show($message, "Orthic priorities", "OK", "Information") | Out-Null

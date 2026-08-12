@@ -1,4 +1,4 @@
-# STEM Forge Private-Beta Feedback
+# Orthic Private-Beta Feedback
 
 Copy this template for each session or transfer the same questions into an owner-approved external form later. Avoid collecting unnecessary personal data.
 
@@ -12,7 +12,7 @@ Copy this template for each session or transfer the same questions into an owner
 
 ## Questions
 
-1. What did you think STEM Forge was for within the first 30 seconds?
+1. What did you think Orthic was for within the first 30 seconds?
 
 2. Could you find the first question without help? If not, where did you get stuck?
 
@@ -28,7 +28,7 @@ Copy this template for each session or transfer the same questions into an owner
 
 8. What felt confusing, slow or unnecessary?
 
-9. What would make you return to STEM Forge?
+9. What would make you return to Orthic?
 
 10. Did anything break? Include what you did, what you expected, what happened, and the route/question if known.
 

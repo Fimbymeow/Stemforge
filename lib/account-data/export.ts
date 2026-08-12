@@ -37,7 +37,7 @@ export function buildAccountLearningDataExport(records: AccountExportRecord[], a
 }
 
 export function safeAccountExportFilename(now = new Date()) {
-  return `stem-forge-account-data-${now.toISOString().slice(0, 10)}.json`;
+  return `orthic-account-data-${now.toISOString().slice(0, 10)}.json`;
 }
 
 export class AccountExportBoundsError extends Error {}

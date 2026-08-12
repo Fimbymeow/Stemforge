@@ -10,7 +10,7 @@ const steps = [
 
 export function HowItWorks() {
   return (
-    <SectionShell kicker="How STEM Forge works" title="Learn. Practise. Exam Questions. Master.">
+    <SectionShell kicker="How Orthic works" title="Learn. Practise. Exam Questions. Master.">
       <div className="grid grid-cols-4 gap-6 max-lg:grid-cols-1">
         {steps.map(([step, copy], index) => (
           <Card key={step} className="p-8 text-center">

@@ -5,7 +5,7 @@ import { readConfiguredMigrationStatus } from "@/scripts/database/migration-stat
 async function main() {
   loadEnvConfig(process.cwd());
   const status = await readConfiguredMigrationStatus();
-  console.log(`STEM Forge migration status: expected=${status.expectedCount} applied=${status.appliedCount} pending=${status.pending.length} unexpected=${status.unexpected.length} ssl=${status.ssl ? "enabled" : "not_verified"}.`);
+  console.log(`Orthic migration status: expected=${status.expectedCount} applied=${status.appliedCount} pending=${status.pending.length} unexpected=${status.unexpected.length} ssl=${status.ssl ? "enabled" : "not_verified"}.`);
   if (!status.current) {
     printMigrationList("Expected migrations", status.expected);
     printMigrationList("Applied migrations", status.applied);

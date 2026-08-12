@@ -41,7 +41,7 @@ export function CourseTracker({ subject }: { subject: Subject }) {
             {area.requirements.map((requirement) => (
               <section key={requirement.areaId} aria-labelledby={`tracker-topic-${requirement.areaId}`} className="min-w-0">
                 <h4 id={`tracker-topic-${requirement.areaId}`} className="text-base font-extrabold text-ink">{requirement.title}</h4>
-                <ul className="mt-3 divide-y divide-line border-y border-line" aria-label={`${requirement.title} STEM Forge skills`}>
+                <ul className="mt-3 divide-y divide-line border-y border-line" aria-label={`${requirement.title} Orthic skills`}>
                   {requirement.skills.map((skill) => <TrackerSkillRow key={skill.skillPathId} skill={skill} />)}
                 </ul>
               </section>

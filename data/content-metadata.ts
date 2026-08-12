@@ -1,6 +1,6 @@
 import type { ContentStatus } from "@/data/types";
 
-/** First version represented by the canonical versioned STEM Forge content model. */
+/** First version represented by the canonical versioned Orthic content model. */
 export const INITIAL_QUESTION_VERSION = 1;
 export const INITIAL_STAGE_VERSION = 1;
 export const INITIAL_PATH_VERSION = 1;

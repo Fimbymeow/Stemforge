@@ -21,7 +21,7 @@ test("production guest surface, health, security and internal denial are operati
   expect(landing?.headers()["content-security-policy"]).toContain("frame-ancestors 'none'");
   expect(landing?.headers()["strict-transport-security"]).toContain("max-age=");
   expect(landing?.headers()["x-content-type-options"]).toBe("nosniff");
-  await expect(page.getByRole("heading", { name: "Forge Your Potential.", level: 1 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Learn with Precision.", level: 1 })).toBeVisible();
 
   const health = await page.request.get("/api/health");
   expect(health.status()).toBe(200);
@@ -33,7 +33,7 @@ test("production guest surface, health, security and internal denial are operati
   expect((await readiness.json()).status).toBe(expectReady ? "ready" : "not_ready");
 
   await visit("/dashboard");
-  await expect(page.getByRole("heading", { name: "STEM Forge", level: 1 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Orthic", level: 1 })).toBeVisible();
   await visit("/subjects/higher-maths/calculus/differentiation/basic-differentiation");
   await expect(page.getByRole("heading", { name: "Basic differentiation", level: 1 })).toBeVisible();
   await visit(`/question/${QUESTION_IDS[0]}`);

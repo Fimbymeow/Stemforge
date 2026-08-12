@@ -1,4 +1,4 @@
-# STEM Forge Alpha Facilitator Briefing
+# Orthic Alpha Facilitator Briefing
 
 Programme 6 — Alpha Preparation and Real Learner Validation.
 

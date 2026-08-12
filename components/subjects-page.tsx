@@ -47,7 +47,7 @@ export function SubjectsPage({ mode }: { mode: SubjectsMode }) {
           </section>
         ) : (
           <Card className="p-8">
-            <EmptyState title="No subjects available yet" copy="Published STEM Forge subjects will appear here when course content is ready." />
+            <EmptyState title="No subjects available yet" copy="Published Orthic subjects will appear here when course content is ready." />
           </Card>
         )}
       </div>

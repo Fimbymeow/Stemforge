@@ -366,7 +366,7 @@ function WhyPathwayCard() {
         })}
       </div>
       <p className="leading-relaxed text-muted">
-        STEM Forge moves from Foundations to Applications and then Past Paper-style Questions, so students build confidence
+        Orthic moves from Foundations to Applications and then Past Paper-style Questions, so students build confidence
         before taking on exam-style work.
       </p>
     </Card>

@@ -123,7 +123,7 @@ export function renderPreview(payload: PreviewDecisionPayload) {
     collisions: payload.collisionDiffs.length,
   };
   return [
-    "# STEM Forge Content Import Preview",
+    "# Orthic Content Import Preview",
     "",
     `Preview hash: ${previewHash(payload)}`,
     `Source: ${payload.sourcePath}`,

@@ -43,7 +43,7 @@ test("practice summary retains the app shell and exact-session retry priority", 
   await expect(page.getByRole("heading", { name: "Practice summary" })).toBeVisible();
   await expect(page.locator("main")).toHaveCount(1);
   await expect(page.getByRole("navigation", { name: "Main" })).toBeVisible();
-  await expect(page.getByRole("img", { name: "STEM Forge" })).toBeVisible();
+  await expect(page.getByRole("img", { name: "Orthic" })).toBeVisible();
   const retry = page.getByRole("button", { name: "Retry incorrect" });
   await expect(retry).toBeVisible();
   await retry.focus();
@@ -66,7 +66,7 @@ test("focused recovery shell keeps brand, landmark, headings, skip link and mobi
   await page.goto("/missing-p10-route");
   await expect(page.locator("main")).toHaveCount(1);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("This page could not be found.");
-  await expect(page.getByRole("img", { name: "STEM Forge" })).toBeVisible();
+  await expect(page.getByRole("img", { name: "Orthic" })).toBeVisible();
   const skip = page.getByRole("link", { name: "Skip to main content" });
   await skip.focus();
   await expect(skip).toBeFocused();

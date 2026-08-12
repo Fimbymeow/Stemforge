@@ -6,7 +6,7 @@ test("critical guest journey is accessible, persistent, isolated, and console-cl
   const response = await page.goto("/");
   expect(response?.headers()["content-security-policy"]).toContain("frame-ancestors 'none'");
   expect(response?.headers()["x-content-type-options"]).toBe("nosniff");
-  await expect(page.getByRole("heading", { name: "Forge Your Potential.", level: 1 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Learn with Precision.", level: 1 })).toBeVisible();
 
   await expect(page.getByRole("navigation", { name: "Primary" })).toBeVisible();
   await expect(page.getByRole("navigation", { name: "Footer" })).toBeAttached();

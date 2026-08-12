@@ -2,12 +2,12 @@
 
 Guest-only. Requires nothing from the production database — safe to run regardless of the production database's current state. Approximate duration: 25–35 minutes. Hypothesis definitions and evidence-required detail: `STEM_FORGE_ALPHA_READINESS.md` §4. Evidence sheet: `docs/alpha-evidence-capture.md`.
 
-Setup: fresh private/incognito browser window or a clean profile, before the learner sits down. Do not narrate what STEM Forge is beforehand.
+Setup: fresh private/incognito browser window or a clean profile, before the learner sits down. Do not narrate what Orthic is beforehand.
 
 ## A1 — Fresh start
 
-- **Say:** "This is a website called STEM Forge. Take a look and tell me what you think it's for. Talk out loud as you go — there's no wrong answer."
-- **Do not explain:** what STEM Forge is, who it's for, or that it's a maths product.
+- **Say:** "This is a website called Orthic. Take a look and tell me what you think it's for. Talk out loud as you go — there's no wrong answer."
+- **Do not explain:** what Orthic is, who it's for, or that it's a maths product.
 - **Record:** time to first verbal guess; exact words used; whether the beta/scope notice is read or skipped.
 - **Done when:** learner states an interpretation, correct or not, within 30 seconds (H1).
 - **If blocked:** silent past 30 seconds — ask "What's the first thing you notice?"; do not supply the answer.

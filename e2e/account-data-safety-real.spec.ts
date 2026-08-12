@@ -100,7 +100,7 @@ test("shared browser keeps or removes account data deliberately without affectin
     await shared.setViewportSize({ width: 390, height: 844 });
     await openMoreControls(shared);
     await expect(shared.getByTestId("account-data-controls")).toBeVisible();
-    await shared.getByRole("button", { name: "Clear all STEM Forge progress from this browser" }).click();
+    await shared.getByRole("button", { name: "Clear all Orthic progress from this browser" }).click();
     await expect(shared.getByRole("button", { name: "Cancel" }).last()).toBeFocused();
     await shared.getByRole("button", { name: "Confirm removal" }).click();
     await expect(shared.getByRole("status")).toContainText("cleared from this browser");
@@ -147,7 +147,7 @@ test("confirmed remote learning-data erasure exports, deletes and reconciles sta
     const exportDownload = pageA.waitForEvent("download");
     await pageA.getByRole("button", { name: "Download remote account learning data" }).click();
     const downloaded = await exportDownload;
-    expect(downloaded.suggestedFilename()).toMatch(/^stem-forge-account-data-\d{4}-\d{2}-\d{2}\.json$/);
+    expect(downloaded.suggestedFilename()).toMatch(/^orthic-account-data-\d{4}-\d{2}-\d{2}\.json$/);
     const exportPath = await downloaded.path();
     expect(exportPath).toBeTruthy();
     const exported = JSON.parse(await readFile(exportPath!, "utf8"));

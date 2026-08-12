@@ -68,7 +68,7 @@ export function TuitionAbout() {
           </p>
           <p className="mt-4 text-lg leading-[1.6] text-ink">
             Sessions focus on building that understanding from solid foundations, then applying it under exam
-            conditions — the same structured, worked-solution approach behind STEM Forge itself.
+            conditions — the same structured, worked-solution approach behind Orthic itself.
           </p>
         </TuitionReveal>
 
@@ -87,9 +87,9 @@ export function TuitionAbout() {
                 I recently sat the same National 5 and Higher courses my students are working through now, so the
                 material and exam pressure are both still fresh. Sessions are structured around a clear explanation,
                 a worked example, and then guided and independent practice, so a method is genuinely understood
-                before it&apos;s relied on in an exam. I&apos;m also building STEM Forge, a structured Scottish STEM
+                before it&apos;s relied on in an exam. I&apos;m also building Orthic, a structured Scottish STEM
                 learning platform with original practice questions — the same systematic approach carries over into
-                every lesson. This tutoring service is new, so it&apos;s built around the same standards STEM Forge
+                every lesson. This tutoring service is new, so it&apos;s built around the same standards Orthic
                 is held to, not a long track record.
               </p>
             </div>

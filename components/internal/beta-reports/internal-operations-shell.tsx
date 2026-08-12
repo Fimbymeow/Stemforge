@@ -8,7 +8,7 @@ export function InternalOperationsShell({ children }: { children: ReactNode }) {
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6">
           <div>
             <p className="font-mono text-xs font-bold uppercase tracking-wide text-forge">Restricted operations</p>
-            <p className="text-lg font-extrabold">STEM Forge private beta triage</p>
+            <p className="text-lg font-extrabold">Orthic private beta triage</p>
           </div>
           <nav aria-label="Internal operations">
             <Link href="/internal/beta-reports" className="inline-flex min-h-11 items-center rounded-lg border border-line px-4 font-bold">Report queue</Link>

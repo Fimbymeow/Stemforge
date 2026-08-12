@@ -1,10 +1,10 @@
-﻿# STEM Forge
+# Orthic
 
 Platform performance, accessibility, security, reliability, browser support, and deployment checks are documented in [STEM_FORGE_PERFORMANCE_ACCESSIBILITY_SECURITY_RELIABILITY.md](./STEM_FORGE_PERFORMANCE_ACCESSIBILITY_SECURITY_RELIABILITY.md). Run `pnpm run verify:deployment` for a redacted local readiness dry run and `pnpm run test:e2e:hardening` for the Chromium/Firefox/WebKit critical matrix.
 
-Production provider, environment, migration-status, smoke-test, rollback and release procedures are documented in [STEM_FORGE_PRODUCTION_DEPLOYMENT_AND_RELEASE_VERIFICATION.md](./STEM_FORGE_PRODUCTION_DEPLOYMENT_AND_RELEASE_VERIFICATION.md). The stable release target is `https://stemforge-6an8.vercel.app`; production readiness (application, configuration, authentication, database, migration and reporting) is confirmed live via `/api/health/ready`, and the non-destructive production smoke suite passes. A separate credentialed authenticated smoke pass remains outstanding — see [STEM_FORGE_ALPHA_READINESS.md](./STEM_FORGE_ALPHA_READINESS.md).
+Production provider, environment, migration-status, smoke-test, rollback and release procedures are documented in [STEM_FORGE_PRODUCTION_DEPLOYMENT_AND_RELEASE_VERIFICATION.md](./STEM_FORGE_PRODUCTION_DEPLOYMENT_AND_RELEASE_VERIFICATION.md). The stable release target is `https://stemforge-6an8.vercel.app`; production readiness (application, configuration, authentication, database, migration and reporting) is confirmed live via `/api/health/ready`, and the non-destructive production smoke suite passes. A separate credentialed authenticated smoke pass remains outstanding � see [STEM_FORGE_ALPHA_READINESS.md](./STEM_FORGE_ALPHA_READINESS.md).
 
-STEM Forge is a calm, structured learning platform for Scottish Qualifications Scotland STEM students. It is currently a public beta with a generic multi-path content runtime, optional Supabase accounts, explicitly confirmed browser-progress import, opt-in incremental cross-device evidence synchronization, shared-device-safe account data controls, an evidence-driven learner dashboard, interactive maths graphs/nature tables, and a generic local revision/practice-session engine.
+Orthic is a calm, structured learning platform for Scottish Qualifications Scotland STEM students. It is currently a public beta with a generic multi-path content runtime, optional Supabase accounts, explicitly confirmed browser-progress import, opt-in incremental cross-device evidence synchronization, shared-device-safe account data controls, an evidence-driven learner dashboard, interactive maths graphs/nature tables, and a generic local revision/practice-session engine.
 
 ## Current Beta Status
 
@@ -14,11 +14,11 @@ Higher Maths -> Calculus -> Differentiation -> Basic differentiation
 
 Higher Physics remains visible but locked / coming soon. The current beta is intended for 5-10 early student testers before more content is added.
 
-STEM Forge creates original SQA-style practice materials and is not affiliated with or endorsed by SQA.
+Orthic creates original SQA-style practice materials and is not affiliated with or endorsed by SQA.
 
 ## Product Direction
 
-STEM Forge is not intended to be a random question bank. The product guides students through a structured loop:
+Orthic is not intended to be a random question bank. The product guides students through a structured loop:
 
 Learn -> Practise -> Exam Questions -> Master
 

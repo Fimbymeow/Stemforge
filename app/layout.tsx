@@ -12,8 +12,8 @@ const inter = Inter({
   display: "swap",
 });
 
-const title = "STEM Forge - Structured Qualifications Scotland STEM Learning";
-const description = "A calm, guided learning platform for Qualifications Scotland STEM students. Start with Higher Maths Basic differentiation.";
+const title = "Orthic — Structured STEM learning for Scottish students";
+const description = "Structured STEM learning for Scottish students.";
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
   ?? (process.env.VERCEL_ENV === "production" ? "https://stemforge-6an8.vercel.app" : "http://localhost:3000");
 
@@ -21,25 +21,25 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
     default: title,
-    template: "%s | STEM Forge",
+    template: "%s | Orthic",
   },
   description,
-  applicationName: "STEM Forge",
+  applicationName: "Orthic",
   icons: {
-    icon: "/assets/stemforge-logo-header.png",
-    apple: "/assets/stemforge-logo-header.png",
+    icon: "/assets/orthic-mark.svg",
+    apple: "/assets/orthic-mark.svg",
   },
   openGraph: {
     title,
     description,
-    siteName: "STEM Forge",
+    siteName: "Orthic",
     type: "website",
     images: [
       {
-        url: "/assets/stemforge-logo-header.png",
-        width: 300,
-        height: 91,
-        alt: "STEM Forge",
+        url: "/assets/orthic-wordmark.svg",
+        width: 260,
+        height: 64,
+        alt: "Orthic",
       },
     ],
   },

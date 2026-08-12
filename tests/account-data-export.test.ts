@@ -24,7 +24,7 @@ test("remote account export is bounded, counted and digest-verifiable", () => {
   assert.equal(exported.integrity.algorithm, "SHA-256");
   assert.match(exported.integrity.canonicalDataDigest, /^[a-f0-9]{64}$/);
   assert.equal(buildAccountLearningDataExport(records, "2026-07-17T09:00:00.000Z", "2026-07-17T11:00:00.000Z").integrity.canonicalDataDigest, exported.integrity.canonicalDataDigest);
-  assert.equal(safeAccountExportFilename(new Date("2026-07-17T12:34:56.000Z")), "stem-forge-account-data-2026-07-17.json");
+  assert.equal(safeAccountExportFilename(new Date("2026-07-17T12:34:56.000Z")), "orthic-account-data-2026-07-17.json");
   assert.throws(() => buildAccountLearningDataExport(Array.from({ length: MAX_ACCOUNT_EXPORT_RECORDS + 1 }, () => records[0]), "2026-07-17T09:00:00.000Z"), AccountExportBoundsError);
 });
 

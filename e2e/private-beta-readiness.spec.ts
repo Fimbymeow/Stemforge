@@ -2,7 +2,7 @@ import { test, expect } from "./fixtures/test";
 
 test("homepage states the bounded private-beta promise and all primary actions are real", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "Forge Your Potential.", level: 1 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Learn with Precision.", level: 1 })).toBeVisible();
   await expect(page.getByText("Start with Higher Maths Basic differentiation", { exact: false })).toBeVisible();
   await expect(page.getByText("No account needed. Progress is saved locally on this browser.")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Exam Questions", level: 3 })).toBeVisible();

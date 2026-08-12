@@ -33,6 +33,6 @@ test("auth-disabled account page exports current browser data without account co
   const download = page.waitForEvent("download");
   await page.getByRole("button", { name: "Download this browser's data" }).click();
   const file = await download;
-  expect(file.suggestedFilename()).toMatch(/^stem-forge-browser-data-\d{4}-\d{2}-\d{2}\.json$/);
+  expect(file.suggestedFilename()).toMatch(/^orthic-browser-data-\d{4}-\d{2}-\d{2}\.json$/);
   expect(seriousBrowserErrors).toEqual([]);
 });

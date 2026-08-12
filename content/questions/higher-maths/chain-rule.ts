@@ -115,7 +115,7 @@ export const higherMathsChainRuleQuestions: Question[] = [
     "hint": "Look at the expression inside the brackets.",
     "commonMistake": "Choosing the whole expression $(4x+3)^6$ instead of just the expression inside the brackets.",
     "calculatorAllowed": false,
-    "source": "Original STEM Forge QS-style content",
+    "source": "Original Orthic QS-style content",
     "status": "ready",
     "displayOrder": 1
   },
@@ -190,7 +190,7 @@ export const higherMathsChainRuleQuestions: Question[] = [
     "hint": "The inside function is the full expression being raised to the power 4.",
     "commonMistake": "Choosing only $2x^2$ and leaving out the $-5$.",
     "calculatorAllowed": false,
-    "source": "Original STEM Forge QS-style content",
+    "source": "Original Orthic QS-style content",
     "status": "ready",
     "displayOrder": 2
   },
@@ -259,7 +259,7 @@ export const higherMathsChainRuleQuestions: Question[] = [
     "hint": "Bring down the outside power, then multiply by the derivative of $3x+2$.",
     "commonMistake": "Writing $5(3x+2)^4$ and forgetting to multiply by 3.",
     "calculatorAllowed": false,
-    "source": "Original STEM Forge QS-style content",
+    "source": "Original Orthic QS-style content",
     "status": "ready",
     "displayOrder": 3
   },
@@ -328,7 +328,7 @@ export const higherMathsChainRuleQuestions: Question[] = [
     "hint": "After applying the power rule to the bracket, multiply by the derivative of $5x-4$.",
     "commonMistake": "Forgetting that $\\frac{d}{dx}(5x-4)=5$.",
     "calculatorAllowed": false,
-    "source": "Original STEM Forge QS-style content",
+    "source": "Original Orthic QS-style content",
     "status": "ready",
     "displayOrder": 4
   },
@@ -397,7 +397,7 @@ export const higherMathsChainRuleQuestions: Question[] = [
     "hint": "Keep the 2 at the front, then apply the chain rule to $(4x+1)^6$.",
     "commonMistake": "Forgetting either the coefficient 2 or the derivative of $4x+1$.",
     "calculatorAllowed": false,
-    "source": "Original STEM Forge QS-style content",
+    "source": "Original Orthic QS-style content",
     "status": "ready",
     "displayOrder": 5
   },
@@ -466,7 +466,7 @@ export const higherMathsChainRuleQuestions: Question[] = [
     "hint": "The derivative of the bracket $x^2+4$ is $2x$.",
     "commonMistake": "Treating $x^2+4$ like its derivative is 1.",
     "calculatorAllowed": false,
-    "source": "Original STEM Forge QS-style content",
+    "source": "Original Orthic QS-style content",
     "status": "ready",
     "displayOrder": 6
   },
@@ -535,7 +535,7 @@ export const higherMathsChainRuleQuestions: Question[] = [
     "hint": "Differentiate the bracket $3x^2-2$ after applying the outside power.",
     "commonMistake": "Differentiating $3x^2$ as $3x$ instead of $6x$.",
     "calculatorAllowed": false,
-    "source": "Original STEM Forge QS-style content",
+    "source": "Original Orthic QS-style content",
     "status": "ready",
     "displayOrder": 7
   },
@@ -608,7 +608,7 @@ export const higherMathsChainRuleQuestions: Question[] = [
     "hint": "Use the power $\\frac{1}{2}$, then multiply by the derivative of $2x+7$.",
     "commonMistake": "Forgetting to multiply by 2, or not reducing the power from $\\frac{1}{2}$ to $-\\frac{1}{2}$.",
     "calculatorAllowed": false,
-    "source": "Original STEM Forge QS-style content",
+    "source": "Original Orthic QS-style content",
     "status": "ready",
     "displayOrder": 8
   },
@@ -685,7 +685,7 @@ export const higherMathsChainRuleQuestions: Question[] = [
     "hint": "Bring down the power $-3$, reduce the power by 1, then multiply by $2x$.",
     "commonMistake": "Changing the power from $-3$ to $-2$. Differentiating reduces the power by 1, so it becomes $-4$.",
     "calculatorAllowed": false,
-    "source": "Original STEM Forge QS-style content",
+    "source": "Original Orthic QS-style content",
     "status": "ready",
     "displayOrder": 9
   },
@@ -764,7 +764,7 @@ export const higherMathsChainRuleQuestions: Question[] = [
     "hint": "Look for a function inside another function, usually brackets raised to a power.",
     "commonMistake": "Thinking every power of $x$, such as $x^5$, needs the chain rule.",
     "calculatorAllowed": false,
-    "source": "Original STEM Forge QS-style content",
+    "source": "Original Orthic QS-style content",
     "status": "ready",
     "displayOrder": 10
   },
@@ -827,7 +827,7 @@ export const higherMathsChainRuleQuestions: Question[] = [
     "hint": "Differentiate first, then substitute $x=1$ into $\\frac{dy}{dx}$.",
     "commonMistake": "Substituting $x=1$ into the original function instead of into the derivative.",
     "calculatorAllowed": false,
-    "source": "Original STEM Forge QS-style content",
+    "source": "Original Orthic QS-style content",
     "status": "ready",
     "displayOrder": 1001
   },
@@ -900,7 +900,7 @@ export const higherMathsChainRuleQuestions: Question[] = [
     "hint": "The derivative of the bracket is $2x+4$, not just $2x$.",
     "commonMistake": "Forgetting to differentiate the $4x$ term inside the bracket.",
     "calculatorAllowed": false,
-    "source": "Original STEM Forge QS-style content",
+    "source": "Original Orthic QS-style content",
     "status": "ready",
     "displayOrder": 1002
   },
@@ -963,7 +963,7 @@ export const higherMathsChainRuleQuestions: Question[] = [
     "hint": "Keep the coefficient 3 at the front, then differentiate the bracket using the chain rule.",
     "commonMistake": "Forgetting the outside coefficient 3, or forgetting that $\\frac{d}{dx}(2x^2-1)=4x$.",
     "calculatorAllowed": false,
-    "source": "Original STEM Forge QS-style content",
+    "source": "Original Orthic QS-style content",
     "status": "ready",
     "displayOrder": 1003
   },
@@ -1028,7 +1028,7 @@ export const higherMathsChainRuleQuestions: Question[] = [
     "hint": "Differentiate first using the negative power, then rewrite the answer as a fraction.",
     "commonMistake": "Leaving the answer as $-12(3x-2)^{-5}$, even though the question asks for positive powers.",
     "calculatorAllowed": false,
-    "source": "Original STEM Forge QS-style content",
+    "source": "Original Orthic QS-style content",
     "status": "ready",
     "displayOrder": 1004
   },
@@ -1091,7 +1091,7 @@ export const higherMathsChainRuleQuestions: Question[] = [
     "hint": "Rewrite the square root as $(5x+4)^{1/2}$.",
     "commonMistake": "Forgetting to multiply by the derivative of $5x+4$, which is 5.",
     "calculatorAllowed": false,
-    "source": "Original STEM Forge QS-style content",
+    "source": "Original Orthic QS-style content",
     "status": "ready",
     "displayOrder": 1005
   },
@@ -1164,7 +1164,7 @@ export const higherMathsChainRuleQuestions: Question[] = [
     "hint": "Use $\\sqrt{7x-3}=(7x-3)^{1/2}$.",
     "commonMistake": "Writing $\\frac{1}{2\\sqrt{7x-3}}$ and forgetting the factor of 7.",
     "calculatorAllowed": false,
-    "source": "Original STEM Forge QS-style content",
+    "source": "Original Orthic QS-style content",
     "status": "ready",
     "displayOrder": 1006
   },
@@ -1237,7 +1237,7 @@ export const higherMathsChainRuleQuestions: Question[] = [
     "hint": "Rewrite the function as $(4x+5)^{-3}$.",
     "commonMistake": "Differentiating the denominator as if it were a separate fraction rule, instead of first rewriting with a negative power.",
     "calculatorAllowed": false,
-    "source": "Original STEM Forge QS-style content",
+    "source": "Original Orthic QS-style content",
     "status": "ready",
     "displayOrder": 1007
   },
@@ -1300,7 +1300,7 @@ export const higherMathsChainRuleQuestions: Question[] = [
     "hint": "Differentiate the bracket $x^2-2x+6$, then substitute $x=2$.",
     "commonMistake": "Calculating the $y$-value at $x=2$ instead of the gradient.",
     "calculatorAllowed": false,
-    "source": "Original STEM Forge QS-style content",
+    "source": "Original Orthic QS-style content",
     "status": "ready",
     "displayOrder": 1008
   },
@@ -1363,7 +1363,7 @@ export const higherMathsChainRuleQuestions: Question[] = [
     "hint": "Find $\\frac{dy}{dx}$, set it equal to 54, then solve for $x$.",
     "commonMistake": "Stopping at $2x+1=3$ without noticing that a square equation also gives $2x+1=-3$. The question asks for the positive value.",
     "calculatorAllowed": false,
-    "source": "Original STEM Forge QS-style content",
+    "source": "Original Orthic QS-style content",
     "status": "ready",
     "displayOrder": 1009
   },
@@ -1432,7 +1432,7 @@ export const higherMathsChainRuleQuestions: Question[] = [
     "hint": "After bringing down the power, multiply by the derivative of $7-2x$.",
     "commonMistake": "Dropping the negative sign from the derivative of $7-2x$.",
     "calculatorAllowed": false,
-    "source": "Original STEM Forge QS-style content",
+    "source": "Original Orthic QS-style content",
     "status": "ready",
     "displayOrder": 2003
   },
@@ -1501,7 +1501,7 @@ export const higherMathsChainRuleQuestions: Question[] = [
     "hint": "The derivative of $5-3x$ is $-3$.",
     "commonMistake": "Writing $15(5-3x)^4$ instead of $-15(5-3x)^4$.",
     "calculatorAllowed": false,
-    "source": "Original STEM Forge QS-style content",
+    "source": "Original Orthic QS-style content",
     "status": "ready",
     "displayOrder": 2004
   },
@@ -1574,7 +1574,7 @@ export const higherMathsChainRuleQuestions: Question[] = [
     "hint": "The derivative of the inside function $x^2+3x+1$ is $2x+3$.",
     "commonMistake": "Only differentiating the outside power and forgetting the derivative of the full inside expression.",
     "calculatorAllowed": false,
-    "source": "Original STEM Forge QS-style content",
+    "source": "Original Orthic QS-style content",
     "status": "ready",
     "displayOrder": 2007
   },
@@ -1643,7 +1643,7 @@ export const higherMathsChainRuleQuestions: Question[] = [
     "hint": "Be careful: the derivative of $6-x^2$ is $-2x$.",
     "commonMistake": "Writing $10x(6-x^2)^4$ and losing the negative sign.",
     "calculatorAllowed": false,
-    "source": "Original STEM Forge QS-style content",
+    "source": "Original Orthic QS-style content",
     "status": "ready",
     "displayOrder": 2008
   },
@@ -1712,7 +1712,7 @@ export const higherMathsChainRuleQuestions: Question[] = [
     "hint": "Keep the multiplier $2$, then multiply by the derivative of $x^2-1$.",
     "commonMistake": "Using the outside power correctly but forgetting to multiply by $2x$.",
     "calculatorAllowed": false,
-    "source": "Original STEM Forge QS-style content",
+    "source": "Original Orthic QS-style content",
     "status": "ready",
     "displayOrder": 2010
   },
@@ -1785,7 +1785,7 @@ export const higherMathsChainRuleQuestions: Question[] = [
     "hint": "Use the Chain rule on $(3x+1)^4$, then differentiate $5x^2$ normally.",
     "commonMistake": "Only differentiating the bracketed term and forgetting the $5x^2$ term.",
     "calculatorAllowed": false,
-    "source": "Original STEM Forge QS-style content",
+    "source": "Original Orthic QS-style content",
     "status": "ready",
     "displayOrder": 2011
   },
@@ -1862,7 +1862,7 @@ export const higherMathsChainRuleQuestions: Question[] = [
     "hint": "Rewrite the square root as a power of $\\frac12$.",
     "commonMistake": "Writing $\\frac12(5x+4)^{-1/2}$ and forgetting to multiply by 5.",
     "calculatorAllowed": false,
-    "source": "Original STEM Forge QS-style content",
+    "source": "Original Orthic QS-style content",
     "status": "ready",
     "displayOrder": 2012
   },
@@ -1939,7 +1939,7 @@ export const higherMathsChainRuleQuestions: Question[] = [
     "hint": "Bring down the power $-2$, then reduce the power by 1.",
     "commonMistake": "Changing the power from $-2$ to $-1$ instead of reducing it to $-3$.",
     "calculatorAllowed": false,
-    "source": "Original STEM Forge QS-style content",
+    "source": "Original Orthic QS-style content",
     "status": "ready",
     "displayOrder": 2014
   },
@@ -2002,7 +2002,7 @@ export const higherMathsChainRuleQuestions: Question[] = [
     "hint": "Differentiate first, then substitute $x=1$ into the derivative.",
     "commonMistake": "Substituting $x=1$ into $y$ instead of into $\\frac{dy}{dx}$.",
     "calculatorAllowed": false,
-    "source": "Original STEM Forge QS-style content",
+    "source": "Original Orthic QS-style content",
     "status": "ready",
     "displayOrder": 2015
   },
@@ -2065,7 +2065,7 @@ export const higherMathsChainRuleQuestions: Question[] = [
     "hint": "Differentiate using the Chain rule, then substitute $x=2$.",
     "commonMistake": "Forgetting the $2x$ from differentiating $x^2+2$.",
     "calculatorAllowed": false,
-    "source": "Original STEM Forge QS-style content",
+    "source": "Original Orthic QS-style content",
     "status": "ready",
     "displayOrder": 2016
   },
@@ -2143,7 +2143,7 @@ export const higherMathsChainRuleQuestions: Question[] = [
     "hint": "Find each derivative, then substitute $x=1$ into both derivatives.",
     "commonMistake": "Comparing the $y$-values of the curves instead of comparing the gradients.",
     "calculatorAllowed": false,
-    "source": "Original STEM Forge QS-style content",
+    "source": "Original Orthic QS-style content",
     "status": "ready",
     "displayOrder": 2017
   },
@@ -2206,7 +2206,7 @@ export const higherMathsChainRuleQuestions: Question[] = [
     "hint": "Find $f'(x)$, then substitute $x=3$.",
     "commonMistake": "Substituting $x=3$ into $f(x)$ instead of into $f'(x)$.",
     "calculatorAllowed": false,
-    "source": "Original STEM Forge QS-style content",
+    "source": "Original Orthic QS-style content",
     "status": "ready",
     "displayOrder": 2018
   },
@@ -2269,7 +2269,7 @@ export const higherMathsChainRuleQuestions: Question[] = [
     "hint": "Differentiate first, then set the derivative equal to 8.",
     "commonMistake": "Setting $f(x)=8$ instead of setting $f'(x)=8$.",
     "calculatorAllowed": false,
-    "source": "Original STEM Forge QS-style content",
+    "source": "Original Orthic QS-style content",
     "status": "ready",
     "displayOrder": 2019
   },
@@ -2332,7 +2332,7 @@ export const higherMathsChainRuleQuestions: Question[] = [
     "hint": "Differentiate first, then check the positive value that makes the derivative equal to 300.",
     "commonMistake": "Trying to solve the full equation by expanding everything. Since the question asks for the positive value, substitution/checking is a clean method here.",
     "calculatorAllowed": false,
-    "source": "Original STEM Forge QS-style content",
+    "source": "Original Orthic QS-style content",
     "status": "ready",
     "displayOrder": 2020
   },
@@ -2395,7 +2395,7 @@ export const higherMathsChainRuleQuestions: Question[] = [
     "hint": "Differentiate using the Chain rule, then substitute $x=1$ and use the given gradient.",
     "commonMistake": "Differentiating $kx+1$ as $x+1$, instead of recognising that its derivative is $k$.",
     "calculatorAllowed": false,
-    "source": "Original STEM Forge QS-style content",
+    "source": "Original Orthic QS-style content",
     "status": "ready",
     "displayOrder": 2021
   }

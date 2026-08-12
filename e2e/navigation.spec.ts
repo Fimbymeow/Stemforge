@@ -3,7 +3,7 @@ import { readStoredProgress } from "./fixtures/progress";
 
 test("fresh student reaches the Basic differentiation path through the app", async ({ page }) => {
   await page.goto("/dashboard");
-  await expect(page.getByRole("heading", { name: "STEM Forge", level: 1 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Orthic", level: 1 })).toBeVisible();
   await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Foundations \u00b7 0 of 3 complete");
 
   await page.getByRole("link", { name: "Subjects" }).click();

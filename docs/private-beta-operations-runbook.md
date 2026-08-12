@@ -1,8 +1,8 @@
-# STEM Forge private beta operations runbook
+# Orthic private beta operations runbook
 
 ## Feedback and support intake
 
-Learners can submit beta reports from the in-app feedback control. Reports are explicit, user-initiated submissions only; STEM Forge does not add passive analytics or background tracking.
+Learners can submit beta reports from the in-app feedback control. Reports are explicit, user-initiated submissions only; Orthic does not add passive analytics or background tracking.
 
 The Sprint 21 reporting migration is applied in the configured development Supabase environment, so server-side report persistence is available there. Apply the repository migration history to each later deployment environment before enabling reporting traffic.
 

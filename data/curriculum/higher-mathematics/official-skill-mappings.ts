@@ -11,7 +11,7 @@ const mapping = (
 });
 
 /**
- * Whole-course bridge between the 49 STEM Forge teaching skills and the official
+ * Whole-course bridge between the 49 Orthic teaching skills and the official
  * Higher Mathematics requirements. Official wording remains in specification-register.ts;
  * this file contains stable identities only.
  */

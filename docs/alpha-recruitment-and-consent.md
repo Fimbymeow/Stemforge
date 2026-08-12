@@ -8,18 +8,18 @@ A current or recent Scottish Higher Maths student (or a student at an equivalent
 
 ## Recruitment message
 
-> "I'm looking for 5–10 Higher Maths students to try an early version of a learning website called STEM Forge, currently focused on differentiation. It takes about three short sessions over roughly a week, is completely optional, and you can stop at any time. No payment or account is required to take part; there's a small optional step where you can try creating an account using a test address we provide. I'll ask you to think out loud while you use it and answer a few questions afterward."
+> "I'm looking for 5–10 Higher Maths students to try an early version of a learning website called Orthic, currently focused on differentiation. It takes about three short sessions over roughly a week, is completely optional, and you can stop at any time. No payment or account is required to take part; there's a small optional step where you can try creating an account using a test address we provide. I'll ask you to think out loud while you use it and answer a few questions afterward."
 
 ## Screening questions
 
 1. Have you started or completed differentiation in your current Higher Maths course? *(exclude "no")*
-2. Have you used STEM Forge before, or do you know anyone who worked on it? *(exclude "yes" — keeps the sample unassisted-first-use)*
+2. Have you used Orthic before, or do you know anyone who worked on it? *(exclude "yes" — keeps the sample unassisted-first-use)*
 3. What device and browser would you normally use for this? *(route into `docs/alpha-device-allocation.md`)*
 4. Would you be comfortable being observed and having notes taken for this? *(a "no" here should end recruitment for this candidate, not proceed with a workaround)*
 
 ## Recruitment exclusions
 
-- Anyone who has already used STEM Forge.
+- Anyone who has already used Orthic.
 - Anyone directly connected to its development.
 - Anyone recruited specifically for being "good with computers" — this would bias the H1/H2/H8 unassisted-comprehension hypotheses toward a false pass.
 

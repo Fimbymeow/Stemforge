@@ -65,7 +65,7 @@ export function AccountLearningData() {
       if (!response.ok) { const body = await response.json().catch(() => null) as { message?: string } | null; throw new Error(body?.message ?? "Export failed."); }
       const blob = await response.blob();
       const disposition = response.headers.get("content-disposition") ?? "";
-      const filename = /filename="([^"]+)"/.exec(disposition)?.[1] ?? "stem-forge-account-data.json";
+      const filename = /filename="([^"]+)"/.exec(disposition)?.[1] ?? "orthic-account-data.json";
       const url = URL.createObjectURL(blob); const anchor = document.createElement("a"); anchor.href = url; anchor.download = filename; anchor.click(); URL.revokeObjectURL(url);
       setPassword(""); setMessage("Your account learning-progress export is ready.");
     } catch (error) { setMessage(error instanceof Error ? error.message : "Export failed."); }
@@ -91,7 +91,7 @@ export function AccountLearningData() {
       <div className="mt-4 grid gap-4">
         <div className="rounded-lg border border-line bg-paper p-4">
           <h3 className="m-0 text-base font-extrabold">Export</h3>
-          <p className="mb-0 mt-2 text-sm">Download a copy of the learning data stored in your STEM Forge account.</p>
+          <p className="mb-0 mt-2 text-sm">Download a copy of the learning data stored in your Orthic account.</p>
           <label className="mt-3 block text-sm font-bold">Current password<input className={inputClass} ref={request?.status === "awaiting_reauthentication" ? passwordRef : undefined} type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} /></label>
           <button className={secondaryButton} type="button" disabled={busy || !password} onClick={() => void exportRemote()}>Download account learning progress</button>
           <p className="mb-0 mt-4 text-sm">Download progress and account-related information stored on this browser.</p>

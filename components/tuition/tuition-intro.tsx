@@ -19,7 +19,7 @@ export function TuitionIntro() {
             <p className="mt-3 leading-relaxed text-muted">
               I recently completed the same Higher courses my students are preparing for, achieving A grades across
               Maths, Physics, Chemistry, Biology and English. I&apos;m now studying Advanced Higher Maths, Physics
-              and Chemistry, while building STEM Forge — a structured Scottish STEM learning platform. My lessons
+              and Chemistry, while building Orthic — a structured Scottish STEM learning platform. My lessons
               combine clear explanations with guided and independent exam-style practice.
             </p>
             <Link

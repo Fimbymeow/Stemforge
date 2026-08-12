@@ -119,23 +119,23 @@ test("no disguised trust claims (student counts, star ratings, 'proven results',
   }
 });
 
-test("STEM Forge is described accurately: no claim of course completion, wide use, proven results, or SQA affiliation/endorsement", () => {
+test("Orthic is described accurately: no claim of course completion, wide use, proven results, or SQA affiliation/endorsement", () => {
   // tuition-footer.tsx is excluded here — it is the one file required to carry the negated
   // "not affiliated with or endorsed by SQA" disclaimer, checked separately below.
   for (const file of TUITION_FILES.filter((file) => file !== "components/tuition/tuition-footer.tsx")) {
     const text = source(file);
     assert.doesNotMatch(text, /(?<!not )affiliated with (?:the )?SQA/i, `${file} must not claim SQA affiliation`);
     assert.doesNotMatch(text, /(?<!not )endorsed by (?:the )?SQA/i, `${file} must not claim SQA endorsement`);
-    assert.doesNotMatch(text, /complete (?:curriculum|course library|platform)/i, `${file} must not claim STEM Forge is complete`);
-    assert.doesNotMatch(text, /widely used/i, `${file} must not claim STEM Forge is widely used`);
+    assert.doesNotMatch(text, /complete (?:curriculum|course library|platform)/i, `${file} must not claim Orthic is complete`);
+    assert.doesNotMatch(text, /widely used/i, `${file} must not claim Orthic is widely used`);
   }
   const footer = source("components/tuition/tuition-footer.tsx");
   assert.match(footer, /not affiliated with or endorsed by SQA/i, "the independence disclaimer must remain in the footer");
 });
 
-test("STEM Forge positioning copy references structured, original, staged content rather than a finished product claim", () => {
+test("Orthic positioning copy references structured, original, staged content rather than a finished product claim", () => {
   const combined = source("components/tuition/tuition-intro.tsx") + source("components/tuition/tuition-difference.tsx");
-  assert.match(combined, /STEM Forge/);
+  assert.match(combined, /Orthic/);
   assert.match(combined, /structured|original|staged/i);
 });
 

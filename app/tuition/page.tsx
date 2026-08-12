@@ -11,7 +11,7 @@ import { TuitionTestimonials } from "@/components/tuition/tuition-testimonials";
 export const metadata: Metadata = {
   title: "Tuition",
   description:
-    "One-to-one National 5 and Higher Maths and Physics tuition from Finlay Kennedy, who achieved A grades across five Highers and is building STEM Forge.",
+    "One-to-one National 5 and Higher Maths and Physics tuition from Finlay Kennedy, who achieved A grades across five Highers and is building Orthic.",
 };
 
 export default function TuitionPage() {

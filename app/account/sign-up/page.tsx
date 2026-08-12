@@ -25,7 +25,7 @@ export default async function SignUpPage({ searchParams }: { searchParams: Promi
         <input className={inputClass} id="email" name="email" type="email" autoComplete="email" required aria-describedby={result ? "account-result" : undefined} />
         <label className="mt-5 block font-bold" htmlFor="password">Password</label>
         <input className={inputClass} id="password" name="password" type="password" autoComplete="new-password" required minLength={8} aria-describedby={`password-help${result ? " account-result" : ""}`} />
-        <p id="password-help" className="mt-2 text-sm text-muted">Use at least 8 characters. Your password is handled by the secure account provider and is not stored in STEM Forge learning data.</p>
+        <p id="password-help" className="mt-2 text-sm text-muted">Use at least 8 characters. Your password is handled by the secure account provider and is not stored in Orthic learning data.</p>
         <SubmitButton idle="Create account" pending="Creating account…" />
       </form>
       <p className="mb-0 mt-4 text-sm leading-relaxed text-muted">If email confirmation is required, we’ll tell you where to continue. Creating an account never imports browser progress automatically.</p>

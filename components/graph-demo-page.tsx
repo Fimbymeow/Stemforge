@@ -68,7 +68,7 @@ export const graphDemoQuestion: Question = {
   hint: "Look at the sign of $f'(x)$ on each interval. Positive means increasing; negative means decreasing.",
   commonMistake: "A common mistake is to classify the stationary point using the value of $f(x)$ instead of the sign change in $f'(x)$.",
   calculatorAllowed: false,
-  source: "Internal STEM Forge graph interaction demo",
+  source: "Internal Orthic graph interaction demo",
   status: "ready",
   displayOrder: 1,
 };

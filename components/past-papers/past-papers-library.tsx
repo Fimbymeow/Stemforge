@@ -49,7 +49,7 @@ export function PastPapersLibrary({ records }: { records: readonly PastPaperReco
             </div>
           </div>
           <aside className="rounded-xl border border-line bg-white px-4 py-3 text-sm leading-relaxed text-muted">
-            Links open official PDFs from Qualifications Scotland (formerly SQA) in a new tab. STEM Forge does not store copies of these documents.
+            Links open official PDFs from Qualifications Scotland (formerly SQA) in a new tab. Orthic does not store copies of these documents.
           </aside>
         </header>
 

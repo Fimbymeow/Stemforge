@@ -43,7 +43,7 @@ test("sign-in and sign-up preserve a safe learning return with accessible mobile
 
   await page.getByRole("link", { name: "Create an account" }).click();
   await expect(page.getByRole("heading", { name: "Create an account" })).toBeVisible();
-  await expect(page.getByText("not stored in STEM Forge learning data")).toBeVisible();
+  await expect(page.getByText("not stored in Orthic learning data")).toBeVisible();
   const accountCard = page.getByRole("article");
   await expect(accountCard.getByRole("link", { name: "Terms" })).toHaveAttribute("href", "/terms");
   await expect(accountCard.getByRole("link", { name: "Privacy Notice" })).toHaveAttribute("href", "/privacy");

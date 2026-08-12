@@ -1,4 +1,4 @@
-﻿import { Flame } from "lucide-react";
+import { Flame } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { AppTopbar } from "@/components/layout/app-topbar";
 import { DashboardLocalProgressSection } from "@/components/dashboard-local-progress";
@@ -26,7 +26,7 @@ function DashboardHeader() {
           <Flame className="size-6" />
         </span>
         <div>
-          <h1 className="m-0 text-[32px] font-extrabold leading-none">STEM Forge</h1>
+          <h1 className="m-0 text-[32px] font-extrabold leading-none">Orthic</h1>
           <p className="mt-2 max-w-3xl text-base leading-relaxed text-muted">Your next Higher Maths step is ready below.</p>
         </div>
       </div>

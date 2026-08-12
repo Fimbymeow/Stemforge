@@ -37,7 +37,7 @@ export function AppSidebar({
   return (
     <aside data-app-sidebar className="fixed inset-y-0 left-0 z-10 flex w-[240px] flex-col border-r border-line/70 bg-paper px-4 py-6 max-xl:sticky max-xl:top-0 max-xl:h-auto max-xl:w-full max-xl:border-b max-xl:border-r-0 max-xl:px-4 max-xl:py-3">
       <Link href="/" className="mb-8 block w-[178px] max-xl:mb-3 max-xl:w-[146px]">
-        <Image src="/assets/stemforge-logo-header.png" alt="STEM Forge" width={300} height={91} />
+        <Image src="/assets/orthic-wordmark.svg" alt="Orthic" width={260} height={64} />
       </Link>
       <Link
         href="/"

@@ -31,7 +31,7 @@ export function createSafeServerErrorDiagnostic(
 
 export function logServerOperationError(route: string, operation: string, cause: unknown) {
   console.error(
-    "STEM Forge server operation failed.",
+    "Orthic server operation failed.",
     createSafeServerErrorDiagnostic(route, operation, cause),
   );
 }

@@ -1,4 +1,4 @@
-﻿import { getActiveSkillPathHref } from "@/lib/learning-paths";
+import { getActiveSkillPathHref } from "@/lib/learning-paths";
 import Link from "next/link";
 
 export function Footer() {
@@ -13,7 +13,7 @@ export function Footer() {
         <Link href={getActiveSkillPathHref()}>Basic differentiation</Link>
       </nav>
       <p className="m-0 max-w-3xl text-xs leading-relaxed">
-        STEM Forge creates original Qualifications Scotland-style practice materials and is not affiliated with or endorsed by Qualifications Scotland.
+        Orthic creates original Qualifications Scotland-style practice materials and is not affiliated with or endorsed by Qualifications Scotland.
       </p>
       <p className="m-0 max-w-3xl text-xs leading-relaxed">
         Public beta. Learning and account features may continue to change as they are validated with learners.

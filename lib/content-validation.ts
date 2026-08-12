@@ -376,7 +376,7 @@ export function validateContent(input: ContentValidationInput): ContentValidatio
 
 export function formatValidationReport(report: ContentValidationReport) {
   const lines = [
-    "STEM Forge Content Validation",
+    "Orthic Content Validation",
     "",
     `Subjects: ${report.counts.subjects}`,
     `Courses: ${report.counts.courses}`,

@@ -6,9 +6,9 @@ export function TuitionFooter() {
     <footer className="border-t border-line bg-paper px-5 py-10">
       <div className="mx-auto grid w-[min(1120px,100%)] grid-cols-3 gap-10 max-md:grid-cols-1 max-md:text-center">
         <div>
-          <p className="m-0 text-lg font-extrabold text-ink">STEM Forge Tuition</p>
+          <p className="m-0 text-lg font-extrabold text-ink">Orthic Tuition</p>
           <p className="mt-2 max-w-[280px] text-sm leading-relaxed text-muted max-md:mx-auto">
-            One-to-one National 5 and Higher tuition from Finlay Kennedy, who is also building STEM Forge.
+            One-to-one National 5 and Higher tuition from Finlay Kennedy, who is also building Orthic.
           </p>
         </div>
         <div>
@@ -32,7 +32,7 @@ export function TuitionFooter() {
         </div>
       </div>
       <p className="mx-auto mt-8 max-w-[900px] text-center text-xs leading-relaxed text-muted">
-        STEM Forge creates original SQA-style practice materials and is not affiliated with or endorsed by SQA.
+        Orthic creates original SQA-style practice materials and is not affiliated with or endorsed by SQA.
       </p>
     </footer>
   );

@@ -312,7 +312,7 @@ function toCanonicalQuestion(
     hint: source.hint,
     commonMistake: source.commonMistake,
     calculatorAllowed: !/non-calculator/i.test(source.calculatorStatus ?? ""),
-    source: "Original STEM Forge QS-style content",
+    source: "Original Orthic QS-style content",
     status: "ready",
     displayOrder: sourceOrder(source.id),
   };

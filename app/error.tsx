@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { getActiveSkillPathHref } from "@/lib/learning-paths";
 import Link from "next/link";
@@ -16,7 +16,7 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
       <section className="grid gap-4">
         <p className="m-0 text-sm font-extrabold uppercase text-forge">Something went wrong</p>
         <Card className="p-8 max-md:p-5">
-          <h1 className="m-0 text-[clamp(32px,5vw,48px)] font-extrabold leading-tight">STEM Forge hit a temporary problem.</h1>
+          <h1 className="m-0 text-[clamp(32px,5vw,48px)] font-extrabold leading-tight">Orthic hit a temporary problem.</h1>
           <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted">
             Try again, or return to the current Basic differentiation path. No technical details are shown here.
           </p>

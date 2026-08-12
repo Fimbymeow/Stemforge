@@ -18,7 +18,7 @@ import type { CourseSpecificationRegister, SpecificationArea, VerifiedSpecificat
  *
  * The assessable content is taken from the "Skills, knowledge and understanding for the
  * course assessment" tables on printed pages 5–9. Every officialStatement below is copied
- * from those tables' explanation bullets; authoringSummary values are STEM Forge-authored
+ * from those tables' explanation bullets; authoringSummary values are Orthic-authored
  * paraphrases. Appendix 2 is deliberately not used as a source of assessed requirements.
  *
  * Official table headings map to register areas. The headings are not repeated as

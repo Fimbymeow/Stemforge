@@ -4,7 +4,7 @@ import { migrateConfiguredTestDatabase, reportMigrationFailure } from "@/scripts
 async function main() {
   loadEnvConfig(process.cwd());
   await migrateConfiguredTestDatabase(process.env);
-  console.log("STEM Forge migrations applied to the isolated test database.");
+  console.log("Orthic migrations applied to the isolated test database.");
 }
 
-void main().catch(() => reportMigrationFailure("STEM Forge test database migration"));
+void main().catch(() => reportMigrationFailure("Orthic test database migration"));
