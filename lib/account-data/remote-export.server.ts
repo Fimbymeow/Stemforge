@@ -3,6 +3,7 @@ import "server-only";
 import type { Pool } from "pg";
 import { buildAccountLearningDataExport, MAX_ACCOUNT_EXPORT_RECORDS, type AccountExportRecord } from "@/lib/account-data/export";
 import { ownerLock } from "@/lib/account-data/postgres-account-data.server";
+import { normalizeLearnerPreferences } from "@/lib/learner-preferences";
 
 type Row = { kind: AccountExportRecord["kind"]; disposition: AccountExportRecord["disposition"]; event_id: string;
   evidence: unknown; account_generation: string; receive_order: string; received_at: Date };
@@ -35,7 +36,18 @@ export async function exportRemoteLearningData(pool: Pool, ownerId: string) {
     const records: AccountExportRecord[] = result.rows.map((row) => ({ kind: row.kind, disposition: row.disposition,
       eventId: row.event_id, evidence: row.evidence, accountGeneration: row.account_generation,
       receiveCursor: row.receive_order, receivedAt: row.received_at.toISOString() }));
-    const exported = buildAccountLearningDataExport(records, account.rows[0].created_at.toISOString());
+    const preferenceResult = await client.query<{ first_name: string | null; name_prompt_dismissed: boolean; selected_course_slugs: string[] }>(`
+      SELECT first_name, name_prompt_dismissed, selected_course_slugs
+      FROM stemforge_account_data.learner_preferences WHERE owner_id=$1
+    `, [ownerId]);
+    const preferenceRow = preferenceResult.rows[0];
+    const learnerPreferences = normalizeLearnerPreferences(preferenceRow ? {
+      version: 1,
+      firstName: preferenceRow.first_name,
+      namePromptDismissed: preferenceRow.name_prompt_dismissed,
+      selectedCourseSlugs: preferenceRow.selected_course_slugs,
+    } : null);
+    const exported = buildAccountLearningDataExport(records, account.rows[0].created_at.toISOString(), new Date().toISOString(), learnerPreferences);
     await client.query("COMMIT");
     return exported;
   } catch (error) { await client.query("ROLLBACK"); throw error; } finally { client.release(); }

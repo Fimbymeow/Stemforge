@@ -11,6 +11,7 @@ import { runner } from "node-pg-migrate";
 import { PostgresRemoteEvidenceRepository } from "../lib/remote-evidence/postgres-repository.server";
 import { PostgresOwnerMappingRepository } from "../lib/auth/postgres-owner-repository.server";
 import { PostgresAccountDataRepository } from "../lib/account-data/postgres-account-data.server";
+import { PostgresLearnerPreferencesRepository } from "../lib/learner-preferences/postgres-learner-preferences.server";
 import { PostgresBetaReportRepository, BetaReportRateLimitError } from "../lib/beta-reports/report-repository.server";
 import {
   InternalReportConflictError,
@@ -33,6 +34,7 @@ let pool: Pool;
 let repository: PostgresRemoteEvidenceRepository;
 let ownerRepository: PostgresOwnerMappingRepository;
 let accountDataRepository: PostgresAccountDataRepository;
+let learnerPreferencesRepository: PostgresLearnerPreferencesRepository;
 let betaReportRepository: PostgresBetaReportRepository;
 let internalReportRepository: PostgresInternalBetaReportRepository;
 let databaseUrl: string;
@@ -62,6 +64,7 @@ before(async () => {
   repository = new PostgresRemoteEvidenceRepository(pool);
   ownerRepository = new PostgresOwnerMappingRepository(pool);
   accountDataRepository = new PostgresAccountDataRepository(pool);
+  learnerPreferencesRepository = new PostgresLearnerPreferencesRepository(pool);
   betaReportRepository = new PostgresBetaReportRepository(pool);
   internalReportRepository = new PostgresInternalBetaReportRepository(pool);
 });
@@ -82,6 +85,23 @@ test("clean migrations create the append-only evidence schema", async () => {
   assert.deepEqual(result.rows.map((row) => row.table_name), [
     "achievement_snapshots", "evidence_conflicts", "flashcard_reviews", "guided_self_assessments", "question_attempts", "review_events", "support_events",
   ]);
+});
+
+test("clean migrations create dedicated mutable learner preferences", async () => {
+  const result = await pool.query<{ table_name: string }>(`
+    SELECT table_name FROM information_schema.tables
+    WHERE table_schema = 'stemforge_account_data' AND table_name = 'learner_preferences'
+  `);
+  assert.deepEqual(result.rows.map((row) => row.table_name), ["learner_preferences"]);
+});
+
+test("learner preferences replace and conservatively merge guest state", async () => {
+  const owner = await ownerId();
+  await learnerPreferencesRepository.replace(owner, { version: 1, firstName: "Remote", namePromptDismissed: false, selectedCourseSlugs: ["higher-maths"] });
+  const merged = await learnerPreferencesRepository.mergeGuest(owner, { version: 1, firstName: "Guest", namePromptDismissed: true, selectedCourseSlugs: ["higher-maths"] });
+  assert.deepEqual(merged, { version: 1, firstName: "Remote", namePromptDismissed: false, selectedCourseSlugs: ["higher-maths"] });
+  const emptyOwner = await ownerId();
+  assert.equal((await learnerPreferencesRepository.mergeGuest(emptyOwner, { version: 1, firstName: "Guest", namePromptDismissed: true, selectedCourseSlugs: ["higher-maths"] })).firstName, "Guest");
 });
 
 test("clean migrations create the immutable owner schema", async () => {
@@ -618,6 +638,7 @@ test("scheduled erasure pauses account writes and cancellation restores active g
 
 test("processing erasure hard-deletes retained evidence and advances generation", async () => {
   const owner = await ownerId();
+  await learnerPreferencesRepository.replace(owner, { version: 1, firstName: "Erase", namePromptDismissed: true, selectedCourseSlugs: ["higher-maths"] });
   const accepted = attempt({ eventId: "attempt_erasure_delete", answer: "accepted" });
   const conflict = attempt({ eventId: "attempt_erasure_delete", answer: "conflict" });
   await repository.append(owner, batch(
@@ -645,6 +666,7 @@ test("processing erasure hard-deletes retained evidence and advances generation"
   assert.equal(state.status, "active");
   assert.equal(state.generation, "2");
   assert.equal(await evidenceRowCountForOwner(owner), "0");
+  assert.deepEqual(await learnerPreferencesRepository.read(owner), { version: 1, firstName: null, namePromptDismissed: false, selectedCourseSlugs: [] });
   await assert.rejects(
     repository.append(owner, batch([attempt({ eventId: "attempt_after_erase_stale" })]), "1"),
     (error) => error instanceof AccountDataAccessError && error.code === "account_generation_mismatch",

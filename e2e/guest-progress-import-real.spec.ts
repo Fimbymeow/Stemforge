@@ -7,6 +7,7 @@ import {
   seedStoredProgress,
 } from "./fixtures/progress";
 import { PROGRESS_IMPORT_METADATA_KEY } from "../lib/progress/import-metadata";
+import { LEARNER_PREFERENCES_STORAGE_KEY } from "../lib/learner-preferences";
 
 const initialEvidence = {
   version: 4 as const,
@@ -112,6 +113,37 @@ test("real sign-in and sign-out preserve the useful learning destination without
   await expect(page).toHaveURL(new RegExp(`/account\\?next=${encodeURIComponent(destination)}$`));
   await page.getByRole("button", { name: "Sign out and keep progress on this browser" }).click();
   await expect(page).toHaveURL(new RegExp(`${destination}$`));
+  expect(seriousBrowserErrors).toEqual([]);
+});
+
+test("guest preferences import explicitly, remain editable and can be cleared without blocking learning", async ({ page, seriousBrowserErrors }) => {
+  await page.goto("/");
+  await page.evaluate((key) => localStorage.setItem(key, JSON.stringify({
+    version: 1,
+    firstName: "Guest name",
+    namePromptDismissed: true,
+    selectedCourseSlugs: ["higher-maths"],
+  })), LEARNER_PREFERENCES_STORAGE_KEY);
+  await signIn(page);
+  await expect(page.getByTestId("guest-preferences-import")).toBeVisible();
+  await page.getByRole("button", { name: "Add preferences" }).click();
+  await expect(page.getByTestId("guest-preferences-import")).toHaveCount(0);
+
+  const editor = page.getByTestId("account-learner-preferences");
+  await expect(editor.getByLabel("First name")).toHaveValue("Guest name");
+  await editor.getByLabel("First name").fill("Account name");
+  await editor.getByRole("button", { name: "Save preferences" }).click();
+  await expect(editor).toContainText("preferences were saved");
+  await page.goto("/dashboard");
+  await expect(page.getByRole("heading", { name: "Welcome back, Account name" })).toBeVisible();
+
+  await page.goto("/account");
+  await page.getByTestId("account-learner-preferences").getByLabel("First name").fill("");
+  await page.getByTestId("account-learner-preferences").getByRole("button", { name: "Save preferences" }).click();
+  await page.goto("/dashboard");
+  await expect(page.getByRole("heading", { name: "Welcome back", exact: true })).toBeVisible();
+  await expect(page.getByTestId("learner-name-prompt")).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Open Higher Maths" })).toBeVisible();
   expect(seriousBrowserErrors).toEqual([]);
 });
 

@@ -12,6 +12,7 @@ import { PROGRESS_STORAGE_KEY } from "../lib/progress/storage";
 import { EVIDENCE_PROVENANCE_KEY } from "../lib/progress/evidence-provenance";
 import { PROGRESS_SYNC_METADATA_KEY } from "../lib/progress/sync-protocol";
 import { attempt, supportEvent } from "./progress-fixtures";
+import { LEARNER_PREFERENCES_STORAGE_KEY, normalizeLearnerPreferences } from "../lib/learner-preferences";
 
 test("remote account export is bounded, counted and digest-verifiable", () => {
   const records: AccountExportRecord[] = [
@@ -19,11 +20,13 @@ test("remote account export is bounded, counted and digest-verifiable", () => {
     { kind: "support_event", disposition: "accepted", eventId: "support_export", evidence: supportEvent({ eventId: "support_export" }), accountGeneration: "1", receiveCursor: "2", receivedAt: "2026-07-17T10:00:01.000Z" },
     { kind: "attempt", disposition: "conflict_retained", eventId: "attempt_export", evidence: attempt({ eventId: "attempt_export", answer: "retained" }), accountGeneration: "1", receiveCursor: "3", receivedAt: "2026-07-17T10:00:02.000Z" },
   ];
-  const exported = buildAccountLearningDataExport(records, "2026-07-17T09:00:00.000Z", "2026-07-17T11:00:00.000Z");
+  const preferences = normalizeLearnerPreferences({ version: 1, firstName: "Finlay", namePromptDismissed: true, selectedCourseSlugs: ["higher-maths"] });
+  const exported = buildAccountLearningDataExport(records, "2026-07-17T09:00:00.000Z", "2026-07-17T11:00:00.000Z", preferences);
   assert.deepEqual(exported.categoryCounts, { attempts: 1, supportEvents: 1, guidedSelfAssessments: 0, achievementSnapshots: 0, reviewEvents: 0, flashcardReviews: 0, retainedConflicts: 1 });
   assert.equal(exported.integrity.algorithm, "SHA-256");
   assert.match(exported.integrity.canonicalDataDigest, /^[a-f0-9]{64}$/);
-  assert.equal(buildAccountLearningDataExport(records, "2026-07-17T09:00:00.000Z", "2026-07-17T11:00:00.000Z").integrity.canonicalDataDigest, exported.integrity.canonicalDataDigest);
+  assert.equal(exported.learnerPreferences.firstName, "Finlay");
+  assert.equal(buildAccountLearningDataExport(records, "2026-07-17T09:00:00.000Z", "2026-07-17T11:00:00.000Z", preferences).integrity.canonicalDataDigest, exported.integrity.canonicalDataDigest);
   assert.equal(safeAccountExportFilename(new Date("2026-07-17T12:34:56.000Z")), "orthic-account-data-2026-07-17.json");
   assert.throws(() => buildAccountLearningDataExport(Array.from({ length: MAX_ACCOUNT_EXPORT_RECORDS + 1 }, () => records[0]), "2026-07-17T09:00:00.000Z"), AccountExportBoundsError);
 });
@@ -33,11 +36,13 @@ test("current browser export includes only local browser state and tolerates emp
     [PROGRESS_STORAGE_KEY, JSON.stringify({ version: 4, data: { attempts: [attempt({ eventId: "attempt_browser_export" })], supportEvents: [], achievementSnapshots: [] } })],
     [EVIDENCE_PROVENANCE_KEY, JSON.stringify({ version: 1, records: {} })],
     [PROGRESS_SYNC_METADATA_KEY, JSON.stringify({ version: 1, lastAssociatedAccountFingerprint: null, accounts: {} })],
+    [LEARNER_PREFERENCES_STORAGE_KEY, JSON.stringify({ version: 1, firstName: "Finlay", namePromptDismissed: true, selectedCourseSlugs: ["higher-maths"] })],
   ]));
   const exported = buildCurrentBrowserExport(storage, "2026-07-17T12:00:00.000Z");
   assert.equal(exported.scope, "current_browser_only");
   assert.equal(exported.progress.data.attempts[0].eventId, "attempt_browser_export");
   assert.equal(exported.provenance.records["attempt:attempt_browser_export"].source, "legacy_unknown");
+  assert.equal(exported.learnerPreferences.firstName, "Finlay");
 });
 
 function memoryStorage(values: Map<string, string>): Storage {

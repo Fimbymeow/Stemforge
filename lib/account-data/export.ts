@@ -1,8 +1,9 @@
 import { createHash } from "node:crypto";
 import { stableStringify } from "@/lib/progress/event-identity";
 import type { RemoteEvidenceKind } from "@/lib/remote-evidence/types";
+import { emptyLearnerPreferences, type LearnerPreferences } from "@/lib/learner-preferences";
 
-export const ACCOUNT_EXPORT_SCHEMA_VERSION = 4 as const;
+export const ACCOUNT_EXPORT_SCHEMA_VERSION = 5 as const;
 export const MAX_ACCOUNT_EXPORT_RECORDS = 10_000;
 export const MAX_ACCOUNT_EXPORT_BYTES = 5_000_000;
 
@@ -19,17 +20,23 @@ export type AccountExportRecord = {
 export type AccountLearningDataExport = {
   schemaVersion: typeof ACCOUNT_EXPORT_SCHEMA_VERSION;
   generatedAt: string;
-  scope: "remote_account_learning_data";
+  scope: "remote_account_learning_and_preferences";
   accountCreatedAt: string;
+  learnerPreferences: LearnerPreferences;
   categoryCounts: { attempts: number; supportEvents: number; guidedSelfAssessments: number; achievementSnapshots: number; reviewEvents: number; flashcardReviews: number; retainedConflicts: number };
   records: AccountExportRecord[];
   integrity: { algorithm: "SHA-256"; canonicalDataDigest: string };
 };
 
-export function buildAccountLearningDataExport(records: AccountExportRecord[], accountCreatedAt: string, generatedAt = new Date().toISOString()) {
+export function buildAccountLearningDataExport(
+  records: AccountExportRecord[],
+  accountCreatedAt: string,
+  generatedAt = new Date().toISOString(),
+  learnerPreferences = emptyLearnerPreferences(),
+) {
   if (records.length > MAX_ACCOUNT_EXPORT_RECORDS) throw new AccountExportBoundsError();
-  const canonicalData = { schemaVersion: ACCOUNT_EXPORT_SCHEMA_VERSION, generatedAt, scope: "remote_account_learning_data" as const,
-    accountCreatedAt, categoryCounts: categoryCounts(records), records };
+  const canonicalData = { schemaVersion: ACCOUNT_EXPORT_SCHEMA_VERSION, generatedAt, scope: "remote_account_learning_and_preferences" as const,
+    accountCreatedAt, learnerPreferences, categoryCounts: categoryCounts(records), records };
   const result: AccountLearningDataExport = { ...canonicalData,
     integrity: { algorithm: "SHA-256", canonicalDataDigest: createHash("sha256").update(stableStringify(canonicalData), "utf8").digest("hex") } };
   if (new TextEncoder().encode(JSON.stringify(result)).length > MAX_ACCOUNT_EXPORT_BYTES) throw new AccountExportBoundsError();

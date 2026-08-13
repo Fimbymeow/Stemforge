@@ -115,6 +115,7 @@ test("production readiness tracks the latest committed migration", async () => {
     "1753352800000_guided-self-assessment-evidence",
     "1753439200000_review-evidence",
     "1753525600000_flashcard-review-evidence",
+    "1753612000000_learner-preferences",
   ]);
 });
 

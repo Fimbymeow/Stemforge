@@ -145,7 +145,7 @@ test("account export counts and preserves accepted Review evidence", () => {
     receiveCursor: "1",
     receivedAt: "2026-07-20T10:00:00.000Z",
   }], "2026-07-01T10:00:00.000Z", "2026-07-20T10:00:00.000Z");
-  assert.equal(exported.schemaVersion, 4);
+  assert.equal(exported.schemaVersion, 5);
   assert.equal(exported.categoryCounts.reviewEvents, 1);
   assert.equal(exported.records[0].kind, "review_event");
 });

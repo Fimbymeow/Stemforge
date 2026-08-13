@@ -11,13 +11,14 @@ import { useLearnerNextAction } from "@/components/learning/use-learner-next-act
 import type { ProgressEvidence } from "@/lib/progress/types";
 import { GuestProgressProtection } from "@/components/account/guest-progress-protection";
 import { deriveSubjectReviewSummary } from "@/lib/review/derivation";
-
-const HIGHER_MATHS_HREF = "/subjects/higher-maths";
+import { resolveEffectiveCourses } from "@/lib/learner-preferences";
+import { useLearnerPreferences } from "@/components/learner-preferences/use-learner-preferences";
 
 export function DashboardLocalProgressSection() {
   const [evidence, setEvidence] = useState<ProgressEvidence>(() => getEmptyProgressEvidence());
   const sync = useProgressSync();
   const recommendation = useLearnerNextAction();
+  const learnerPreferences = useLearnerPreferences();
 
   useEffect(() => {
     const update = () => setEvidence(getProgressEvidence());
@@ -49,6 +50,7 @@ export function DashboardLocalProgressSection() {
   const reviewSummary = review.dueSkillCount
     ? `${review.dueSkillCount} review${review.dueSkillCount === 1 ? "" : "s"} due`
     : "Up to date";
+  const effectiveCourses = useMemo(() => resolveEffectiveCourses({ preferences: learnerPreferences.preferences, evidence }), [evidence, learnerPreferences.preferences]);
 
   return (
     <section className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-5" aria-label="Your learning dashboard">
@@ -72,11 +74,18 @@ export function DashboardLocalProgressSection() {
       <section aria-labelledby="your-courses-title">
         <div className="mb-2 flex items-end justify-between gap-3"><h2 id="your-courses-title" className="text-lg font-extrabold">Your courses</h2><span className="text-xs font-bold text-muted">{model.sync.label}</span></div>
         <div className="divide-y divide-line border-y border-line" data-testid="dashboard-courses">
-          <Link href={HIGHER_MATHS_HREF} aria-label="Open Higher Maths" className="flex min-h-16 items-center gap-4 py-2 hover:bg-forge-soft">
-            <BookOpen aria-hidden="true" className="size-5 shrink-0 text-forge" />
-            <span className="min-w-0 flex-1"><span className="block font-extrabold">Higher Maths</span><span className="block text-xs text-muted">{model.course.completedPathCount} of {model.course.availablePathCount} skills learned · {reviewSummary}</span><ProgressBar value={learnedSkillPercentage} className="mt-2 max-w-sm" /></span>
-            <ArrowRight aria-hidden="true" className="size-4 shrink-0 text-forge" />
-          </Link>
+          {effectiveCourses.map((course) => (
+            <Link key={course.slug} href={course.href} aria-label={`Open ${course.name}`} className="flex min-h-16 items-center gap-4 py-2 hover:bg-forge-soft">
+              <BookOpen aria-hidden="true" className="size-5 shrink-0 text-forge" />
+              <span className="min-w-0 flex-1">
+                <span className="block font-extrabold">{course.name}</span>
+                {course.slug === model.course.subjectSlug ? (
+                  <><span className="block text-xs text-muted">{model.course.completedPathCount} of {model.course.availablePathCount} skills learned · {reviewSummary}</span><ProgressBar value={learnedSkillPercentage} className="mt-2 max-w-sm" /></>
+                ) : null}
+              </span>
+              <ArrowRight aria-hidden="true" className="size-4 shrink-0 text-forge" />
+            </Link>
+          ))}
         </div>
       </section>
 

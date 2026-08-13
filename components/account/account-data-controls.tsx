@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { useProgressSync } from "@/components/progress-sync-provider";
 import { useModalFocusTrap } from "@/lib/use-modal-focus-trap";
+import { clearGuestLearnerPreferences } from "@/lib/learner-preferences";
 
 type Confirmation = "association" | "account_progress" | "all_progress" | null;
 
@@ -34,6 +35,7 @@ export function AccountDataControls() {
         setMessage(`${removed} item${removed === 1 ? " was" : "s were"} removed from this browser. Progress that might belong to another account, or whose origin isn't known, was left alone to avoid deleting anything by mistake.`);
       } else {
         await sync.clearAllBrowserProgress();
+        if (!clearGuestLearnerPreferences(window.localStorage)) throw new Error("preference_clear_failed");
         setMessage("All Orthic progress and account information was cleared from this browser. Your account's progress, already kept in sync, was not deleted.");
       }
       setConfirmation(null);

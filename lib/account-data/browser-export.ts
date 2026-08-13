@@ -3,6 +3,7 @@ import { PROGRESS_IMPORT_METADATA_KEY, readProgressImportMetadata } from "@/lib/
 import { LocalStorageProgressStorage } from "@/lib/progress/storage";
 import { EVIDENCE_PROVENANCE_KEY, readEvidenceProvenance } from "@/lib/progress/evidence-provenance";
 import { PROGRESS_SYNC_METADATA_KEY, readProgressSyncMetadata } from "@/lib/progress/sync-metadata";
+import { readGuestLearnerPreferences } from "@/lib/learner-preferences";
 
 export function buildCurrentBrowserExport(storage: Storage, generatedAt = new Date().toISOString()) {
   const progress = new LocalStorageProgressStorage(storage).load();
@@ -19,6 +20,7 @@ export function buildCurrentBrowserExport(storage: Storage, generatedAt = new Da
     importMetadata: readProgressImportMetadata(storage.getItem(PROGRESS_IMPORT_METADATA_KEY)),
     syncMetadata: readProgressSyncMetadata(storage.getItem(PROGRESS_SYNC_METADATA_KEY), storage.getItem(PROGRESS_IMPORT_METADATA_KEY)),
     celebrationState: safeJson(storage.getItem(CELEBRATION_STORAGE_KEY)),
+    learnerPreferences: readGuestLearnerPreferences(storage),
   };
 }
 
