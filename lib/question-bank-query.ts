@@ -1,10 +1,10 @@
 import type { AnswerType, LearningStageName, Question } from "@/data/types";
 import type { ResolvedQuestionContext, ResolvedSkillPath } from "@/lib/content-resolver";
 import { createContentResolver } from "@/lib/content-resolver";
-import { calculateSkillPathProgress, getQuestionProgressForVersion } from "@/lib/progress/calculations";
+import { calculateSkillPathProgress, createQuestionProgressIndex, getQuestionProgressForVersionFromIndex } from "@/lib/progress/calculations";
 import type { ProgressEvidence, QuestionProgressState, SkillPathProgress } from "@/lib/progress/types";
 
-export type QuestionBankProgressFilter = "all" | "not-started" | "in-progress" | "completed" | "review-recommended";
+export type QuestionBankProgressFilter = "all" | "not-started" | "in-progress" | "completed" | "review-recommended" | "previously-incorrect";
 export type QuestionBankStageFilter = "all" | LearningStageName;
 export type QuestionBankSort = "default" | "recently-practised" | "review-priority" | "completion-status";
 export type QuestionBankTypeFilter = "all" | AnswerType;
@@ -26,10 +26,13 @@ export type QuestionBankQuery = {
   courseAreaId?: string;
   specAreaId?: string;
   skillPathId?: string;
+  skillPathIds?: readonly string[];
   stageId?: string;
+  stageIds?: readonly string[];
   typeFilter?: QuestionBankTypeFilter;
   calculatorFilter?: QuestionBankCalculatorFilter;
   sort?: QuestionBankSort;
+  openMistakeQuestionIds?: ReadonlySet<string>;
 };
 
 export type AvailableQuestionBankQuery = QuestionBankQuery & { subjectSlug: string };
@@ -158,6 +161,9 @@ export function queryAvailableQuestionBankQuestions(
   const progressFilter = query.progressFilter ?? "all";
   const stageFilter = query.stageFilter ?? "all";
   const sort = query.sort ?? "default";
+  const progressIndex = createQuestionProgressIndex(evidence);
+  const skillPathIds = query.skillPathIds?.length ? new Set(query.skillPathIds) : null;
+  const stageIds = query.stageIds?.length ? new Set(query.stageIds) : null;
   const entries = resolver.getQuestions().flatMap((question) => {
     const context = resolver.getQuestionContext(question.id);
     if (!context?.skillPath.isAvailable) return [];
@@ -165,7 +171,9 @@ export function queryAvailableQuestionBankQuestions(
     if (query.courseAreaId && context.courseArea.slug !== query.courseAreaId) return [];
     if (query.specAreaId && context.routeTopic.slug !== query.specAreaId) return [];
     if (query.skillPathId && context.skillPath.slug !== query.skillPathId) return [];
+    if (skillPathIds && !skillPathIds.has(context.skillPath.slug)) return [];
     if (query.stageId && context.stage.id !== query.stageId) return [];
+    if (stageIds && !stageIds.has(context.stage.id)) return [];
     if (stageFilter !== "all" && context.stage.name !== stageFilter) return [];
     if (query.typeFilter && query.typeFilter !== "all" && question.answerType !== query.typeFilter) return [];
     if (query.calculatorFilter === "allowed" && !question.calculatorAllowed) return [];
@@ -179,13 +187,13 @@ export function queryAvailableQuestionBankQuestions(
       context.specificationStrand.name,
     ].map(normalizeSearch);
     if (search && !searchable.some((value) => value.includes(search))) return [];
-    const progress = getQuestionProgressForVersion(question.id, question.questionVersion, evidence, context.skillPath.slug);
-    if (!matchesQuestionProgress(progress, progressFilter)) return [];
+    const progress = getQuestionProgressForVersionFromIndex(question.id, question.questionVersion, progressIndex, context.skillPath.slug);
+    if (!matchesQuestionProgress(progress, progressFilter, question.id, query.openMistakeQuestionIds)) return [];
     return [{
       question,
       context,
       progress,
-      lastPractisedAt: latestActivityForQuestion(question.id, context.skillPath.slug, evidence),
+      lastPractisedAt: latestActivityForQuestion(question.id, context.skillPath.slug, progressIndex),
     }];
   });
 
@@ -232,18 +240,19 @@ export function deriveQuestionBankFilterOptions(entries: readonly QuestionBankQu
   };
 }
 
-function matchesQuestionProgress(progress: QuestionProgressState, filter: QuestionBankProgressFilter) {
+function matchesQuestionProgress(progress: QuestionProgressState, filter: QuestionBankProgressFilter, questionId: string, openMistakeQuestionIds?: ReadonlySet<string>) {
   if (filter === "all") return true;
+  if (filter === "previously-incorrect") return openMistakeQuestionIds?.has(questionId) ?? false;
   if (filter === "not-started") return !progress.attempted;
   if (filter === "in-progress") return progress.attempted && !progress.completed;
   if (filter === "review-recommended") return progress.reviewRecommended;
   return progress.completed;
 }
 
-function latestActivityForQuestion(questionId: string, skillPathId: string, evidence: ProgressEvidence) {
+function latestActivityForQuestion(questionId: string, skillPathId: string, index: ReturnType<typeof createQuestionProgressIndex>) {
   const times = [
-    ...evidence.attempts.filter((attempt) => attempt.questionId === questionId && attempt.skillPathId === skillPathId).map((attempt) => attempt.attemptedAt),
-    ...evidence.supportEvents.filter((event) => event.questionId === questionId && event.skillPathId === skillPathId).map((event) => event.occurredAt),
+    ...(index.attemptsByQuestion.get(questionId) ?? []).filter((attempt) => attempt.skillPathId === skillPathId).map((attempt) => attempt.attemptedAt),
+    ...(index.eventsByQuestion.get(questionId) ?? []).filter((event) => event.skillPathId === skillPathId).map((event) => event.occurredAt),
   ].filter((value) => !Number.isNaN(Date.parse(value)));
   return times.sort((left, right) => Date.parse(right) - Date.parse(left))[0] ?? null;
 }

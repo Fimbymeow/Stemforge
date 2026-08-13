@@ -90,6 +90,7 @@ test("overview uses one honest compact journey instead of repeated stage cards",
   await expect(journey.locator('[data-journey-kind="stage"]').filter({ hasText: "Foundations" })).toHaveAttribute("aria-current", "step");
   await expect(journey.locator('[data-journey-kind="review"]')).toContainText("Review");
   await expect(journey.locator('[data-journey-kind="review"]').getByRole("link", { name: "Review" })).toHaveAttribute("href", "/practice?path=basic-differentiation");
+  await expect(page.getByRole("link", { name: "Browse Questions" })).toHaveAttribute("href", "/subjects/higher-maths/question-bank?path=basic-differentiation");
   await expect(page.getByRole("progressbar")).toHaveCount(1);
 });
 

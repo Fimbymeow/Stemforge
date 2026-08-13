@@ -29,6 +29,7 @@ test("fresh state starts with Notes while Foundations remains canonical", () => 
   assert.equal(model.stages[0].href, `/question/${questionIds[0]}`);
   assert.equal(model.completed, 0);
   assert.equal(model.reviewHref, null);
+  assert.equal(model.questionBankHref, "/subjects/higher-maths/question-bank?path=basic-differentiation");
 });
 
 test("lesson continuation follows canonical stages and genuine scheduled Review", () => {

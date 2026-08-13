@@ -38,12 +38,14 @@ import { usePracticeActivation } from "@/components/practice/use-practice-activa
 import { useHasMounted } from "@/lib/use-mounted";
 import { useModalFocusTrap } from "@/lib/use-modal-focus-trap";
 import { formatNeedsPracticeLabel } from "@/lib/working-context";
+import { deriveMistakeLog } from "@/lib/mistakes/derivation";
 
 const STATUS_FILTERS: Array<{ id: QuestionBankProgressFilter; label: string }> = [
   { id: "all", label: "All questions" },
   { id: "not-started", label: "Not attempted" },
   { id: "in-progress", label: "In progress" },
   { id: "review-recommended", label: "Needs more practice" },
+  { id: "previously-incorrect", label: "Previously incorrect" },
   { id: "completed", label: "Completed" },
 ];
 
@@ -59,7 +61,7 @@ const ANSWER_TYPE_LABELS: Record<AnswerType, string> = {
 
 const VISUAL_ANSWER_TYPES: ReadonlySet<AnswerType> = new Set(["graph_structured", "nature_table"]);
 
-type FilterChip = { key: keyof QuestionBankUrlState; label: string };
+type FilterChip = { key: keyof QuestionBankUrlState; label: string; value?: string };
 
 type Group = {
   pathId: string;
@@ -134,8 +136,8 @@ export function QuestionBank({ subjectSlug }: { subjectSlug: string }) {
       {
         courseAreaId: rawUrlState.courseAreaId,
         specAreaId: rawUrlState.specAreaId,
-        skillPathId: rawUrlState.skillPathId,
-        stageId: rawUrlState.stageId,
+        skillPathIds: rawUrlState.skillPathIds,
+        stageIds: rawUrlState.stageIds,
       },
       options,
     ),
@@ -143,6 +145,8 @@ export function QuestionBank({ subjectSlug }: { subjectSlug: string }) {
   );
   const typeValid = rawUrlState.type === "all" || (Object.keys(ANSWER_TYPE_LABELS) as AnswerType[]).includes(rawUrlState.type as AnswerType);
   const effectiveType = typeValid ? rawUrlState.type : "all";
+  const mistakeLog = useMemo(() => deriveMistakeLog(evidence, subjectSlug), [evidence, subjectSlug]);
+  const openMistakeQuestionIds = useMemo(() => new Set(mistakeLog.openGroups.flatMap((group) => group.items.map((item) => item.questionId))), [mistakeLog]);
 
   const questions = useMemo(() => queryAvailableQuestionBankQuestions(contentResolver, evidence, {
     subjectSlug,
@@ -150,28 +154,30 @@ export function QuestionBank({ subjectSlug }: { subjectSlug: string }) {
     progressFilter: rawUrlState.status,
     courseAreaId: normalizedFilters.courseAreaId || undefined,
     specAreaId: normalizedFilters.specAreaId || undefined,
-    skillPathId: normalizedFilters.skillPathId || undefined,
-    stageId: normalizedFilters.stageId || undefined,
+    skillPathIds: normalizedFilters.skillPathIds,
+    stageIds: normalizedFilters.stageIds,
     typeFilter: effectiveType,
     calculatorFilter: rawUrlState.calc,
     sort: rawUrlState.sort,
-  }), [evidence, subjectSlug, appliedSearch, rawUrlState.status, rawUrlState.calc, rawUrlState.sort, effectiveType, normalizedFilters]);
+    openMistakeQuestionIds,
+  }), [evidence, subjectSlug, appliedSearch, rawUrlState.status, rawUrlState.calc, rawUrlState.sort, effectiveType, normalizedFilters, openMistakeQuestionIds]);
 
   const entryById = useMemo(() => new Map(allEntries.map((entry) => [entry.question.id, entry])), [allEntries]);
   const pagination = paginateQuestionIds(questions.map((entry) => entry.question.id), rawUrlState.page);
   const pageEntryIds = useMemo(() => new Set(pagination.questionIds), [pagination.questionIds]);
   const groups = useMemo(() => buildGroups(questions), [questions]);
+  const filteredEligibleIds = useMemo(() => questions.filter((entry) => checkPracticeEligibility(entry.question).eligible).map((entry) => entry.question.id), [questions]);
   const selectedEntries = [...selected].map((id) => entryById.get(id)).filter((entry): entry is QuestionBankQuestionEntry => Boolean(entry));
   const selectedMarks = selectedEntries.reduce((total, entry) => total + entry.question.marks, 0);
   const lockedPaths = contentResolver.getAllPathContexts().filter((context) => context.subject.subjectSlug === subjectSlug && !context.skillPath.isAvailable);
   const futureCoverage = groupFutureCoverage(lockedPaths);
 
-  const hasActiveTaxonomyFilters = Boolean(normalizedFilters.courseAreaId || normalizedFilters.specAreaId || normalizedFilters.skillPathId || normalizedFilters.stageId);
+  const hasActiveTaxonomyFilters = Boolean(normalizedFilters.courseAreaId || normalizedFilters.specAreaId || normalizedFilters.skillPathIds.length || normalizedFilters.stageIds.length);
   const hasActiveSecondaryFilters = rawUrlState.status !== "all" || effectiveType !== "all" || rawUrlState.calc !== "all";
   const hasActiveFilters = hasActiveTaxonomyFilters || hasActiveSecondaryFilters;
   const hasSearch = appliedSearch.trim().length > 0;
 
-  const scopedSkillPath = normalizedFilters.skillPathId ? options.skillPaths.find((path) => path.id === normalizedFilters.skillPathId) : undefined;
+  const scopedSkillPath = normalizedFilters.skillPathIds.length === 1 ? options.skillPaths.find((path) => path.id === normalizedFilters.skillPathIds[0]) : undefined;
 
   const reviewDueEntries = useMemo(() => allEntries.filter((entry) => entry.progress.reviewRecommended), [allEntries]);
   const reviewDueEligible = useMemo(() => reviewDueEntries.filter((entry) => checkPracticeEligibility(entry.question).eligible), [reviewDueEntries]);
@@ -184,6 +190,8 @@ export function QuestionBank({ subjectSlug }: { subjectSlug: string }) {
     }
     return [...seen.values()];
   }, [reviewDueEligible]);
+  const stageFilterOptions = options.stages.filter((item) => !normalizedFilters.skillPathIds.length || normalizedFilters.skillPathIds.includes(item.skillPathId));
+  const stageChoices = groupStageChoices(stageFilterOptions);
 
   useEffect(() => {
     const update = () => setVersion((current) => current + 1);
@@ -204,8 +212,8 @@ export function QuestionBank({ subjectSlug }: { subjectSlug: string }) {
   useEffect(() => {
     const canonicalPage = Math.min(rawUrlState.page, pagination.pageCount);
     const needsFilterFix = normalizedFilters.specAreaId !== rawUrlState.specAreaId
-      || normalizedFilters.skillPathId !== rawUrlState.skillPathId
-      || normalizedFilters.stageId !== rawUrlState.stageId;
+      || !sameValues(normalizedFilters.skillPathIds, rawUrlState.skillPathIds)
+      || !sameValues(normalizedFilters.stageIds, rawUrlState.stageIds);
     const needsTypeFix = !typeValid;
     const needsPageFix = canonicalPage !== rawUrlState.page;
     if (!needsFilterFix && !needsTypeFix && !needsPageFix) return;
@@ -286,6 +294,27 @@ export function QuestionBank({ subjectSlug }: { subjectSlug: string }) {
     updateFilters({ ...QUESTION_BANK_URL_DEFAULTS });
   }
 
+  function removeChip(chip: FilterChip) {
+    if (chip.key === "skillPathIds" && chip.value) {
+      updateFilters({ skillPathIds: normalizedFilters.skillPathIds.filter((id) => id !== chip.value) });
+      return;
+    }
+    if (chip.key === "stageIds" && chip.value) {
+      const removed = new Set(chip.value.split(","));
+      updateFilters({ stageIds: normalizedFilters.stageIds.filter((id) => !removed.has(id)) });
+      return;
+    }
+    updateFilters({ [chip.key]: QUESTION_BANK_URL_DEFAULTS[chip.key] } as Partial<QuestionBankUrlState>);
+  }
+
+  function toggleMultiValue(key: "skillPathIds" | "stageIds", ids: readonly string[], checked: boolean) {
+    const current = pendingUrlStateRef.current[key];
+    const changed = checked
+      ? [...new Set([...current, ...ids])]
+      : current.filter((value) => !ids.includes(value));
+    updateFilters({ [key]: changed });
+  }
+
   function focusFilters() {
     if (typeof window !== "undefined" && window.matchMedia("(max-width: 1023px)").matches) {
       setMobileFiltersOpen(true);
@@ -316,8 +345,8 @@ export function QuestionBank({ subjectSlug }: { subjectSlug: string }) {
   const rawChips: Array<FilterChip | null> = [
     normalizedFilters.courseAreaId ? { key: "courseAreaId", label: options.courseAreas.find((item) => item.id === normalizedFilters.courseAreaId)?.name ?? normalizedFilters.courseAreaId } : null,
     normalizedFilters.specAreaId ? { key: "specAreaId", label: options.specAreas.find((item) => item.id === normalizedFilters.specAreaId)?.name ?? normalizedFilters.specAreaId } : null,
-    normalizedFilters.skillPathId ? { key: "skillPathId", label: options.skillPaths.find((item) => item.id === normalizedFilters.skillPathId)?.name ?? normalizedFilters.skillPathId } : null,
-    normalizedFilters.stageId ? { key: "stageId", label: options.stages.find((item) => item.id === normalizedFilters.stageId)?.name ?? normalizedFilters.stageId } : null,
+    ...normalizedFilters.skillPathIds.map((id) => ({ key: "skillPathIds" as const, value: id, label: options.skillPaths.find((item) => item.id === id)?.name ?? id })),
+    ...groupStageChoices(options.stages.filter((item) => normalizedFilters.stageIds.includes(item.id))).map((choice) => ({ key: "stageIds" as const, value: choice.ids.join(","), label: choice.name })),
     rawUrlState.status !== "all" ? { key: "status", label: STATUS_FILTERS.find((item) => item.id === rawUrlState.status)?.label ?? rawUrlState.status } : null,
     effectiveType !== "all" ? { key: "type", label: `${ANSWER_TYPE_LABELS[effectiveType as AnswerType]} questions` } : null,
     rawUrlState.calc !== "all" ? { key: "calc", label: rawUrlState.calc === "allowed" ? "Calculator allowed" : "Calculator not allowed" } : null,
@@ -326,10 +355,24 @@ export function QuestionBank({ subjectSlug }: { subjectSlug: string }) {
 
   const filterPanel = (
     <div className="grid gap-3">
-      <FilterSelect label="Course area" value={normalizedFilters.courseAreaId} onChange={(value) => updateFilters({ courseAreaId: value, specAreaId: "", skillPathId: "", stageId: "" })} options={options.courseAreas} allLabel="All areas" />
-      <FilterSelect label="Specification area" value={normalizedFilters.specAreaId} onChange={(value) => updateFilters({ specAreaId: value, skillPathId: "", stageId: "" })} options={options.specAreas.filter((item) => !normalizedFilters.courseAreaId || item.courseAreaId === normalizedFilters.courseAreaId)} allLabel="All specification areas" />
-      <FilterSelect label="Skill path" value={normalizedFilters.skillPathId} onChange={(value) => updateFilters({ skillPathId: value, stageId: "" })} options={options.skillPaths.filter((item) => (!normalizedFilters.courseAreaId || item.courseAreaId === normalizedFilters.courseAreaId) && (!normalizedFilters.specAreaId || item.specAreaId === normalizedFilters.specAreaId))} allLabel="All skill paths" />
-      <FilterSelect label="Stage" value={normalizedFilters.stageId} onChange={(value) => updateFilters({ stageId: value })} options={options.stages.filter((item) => !normalizedFilters.skillPathId || item.skillPathId === normalizedFilters.skillPathId)} allLabel="All stages" />
+      <FilterSelect label="Course area" value={normalizedFilters.courseAreaId} onChange={(value) => updateFilters({ courseAreaId: value, specAreaId: "", skillPathIds: [], stageIds: [] })} options={options.courseAreas} allLabel="All areas" />
+      <FilterSelect label="Specification area" value={normalizedFilters.specAreaId} onChange={(value) => updateFilters({ specAreaId: value, skillPathIds: [], stageIds: [] })} options={options.specAreas.filter((item) => !normalizedFilters.courseAreaId || item.courseAreaId === normalizedFilters.courseAreaId)} allLabel="All specification areas" />
+      <MultiFilter
+        label="Skills"
+        values={normalizedFilters.skillPathIds}
+        onClear={() => updateFilters({ skillPathIds: [], stageIds: [] })}
+        onToggle={(id, checked) => toggleMultiValue("skillPathIds", [id], checked)}
+        options={options.skillPaths.filter((item) => (!normalizedFilters.courseAreaId || item.courseAreaId === normalizedFilters.courseAreaId) && (!normalizedFilters.specAreaId || item.specAreaId === normalizedFilters.specAreaId))}
+        allLabel="All skills"
+      />
+      <StageMultiFilter
+        label="Stages"
+        values={normalizedFilters.stageIds}
+        onClear={() => updateFilters({ stageIds: [] })}
+        onToggle={(ids, checked) => toggleMultiValue("stageIds", ids, checked)}
+        options={stageChoices}
+        allLabel="All stages"
+      />
       <details className="group rounded-lg border border-line">
         <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between px-3 font-bold text-sm">More filters<ChevronDown className="size-4 group-open:rotate-180" /></summary>
         <div className="grid gap-3 border-t border-line p-3">
@@ -355,12 +398,20 @@ export function QuestionBank({ subjectSlug }: { subjectSlug: string }) {
           ) : null}
         </div>
       </details>
+      <div className="grid gap-3 border-t border-line pt-3 lg:hidden">
+        <label className="grid gap-1 text-sm font-bold">Sort
+          <select value={rawUrlState.sort} onChange={(event) => updateFilters({ sort: event.target.value as QuestionBankUrlState["sort"] })} className="min-h-11 min-w-0 rounded-lg border border-line bg-white px-3">
+            <option value="default">Course order</option><option value="recently-practised">Recently practised</option><option value="review-priority">Review priority</option><option value="completion-status">Completion status</option>
+          </select>
+        </label>
+        {filteredEligibleIds.length ? <button type="button" onClick={() => setSelected((current) => setQuestionGroupSelection(current, filteredEligibleIds, true))} className="min-h-11 rounded-lg border border-line bg-white px-3 font-bold text-forge">Select all {filteredEligibleIds.length} filtered questions</button> : null}
+      </div>
       <button type="button" onClick={resetAllFilters} className="min-h-11 rounded-lg border border-line bg-white px-3 font-bold text-forge">Reset filters</button>
     </div>
   );
 
   return (
-    <AppShell demo active="Subjects" workingContextPathId={normalizedFilters.skillPathId || null}>
+    <AppShell demo active="Subjects" workingContextPathId={normalizedFilters.skillPathIds.length === 1 ? normalizedFilters.skillPathIds[0] : null}>
       <div className="mx-auto mb-3 flex max-w-[1120px] justify-end max-md:mb-1"><AppTopbar demo /></div>
       <div
         className="mx-auto grid min-w-0 max-w-[1120px] gap-4 max-md:gap-2"
@@ -371,10 +422,10 @@ export function QuestionBank({ subjectSlug }: { subjectSlug: string }) {
             <Link href={subject.href}>{subject.subjectName}</Link><ArrowRight className="size-4" /><span className="font-bold text-forge">Question Bank</span>
           </nav>
           <h1 className="m-0 text-[clamp(24px,4vw,36px)] font-extrabold leading-none">Question Bank</h1>
-          <p className="mt-2 max-w-3xl text-base leading-relaxed text-muted max-md:hidden">Choose topics and questions to build your own practice session.</p>
+          <p className="mt-2 max-w-3xl text-base leading-relaxed text-muted max-md:hidden">Choose skills and questions to build your own practice session.</p>
           <div className="mt-3 flex flex-wrap gap-2 text-sm font-bold max-md:mt-1.5">
             <span className="rounded-full bg-forge-soft px-3 py-1.5 text-forge">{allEntries.length} questions available</span>
-            <span className="rounded-full border border-line bg-white px-3 py-1.5 max-md:hidden">{options.skillPaths.length} available skill path{options.skillPaths.length === 1 ? "" : "s"}</span>
+            <span className="rounded-full border border-line bg-white px-3 py-1.5 max-md:hidden">{options.skillPaths.length} available skill{options.skillPaths.length === 1 ? "" : "s"}</span>
             <span className="rounded-full border border-line bg-white px-3 py-1.5 text-muted max-md:hidden">More {subject.subjectName} content is coming later</span>
           </div>
         </header>
@@ -382,7 +433,7 @@ export function QuestionBank({ subjectSlug }: { subjectSlug: string }) {
         {scopedSkillPath || reviewDueEligible.length ? <div className="flex flex-wrap items-center gap-2">
           {scopedSkillPath ? <p className="inline-flex flex-wrap items-center gap-2 rounded-lg border border-line bg-white px-3 py-2 text-sm font-bold">
             Scoped to {scopedSkillPath.name}
-            <button type="button" onClick={() => updateFilters({ skillPathId: "", stageId: "" })} className="min-h-8 rounded-full border border-line px-2 text-xs font-bold text-forge">Browse all {subject.subjectName}</button>
+            <button type="button" onClick={() => updateFilters({ skillPathIds: [], stageIds: [] })} className="min-h-8 rounded-full border border-line px-2 text-xs font-bold text-forge">Browse all {subject.subjectName}</button>
           </p> : null}
           {reviewDueEligible.length ? <button ref={reviewDueTriggerRef} type="button" onClick={() => setReviewDueConfirmOpen(true)} className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-forge/40 bg-forge-soft px-3 text-sm font-bold text-forge">
             {formatNeedsPracticeLabel(reviewDueEligible.length)}
@@ -401,7 +452,7 @@ export function QuestionBank({ subjectSlug }: { subjectSlug: string }) {
                 <label className="relative block min-w-0 flex-1">
                   <span className="sr-only">Search questions</span>
                   <Search className="pointer-events-none absolute left-3 top-3.5 size-4 text-muted" />
-                  <input value={searchInput} onChange={(event) => setSearchInput(event.target.value)} placeholder="Search questions, paths or stages" className="min-h-12 w-full rounded-xl border border-line bg-white pl-10 pr-4 max-md:min-h-11" />
+                  <input value={searchInput} onChange={(event) => setSearchInput(event.target.value)} placeholder="Search questions, skills or stages" className="min-h-12 w-full rounded-xl border border-line bg-white pl-10 pr-4 max-md:min-h-11" />
                 </label>
                 <button ref={filterTriggerRef} type="button" onClick={() => setMobileFiltersOpen(true)} className="inline-flex min-h-11 w-fit shrink-0 items-center gap-2 rounded-lg border border-line bg-white px-3 font-bold lg:hidden">
                   <Filter className="size-4" />Filters{hasActiveFilters ? <span className="rounded-full bg-forge px-1.5 text-xs text-white">{activeChips.length}</span> : null}
@@ -409,15 +460,15 @@ export function QuestionBank({ subjectSlug }: { subjectSlug: string }) {
               </div>
 
               {activeChips.length ? <div className="flex flex-wrap items-center gap-2">
-                {activeChips.map((chip) => <button key={chip.key} type="button" onClick={() => updateFilters({ [chip.key]: QUESTION_BANK_URL_DEFAULTS[chip.key] } as Partial<QuestionBankUrlState>)} className="inline-flex min-h-8 items-center gap-1 rounded-full border border-line bg-white px-3 text-xs font-bold">{chip.label}<X className="size-3" /></button>)}
+                {activeChips.map((chip) => <button key={`${chip.key}:${chip.value ?? ""}`} type="button" onClick={() => removeChip(chip)} aria-label={`Remove ${chip.label} filter`} className="inline-flex min-h-8 items-center gap-1 rounded-full border border-line bg-white px-3 text-xs font-bold">{chip.label}<X className="size-3" /></button>)}
               </div> : null}
 
               <div className="flex flex-wrap items-center justify-between gap-3 max-md:gap-1.5">
                 <h2 id="question-results-title" className="text-xl font-extrabold max-md:text-base" aria-live="polite">{questions.length} matching question{questions.length === 1 ? "" : "s"}</h2>
                 <div className="flex flex-wrap items-center gap-2 max-md:hidden">
                   {questions.length ? (
-                    <button type="button" onClick={() => setSelected((current) => setQuestionGroupSelection(current, questions.filter((entry) => checkPracticeEligibility(entry.question).eligible).map((entry) => entry.question.id), true))} className="min-h-10 rounded-lg border border-line bg-white px-3 text-sm font-bold">
-                      Select all {questions.length} filtered questions
+                    <button type="button" onClick={() => setSelected((current) => setQuestionGroupSelection(current, filteredEligibleIds, true))} className="min-h-10 rounded-lg border border-line bg-white px-3 text-sm font-bold">
+                      Select all {filteredEligibleIds.length} filtered questions
                     </button>
                   ) : null}
                   <label className="text-sm font-bold">Sort <select value={rawUrlState.sort} onChange={(event) => updateFilters({ sort: event.target.value as QuestionBankUrlState["sort"] })} className="ml-1 min-h-10 rounded-lg border border-line bg-white px-2">
@@ -468,11 +519,12 @@ export function QuestionBank({ subjectSlug }: { subjectSlug: string }) {
               scopedSkillPathName={!hasSearch && !hasActiveSecondaryFilters ? scopedSkillPath?.name : undefined}
               hasSearch={hasSearch}
               hasActiveFilters={hasActiveFilters}
+              previouslyIncorrect={rawUrlState.status === "previously-incorrect"}
               activeChips={activeChips}
               onClearSearch={() => setSearchInput("")}
               onAdjustFilters={focusFilters}
               onResetFilters={resetAllFilters}
-              onRemoveChip={(key) => updateFilters({ [key]: QUESTION_BANK_URL_DEFAULTS[key] } as Partial<QuestionBankUrlState>)}
+              onRemoveChip={removeChip}
               subjectName={subject.subjectName}
               subjectHref={subject.href}
             />}
@@ -525,6 +577,37 @@ function FilterSelect({ label, value, onChange, options, allLabel }: { label: st
   return <label className="grid gap-1 text-sm font-bold">{label}<select aria-label={label} value={value} onChange={(event) => onChange(event.target.value)} className="min-h-11 min-w-0 rounded-lg border border-line bg-white px-3"><option value="">{allLabel}</option>{options.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>;
 }
 
+function MultiFilter({ label, values, onClear, onToggle, options, allLabel }: { label: string; values: readonly string[]; onClear: () => void; onToggle: (id: string, checked: boolean) => void; options: readonly { id: string; name: string }[]; allLabel: string }) {
+  return <fieldset className="rounded-lg border border-line p-3">
+    <legend className="px-1 text-sm font-bold">{label}</legend>
+    <label className="flex min-h-10 items-center gap-2 text-sm font-semibold">
+      <input type="checkbox" checked={!values.length} onChange={onClear} /> {allLabel}
+    </label>
+    <div className="grid max-h-44 gap-1 overflow-y-auto border-t border-line pt-1">
+      {options.map((item) => <label key={item.id} className="flex min-h-10 items-center gap-2 text-sm font-semibold">
+        <input type="checkbox" checked={values.includes(item.id)} onChange={(event) => onToggle(item.id, event.target.checked)} /> {item.name}
+      </label>)}
+    </div>
+  </fieldset>;
+}
+
+function StageMultiFilter({ label, values, onClear, onToggle, options, allLabel }: { label: string; values: readonly string[]; onClear: () => void; onToggle: (ids: readonly string[], checked: boolean) => void; options: readonly { name: string; ids: string[] }[]; allLabel: string }) {
+  return <fieldset className="rounded-lg border border-line p-3">
+    <legend className="px-1 text-sm font-bold">{label}</legend>
+    <label className="flex min-h-10 items-center gap-2 text-sm font-semibold">
+      <input type="checkbox" checked={!values.length} onChange={onClear} /> {allLabel}
+    </label>
+    <div className="grid gap-1 border-t border-line pt-1">
+      {options.map((item) => {
+        const checked = item.ids.every((id) => values.includes(id));
+        return <label key={item.name} className="flex min-h-10 items-center gap-2 text-sm font-semibold">
+          <input type="checkbox" checked={checked} onChange={(event) => onToggle(item.ids, event.target.checked)} /> {displayStageName(item.name)}
+        </label>;
+      })}
+    </div>
+  </fieldset>;
+}
+
 function MobileFilterSheet({ containerRef, closeRef, onClose, children }: { containerRef: React.RefObject<HTMLElement | null>; closeRef: React.RefObject<HTMLButtonElement | null>; onClose: () => void; children: React.ReactNode }) {
   const titleId = useId();
   return <div className="fixed inset-0 z-50 bg-ink/35 lg:hidden" role="presentation" onMouseDown={(event) => { if (event.currentTarget === event.target) onClose(); }}>
@@ -575,16 +658,17 @@ function QuestionRow({ entry, selected, expanded, onSelected, onToggleExpand }: 
   </li>;
 }
 
-function QuestionBankEmptyState({ hasAnyQuestions, scopedSkillPathName, hasSearch, hasActiveFilters, activeChips, onClearSearch, onAdjustFilters, onResetFilters, onRemoveChip, subjectName, subjectHref }: {
+function QuestionBankEmptyState({ hasAnyQuestions, scopedSkillPathName, hasSearch, hasActiveFilters, previouslyIncorrect, activeChips, onClearSearch, onAdjustFilters, onResetFilters, onRemoveChip, subjectName, subjectHref }: {
   hasAnyQuestions: boolean;
   scopedSkillPathName?: string;
   hasSearch: boolean;
   hasActiveFilters: boolean;
+  previouslyIncorrect: boolean;
   activeChips: FilterChip[];
   onClearSearch: () => void;
   onAdjustFilters: () => void;
   onResetFilters: () => void;
-  onRemoveChip: (key: keyof QuestionBankUrlState) => void;
+  onRemoveChip: (chip: FilterChip) => void;
   subjectName: string;
   subjectHref: string;
 }) {
@@ -616,9 +700,16 @@ function QuestionBankEmptyState({ hasAnyQuestions, scopedSkillPathName, hasSearc
       </div>
     </Card>;
   }
+  if (previouslyIncorrect) {
+    return <Card className="animate-fade-rise mt-3 p-5">
+      <h3 className="font-extrabold">Nothing to recover here right now.</h3>
+      <p className="mt-1 text-sm text-muted">Try another skill or return to all questions.</p>
+      <button type="button" onClick={onResetFilters} className="mt-4 min-h-10 rounded-lg border border-line px-4 font-bold text-forge">Clear filters</button>
+    </Card>;
+  }
   return <Card className="animate-fade-rise mt-3 p-5">
     <h3 className="font-extrabold">No questions match these filters</h3>
-    {activeChips.length ? <div className="mt-3 flex flex-wrap gap-2">{activeChips.map((chip) => <button key={chip.key} type="button" onClick={() => onRemoveChip(chip.key)} className="inline-flex min-h-8 items-center gap-1 rounded-full border border-line bg-white px-3 text-xs font-bold">{chip.label}<X className="size-3" /></button>)}</div> : null}
+    {activeChips.length ? <div className="mt-3 flex flex-wrap gap-2">{activeChips.map((chip) => <button key={`${chip.key}:${chip.value ?? ""}`} type="button" onClick={() => onRemoveChip(chip)} className="inline-flex min-h-8 items-center gap-1 rounded-full border border-line bg-white px-3 text-xs font-bold">{chip.label}<X className="size-3" /></button>)}</div> : null}
     {hasActiveFilters ? <button type="button" onClick={onResetFilters} className="mt-4 min-h-10 rounded-lg border border-line px-4 font-bold text-forge">Reset all filters</button> : null}
   </Card>;
 }
@@ -678,4 +769,18 @@ function questionStatus(entry: QuestionBankQuestionEntry) {
   if (entry.progress.completed) return "Completed";
   if (entry.progress.attempted) return "In progress";
   return "Not attempted";
+}
+
+function sameValues(left: readonly string[], right: readonly string[]) {
+  return left.length === right.length && left.every((value, index) => value === right[index]);
+}
+
+function groupStageChoices(stages: readonly { id: string; name: string }[]) {
+  const grouped = new Map<string, string[]>();
+  for (const stage of stages) grouped.set(stage.name, [...(grouped.get(stage.name) ?? []), stage.id]);
+  return [...grouped].map(([name, ids]) => ({ name, ids }));
+}
+
+function displayStageName(name: string) {
+  return name === "Past Paper-style Questions" ? "Exam practice" : name;
 }

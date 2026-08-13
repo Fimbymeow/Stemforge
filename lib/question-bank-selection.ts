@@ -3,8 +3,8 @@ export const QUESTION_BANK_PAGE_SIZE = 24;
 export type QuestionBankFilters = {
   courseAreaId: string;
   specAreaId: string;
-  skillPathId: string;
-  stageId: string;
+  skillPathIds: string[];
+  stageIds: string[];
 };
 
 export function normalizeQuestionBankFilters(
@@ -17,19 +17,22 @@ export function normalizeQuestionBankFilters(
 ): QuestionBankFilters {
   const specAreaId = available.specAreas.some((item) => item.id === filters.specAreaId && (!filters.courseAreaId || item.courseAreaId === filters.courseAreaId))
     ? filters.specAreaId : "";
-  const skillPathId = available.skillPaths.some((item) =>
-    item.id === filters.skillPathId
+  const skillPathIds = unique(filters.skillPathIds).filter((skillPathId) => available.skillPaths.some((item) =>
+    item.id === skillPathId
     && (!filters.courseAreaId || item.courseAreaId === filters.courseAreaId)
-    && (!specAreaId || item.specAreaId === specAreaId))
-    ? filters.skillPathId : "";
-  const stageId = available.stages.some((item) => {
-    if (item.id !== filters.stageId || (skillPathId && item.skillPathId !== skillPathId)) return false;
+    && (!specAreaId || item.specAreaId === specAreaId)));
+  const stageIds = unique(filters.stageIds).filter((stageId) => available.stages.some((item) => {
+    if (item.id !== stageId || (skillPathIds.length && !skillPathIds.includes(item.skillPathId))) return false;
     const parentPath = available.skillPaths.find((path) => path.id === item.skillPathId);
     return Boolean(parentPath)
       && (!filters.courseAreaId || parentPath?.courseAreaId === filters.courseAreaId)
       && (!specAreaId || parentPath?.specAreaId === specAreaId);
-  }) ? filters.stageId : "";
-  return { courseAreaId: filters.courseAreaId, specAreaId, skillPathId, stageId };
+  }));
+  return { courseAreaId: filters.courseAreaId, specAreaId, skillPathIds, stageIds };
+}
+
+function unique(values: readonly string[]) {
+  return [...new Set(values.filter(Boolean))];
 }
 
 export function toggleQuestionSelection(selected: ReadonlySet<string>, questionId: string, checked: boolean) {

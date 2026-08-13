@@ -9,8 +9,8 @@ test("Question Bank opens directly into compact discovery with published-only fi
   await expect(page.getByText("42 questions available")).toBeVisible();
   await page.getByLabel("Course area").selectOption({ label: "Calculus" });
   await page.getByLabel("Specification area").selectOption({ label: "Differentiation" });
-  await page.getByLabel("Skill path").selectOption({ label: "Basic differentiation" });
-  await page.getByLabel("Stage", { exact: true }).selectOption({ label: "Foundations" });
+  await page.getByRole("group", { name: "Skills" }).getByLabel("Basic differentiation").click();
+  await page.getByRole("group", { name: "Stages" }).getByLabel("Foundations").click();
   await expect(page.getByRole("heading", { name: "3 matching questions" })).toBeVisible();
   await page.getByRole("button", { name: "Reset filters" }).click();
   await expect(page.getByRole("heading", { name: "42 matching questions" })).toBeVisible();
@@ -18,14 +18,14 @@ test("Question Bank opens directly into compact discovery with published-only fi
 
 test("filter state is shareable through the URL and survives refresh and Back/Forward", async ({ page }) => {
   await page.goto(bank);
-  await page.getByLabel("Skill path").selectOption({ label: "Basic differentiation" });
+  await page.getByRole("group", { name: "Skills" }).getByLabel("Basic differentiation").click();
   await expect(page).toHaveURL(/path=basic-differentiation/);
-  await page.getByLabel("Stage", { exact: true }).selectOption({ label: "Foundations" });
+  await page.getByRole("group", { name: "Stages" }).getByLabel("Foundations").click();
   await expect(page).toHaveURL(/path=basic-differentiation/);
   await expect(page).toHaveURL(/stage=basic-diff-stage-foundations/);
   await page.reload();
   await expect(page.getByRole("heading", { name: "3 matching questions" })).toBeVisible();
-  await expect(page.getByLabel("Stage", { exact: true })).toHaveValue("basic-diff-stage-foundations");
+  await expect(page.getByRole("group", { name: "Stages" }).getByLabel("Foundations")).toBeChecked();
   await page.goBack();
   await expect(page).toHaveURL(/path=basic-differentiation/);
   await expect(page).not.toHaveURL(/stage=/);
@@ -34,11 +34,29 @@ test("filter state is shareable through the URL and survives refresh and Back/Fo
   await expect(page.getByRole("heading", { name: "3 matching questions" })).toBeVisible();
 });
 
+test("skill and stage multi-select state is visible, shareable and removable", async ({ page }) => {
+  await page.goto(bank);
+  const skills = page.getByRole("group", { name: "Skills" });
+  await skills.getByLabel("Basic differentiation").click();
+  await skills.getByLabel("Chain rule").click();
+  const stages = page.getByRole("group", { name: "Stages" });
+  await stages.getByLabel("Foundations").click();
+  await stages.getByLabel("Applications").click();
+  await expect(page).toHaveURL(/path=basic-differentiation%2Cchain-rule/);
+  await expect(page).toHaveURL(/stage=basic-diff-stage-foundations%2Cchain-rule-stage-foundations%2Cbasic-diff-stage-applications%2Cchain-rule-stage-applications|stage=basic-diff-stage-foundations%2Cbasic-diff-stage-applications%2Cchain-rule-stage-foundations%2Cchain-rule-stage-applications/);
+  for (const label of ["Basic differentiation", "Chain rule", "Foundations", "Applications"]) {
+    await expect(page.getByRole("button", { name: `Remove ${label} filter` })).toBeVisible();
+  }
+  await page.getByRole("button", { name: "Remove Foundations filter" }).click();
+  await expect(page.getByRole("button", { name: "Remove Foundations filter" })).toHaveCount(0);
+});
+
 test("selection survives filtering, can be reviewed and creates an ordered custom session", async ({ page }) => {
   await page.goto(bank);
   await page.getByLabel("Select Basic differentiation, Foundations, Question 1").check();
   await expect(page.getByLabel("Question selection summary")).toContainText("1 selected");
-  await page.getByLabel("Stage", { exact: true }).selectOption({ label: "Applications" });
+  await page.getByRole("group", { name: "Skills" }).getByLabel("Basic differentiation").click();
+  await page.getByRole("group", { name: "Stages" }).getByLabel("Applications").click();
   await expect(page.getByLabel("Question selection summary")).toContainText("1 selected");
   await page.getByRole("button", { name: /Select all 3 filtered questions/ }).click();
   await expect(page.getByLabel("Question selection summary")).toContainText("4 selected");

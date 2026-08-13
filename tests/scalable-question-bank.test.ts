@@ -10,7 +10,8 @@ import {
 } from "../lib/question-bank-selection";
 import { createCustomPracticeSession } from "../lib/practice/custom-practice";
 import { isPracticeSession } from "../lib/practice/practice-validation";
-import { evidence } from "./progress-fixtures";
+import { createQuestionProgressIndex, getQuestionProgressForVersion, getQuestionProgressForVersionFromIndex } from "../lib/progress/calculations";
+import { attempt, evidence, supportEvent } from "./progress-fixtures";
 import {
   createTwoPathFixture,
   createTwoSubjectFixture,
@@ -28,8 +29,8 @@ test("active filter nodes derive only from published questions and compose acros
     subjectSlug: fixtureIds.subjectSlug,
     courseAreaId: "calculus",
     specAreaId: "integration",
-    skillPathId: fixtureIds.path,
-    stageId: fixtureIds.foundationsStage,
+    skillPathIds: [fixtureIds.path],
+    stageIds: [fixtureIds.foundationsStage],
   }).length, 2);
 });
 
@@ -38,13 +39,13 @@ test("invalid child filters clear while valid parent-compatible values remain", 
   assert.deepEqual(normalizeQuestionBankFilters({
     courseAreaId: "calculus",
     specAreaId: "differentiation",
-    skillPathId: fixtureIds.path,
-    stageId: fixtureIds.foundationsStage,
+    skillPathIds: [fixtureIds.path],
+    stageIds: [fixtureIds.foundationsStage],
   }, options), {
     courseAreaId: "calculus",
     specAreaId: "differentiation",
-    skillPathId: "",
-    stageId: "",
+    skillPathIds: [],
+    stageIds: [],
   });
 });
 
@@ -55,6 +56,49 @@ test("canonical selection persists across filters and group operations are deter
   assert.deepEqual([...selected], ["q-1", "q-2"]);
   selected = setQuestionGroupSelection(selected, ["q-2"], false);
   assert.deepEqual([...selected], ["q-1"]);
+});
+
+test("skill and stage multi-select filters form unions while still composing", () => {
+  const resolver = createContentResolver(createTwoPathFixture());
+  const all = queryAvailableQuestionBankQuestions(resolver, evidence(), { subjectSlug: fixtureIds.subjectSlug });
+  const multiSkill = queryAvailableQuestionBankQuestions(resolver, evidence(), {
+    subjectSlug: fixtureIds.subjectSlug,
+    skillPathIds: ["basic-differentiation", fixtureIds.path],
+  });
+  assert.equal(multiSkill.length, all.length);
+  const multiStage = queryAvailableQuestionBankQuestions(resolver, evidence(), {
+    subjectSlug: fixtureIds.subjectSlug,
+    skillPathIds: ["basic-differentiation", fixtureIds.path],
+    stageIds: ["basic-diff-stage-foundations", fixtureIds.applicationsStage],
+  });
+  assert.deepEqual(new Set(multiStage.map((entry) => entry.context.stage.id)), new Set(["basic-diff-stage-foundations", fixtureIds.applicationsStage]));
+  assert.equal(multiStage.length, 4);
+});
+
+test("Previously incorrect uses the supplied canonical open-mistake question set", () => {
+  const resolver = createContentResolver(createTwoPathFixture());
+  const target = fixtureIds.questions[0];
+  const results = queryAvailableQuestionBankQuestions(resolver, evidence(), {
+    subjectSlug: fixtureIds.subjectSlug,
+    progressFilter: "previously-incorrect",
+    openMistakeQuestionIds: new Set([target]),
+  });
+  assert.deepEqual(results.map((entry) => entry.question.id), [target]);
+});
+
+test("indexed question progress is identical to the established per-question derivation", () => {
+  const progressEvidence = evidence([
+    attempt(),
+    attempt({ isCorrect: true, sequence: 3, eventId: "attempt_test_2", attemptedAt: "2026-07-12T10:02:00.000Z" }),
+  ], [supportEvent()]);
+  const index = createQuestionProgressIndex(progressEvidence);
+  const source = createTwoPathFixture();
+  for (const question of source.questions) {
+    assert.deepEqual(
+      getQuestionProgressForVersionFromIndex(question.id, question.questionVersion, index, question.skillPathId),
+      getQuestionProgressForVersion(question.id, question.questionVersion, progressEvidence, question.skillPathId),
+    );
+  }
 });
 
 test("pagination preserves the complete selection and exposes stable ranges", () => {

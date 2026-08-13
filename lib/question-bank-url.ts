@@ -13,8 +13,8 @@ export type QuestionBankUrlState = QuestionBankFilters & {
 export const QUESTION_BANK_URL_DEFAULTS: QuestionBankUrlState = {
   courseAreaId: "",
   specAreaId: "",
-  skillPathId: "",
-  stageId: "",
+  skillPathIds: [],
+  stageIds: [],
   status: "all",
   type: "all",
   calc: "all",
@@ -25,8 +25,8 @@ export const QUESTION_BANK_URL_DEFAULTS: QuestionBankUrlState = {
 const PARAM_NAMES = {
   courseAreaId: "course",
   specAreaId: "spec",
-  skillPathId: "path",
-  stageId: "stage",
+  skillPathIds: "path",
+  stageIds: "stage",
   status: "status",
   type: "type",
   calc: "calc",
@@ -34,7 +34,7 @@ const PARAM_NAMES = {
   page: "page",
 } as const satisfies Record<keyof QuestionBankUrlState, string>;
 
-const STATUS_VALUES: readonly QuestionBankProgressFilter[] = ["all", "not-started", "in-progress", "completed", "review-recommended"];
+const STATUS_VALUES: readonly QuestionBankProgressFilter[] = ["all", "not-started", "in-progress", "completed", "review-recommended", "previously-incorrect"];
 const SORT_VALUES: readonly QuestionBankSort[] = ["default", "recently-practised", "review-priority", "completion-status"];
 const CALC_VALUES: readonly QuestionBankCalculatorFilter[] = ["all", "allowed", "not-allowed"];
 const TYPE_VALUES: readonly QuestionBankTypeFilter[] = [
@@ -57,14 +57,18 @@ function readSlug(params: URLSearchParams, key: string): string {
   return params.get(key)?.trim() ?? "";
 }
 
+function readSlugs(params: URLSearchParams, key: string): string[] {
+  return [...new Set((params.get(key) ?? "").split(",").map((value) => value.trim()).filter(Boolean))];
+}
+
 /** Context-free parse: validates enum/page shape only. Cascade validity (course/spec/path/stage) is resolved separately once real filter options are known. */
 export function parseQuestionBankSearchParams(params: URLSearchParams): QuestionBankUrlState {
   const rawPage = Number.parseInt(params.get(PARAM_NAMES.page) ?? "", 10);
   return {
     courseAreaId: readSlug(params, PARAM_NAMES.courseAreaId),
     specAreaId: readSlug(params, PARAM_NAMES.specAreaId),
-    skillPathId: readSlug(params, PARAM_NAMES.skillPathId),
-    stageId: readSlug(params, PARAM_NAMES.stageId),
+    skillPathIds: readSlugs(params, PARAM_NAMES.skillPathIds),
+    stageIds: readSlugs(params, PARAM_NAMES.stageIds),
     status: readEnum(params, PARAM_NAMES.status, STATUS_VALUES, QUESTION_BANK_URL_DEFAULTS.status),
     type: readEnum(params, PARAM_NAMES.type, TYPE_VALUES, QUESTION_BANK_URL_DEFAULTS.type),
     calc: readEnum(params, PARAM_NAMES.calc, CALC_VALUES, QUESTION_BANK_URL_DEFAULTS.calc),
@@ -78,6 +82,11 @@ export function serializeQuestionBankUrlState(state: QuestionBankUrlState): URLS
   const params = new URLSearchParams();
   (Object.keys(PARAM_NAMES) as Array<keyof QuestionBankUrlState>).forEach((key) => {
     const value = state[key];
+    if (Array.isArray(value)) {
+      if (!value.length) return;
+      params.set(PARAM_NAMES[key], value.join(","));
+      return;
+    }
     if (value === QUESTION_BANK_URL_DEFAULTS[key]) return;
     params.set(PARAM_NAMES[key], String(value));
   });

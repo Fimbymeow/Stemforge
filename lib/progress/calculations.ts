@@ -94,6 +94,34 @@ export function getQuestionProgress(questionId: string, evidence: ProgressEviden
   return getQuestionProgressForVersion(questionId, 1, evidence);
 }
 
+export type QuestionProgressIndex = {
+  attemptsByQuestion: ReadonlyMap<string, readonly QuestionAttempt[]>;
+  attemptsByQuestionPath: ReadonlyMap<string, readonly QuestionAttempt[]>;
+  eventsByQuestion: ReadonlyMap<string, readonly QuestionSupportEvent[]>;
+  eventsByQuestionPath: ReadonlyMap<string, readonly QuestionSupportEvent[]>;
+};
+
+export function createQuestionProgressIndex(evidence: ProgressEvidence): QuestionProgressIndex {
+  return {
+    attemptsByQuestion: groupEvidence(evidence.attempts, (attempt) => attempt.questionId),
+    attemptsByQuestionPath: groupEvidence(evidence.attempts, (attempt) => questionPathKey(attempt.questionId, attempt.skillPathId)),
+    eventsByQuestion: groupEvidence(evidence.supportEvents, (event) => event.questionId),
+    eventsByQuestionPath: groupEvidence(evidence.supportEvents, (event) => questionPathKey(event.questionId, event.skillPathId)),
+  };
+}
+
+export function getQuestionProgressForVersionFromIndex(
+  questionId: string,
+  currentVersion: number,
+  index: QuestionProgressIndex,
+  expectedSkillPathId?: string,
+): QuestionProgressState {
+  const key = expectedSkillPathId ? questionPathKey(questionId, expectedSkillPathId) : questionId;
+  const attempts = expectedSkillPathId ? index.attemptsByQuestionPath.get(key) : index.attemptsByQuestion.get(key);
+  const events = expectedSkillPathId ? index.eventsByQuestionPath.get(key) : index.eventsByQuestion.get(key);
+  return deriveQuestionProgressForVersion(questionId, currentVersion, attempts ?? [], events ?? []);
+}
+
 export function getQuestionProgressForVersion(
   questionId: string,
   currentVersion: number,
@@ -107,6 +135,15 @@ export function getQuestionProgressForVersion(
   const historicalEvents = evidence.supportEvents.filter((event) =>
     event.questionId === questionId &&
     (!expectedSkillPathId || event.skillPathId === expectedSkillPathId));
+  return deriveQuestionProgressForVersion(questionId, currentVersion, historicalAttempts, historicalEvents);
+}
+
+function deriveQuestionProgressForVersion(
+  questionId: string,
+  currentVersion: number,
+  historicalAttempts: readonly QuestionAttempt[],
+  historicalEvents: readonly QuestionSupportEvent[],
+): QuestionProgressState {
   const currentAttempts = historicalAttempts.filter(
     (attempt) => attempt.versionEvidence.kind === "known" && attempt.versionEvidence.questionVersion === currentVersion,
   );
@@ -168,6 +205,21 @@ export function getQuestionProgressForVersion(
           ? (currentVersion > 1 ? "required" : "recommended")
           : "none",
   };
+}
+
+function questionPathKey(questionId: string, skillPathId: string) {
+  return `${questionId}\u0000${skillPathId}`;
+}
+
+function groupEvidence<T>(items: readonly T[], keyFor: (item: T) => string): Map<string, T[]> {
+  const grouped = new Map<string, T[]>();
+  for (const item of items) {
+    const key = keyFor(item);
+    const values = grouped.get(key);
+    if (values) values.push(item);
+    else grouped.set(key, [item]);
+  }
+  return grouped;
 }
 
 export function deriveBestDemonstratedOutcome(

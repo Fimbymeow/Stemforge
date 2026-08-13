@@ -70,7 +70,11 @@ test("mobile taxonomy and question context remain readable without page overflow
   await expect(page.getByRole("heading", { name: "42 matching questions" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Open Differentiate a power" })).toBeVisible();
   await expect(page.getByText("Future Higher Maths coverage", { exact: true })).toBeVisible();
-  await expect(page.getByLabel("Skill path").locator("option", { hasText: "Chain rule" })).toHaveCount(1);
+  await page.getByRole("button", { name: /^Filters/ }).click();
+  const filters = page.getByRole("dialog", { name: "Filters" });
+  await expect(filters.getByRole("group", { name: "Skills" }).getByLabel("Chain rule")).toBeVisible();
+  await expect(filters.getByLabel("Sort")).toBeVisible();
+  await expect(filters.getByRole("button", { name: "Select all 42 filtered questions" })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
 
   await page.goto("/question/hm-calc-diff-basic-a-001");

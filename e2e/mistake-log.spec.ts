@@ -25,7 +25,7 @@ test("fresh learner sees a calm empty Mistake Log", async ({ page }) => {
   await expect(page.getByRole("heading", { level: 1, name: "Mistake Log" })).toBeVisible();
   await expect(page.getByTestId("mistake-log-empty-state")).toContainText("No unresolved mistakes right now");
   await expect(page.getByTestId("mistake-item")).toHaveCount(0);
-  await expect(page.getByRole("button", { name: /Practise .* mistakes/ })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: /Practise these/ })).toHaveCount(0);
   await page.goto("/dashboard");
   await expect(page.getByTestId("dashboard-mistakes-link")).toHaveCount(0);
 });
@@ -116,14 +116,11 @@ test("two Chain Rule errors remain two questions in one skill group", async ({ p
   await expect(group).toHaveAttribute("data-skill-path-id", "chain-rule");
   await expect(group.getByTestId("mistake-item")).toHaveCount(2);
   await expect(group).toContainText("2 unresolved questions");
-  await group.getByRole("button", { name: "Practise Chain rule mistakes" }).click();
-  await expect(page).toHaveURL(/\/practice\/session\//);
-  const session = await readActiveSession(page);
-  expect(session.mode).toBe("retry_incorrect");
-  expect(session.origin).toBe("retry_incorrect");
-  expect(session.questionIds).toEqual(expect.arrayContaining(CHAIN_IDS));
-  expect(session.questionIds).toHaveLength(2);
-  expect(new Set(session.pathIds)).toEqual(new Set(["chain-rule"]));
+  await group.getByRole("link", { name: "Practise these Chain rule questions" }).click();
+  await expect(page).toHaveURL(/\/subjects\/higher-maths\/question-bank\?path=chain-rule&status=previously-incorrect/);
+  await expect(page.getByRole("heading", { name: "2 matching questions" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Remove Chain rule filter" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Remove Previously incorrect filter" })).toBeVisible();
 });
 
 test("Practice setup exposes one grouped Retry mistakes mode only while a mistake is open", async ({ page }) => {
@@ -149,20 +146,19 @@ test("solution-assisted success in remediation remains open and independently co
   await openQuestion(page, QUESTION_IDS[0]);
   await submitAnswer(page, "4x^5");
   await page.goto(MISTAKES_HREF);
-  await page.getByRole("button", { name: "Practise Basic differentiation mistakes" }).click();
-  await expect(page).toHaveURL(/\/practice\/session\//);
+  await page.getByRole("link", { name: "Retry Basic differentiation question 1" }).click();
   await openWorkedSolution(page);
   await page.reload();
   await submitAnswer(page, "5x^4");
   await page.goto(MISTAKES_HREF);
   await expect(page.getByTestId("mistake-item")).toHaveAttribute("data-mistake-state", "open");
-  await expect(page.getByRole("button", { name: "Practise Basic differentiation mistakes" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Practise these Basic differentiation questions" })).toBeVisible();
 
   await page.getByRole("link", { name: "Retry Basic differentiation question 1" }).click();
   await submitAnswer(page, "5x^4");
   await page.goto(MISTAKES_HREF);
   await expect(page.getByTestId("mistake-log-empty-state")).toBeVisible();
-  await expect(page.getByRole("button", { name: /Practise .* mistakes/ })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: /Practise these/ })).toHaveCount(0);
 });
 
 test("Basic-scoped remediation excludes an open Chain Rule mistake", async ({ page }) => {
@@ -171,11 +167,11 @@ test("Basic-scoped remediation excludes an open Chain Rule mistake", async ({ pa
     canonicalAttempt(CHAIN_IDS[0], 2, false),
   ]));
   await page.goto(MISTAKES_HREF);
-  await page.getByRole("button", { name: "Practise Basic differentiation mistakes" }).click();
-  await expect(page).toHaveURL(/\/practice\/session\//);
-  const session = await readActiveSession(page);
-  expect(session.questionIds).toEqual([QUESTION_IDS[0]]);
-  expect(session.pathIds).toEqual(["basic-differentiation"]);
+  await page.getByRole("link", { name: "Practise these Basic differentiation questions" }).click();
+  await expect(page).toHaveURL(/path=basic-differentiation/);
+  await expect(page).toHaveURL(/status=previously-incorrect/);
+  await expect(page.getByRole("heading", { name: "1 matching question" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Chain rule/ })).toHaveCount(0);
 });
 
 test("Basic and Chain mistakes are separated by skill and remain clean at 375px and 320px", async ({ page }) => {
@@ -189,7 +185,7 @@ test("Basic and Chain mistakes are separated by skill and remain clean at 375px 
     await page.goto(MISTAKES_HREF);
     await expect(page.getByTestId("mistake-skill-group")).toHaveCount(2);
     await expect(page.getByRole("link", { name: /^Retry / })).toHaveCount(2);
-    await expect(page.getByRole("button", { name: /Practise .* mistakes/ })).toHaveCount(2);
+    await expect(page.getByRole("link", { name: /Practise these/ })).toHaveCount(2);
     await expectNoHorizontalOverflow(page);
   }
 });
@@ -207,7 +203,7 @@ test("an older question-version error stays history and does not appear unresolv
   const item = page.getByTestId("mistake-item");
   await expect(item).toHaveAttribute("data-mistake-state", "historical");
   await expect(item).toContainText("Previous version");
-  await expect(page.getByRole("button", { name: /Practise .* mistakes/ })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: /Practise these/ })).toHaveCount(0);
 });
 
 test("malformed evidence cannot substitute an unavailable or different skill", async ({ page }) => {

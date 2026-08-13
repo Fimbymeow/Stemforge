@@ -189,7 +189,7 @@ export function deriveWorkingContextModel(input: {
     notesHref,
     practiceHref,
     overviewHref: context.skillPath.href,
-    questionBankHref: `/subjects/${context.subject.subjectSlug}/question-bank`,
+    questionBankHref: `/subjects/${context.subject.subjectSlug}/question-bank?path=${encodeURIComponent(context.skillPath.slug)}`,
     mistakesHref: openMistakeCount > 0 ? mistakeLog.href : null,
     openMistakeCount,
     attentionReasonCode: attention.primaryReason.code,

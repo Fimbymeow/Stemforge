@@ -16,8 +16,8 @@ test("canonical parameter names round-trip through parse and serialize", () => {
   const state: QuestionBankUrlState = {
     courseAreaId: "calculus",
     specAreaId: "differentiation",
-    skillPathId: "basic-differentiation",
-    stageId: "basic-diff-stage-foundations",
+    skillPathIds: ["basic-differentiation", "chain-rule"],
+    stageIds: ["basic-diff-stage-foundations", "chain-rule-stage-applications"],
     status: "review-recommended",
     type: "numerical",
     calc: "allowed",
@@ -27,8 +27,8 @@ test("canonical parameter names round-trip through parse and serialize", () => {
   const params = serializeQuestionBankUrlState(state);
   assert.equal(params.get("course"), "calculus");
   assert.equal(params.get("spec"), "differentiation");
-  assert.equal(params.get("path"), "basic-differentiation");
-  assert.equal(params.get("stage"), "basic-diff-stage-foundations");
+  assert.equal(params.get("path"), "basic-differentiation,chain-rule");
+  assert.equal(params.get("stage"), "basic-diff-stage-foundations,chain-rule-stage-applications");
   assert.equal(params.get("status"), "review-recommended");
   assert.equal(params.get("type"), "numerical");
   assert.equal(params.get("calc"), "allowed");
@@ -44,8 +44,20 @@ test("default values are omitted from the serialized URL", () => {
 });
 
 test("only non-default fields are serialized", () => {
-  const params = serializeQuestionBankUrlState({ ...QUESTION_BANK_URL_DEFAULTS, skillPathId: "basic-differentiation", page: 2 });
+  const params = serializeQuestionBankUrlState({ ...QUESTION_BANK_URL_DEFAULTS, skillPathIds: ["basic-differentiation"], page: 2 });
   assert.deepEqual([...params.keys()].sort(), ["page", "path"]);
+});
+
+test("multi-value skill and stage filters parse uniquely and serialize stably", () => {
+  const parsed = parseQuestionBankSearchParams(new URLSearchParams({
+    path: "basic-differentiation,chain-rule,basic-differentiation",
+    stage: "basic-diff-stage-foundations,chain-rule-stage-applications",
+    status: "previously-incorrect",
+  }));
+  assert.deepEqual(parsed.skillPathIds, ["basic-differentiation", "chain-rule"]);
+  assert.deepEqual(parsed.stageIds, ["basic-diff-stage-foundations", "chain-rule-stage-applications"]);
+  assert.equal(parsed.status, "previously-incorrect");
+  assert.equal(serializeQuestionBankUrlState(parsed).get("path"), "basic-differentiation,chain-rule");
 });
 
 test("invalid enum values are discarded safely and fall back to defaults", () => {
@@ -65,7 +77,7 @@ test("invalid page values (non-numeric, zero, negative, fractional-only) fall ba
 });
 
 test("selected question IDs, search text and other ephemeral state have no canonical parameter names", () => {
-  const params = serializeQuestionBankUrlState({ ...QUESTION_BANK_URL_DEFAULTS, skillPathId: "basic-differentiation" });
+  const params = serializeQuestionBankUrlState({ ...QUESTION_BANK_URL_DEFAULTS, skillPathIds: ["basic-differentiation"] });
   assert(!params.has("selected"));
   assert(!params.has("search"));
   assert(!params.has("expanded"));
