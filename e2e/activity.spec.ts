@@ -23,7 +23,7 @@ test("meaningful evidence renders week rows, Dashboard signal and bounded day de
   ], [review(yesterday)]));
   await page.goto("/dashboard");
   await expect(page.getByTestId("dashboard-activity-line")).toContainText("2 active days in the last 7 days");
-  await page.getByRole("link", { name: /View your activity/ }).click();
+  await page.getByRole("link", { name: "View activity" }).click();
   await expect(page).toHaveURL(/\/activity$/);
   await expect(page.getByTestId("activity-history")).toBeVisible();
   await expect(page.getByRole("group", { name: /Activity by week/ }).getByRole("group")).toHaveCount(12);

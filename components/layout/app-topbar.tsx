@@ -1,10 +1,10 @@
 import { ProgressSyncStatus } from "@/components/progress-sync-status";
 
 export function AppTopbar({ demo }: { demo: boolean }) {
+  void demo;
   return (
     <div className="flex items-center gap-4">
       <ProgressSyncStatus />
-      {demo ? <span className="hidden rounded-full border border-line bg-white px-4 py-2 text-sm font-bold text-muted sm:inline-flex">Higher Maths preview</span> : null}
     </div>
   );
 }

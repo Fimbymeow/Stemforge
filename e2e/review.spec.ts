@@ -16,8 +16,9 @@ test("due scheduled Review launches the existing Practice Session without consol
   ));
   await page.goto("/subjects/higher-maths");
   const reviewEntry = page.getByTestId("review-entry-card");
-  await expect(reviewEntry).toContainText("Basic differentiation is ready to review.");
-  await reviewEntry.getByRole("link", { name: "Start Review for 1 skill" }).click();
+  await expect(reviewEntry).toHaveAccessibleName("Review, 1 skill due");
+  await expect(reviewEntry).toContainText("1 skill due");
+  await reviewEntry.click();
   await expect(page).toHaveURL(/\/practice\?review=1$/);
   const card = page.getByTestId("review-launch-card");
   await expect(card).toContainText("1 skill due");
@@ -49,8 +50,9 @@ test("both due skills create a mixed Review that exposes the current skill and k
 
   await page.goto("/subjects/higher-maths");
   const reviewEntry = page.getByTestId("review-entry-card");
-  await expect(reviewEntry).toContainText("Review is due across 2 skills.");
-  await reviewEntry.getByRole("link", { name: "Start Review across 2 skills" }).click();
+  await expect(reviewEntry).toHaveAccessibleName("Review, 2 skills due");
+  await expect(reviewEntry).toContainText("2 skills due");
+  await reviewEntry.click();
   await expect(page).toHaveURL(/\/practice\?review=1$/);
   const card = page.getByTestId("review-launch-card");
   await expect(card).toContainText("2 skills due");

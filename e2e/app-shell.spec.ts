@@ -40,7 +40,7 @@ test("shell destinations load and Course Tracker remains reachable through Highe
   }
 
   await page.goto(hub);
-  await page.getByTestId("course-tracker-destination").getByRole("link", { name: "Open Course Tracker" }).click();
+  await page.getByTestId("course-tracker-destination").click();
   await expect(page).toHaveURL("/subjects/higher-maths/course-tracker");
   await expect(page.getByTestId("course-tracker")).toBeVisible();
   await expect(page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Subjects", exact: true })).toHaveAttribute("aria-current", "page");

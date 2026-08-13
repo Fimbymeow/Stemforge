@@ -5,7 +5,6 @@ import { higherMathematicsOfficialSkillMappings } from "../data/curriculum/highe
 import { higherMathematicsSpecificationRegister } from "../data/curriculum/higher-mathematics/specification-register";
 import { contentResolver } from "../lib/content-resolver";
 import { deriveHigherMathsCourseTracker } from "../lib/course-tracker";
-import { deriveSkillPathNextAction } from "../lib/learning/next-action";
 import type { ProgressEvidence, QuestionAttempt } from "../lib/progress/types";
 
 const empty = (): ProgressEvidence => ({ attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [], flashcardReviews: [] });
@@ -29,7 +28,7 @@ test("fresh tracker derives honest availability, progress and coverage from the 
   for (const id of ["basic-differentiation", "chain-rule"]) {
     const skill = findSkill(model, id); assert.ok(skill);
     assert.equal(skill.structuralStatus, "Not started"); assert.equal(skill.knowledgeStatus, null);
-    assert.deepEqual(skill.action, deriveSkillPathNextAction({ pathId: id, evidence: empty() }).href ? { label: deriveSkillPathNextAction({ pathId: id, evidence: empty() }).label, href: deriveSkillPathNextAction({ pathId: id, evidence: empty() }).href } : null);
+    assert.deepEqual(skill.action, { label: "Open skill", href: contentResolver.getPathContext(id)!.skillPath.href });
   }
   const unavailable = findSkill(model, "trigonometric-differentiation"); assert.ok(unavailable);
   assert.equal(unavailable.availability, "Coming soon"); assert.equal(unavailable.action, null); assert.equal(unavailable.knowledgeStatus, null);
@@ -68,8 +67,7 @@ test("healthy partial evidence stays distinct from structural completion", () =>
   const progress = empty(); progress.attempts = attemptsFor("chain-rule", "2026-08-07T10:00:00Z", 1);
   const skill = findSkill(deriveHigherMathsCourseTracker(higherMaths, progress), "chain-rule"); assert.ok(skill);
   assert.equal(skill.structuralStatus, "In progress"); assert.equal(skill.knowledgeStatus, "Healthy");
-  const expected = deriveSkillPathNextAction({ pathId: "chain-rule", evidence: progress });
-  assert.deepEqual(skill.action, { label: expected.label, href: expected.href });
+  assert.deepEqual(skill.action, { label: "Open skill", href: contentResolver.getPathContext("chain-rule")!.skillPath.href });
 });
 
 test("completed and healthy may coexist with an independent Review due state", () => {

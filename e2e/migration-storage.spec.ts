@@ -18,7 +18,7 @@ import { openQuestion, submitAnswer } from "./fixtures/student-actions";
 test("V1 progress stays visible and continued activity writes V7 safely", async ({ page }) => {
   await seedStoredProgress(page, v1Payload([legacyAttempt()]));
   await page.goto("/dashboard");
-  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Foundations \u00b7 1 of 3 complete");
+  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Foundations \u00b7 1/3 complete");
 
   await openQuestion(page, QUESTION_IDS[1]);
   await submitAnswer(page, QUESTION_ANSWERS[QUESTION_IDS[1]]);
@@ -62,13 +62,13 @@ test("unversioned incorrect-only completion is preserved conservatively", async 
 test("malformed JSON and invalid shape render a safe state without a read-time overwrite", async ({ page }) => {
   await seedStoredProgress(page, "{broken-json");
   await page.goto("/dashboard");
-  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Foundations \u00b7 0 of 3 complete");
+  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Foundations \u00b7 0/3 complete");
   expect(await readStoredProgress(page)).toBe("{broken-json");
 
   await page.goto("/");
   await page.evaluate((key) => window.localStorage.setItem(key, JSON.stringify({ version: 2, data: { nope: true } })), STORAGE_KEY);
   await page.goto("/dashboard");
-  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Foundations \u00b7 0 of 3 complete");
+  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Foundations \u00b7 0/3 complete");
 });
 
 test("partially malformed V2 keeps valid records and repairs into V7 on the next save", async ({ page }) => {
@@ -78,7 +78,7 @@ test("partially malformed V2 keeps valid records and repairs into V7 on the next
     data: { attempts: [...source.data.attempts, { invalid: true }], supportEvents: [null] },
   });
   await page.goto("/dashboard");
-  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Foundations \u00b7 1 of 3 complete");
+  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Foundations \u00b7 1/3 complete");
   await openQuestion(page, QUESTION_IDS[1]);
   await submitAnswer(page, QUESTION_ANSWERS[QUESTION_IDS[1]]);
   const stored = await readStoredProgress(page) as ProgressPayload;
@@ -115,7 +115,7 @@ test("malformed V3 version evidence is dropped without crashing the learner flow
     },
   });
   await page.goto("/dashboard");
-  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Foundations \u00b7 0 of 3 complete");
+  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Foundations \u00b7 0/3 complete");
 });
 
 test("migrating an already-complete V2 path does not replay the completion celebration", async ({ page }) => {
@@ -131,7 +131,7 @@ test("unsupported future payload remains untouched", async ({ page }) => {
   const future = { version: 99, data: { attempts: [{ future: true }] } };
   await seedStoredProgress(page, future);
   await page.goto("/dashboard");
-  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Foundations \u00b7 0 of 3 complete");
+  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Foundations \u00b7 0/3 complete");
   await openQuestion(page, QUESTION_IDS[0]);
   await submitAnswer(page, QUESTION_ANSWERS[QUESTION_IDS[0]], false);
   expect(await readStoredProgress(page)).toEqual(future);

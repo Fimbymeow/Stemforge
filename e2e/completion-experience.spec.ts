@@ -99,7 +99,7 @@ test("refresh does not replay completion and the permanent completed state remai
   expect(await readStoredCelebrations(page)).toEqual(acknowledgement);
   await page.goto(PATH_ROUTE);
   await expect(page.getByTestId("completed-path-card")).toContainText("Basic differentiation mastered");
-  await expect(page.getByTestId("path-mastery-status")).toContainText("Mastered");
+  await expect(page.locator('[data-mastery-status="mastered"]')).toHaveAccessibleName("Mastery: Mastered");
 });
 
 test("navigation away and revisit do not replay the transient celebration", async ({ page }) => {
@@ -116,7 +116,7 @@ test("navigation away and revisit do not replay the transient celebration", asyn
   await expect(page.getByTestId("path-completion-panel")).toHaveCount(0);
 });
 
-test("solution-assisted final completion is Completed with Review Recommended", async ({ page }) => {
+test("solution-assisted final completion is Learned with Review Recommended", async ({ page }) => {
   await seedStoredProgress(page, solutionCompletedPayload(QUESTION_IDS.slice(0, -1)));
   await openQuestion(page, FINAL_QUESTION_ID);
   await submitAnswer(page, "0");
@@ -124,7 +124,7 @@ test("solution-assisted final completion is Completed with Review Recommended", 
 
   const panel = page.getByTestId("path-completion-panel");
   await expect(panel).toBeVisible();
-  await expect(panel.getByText("Completed", { exact: true })).toBeVisible();
+  await expect(panel.getByText("Learned", { exact: true })).toBeVisible();
   await expect(panel.getByText("Needs more practice", { exact: true })).toBeVisible();
   await expect(panel).toContainText("8 / 8 completed");
   await expect(panel.getByText("Mastered", { exact: true })).toHaveCount(0);
@@ -153,7 +153,7 @@ test("secure completion uses the Secure variant without a Mastered claim", async
 
   await page.goto(PATH_ROUTE);
   await expect(page.getByTestId("completed-path-card")).toContainText("Basic differentiation secure");
-  await expect(page.getByTestId("path-mastery-status")).toContainText("Secure");
+  await expect(page.locator('[data-mastery-status="secure"]')).toHaveAccessibleName("Mastery: Secure");
 });
 
 test("mastered completion stays consistent while the hub advances to the next live skill", async ({ page }) => {
@@ -165,17 +165,16 @@ test("mastered completion stays consistent while the hub advances to the next li
 
   await page.goto("/dashboard");
   await expect(page.getByTestId("dashboard-progress-summary")).toContainText("Chain rule");
-  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Foundations \u00b7 0 of 10 complete");
+  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Foundations \u00b7 0/10 complete");
   await page.goto(HUB_ROUTE);
   await expect(page.getByTestId("working-context-hub")).toContainText("Chain rule");
-  await page.getByRole("link", { name: "Open Course Tracker" }).click();
+  await page.getByTestId("course-tracker-destination").click();
   await expect(page).toHaveURL("/subjects/higher-maths/course-tracker");
   const completedSkill = page.getByRole("listitem").filter({ hasText: "Basic differentiation" });
-  await expect(completedSkill).toContainText("Progress: Completed");
-  await expect(completedSkill).toContainText("Knowledge: Healthy");
-  await expect(completedSkill.getByRole("link", { name: "Practise again" })).toBeVisible();
+  await expect(completedSkill.locator('[data-mastery-status="mastered"]')).toHaveAccessibleName("Mastery: Mastered");
+  await expect(completedSkill.getByRole("link")).toBeVisible();
   await page.goto(PATH_ROUTE);
-  await expect(page.getByTestId("path-mastery-status")).toContainText("Mastered");
+  await expect(page.locator('[data-mastery-status="mastered"]')).toHaveAccessibleName("Mastery: Mastered");
   await expect(page.getByTestId("completed-path-card")).toContainText("8 / 8 questions");
 });
 
@@ -214,7 +213,7 @@ test("path reset clears only its acknowledgement and permits a future celebratio
   await page.getByText("Progress options", { exact: true }).click();
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByTestId("reset-progress").click();
-  await expect(page.getByTestId("path-mastery-status")).toContainText("Not Started");
+  await expect(page.locator('[data-mastery-status="not_started"]')).toHaveAccessibleName("Progress: Not started");
   const resetProgress = await readStoredProgress(page) as ProgressPayload;
   expect(resetProgress.data.attempts.some((attempt) => attempt.skillPathId === PATH_ID)).toBe(false);
   const resetAcknowledgements = await readStoredCelebrations(page) as ReturnType<typeof celebrationPayload>;

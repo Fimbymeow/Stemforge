@@ -10,7 +10,7 @@ export default function HigherMathsCourseTrackerPage() {
   return (
     <AppShell demo active="Subjects">
       <div className="mx-auto mb-3 flex max-w-[1240px] justify-end"><AppTopbar demo /></div>
-      <div className="mx-auto grid max-w-[1240px] gap-6">
+      <div className="mx-auto grid min-w-0 max-w-[1240px] grid-cols-[minmax(0,1fr)] gap-6">
         <header className="grid gap-4">
           <Link href="/subjects/higher-maths" className="inline-flex min-h-10 w-fit items-center gap-2 rounded-lg text-sm font-extrabold text-forge">
             <ArrowLeft aria-hidden="true" className="size-4" /> Back to Higher Maths

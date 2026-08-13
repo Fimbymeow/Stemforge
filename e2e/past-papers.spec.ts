@@ -3,8 +3,8 @@ import { expect, test } from "./fixtures/test";
 test("Higher Maths exposes the official Past Papers library without confusing it with learning-stage PPQs", async ({ page }) => {
   await page.goto("/subjects/higher-maths");
   const destination = page.getByTestId("past-papers-destination");
-  await expect(destination.getByRole("link", { name: "Open Past Papers" })).toBeVisible();
-  await destination.getByRole("link", { name: "Open Past Papers" }).click();
+  await expect(destination).toHaveAttribute("href", "/subjects/higher-maths/past-papers");
+  await destination.click();
   await expect(page).toHaveURL(/\/subjects\/higher-maths\/past-papers$/);
   await expect(page.getByRole("heading", { name: "Past Papers", level: 1 })).toBeVisible();
   await expect(page.getByText("Qualifications Scotland (formerly SQA)")).toBeVisible();

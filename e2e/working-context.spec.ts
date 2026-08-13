@@ -13,12 +13,14 @@ test("fresh learner gets real production entry points with no activation query",
   await page.goto(hub);
   const card = page.getByTestId("working-context-hub");
   await expect(card).toContainText("Basic differentiation");
+  await expect(card).toContainText("Foundations \u00b7 0/3");
+  await expect(card).not.toContainText("Foundations \u00b7 0/8");
   await expect(card.getByRole("link", { name: "Basic differentiation" })).toHaveAttribute("href", overview);
   await expect(card.getByRole("link", { name: "Start", exact: true })).toHaveAttribute("href", "/subjects/higher-maths/revision-notes?path=basic-differentiation");
-  await expect(card.getByRole("link", { name: "Notes" })).toHaveAttribute("href", "/subjects/higher-maths/revision-notes?path=basic-differentiation");
-  await expect(card.getByRole("link", { name: "Overview" })).toHaveAttribute("href", overview);
+  await expect(card.getByRole("link", { name: "Notes" })).toHaveCount(0);
+  await expect(card.getByRole("link", { name: "View skill overview" })).toHaveAttribute("href", overview);
   await expect(card.getByRole("link", { name: "Practice" })).toHaveCount(0);
-  await expect(page.getByTestId("higher-maths-practice")).toBeVisible();
+  await expect(page.getByTestId("higher-maths-destinations").getByRole("link", { name: "Practice" })).toHaveAttribute("href", "/practice");
   await expect(page.getByTestId("review-entry-card")).toBeVisible();
   expect(page.url()).not.toContain("workingContext=");
   await card.getByRole("link", { name: "Start", exact: true }).click();
@@ -86,7 +88,8 @@ test("overview uses one honest compact journey instead of repeated stage cards",
   await expect(notes).toHaveAttribute("data-journey-state", "available");
   await expect(notes).not.toContainText("Complete");
   await expect(journey.locator('[data-journey-kind="stage"]').filter({ hasText: "Foundations" })).toHaveAttribute("aria-current", "step");
-  await expect(journey.locator('[data-journey-kind="review"]')).toContainText("After learning");
+  await expect(journey.locator('[data-journey-kind="review"]')).toContainText("Review");
+  await expect(journey.locator('[data-journey-kind="review"]').getByRole("link", { name: "Review" })).toHaveAttribute("href", "/practice?path=basic-differentiation");
   await expect(page.getByRole("progressbar")).toHaveCount(1);
 });
 
@@ -145,7 +148,8 @@ test("completed overview with genuine review due shows one review-aware primary 
   await expect(primaryActions).toHaveAttribute("href", "/practice?review=1&path=basic-differentiation");
   const journey = page.getByTestId("skill-learning-journey");
   await expect(journey.locator('[data-journey-kind="review"]')).toHaveAttribute("aria-current", "step");
-  await expect(journey.locator('[data-journey-kind="review"]')).toContainText("Review 1 skill due");
+  await expect(journey.locator('[data-journey-kind="review"]')).toContainText("Due");
+  await expect(journey.locator('[data-journey-kind="review"]').getByRole("link", { name: "Start Review" })).toHaveAttribute("href", "/practice?review=1&path=basic-differentiation");
   await expect(journey.locator('[data-journey-kind="stage"]').filter({ hasText: "Foundations" }).getByRole("link", { name: "Revisit" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
 });
 
@@ -189,7 +193,7 @@ test("feedback control never intersects overview content at 1366x768, including 
   await page.goto(overview);
   await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }));
   const dockBox = await page.locator('[data-global-report-dock]').boundingBox();
-  const backLink = page.getByRole("link", { name: "Back to Higher Maths" });
+  const backLink = page.getByRole("link", { name: "Higher Maths", exact: true }).first();
   const backBox = await backLink.boundingBox();
   expect(dockBox && backBox && backBox.y + backBox.height <= dockBox.y).toBeTruthy();
 });
@@ -201,7 +205,8 @@ test("scheduled Review exposes one contextual Practice Session entry and a recen
   const panel = page.getByTestId("working-context-desktop-panel");
   await expect(panel.getByRole("link", { name: "Review 1 skill due" })).toHaveAttribute("href", "/practice?review=1&path=basic-differentiation");
   await page.goto(hub);
-  await expect(page.getByTestId("review-entry-card").getByRole("link", { name: "Start Review for 1 skill" })).toHaveAttribute("href", "/practice?review=1");
+  await expect(page.getByTestId("review-entry-card")).toHaveAttribute("href", "/practice?review=1");
+  await expect(page.getByTestId("review-entry-card")).toHaveAccessibleName("Review, 1 skill due");
 
   await seedStoredProgress(page, v3Payload(recentCompletion()));
   await page.goto(`/question/${QUESTION_IDS[7]}`);
@@ -216,10 +221,11 @@ test("scheduled Review count and destination stay coherent across rail, hub and 
   await expect(page.getByTestId("working-context-desktop-panel").getByRole("link", { name: "Review 1 skill due" })).toHaveAttribute("href", "/practice?review=1&path=basic-differentiation");
 
   await page.goto(hub);
-  await expect(page.getByTestId("review-entry-card").getByRole("link", { name: "Start Review for 1 skill" })).toHaveAttribute("href", "/practice?review=1");
+  await expect(page.getByTestId("review-entry-card")).toHaveAttribute("href", "/practice?review=1");
+  await expect(page.getByTestId("review-entry-card")).toHaveAccessibleName("Review, 1 skill due");
 
   await page.goto(overview);
-  await expect(page.getByRole("link", { name: "Review 1 skill due" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Start Review" })).toBeVisible();
 });
 
 test("question-to-Notes continuity returns to the exact production question URL", async ({ page }) => {

@@ -1,14 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { BookOpen, Check, Circle, Clock3 } from "lucide-react";
+import { ArrowLeft, BookOpen, Check, Circle, Clock3 } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { LocalProgressControls, LocalRecommendedNextAction } from "@/components/learning/local-skill-path-progress";
-import { formatProgressStatusLabel } from "@/components/learning/mastery-badge";
+import { MasteryMark } from "@/components/learning/mastery-badge";
+import { getReviewPresentationState } from "@/components/learning/review-status";
 import { ProgressBar } from "@/components/ui";
 import { useWorkingContextModel } from "@/components/working-context/use-working-context-model";
 import { contentResolver } from "@/lib/content-resolver";
-import { formatReviewDueLabel } from "@/lib/working-context";
 
 export function WorkingContextOverview({ pathId }: { pathId: string }) {
   const model = useWorkingContextModel(pathId);
@@ -19,16 +19,16 @@ export function WorkingContextOverview({ pathId }: { pathId: string }) {
     <AppShell demo active="Current Path" workingContextPathId={pathId}>
       <div className="mx-auto grid max-w-[1040px] gap-5">
         <header data-testid="skill-path-compact-header">
-          <nav aria-label="Breadcrumb" className="flex flex-wrap gap-2 text-sm text-muted">
-            <Link href={model.higherMathsHref}>Higher Maths</Link><span aria-hidden="true">/</span>
+          <Link href={model.higherMathsHref} className="inline-flex min-h-11 items-center gap-2 text-sm font-bold text-forge"><ArrowLeft aria-hidden="true" className="size-4" />Higher Maths</Link>
+          <nav aria-label="Breadcrumb" className="mt-1 flex flex-wrap gap-2 text-xs text-muted">
             <span>Calculus</span><span aria-hidden="true">/</span><span>Differentiating functions</span>
           </nav>
-          <h1 className="mt-3 text-[32px] font-extrabold leading-none">{model.skillName}</h1>
-          {skillPath?.description ? <p className="mt-3 max-w-2xl text-base leading-relaxed text-muted">{skillPath.description}</p> : null}
-          <div className="mt-4 grid gap-2" data-testid="skill-path-hero-progress">
+          <h1 className="mt-2 text-[28px] font-extrabold leading-tight">{model.skillName}</h1>
+          {skillPath?.description ? <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">{skillPath.description}</p> : null}
+          <div className="mt-3 grid gap-2" data-testid="skill-path-hero-progress">
             <div className="flex flex-wrap items-center justify-between gap-2 text-sm font-bold text-muted">
               <span>{model.completed} of {model.total} questions complete</span>
-              <span data-testid="path-mastery-status">{formatProgressStatusLabel(model.status)}</span>
+              <MasteryMark status={model.status} density="labelled" className="text-ink" />
             </div>
             <ProgressBar value={model.completionPercentage} />
           </div>
@@ -42,14 +42,11 @@ export function WorkingContextOverview({ pathId }: { pathId: string }) {
         {model.isComplete && skillPath ? <LocalRecommendedNextAction skillPath={skillPath} hidePrimaryAction={Boolean(model.reviewHref)} secondaryStagesHref="#stages" /> : null}
 
         <nav aria-label="Skill resources" className="flex flex-wrap gap-1 border-y border-line py-2">
-          {model.notesHref ? <Link href={model.notesHref} className="inline-flex min-h-10 items-center rounded-lg px-3 font-bold hover:bg-forge-soft">Notes</Link> : null}
           <Link href={model.practiceHref} className="inline-flex min-h-10 items-center rounded-lg px-3 font-bold hover:bg-forge-soft">Practice</Link>
           <Link href={model.questionBankHref} className="inline-flex min-h-10 items-center rounded-lg px-3 font-bold hover:bg-forge-soft">Browse Questions</Link>
           {model.mistakesHref ? <Link href={model.mistakesHref} data-testid="skill-mistakes-link" className="inline-flex min-h-10 items-center rounded-lg px-3 font-bold text-forge hover:bg-forge-soft">Open Mistake Log</Link> : null}
-          {model.reviewHref ? <Link href={model.reviewHref} className="inline-flex min-h-10 items-center rounded-lg px-3 font-bold text-forge hover:bg-forge-soft">{formatReviewDueLabel(model.reviewCount)}</Link> : null}
         </nav>
         {skillPath ? <LocalProgressControls skillPath={skillPath} compact /> : null}
-        <Link href={model.higherMathsHref} className="inline-flex min-h-10 items-center px-3 text-sm font-bold text-forge">Back to Higher Maths</Link>
       </div>
     </AppShell>
   );
@@ -57,15 +54,15 @@ export function WorkingContextOverview({ pathId }: { pathId: string }) {
 
 function SkillLearningJourney({ model }: { model: NonNullable<ReturnType<typeof useWorkingContextModel>> }) {
   const reviewIsCurrent = model.isComplete && Boolean(model.reviewHref);
+  const reviewState = getReviewPresentationState({ eligible: model.reviewEligible, due: Boolean(model.reviewHref), dueSoon: model.reviewDueSoon });
 
   return (
     <section aria-labelledby="stages" className="grid gap-3">
-      <div className="flex flex-wrap items-end justify-between gap-2">
+      <div>
         <div>
           <h2 id="stages" tabIndex={-1} className="text-xl font-extrabold">Your learning journey</h2>
           <p className="mt-1 text-sm text-muted">Move through the lesson and three practice stages. Review keeps the skill fresh afterwards.</p>
         </div>
-        {!model.isComplete ? <p className="text-sm font-bold text-forge">Next: {displayStageName(model.stageName)}</p> : null}
       </div>
 
       <ol data-testid="skill-learning-journey" className="grid overflow-hidden rounded-xl border border-line bg-white md:grid-cols-5">
@@ -105,19 +102,18 @@ function SkillLearningJourney({ model }: { model: NonNullable<ReturnType<typeof 
         <JourneyStep
           kind="review"
           title="Review"
-          status={reviewIsCurrent ? "due" : model.isComplete ? "available" : "future"}
-          statusLabel={reviewIsCurrent ? formatReviewDueLabel(model.reviewCount) : model.isComplete ? "Not due" : "After learning"}
-          href={model.reviewHref}
-          actionLabel={reviewIsCurrent ? "Start Review" : null}
+          status={reviewIsCurrent ? "due" : "review"}
+          statusLabel={reviewIsCurrent ? "Due now" : reviewState === "recommended" ? "Recommended" : reviewState === "available" ? "Available" : "Available anytime"}
+          href={model.reviewActionHref}
+          actionLabel={reviewIsCurrent ? "Start Review" : "Review"}
           icon={Clock3}
-          note="Keeps learning fresh"
         />
       </ol>
     </section>
   );
 }
 
-type JourneyState = "available" | "complete" | "current" | "due" | "future";
+type JourneyState = "available" | "complete" | "current" | "due" | "review" | "future";
 
 function JourneyStep({
   kind,
@@ -127,7 +123,6 @@ function JourneyStep({
   href,
   actionLabel,
   icon: Icon,
-  note,
 }: {
   kind: "notes" | "stage" | "review";
   title: string;
@@ -136,13 +131,12 @@ function JourneyStep({
   href: string | null;
   actionLabel: string | null;
   icon: typeof Circle;
-  note?: string;
 }) {
   const isCurrent = status === "current" || status === "due";
   const iconClass = status === "complete"
     ? "border-success bg-success text-white"
     : isCurrent
-      ? "border-forge bg-forge text-white"
+      ? "border-forge bg-white text-forge"
       : "border-line bg-paper text-muted";
 
   return (
@@ -151,14 +145,13 @@ function JourneyStep({
       data-journey-state={status}
       data-recommended={isCurrent ? "true" : undefined}
       aria-current={isCurrent ? "step" : undefined}
-      className={`relative flex min-w-0 flex-col border-line p-4 max-md:grid max-md:grid-cols-[2rem_minmax(0,1fr)_auto] max-md:items-center max-md:gap-x-3 max-md:border-b max-md:py-3 max-md:last:border-b-0 md:border-r md:last:border-r-0 ${isCurrent ? "bg-forge-soft" : ""} ${kind === "review" ? "md:border-l md:border-l-dashed" : ""}`}
+      className={`relative flex min-w-0 flex-col border-line p-4 max-md:grid max-md:grid-cols-[2rem_minmax(0,1fr)_auto] max-md:items-center max-md:gap-x-3 max-md:border-b max-md:py-3 max-md:last:border-b-0 md:border-r md:last:border-r-0 ${isCurrent ? "after:absolute after:inset-x-0 after:top-0 after:h-0.5 after:bg-forge" : ""} ${kind === "review" ? "md:border-l md:border-l-dashed" : ""}`}
     >
       <span aria-hidden="true" className={`grid size-8 place-items-center rounded-full border ${iconClass}`}>
         <Icon className="size-4" strokeWidth={2.5} />
       </span>
       <h3 className="mt-3 font-extrabold leading-tight max-md:mt-0">{title}</h3>
       <p className={`mt-1 text-xs font-bold max-md:col-start-2 max-md:mt-0 ${isCurrent ? "text-forge" : "text-muted"}`}>{statusLabel}</p>
-      {note ? <p className="mt-1 text-xs leading-relaxed text-muted max-md:col-start-2">{note}</p> : null}
       {href && actionLabel ? (
         <Link
           href={href}

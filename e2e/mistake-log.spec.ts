@@ -42,8 +42,8 @@ test("a real Basic Differentiation error appears automatically across bounded di
   await expect(item.getByRole("link", { name: "Retry Basic differentiation question 1" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
 
   await page.goto("/dashboard");
-  await expect(page.getByTestId("dashboard-mistakes-link")).toHaveText(/1 unresolved mistake/);
-  await expect(page.getByText("1 unresolved question", { exact: true })).toBeVisible();
+  await expect(page.getByTestId("dashboard-mistakes-link")).toHaveCount(0);
+  await expect(page.getByText("Needs attention", { exact: true })).toHaveCount(0);
   await page.goto(BASIC_SKILL_HREF);
   await expect(page.getByTestId("skill-attention-reason")).toHaveText("1 unresolved question");
   await expect(page.getByTestId("skill-mistakes-link")).toHaveText("Open Mistake Log");
@@ -91,7 +91,7 @@ test("updated content explanation preserves historical progress wording", async 
     }),
   ]));
   await page.goto("/dashboard");
-  await expect(page.getByText("Updated content needs a quick recheck. Your earlier progress is saved.")).toBeVisible();
+  await expect(page.getByTestId("dashboard-mistakes-link")).toHaveCount(0);
   await page.goto(BASIC_SKILL_HREF);
   await expect(page.getByTestId("skill-attention-reason")).toContainText("earlier progress is saved");
 });

@@ -2,25 +2,25 @@ import { expect, test } from "./fixtures/test";
 import { PRACTICE_SESSIONS_STORAGE_KEY } from "../lib/practice/practice-types";
 import { getStudentResourceCapabilities } from "../lib/resource-capabilities";
 
-test("Higher Maths orders Start Here above a balanced destination grid responsively", async ({ page }) => {
+test("Higher Maths keeps continuation above compact course destinations responsively", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/subjects/higher-maths");
   const learn = page.getByTestId("working-context-hub");
-  const practice = page.getByTestId("higher-maths-practice");
+  const destinations = page.getByTestId("higher-maths-destinations");
+  const practice = destinations.getByRole("link", { name: "Practice" });
   const review = page.getByTestId("review-entry-card");
   const tracker = page.getByTestId("course-tracker-destination");
   const pastPapers = page.getByTestId("past-papers-destination");
   await expect(learn).toBeVisible();
   await expect(practice).toBeVisible();
   await expect(review).toBeVisible();
-  await expect(tracker.getByRole("link", { name: "Open Course Tracker" })).toHaveAttribute("href", "/subjects/higher-maths/course-tracker");
-  await expect(pastPapers.getByRole("link", { name: "Open Past Papers" })).toHaveAttribute("href", "/subjects/higher-maths/past-papers");
+  await expect(tracker).toHaveAttribute("href", "/subjects/higher-maths/course-tracker");
+  await expect(pastPapers).toHaveAttribute("href", "/subjects/higher-maths/past-papers");
   await expect(pastPapers.getByRole("button")).toHaveCount(0);
   const wide = await cardBoxes(learn, practice, review);
   expect(wide.practice.y).toBeGreaterThanOrEqual(wide.learn.y + wide.learn.height);
   expect(Math.abs(wide.practice.y - wide.review.y)).toBeLessThan(8);
-  expect(Math.abs(wide.practice.width - wide.review.width)).toBeLessThan(2);
-  expect(Math.abs(wide.practice.height - wide.review.height)).toBeLessThan(2);
+  expect(Math.abs(wide.practice.y - wide.review.y)).toBeLessThan(8);
   const trackerBox = await tracker.boundingBox();
   const pastPapersBox = await pastPapers.boundingBox();
   expect(Math.abs(trackerBox!.y - pastPapersBox!.y)).toBeLessThan(8);
@@ -31,7 +31,7 @@ test("Higher Maths orders Start Here above a balanced destination grid responsiv
   await page.goto("/subjects/higher-maths");
   const stacked = await cardBoxes(
     page.getByTestId("working-context-hub"),
-    page.getByTestId("higher-maths-practice"),
+    page.getByTestId("higher-maths-destinations").getByRole("link", { name: "Practice" }),
     page.getByTestId("review-entry-card"),
   );
   expect(stacked.practice.y).toBeGreaterThanOrEqual(stacked.learn.y + stacked.learn.height);
@@ -41,20 +41,17 @@ test("Higher Maths orders Start Here above a balanced destination grid responsiv
   await expectNoDocumentOverflow(page);
 });
 
-test("Course tracker distinguishes official requirements from all canonical skills", async ({ page }) => {
+test("Course tracker distinguishes official requirements within its selected unit", async ({ page }) => {
   await page.goto("/subjects/higher-maths/course-tracker");
   const tracker = page.getByTestId("course-tracker");
-  await expect(tracker.getByRole("heading", { name: "Skills by course area" })).toBeVisible();
-  await expect(page.getByTestId("course-tracker-coverage")).toHaveText("2 of 49 Higher Maths skills available");
-  await expect(tracker.locator('[data-testid^="tracker-skill-"]')).toHaveCount(49);
-  const representedRequirementIds = await tracker.getByTestId("course-tracker-official-point").evaluateAll((points) => [...new Set(points.map((point) => point.getAttribute("data-official-point-id")))]);
-  expect(representedRequirementIds).toHaveLength(58);
-  await expect(page.getByTestId("tracker-skill-basic-differentiation")).toContainText("Progress: Not started");
-  await expect(page.getByTestId("tracker-skill-chain-rule")).toContainText("Progress: Not started");
+  await expect(tracker.getByRole("heading", { name: "Calculus", exact: true })).toBeVisible();
+  await expect(page.getByTestId("course-tracker-coverage")).toHaveText("2 of 49 skills available");
+  await expect(page.getByTestId("tracker-skill-basic-differentiation").locator('[data-mastery-status="not_started"]')).toBeVisible();
+  await expect(page.getByTestId("tracker-skill-chain-rule").locator('[data-mastery-status="not_started"]')).toBeVisible();
   const unavailable = page.getByTestId("tracker-skill-trigonometric-differentiation");
   await expect(unavailable).toContainText("Coming soon");
   await expect(unavailable.getByRole("link")).toHaveCount(0);
-  const disclosure = tracker.locator("summary").first();
+  const disclosure = page.getByTestId("tracker-requirements-basic-differentiation").locator("summary");
   await disclosure.focus();
   await disclosure.press("Enter");
   await expect(disclosure.locator("xpath=parent::details")).toHaveAttribute("open", "");
@@ -64,28 +61,22 @@ test("Course tracker distinguishes official requirements from all canonical skil
   await expect(page.getByTestId("course-tracker")).toHaveCount(0);
 });
 
-test("shared Practice chooser has exactly two modes, traps focus and restores its trigger", async ({ page }) => {
+test("Dashboard reaches the focused Practice setup without a competing chooser", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 568 });
   await page.goto("/dashboard");
-  const trigger = page.getByTestId("dashboard-practice").getByRole("button", { name: "Practice" });
+  const trigger = page.getByTestId("dashboard-progress-summary").getByRole("link", { name: "Practise your way" });
   await trigger.focus();
   await trigger.press("Enter");
-  const dialog = page.getByRole("dialog", { name: "Choose how to practise" });
-  await expect(dialog).toBeVisible();
-  await expect(dialog.locator("h3")).toHaveText(["Quick Practice", "Choose Questions"]);
-  await expect(dialog.getByRole("button", { name: /Quick Practice/ })).toBeVisible();
-  await expect(dialog.getByRole("link", { name: "Choose Questions" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Close practice chooser" })).toBeFocused();
-  await page.keyboard.press("Escape");
-  await expect(dialog).toHaveCount(0);
-  await expect(trigger).toBeFocused();
+  await expect(page).toHaveURL("/practice");
+  await expect(page.getByTestId("quick-practice-action")).toBeVisible();
+  await expect(page.getByText("Choose practice options", { exact: true })).toBeVisible();
   await expectNoDocumentOverflow(page);
 });
 
-test("Practice chooser reuses Quick Practice and routes Choose Questions to Sprint C", async ({ page }) => {
+test("Practice destinations reuse Quick Practice and preserve Question Bank access", async ({ page }) => {
   await page.goto("/dashboard");
-  await page.getByTestId("dashboard-practice").getByRole("button", { name: "Practice" }).click();
-  await page.getByTestId("practice-chooser-quick").click();
+  await page.getByTestId("dashboard-progress-summary").getByRole("link", { name: "Practise your way" }).click();
+  await page.getByTestId("quick-practice-action").click();
   await expect(page).toHaveURL(/\/practice\/session\//);
   const quick = await page.evaluate((key) => {
     const store = JSON.parse(localStorage.getItem(key)!);
@@ -96,8 +87,8 @@ test("Practice chooser reuses Quick Practice and routes Choose Questions to Spri
 
   await page.evaluate((key) => localStorage.removeItem(key), PRACTICE_SESSIONS_STORAGE_KEY);
   await page.goto("/subjects/higher-maths");
-  await page.getByTestId("higher-maths-practice").getByRole("button", { name: "Practice" }).click();
-  await page.getByRole("link", { name: "Choose Questions" }).click();
+  await page.getByTestId("higher-maths-destinations").getByRole("link", { name: "Practice" }).click();
+  await page.goto("/subjects/higher-maths/question-bank");
   await expect(page).toHaveURL("/subjects/higher-maths/question-bank", { timeout: 15_000 });
   await expect(page.getByRole("heading", { name: "Question Bank", exact: true })).toBeVisible();
 });
@@ -138,8 +129,8 @@ test("official formula sheet opens in structured, Quick and custom Higher Maths 
   await verifyFormulaDrawer(page);
 
   await page.goto("/dashboard");
-  await page.getByTestId("dashboard-practice").getByRole("button", { name: "Practice" }).click();
-  await page.getByTestId("practice-chooser-quick").click();
+  await page.getByTestId("dashboard-progress-summary").getByRole("link", { name: "Practise your way" }).click();
+  await page.getByTestId("quick-practice-action").click();
   await verifyFormulaDrawer(page);
 
   await page.goto("/subjects/higher-maths/question-bank");

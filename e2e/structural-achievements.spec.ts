@@ -28,7 +28,7 @@ test("path reset preserves historical snapshots while current readiness resets",
   await page.getByText("Progress options", { exact: true }).click();
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByTestId("reset-progress").click();
-  await expect(page.getByTestId("path-mastery-status")).toContainText("Not Started");
+  await expect(page.locator('[data-mastery-status="not_started"]')).toHaveAccessibleName("Progress: Not started");
   const stored = await readStoredProgress(page) as ProgressPayload;
   expect(stored.data.attempts).toHaveLength(0);
   expect(stored.data.achievementSnapshots.some((item) => item.kind === "path_completed")).toBe(true);

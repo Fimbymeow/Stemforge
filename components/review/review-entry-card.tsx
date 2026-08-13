@@ -8,11 +8,11 @@ import { useWorkingContextModel } from "@/components/working-context/use-working
 import { getEmptyProgressEvidence, getProgressEvidence } from "@/lib/local-progress";
 import { deriveSubjectReviewSummary } from "@/lib/review/derivation";
 
-export function ReviewEntryCard({ pathId, headingLevel = 2 }: { pathId?: string; headingLevel?: 2 | 3 }) {
-  return pathId ? <ScopedReviewEntryCard pathId={pathId} headingLevel={headingLevel} /> : <HigherMathsReviewEntryCard headingLevel={headingLevel} />;
+export function ReviewEntryCard({ pathId, headingLevel = 2, compact = false }: { pathId?: string; headingLevel?: 2 | 3; compact?: boolean }) {
+  return pathId ? <ScopedReviewEntryCard pathId={pathId} headingLevel={headingLevel} compact={compact} /> : <HigherMathsReviewEntryCard headingLevel={headingLevel} compact={compact} />;
 }
 
-function ScopedReviewEntryCard({ pathId, headingLevel }: { pathId: string; headingLevel: 2 | 3 }) {
+function ScopedReviewEntryCard({ pathId, headingLevel, compact }: { pathId: string; headingLevel: 2 | 3; compact: boolean }) {
   const model = useWorkingContextModel(pathId);
   if (!model) return null;
   return <ReviewCard
@@ -20,10 +20,11 @@ function ScopedReviewEntryCard({ pathId, headingLevel }: { pathId: string; headi
     detail={model.reviewHref ? `${model.skillName} is ready to review.` : null}
     href={model.reviewHref}
     headingLevel={headingLevel}
+    compact={compact}
   />;
 }
 
-function HigherMathsReviewEntryCard({ headingLevel }: { headingLevel: 2 | 3 }) {
+function HigherMathsReviewEntryCard({ headingLevel, compact }: { headingLevel: 2 | 3; compact: boolean }) {
   const [summary, setSummary] = useState(() =>
     deriveSubjectReviewSummary("higher-maths", getEmptyProgressEvidence()));
 
@@ -45,11 +46,28 @@ function HigherMathsReviewEntryCard({ headingLevel }: { headingLevel: 2 | 3 }) {
     : summary.dueSkillCount > 1
       ? `Review is due across ${summary.dueSkillCount} skills.`
       : null;
-  return <ReviewCard dueCount={summary.dueSkillCount} detail={detail} href={summary.href} headingLevel={headingLevel} />;
+  return <ReviewCard dueCount={summary.dueSkillCount} detail={detail} href={summary.href} headingLevel={headingLevel} compact={compact} />;
 }
 
-function ReviewCard({ dueCount, detail, href, headingLevel }: { dueCount: number; detail: string | null; href: string | null; headingLevel: 2 | 3 }) {
+function ReviewCard({ dueCount, detail, href, headingLevel, compact }: { dueCount: number; detail: string | null; href: string | null; headingLevel: 2 | 3; compact: boolean }) {
   const Heading = headingLevel === 3 ? "h3" : "h2";
+  if (compact) {
+    const label = href
+      ? (dueCount === 1 ? "Review, 1 skill due" : `Review, ${dueCount} skills due`)
+      : "Review, up to date";
+    return (
+      <Link href={href ?? "/practice?review=1"} aria-label={label} data-testid="review-entry-card" className="flex min-h-16 items-center gap-3 px-2 py-2 text-ink transition hover:bg-forge-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-forge">
+        <RefreshCcw aria-hidden="true" className="size-4 shrink-0 text-forge" />
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="min-w-0">
+            <Heading className="text-sm font-extrabold">Review</Heading>
+            <p className="truncate text-xs text-muted">{href ? `${dueCount} skill${dueCount === 1 ? "" : "s"} due` : "Up to date"}</p>
+          </div>
+        </div>
+        <ArrowRight aria-hidden="true" className="ml-auto size-4 shrink-0" />
+      </Link>
+    );
+  }
   return (
     <Card data-testid="review-entry-card" aria-label="Review" className="flex h-full flex-col p-5">
       <div className="flex items-start justify-between gap-3">

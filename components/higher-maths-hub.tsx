@@ -1,82 +1,74 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Calculator, Files, ListChecks } from "lucide-react";
+import { ArrowRight, Calculator, Files, ListChecks, Shuffle } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { AppTopbar } from "@/components/layout/app-topbar";
-import { Card } from "@/components/ui";
 import { getActiveSubject, getAllSkillPaths, getAvailableSkillPaths } from "@/lib/learning-paths";
 import { useLearnerNextAction } from "@/components/learning/use-learner-next-action";
-import { PracticeEntryCard } from "@/components/practice/practice-entry-card";
 import { ReviewEntryCard } from "@/components/review/review-entry-card";
 import { WorkingContextHubCard } from "@/components/working-context/working-context-hub-card";
-import { getQualificationPresentation } from "@/lib/qualification-presentation";
+import { SubjectRoadmapNavigator } from "@/components/learning/subject-roadmap-navigator";
 
 export function HigherMathsHub() {
   const subject = getActiveSubject();
   const nextAction = useLearnerNextAction();
-  const qualification = getQualificationPresentation(subject.level);
   const availableSkillCount = getAvailableSkillPaths(subject).length;
   const totalSkillCount = getAllSkillPaths(subject).length;
 
   return (
     <AppShell demo active="Subjects" workingContextPathId={nextAction.pathId}>
-      <div className="mx-auto mb-3 flex max-w-[1240px] justify-end"><AppTopbar demo /></div>
-      <div className="mx-auto grid max-w-[1240px] gap-6">
-        <header>
-          <nav className="mb-3 flex flex-wrap items-center gap-2 text-sm text-muted" aria-label="Breadcrumb">
-            <Link href="/subjects">Subjects</Link><ArrowRight className="size-4" /><span className="font-bold text-forge">Higher Maths</span>
+      <div className="mx-auto mb-3 flex max-w-[1120px] justify-end"><AppTopbar demo /></div>
+      <div className="mx-auto grid min-w-0 max-w-[1120px] grid-cols-[minmax(0,1fr)] gap-5">
+        <header className="min-w-0">
+          <nav className="mb-2 flex flex-wrap items-center gap-2 text-sm text-muted" aria-label="Breadcrumb">
+            <Link href="/subjects">Courses</Link><ArrowRight aria-hidden="true" className="size-4" /><span aria-current="page" className="font-bold text-forge">Higher Maths</span>
           </nav>
-          <div className="grid grid-cols-[48px_1fr] items-center gap-3 max-md:grid-cols-1">
-            <span className="grid size-12 place-items-center rounded-xl border border-forge-soft bg-forge-soft text-forge"><Calculator className="size-6" /></span>
+          <div className="flex items-start gap-3">
+            <span className="mt-0.5 grid size-10 shrink-0 place-items-center rounded-lg border border-forge-soft bg-forge-soft text-forge"><Calculator aria-hidden="true" className="size-5" /></span>
             <div>
-              <span className={`mb-3 inline-flex rounded-full border px-3 py-1 text-xs font-extrabold ${qualification.className}`}>{qualification.label}</span>
-              <h1 className="m-0 text-[32px] font-extrabold leading-none">Higher Maths</h1>
-              <p className="mt-2 max-w-3xl text-base leading-relaxed text-muted">Learn in focused stages, then practise and review when you’re ready. Calculus is available now, with more areas being added.</p>
-              <p className="mt-1 text-xs font-bold text-muted" data-testid="higher-maths-coverage">{availableSkillCount} of {totalSkillCount} Higher Maths skills available</p>
+              <h1 className="text-[28px] font-extrabold leading-tight">Higher Maths</h1>
+              <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted">Learn through focused stages, practise deliberately and revisit skills when Review recommends it.</p>
+              <p className="mt-1 text-xs font-bold text-muted" data-testid="higher-maths-coverage">{availableSkillCount} of {totalSkillCount} skills available</p>
             </div>
           </div>
         </header>
 
-        <section>
-          <h2 className="mb-2 text-lg font-extrabold">Start here</h2>
+        <section aria-labelledby="continue-learning-title" className="min-w-0">
+          <h2 id="continue-learning-title" className="sr-only">Continue learning</h2>
           <WorkingContextHubCard pathId={nextAction.pathId} />
         </section>
 
-        <section aria-labelledby="course-destinations-title">
-          <h2 id="course-destinations-title" className="mb-2 text-lg font-extrabold">Course destinations</h2>
-          <div className="grid auto-rows-fr grid-cols-2 items-stretch gap-4 max-md:grid-cols-1" data-testid="higher-maths-destinations">
-            <PracticeEntryCard preferredPathId={nextAction.pathId} testId="higher-maths-practice" headingLevel={3} />
-            <ReviewEntryCard headingLevel={3} />
-            <Card aria-label="Course Tracker" className="flex h-full flex-col p-5" data-testid="course-tracker-destination">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-xs font-extrabold uppercase tracking-wide text-forge">Course Tracker</p>
-                  <h3 className="mt-1 text-xl font-extrabold">Explore the full course</h3>
-                </div>
-                <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-forge-soft text-forge"><ListChecks aria-hidden="true" className="size-5" /></span>
-              </div>
-              <p className="mt-2 flex-1 text-sm leading-relaxed text-muted">See all 49 skills, official requirements and your current progress.</p>
-              <Link href="/subjects/higher-maths/course-tracker" className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-forge bg-white px-4 text-sm font-extrabold text-forge">
-                Open Course Tracker <ArrowRight aria-hidden="true" className="size-4" />
-              </Link>
-            </Card>
-            <Card aria-label="Past Papers" className="flex h-full flex-col p-5" data-testid="past-papers-destination">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-xs font-extrabold uppercase tracking-wide text-forge">Past Papers</p>
-                  <h3 className="mt-1 text-xl font-extrabold text-ink">Exam practice</h3>
-                </div>
-                <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-forge-soft text-forge"><Files aria-hidden="true" className="size-5" /></span>
-              </div>
-              <p className="mt-2 flex-1 text-sm leading-relaxed text-muted">Open official Qualifications Scotland papers and marking instructions from 2022–2025.</p>
-              <Link href="/subjects/higher-maths/past-papers" className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-forge bg-white px-4 text-sm font-extrabold text-forge">
-                Open Past Papers <ArrowRight aria-hidden="true" className="size-4" />
-              </Link>
-            </Card>
+        <section aria-labelledby="course-actions-title" className="min-w-0">
+          <h2 id="course-actions-title" className="mb-2 text-base font-extrabold">Course actions</h2>
+          <div className="grid min-w-0 grid-cols-4 gap-x-4 border-y border-line max-lg:grid-cols-2 max-sm:grid-cols-1" data-testid="higher-maths-destinations">
+            <Destination href="/practice" label="Practice" detail="Choose how to practise" icon={Shuffle} emphasis />
+            <ReviewEntryCard headingLevel={3} compact />
+            <Destination href="/subjects/higher-maths/course-tracker" label="Course Tracker" detail="Explore all 49 skills" icon={ListChecks} testId="course-tracker-destination" />
+            <Destination href="/subjects/higher-maths/past-papers" label="Past Papers" detail="Official exam materials" icon={Files} testId="past-papers-destination" quiet />
           </div>
+        </section>
+
+        <section aria-labelledby="unit-navigation-title" className="min-w-0">
+          <div className="mb-3">
+            <div>
+              <h2 id="unit-navigation-title" className="text-lg font-extrabold">Course units</h2>
+              <p className="mt-1 text-sm text-muted">Select a unit to see its skills.</p>
+            </div>
+          </div>
+          <SubjectRoadmapNavigator subject={subject} />
         </section>
       </div>
     </AppShell>
+  );
+}
+
+function Destination({ href, label, detail, icon: Icon, emphasis = false, quiet = false, testId }: { href: string; label: string; detail: string; icon: typeof Shuffle; emphasis?: boolean; quiet?: boolean; testId?: string }) {
+  return (
+    <Link href={href} aria-label={label} data-testid={testId} className={`flex min-h-16 items-center gap-3 px-2 py-2 transition hover:bg-forge-soft ${emphasis ? "text-forge" : quiet ? "text-muted" : "text-ink"}`}>
+      <Icon aria-hidden="true" className="size-4 shrink-0" />
+      <span className="min-w-0"><span className="block text-sm font-extrabold">{label}</span><span className="block truncate text-xs text-muted">{detail}</span></span>
+      <ArrowRight aria-hidden="true" className="ml-auto size-4 shrink-0" />
+    </Link>
   );
 }

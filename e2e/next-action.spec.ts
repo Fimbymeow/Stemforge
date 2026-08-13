@@ -105,8 +105,8 @@ test("completed Basic Differentiation advances Learn to Chain Rule while schedul
   await page.goto(HUB_ROUTE);
   await expect(page.getByTestId("working-context-hub")).toContainText("Chain rule");
   await expectPrimaryAction(page, "Start", "/subjects/higher-maths/revision-notes?path=chain-rule");
-  await expect(page.getByTestId("review-entry-card")).toContainText("Basic differentiation is ready to review.");
-  await expect(page.getByTestId("review-entry-card").getByRole("link", { name: "Start Review for 1 skill" })).toHaveAttribute("href", "/practice?review=1");
+  await expect(page.getByTestId("review-entry-card")).toContainText("1 skill due");
+  await expect(page.getByTestId("review-entry-card")).toHaveAttribute("href", "/practice?review=1");
 
   await page.goto(PATH_ROUTE);
   await expectPrimaryAction(page, "Start Review", "/practice?review=1&path=basic-differentiation");

@@ -2,9 +2,8 @@ import { higherMathematicsOfficialSkillMappings } from "@/data/curriculum/higher
 import { higherMathematicsReasoningAreaIds, higherMathematicsSpecificationRegister } from "@/data/curriculum/higher-mathematics/specification-register";
 import type { Subject } from "@/data/types";
 import { contentResolver } from "@/lib/content-resolver";
-import { deriveSkillPathNextAction } from "@/lib/learning/next-action";
 import { getSkillPathProgress } from "@/lib/local-progress";
-import type { ProgressEvidence } from "@/lib/progress/types";
+import type { ProgressEvidence, ProgressStatus } from "@/lib/progress/types";
 import { createReviewDerivationCache, deriveSkillReviewState } from "@/lib/review/derivation";
 
 export type TrackerStructuralStatus = "Not started" | "In progress" | "Completed";
@@ -19,6 +18,9 @@ export type CourseTrackerSkill = {
   knowledgeStatus: TrackerKnowledgeStatus | null;
   knowledgeReason: string | null;
   reviewDue: boolean;
+  reviewDueSoon: boolean;
+  reviewEligible: boolean;
+  masteryStatus: ProgressStatus | null;
   reviewReason: string | null;
   action: { label: string; href: string } | null;
   officialPoints: CourseTrackerOfficialPoint[];
@@ -114,14 +116,13 @@ export function deriveHigherMathsCourseTracker(
       .sort((left, right) => (pointOrder.get(left.specPointId) ?? 0) - (pointOrder.get(right.specPointId) ?? 0))
       .map((point) => pointView(point, wordingMode));
     if (!path.isAvailable) {
-      return { skillPathId, name: path.name, availability: "Coming soon", structuralStatus: null, knowledgeStatus: null, knowledgeReason: null, reviewDue: false, reviewReason: null, action: null, officialPoints };
+      return { skillPathId, name: path.name, availability: "Coming soon", structuralStatus: null, knowledgeStatus: null, knowledgeReason: null, reviewDue: false, reviewDueSoon: false, reviewEligible: false, masteryStatus: null, reviewReason: null, action: null, officialPoints };
     }
     const progress = getSkillPathProgress(path, progressEvidence);
     const structuralStatus: TrackerStructuralStatus = progress.status === "not_started" ? "Not started"
       : progress.status === "in_progress" ? "In progress" : "Completed";
     const knowledgeStatus = progress.attemptedCount === 0 ? null : progress.reviewQuestionIds.length > 0 ? "Needs practice" : "Healthy";
     const review = deriveSkillReviewState(path, progressEvidence, at, cache);
-    const nextAction = deriveSkillPathNextAction({ pathId: skillPathId, evidence: progressEvidence });
     return {
       skillPathId,
       name: path.name,
@@ -130,8 +131,11 @@ export function deriveHigherMathsCourseTracker(
       knowledgeStatus,
       knowledgeReason: knowledgeStatus === "Needs practice" ? needsPracticeReason(path, progress) : null,
       reviewDue: review.due && review.reason !== "history_unavailable",
+      reviewDueSoon: review.dueSoon,
+      reviewEligible: review.eligible,
+      masteryStatus: progress.status,
       reviewReason: review.due ? review.reason : null,
-      action: nextAction.href ? { label: nextAction.label, href: nextAction.href } : null,
+      action: { label: "Open skill", href: path.href },
       officialPoints,
     };
   }

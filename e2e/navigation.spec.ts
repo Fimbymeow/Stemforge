@@ -3,8 +3,8 @@ import { readStoredProgress } from "./fixtures/progress";
 
 test("fresh student reaches the Basic differentiation path through the app", async ({ page }) => {
   await page.goto("/dashboard");
-  await expect(page.getByRole("heading", { name: "Orthic", level: 1 })).toBeVisible();
-  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Foundations \u00b7 0 of 3 complete");
+  await expect(page.getByRole("heading", { name: "Welcome back", level: 1 })).toBeVisible();
+  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Foundations \u00b7 0/3 complete");
 
   await page.getByRole("link", { name: "Subjects" }).click();
   await expect(page).toHaveURL(/\/subjects$/);
@@ -18,7 +18,7 @@ test("fresh student reaches the Basic differentiation path through the app", asy
   await page.getByRole("link", { name: "View full overview" }).click();
   await expect(page.getByRole("heading", { name: "Basic differentiation", level: 1 })).toBeVisible();
   await expect(page.getByTestId("skill-path-hero-progress")).toContainText("8");
-  await expect(page.getByTestId("path-mastery-status")).toContainText("Not Started");
+  await expect(page.locator('[data-mastery-status="not_started"]')).toHaveAccessibleName("Progress: Not started");
   const journey = page.getByTestId("skill-learning-journey");
   await expect(journey.locator('[data-journey-kind="stage"]')).toHaveCount(3);
   await expect(journey.locator('[data-journey-kind="stage"]').filter({ hasText: "Foundations" })).toContainText("0 of 3 complete");
@@ -48,6 +48,6 @@ test("disabled account navigation hydrates without console or page errors and fa
   await expect(page.getByRole("heading", { name: "Accounts are not available" })).toBeVisible();
   await page.getByRole("link", { name: "Continue as a guest" }).click();
   await expect(page).toHaveURL(/\/dashboard$/);
-  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Foundations \u00b7 0 of 3 complete");
+  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Foundations \u00b7 0/3 complete");
   expect(seriousBrowserErrors).toEqual([]);
 });

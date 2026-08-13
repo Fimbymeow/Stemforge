@@ -47,6 +47,7 @@
         "test:flashcards": "tsx --test tests/flashcard-foundation.test.ts tests/flashcard-experience.test.ts",
         "test:past-papers": "tsx --test tests/past-papers.test.ts",
         "test:brand": "tsx --test tests/brand-migration.test.ts",
+        "test:ui-redesign": "tsx --test tests/ui-redesign.test.ts",
         "test:next-action": "tsx --test tests/next-action.test.ts",
         "test:question-interaction": "tsx --test tests/question-interaction.test.ts tests/rich-math-normalization.test.ts tests/math-input-capabilities.test.ts",
         "test:review-reason": "tsx --test tests/review-reason.test.ts",

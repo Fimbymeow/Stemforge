@@ -35,6 +35,9 @@ export type WorkingContextModel = {
   collapsedSummary: string;
   reviewCount: number;
   reviewHref: string | null;
+  reviewActionHref: string;
+  reviewEligible: boolean;
+  reviewDueSoon: boolean;
   reviewReason: ReviewDueReason;
   notesHref: string | null;
   practiceHref: string;
@@ -179,6 +182,9 @@ export function deriveWorkingContextModel(input: {
     collapsedSummary,
     reviewCount,
     reviewHref,
+    reviewActionHref: reviewHref ?? practiceHref,
+    reviewEligible: reviewState.eligible,
+    reviewDueSoon: reviewState.dueSoon,
     reviewReason: reviewState.reason,
     notesHref,
     practiceHref,
