@@ -72,7 +72,12 @@ test("mobile taxonomy and question context remain readable without page overflow
   await expect(page.getByText("Future Higher Maths coverage", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: /^Filters/ }).click();
   const filters = page.getByRole("dialog", { name: "Filters" });
+  await filters.getByRole("button", { name: "Skills: All skills" }).click();
   await expect(filters.getByRole("group", { name: "Skills" }).getByLabel("Chain rule")).toBeVisible();
+  await filters.getByLabel("Search skills").fill("chain");
+  await page.keyboard.press("Escape");
+  await expect(filters).toBeVisible();
+  await expect(filters.getByRole("button", { name: "Skills: All skills" })).toBeFocused();
   await expect(filters.getByLabel("Sort")).toBeVisible();
   await expect(filters.getByRole("button", { name: "Select all 42 filtered questions" })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);

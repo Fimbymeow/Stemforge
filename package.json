@@ -29,7 +29,7 @@
         "test:achievements": "tsx --test tests/achievements.test.ts",
         "test:merge": "tsx --test tests/merge.test.ts",
         "test:taxonomy": "tsx --test tests/taxonomy-runtime.test.ts tests/higher-maths-architecture.test.ts",
-        "test:question-bank": "tsx --test tests/question-bank-query.test.ts tests/question-bank-url.test.ts tests/scalable-question-bank.test.ts",
+        "test:question-bank": "tsx --test tests/question-bank-query.test.ts tests/question-bank-url.test.ts tests/scalable-question-bank.test.ts tests/question-bank-skill-picker.test.tsx",
         "test:practice-resources": "tsx --test tests/practice-resources-sprint-d.test.ts",
         "test:working-context": "tsx --test tests/working-context.test.ts",
         "test:lessons": "tsx --test tests/lesson-document.test.ts",

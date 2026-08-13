@@ -9,7 +9,9 @@ test("Question Bank opens directly into compact discovery with published-only fi
   await expect(page.getByText("42 questions available")).toBeVisible();
   await page.getByLabel("Course area").selectOption({ label: "Calculus" });
   await page.getByLabel("Specification area").selectOption({ label: "Differentiation" });
+  await page.getByRole("button", { name: "Skills: All skills" }).click();
   await page.getByRole("group", { name: "Skills" }).getByLabel("Basic differentiation").click();
+  await page.getByRole("group", { name: "Skills" }).getByRole("button", { name: "Done" }).click();
   await page.getByRole("group", { name: "Stages" }).getByLabel("Foundations").click();
   await expect(page.getByRole("heading", { name: "3 matching questions" })).toBeVisible();
   await page.getByRole("button", { name: "Reset filters" }).click();
@@ -18,8 +20,10 @@ test("Question Bank opens directly into compact discovery with published-only fi
 
 test("filter state is shareable through the URL and survives refresh and Back/Forward", async ({ page }) => {
   await page.goto(bank);
+  await page.getByRole("button", { name: "Skills: All skills" }).click();
   await page.getByRole("group", { name: "Skills" }).getByLabel("Basic differentiation").click();
   await expect(page).toHaveURL(/path=basic-differentiation/);
+  await page.getByRole("group", { name: "Skills" }).getByRole("button", { name: "Done" }).click();
   await page.getByRole("group", { name: "Stages" }).getByLabel("Foundations").click();
   await expect(page).toHaveURL(/path=basic-differentiation/);
   await expect(page).toHaveURL(/stage=basic-diff-stage-foundations/);
@@ -37,8 +41,10 @@ test("filter state is shareable through the URL and survives refresh and Back/Fo
 test("skill and stage multi-select state is visible, shareable and removable", async ({ page }) => {
   await page.goto(bank);
   const skills = page.getByRole("group", { name: "Skills" });
+  await skills.getByRole("button", { name: "Skills: All skills" }).click();
   await skills.getByLabel("Basic differentiation").click();
   await skills.getByLabel("Chain rule").click();
+  await skills.getByRole("button", { name: "Done" }).click();
   const stages = page.getByRole("group", { name: "Stages" });
   await stages.getByLabel("Foundations").click();
   await stages.getByLabel("Applications").click();
@@ -55,7 +61,9 @@ test("selection survives filtering, can be reviewed and creates an ordered custo
   await page.goto(bank);
   await page.getByLabel("Select Basic differentiation, Foundations, Question 1").check();
   await expect(page.getByLabel("Question selection summary")).toContainText("1 selected");
+  await page.getByRole("button", { name: "Skills: All skills" }).click();
   await page.getByRole("group", { name: "Skills" }).getByLabel("Basic differentiation").click();
+  await page.getByRole("group", { name: "Skills" }).getByRole("button", { name: "Done" }).click();
   await page.getByRole("group", { name: "Stages" }).getByLabel("Applications").click();
   await expect(page.getByLabel("Question selection summary")).toContainText("1 selected");
   await page.getByRole("button", { name: /Select all 3 filtered questions/ }).click();
@@ -73,6 +81,27 @@ test("selection survives filtering, can be reviewed and creates an ordered custo
   await expect(page.getByTestId("practice-session-panel")).toContainText("Question 1 of 3");
   await page.getByRole("link", { name: "Question Bank" }).click();
   await expect(page).toHaveURL(bank);
+});
+
+test("the compact skill picker searches, selects, clears and restores focus on Escape", async ({ page }) => {
+  await page.goto(bank);
+  const skills = page.getByRole("group", { name: "Skills" });
+  const trigger = skills.getByRole("button", { name: "Skills: All skills" });
+  await expect(skills.getByTestId("skill-picker-options")).toHaveCount(0);
+  await trigger.click();
+  await skills.getByLabel("Search skills").fill("chain");
+  await expect(skills.getByLabel("Chain rule")).toBeVisible();
+  await expect(skills.getByLabel("Basic differentiation")).toHaveCount(0);
+  await skills.getByLabel("Chain rule").click();
+  await expect(page).toHaveURL(/path=chain-rule/);
+  await skills.getByLabel("Search skills").fill("");
+  await skills.getByLabel("Basic differentiation").click();
+  await expect(page).toHaveURL(/path=basic-differentiation%2Cchain-rule|path=chain-rule%2Cbasic-differentiation/);
+  await skills.getByRole("button", { name: "Clear selected skills" }).click();
+  await expect(page).not.toHaveURL(/path=/);
+  await page.keyboard.press("Escape");
+  await expect(skills.getByTestId("skill-picker-options")).toHaveCount(0);
+  await expect(skills.getByRole("button", { name: "Skills: All skills" })).toBeFocused();
 });
 
 test("group selection spans the full matching group with an accurate indeterminate state, and direct question access does not start practice", async ({ page }) => {

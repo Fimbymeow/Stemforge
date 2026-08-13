@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Calculator, Files, ListChecks, Shuffle } from "lucide-react";
+import { ArrowRight, Calculator, Files, ListChecks, Search, Shuffle } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { AppTopbar } from "@/components/layout/app-topbar";
 import { getActiveSubject, getAllSkillPaths, getAvailableSkillPaths } from "@/lib/learning-paths";
@@ -41,8 +41,9 @@ export function HigherMathsHub() {
 
         <section aria-labelledby="course-actions-title" className="min-w-0">
           <h2 id="course-actions-title" className="mb-2 text-base font-extrabold">Course actions</h2>
-          <div className="grid min-w-0 grid-cols-4 gap-x-4 border-y border-line max-lg:grid-cols-2 max-sm:grid-cols-1" data-testid="higher-maths-destinations">
+          <div className="grid min-w-0 grid-cols-5 gap-x-3 border-y border-line max-lg:grid-cols-1" data-testid="higher-maths-destinations">
             <Destination href="/practice" label="Practice" detail="Choose how to practise" icon={Shuffle} emphasis />
+            <Destination href="/subjects/higher-maths/question-bank" label="Question Bank" detail="Choose exact questions" icon={Search} testId="question-bank-destination" />
             <ReviewEntryCard headingLevel={3} compact />
             <Destination href="/subjects/higher-maths/course-tracker" label="Course Tracker" detail="Explore all 49 skills" icon={ListChecks} testId="course-tracker-destination" />
             <Destination href="/subjects/higher-maths/past-papers" label="Past Papers" detail="Official exam materials" icon={Files} testId="past-papers-destination" quiet />

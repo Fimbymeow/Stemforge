@@ -39,6 +39,7 @@ import { useHasMounted } from "@/lib/use-mounted";
 import { useModalFocusTrap } from "@/lib/use-modal-focus-trap";
 import { formatNeedsPracticeLabel } from "@/lib/working-context";
 import { deriveMistakeLog } from "@/lib/mistakes/derivation";
+import { SkillFilterPicker } from "@/components/question-bank-skill-picker";
 
 const STATUS_FILTERS: Array<{ id: QuestionBankProgressFilter; label: string }> = [
   { id: "all", label: "All questions" },
@@ -353,17 +354,20 @@ export function QuestionBank({ subjectSlug }: { subjectSlug: string }) {
   ];
   const activeChips = rawChips.filter((chip): chip is FilterChip => chip !== null);
 
-  const filterPanel = (
+  const scopedSkillOptions = options.skillPaths.filter((item) => (!normalizedFilters.courseAreaId || item.courseAreaId === normalizedFilters.courseAreaId) && (!normalizedFilters.specAreaId || item.specAreaId === normalizedFilters.specAreaId));
+
+  const filterPanel = (mobile: boolean) => (
     <div className="grid gap-3">
       <FilterSelect label="Course area" value={normalizedFilters.courseAreaId} onChange={(value) => updateFilters({ courseAreaId: value, specAreaId: "", skillPathIds: [], stageIds: [] })} options={options.courseAreas} allLabel="All areas" />
       <FilterSelect label="Specification area" value={normalizedFilters.specAreaId} onChange={(value) => updateFilters({ specAreaId: value, skillPathIds: [], stageIds: [] })} options={options.specAreas.filter((item) => !normalizedFilters.courseAreaId || item.courseAreaId === normalizedFilters.courseAreaId)} allLabel="All specification areas" />
-      <MultiFilter
+      <SkillFilterPicker
         label="Skills"
         values={normalizedFilters.skillPathIds}
         onClear={() => updateFilters({ skillPathIds: [], stageIds: [] })}
         onToggle={(id, checked) => toggleMultiValue("skillPathIds", [id], checked)}
-        options={options.skillPaths.filter((item) => (!normalizedFilters.courseAreaId || item.courseAreaId === normalizedFilters.courseAreaId) && (!normalizedFilters.specAreaId || item.specAreaId === normalizedFilters.specAreaId))}
+        options={scopedSkillOptions}
         allLabel="All skills"
+        mobile={mobile}
       />
       <StageMultiFilter
         label="Stages"
@@ -443,7 +447,7 @@ export function QuestionBank({ subjectSlug }: { subjectSlug: string }) {
         <div className="grid min-w-0 gap-4 max-md:gap-2 lg:grid-cols-[250px_minmax(0,1fr)] xl:grid-cols-[296px_minmax(0,1fr)]">
           <div id="question-bank-filters" className="hidden h-fit rounded-xl border border-line bg-white p-4 lg:block">
             <p className="mb-3 inline-flex items-center gap-2 font-extrabold"><Filter className="size-4" />Filters</p>
-            {filterPanel}
+            {filterPanel(false)}
           </div>
 
           <section className="min-w-0" aria-labelledby="question-results-title">
@@ -556,7 +560,7 @@ export function QuestionBank({ subjectSlug }: { subjectSlug: string }) {
         containerRef={filterSheetRef}
         closeRef={filterSheetCloseRef}
         onClose={() => setMobileFiltersOpen(false)}
-      >{filterPanel}</MobileFilterSheet> : null}
+      >{filterPanel(true)}</MobileFilterSheet> : null}
       {reviewOpen ? <ReviewSelection entries={selectedEntries} onClose={() => setReviewOpen(false)} onRemove={(id) => setSelected((current) => toggleQuestionSelection(current, id, false))} onClear={() => setSelected(new Set())} onStart={startPractice} closeRef={closeReviewRef} /> : null}
       {reviewDueConfirmOpen ? <ReviewDueConfirmation
         containerRef={reviewDueDialogRef}
@@ -575,20 +579,6 @@ export function QuestionBank({ subjectSlug }: { subjectSlug: string }) {
 
 function FilterSelect({ label, value, onChange, options, allLabel }: { label: string; value: string; onChange: (value: string) => void; options: readonly { id: string; name: string }[]; allLabel: string }) {
   return <label className="grid gap-1 text-sm font-bold">{label}<select aria-label={label} value={value} onChange={(event) => onChange(event.target.value)} className="min-h-11 min-w-0 rounded-lg border border-line bg-white px-3"><option value="">{allLabel}</option>{options.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>;
-}
-
-function MultiFilter({ label, values, onClear, onToggle, options, allLabel }: { label: string; values: readonly string[]; onClear: () => void; onToggle: (id: string, checked: boolean) => void; options: readonly { id: string; name: string }[]; allLabel: string }) {
-  return <fieldset className="rounded-lg border border-line p-3">
-    <legend className="px-1 text-sm font-bold">{label}</legend>
-    <label className="flex min-h-10 items-center gap-2 text-sm font-semibold">
-      <input type="checkbox" checked={!values.length} onChange={onClear} /> {allLabel}
-    </label>
-    <div className="grid max-h-44 gap-1 overflow-y-auto border-t border-line pt-1">
-      {options.map((item) => <label key={item.id} className="flex min-h-10 items-center gap-2 text-sm font-semibold">
-        <input type="checkbox" checked={values.includes(item.id)} onChange={(event) => onToggle(item.id, event.target.checked)} /> {item.name}
-      </label>)}
-    </div>
-  </fieldset>;
 }
 
 function StageMultiFilter({ label, values, onClear, onToggle, options, allLabel }: { label: string; values: readonly string[]; onClear: () => void; onToggle: (ids: readonly string[], checked: boolean) => void; options: readonly { name: string; ids: string[] }[]; allLabel: string }) {

@@ -8,11 +8,13 @@ test("Higher Maths keeps continuation above compact course destinations responsi
   const learn = page.getByTestId("working-context-hub");
   const destinations = page.getByTestId("higher-maths-destinations");
   const practice = destinations.getByRole("link", { name: "Practice" });
+  const questionBank = page.getByTestId("question-bank-destination");
   const review = page.getByTestId("review-entry-card");
   const tracker = page.getByTestId("course-tracker-destination");
   const pastPapers = page.getByTestId("past-papers-destination");
   await expect(learn).toBeVisible();
   await expect(practice).toBeVisible();
+  await expect(questionBank).toHaveAttribute("href", "/subjects/higher-maths/question-bank");
   await expect(review).toBeVisible();
   await expect(tracker).toHaveAttribute("href", "/subjects/higher-maths/course-tracker");
   await expect(pastPapers).toHaveAttribute("href", "/subjects/higher-maths/past-papers");
@@ -20,6 +22,8 @@ test("Higher Maths keeps continuation above compact course destinations responsi
   const wide = await cardBoxes(learn, practice, review);
   expect(wide.practice.y).toBeGreaterThanOrEqual(wide.learn.y + wide.learn.height);
   expect(Math.abs(wide.practice.y - wide.review.y)).toBeLessThan(8);
+  const questionBankBox = await questionBank.boundingBox();
+  expect(Math.abs(wide.practice.y - questionBankBox!.y)).toBeLessThan(8);
   expect(Math.abs(wide.practice.y - wide.review.y)).toBeLessThan(8);
   const trackerBox = await tracker.boundingBox();
   const pastPapersBox = await pastPapers.boundingBox();
@@ -38,7 +42,16 @@ test("Higher Maths keeps continuation above compact course destinations responsi
   expect(stacked.review.y).toBeGreaterThanOrEqual(stacked.practice.y + stacked.practice.height);
   await expect(page.getByTestId("course-tracker-destination")).toBeVisible();
   await expect(page.getByTestId("past-papers-destination")).toBeVisible();
+  await expect(page.getByTestId("question-bank-destination")).toBeVisible();
   await expectNoDocumentOverflow(page);
+});
+
+test("Higher Maths opens an unscoped Question Bank from its course actions", async ({ page }) => {
+  await page.goto("/subjects/higher-maths");
+  await page.getByTestId("question-bank-destination").click();
+  await expect(page).toHaveURL("/subjects/higher-maths/question-bank");
+  await expect(page.getByRole("heading", { name: "42 matching questions" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Remove .* filter/ })).toHaveCount(0);
 });
 
 test("Course tracker distinguishes official requirements within its selected unit", async ({ page }) => {
