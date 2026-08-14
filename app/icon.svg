@@ -1,6 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <rect width="64" height="64" rx="12" fill="#f5f4f0"/>
-  <path fill="#234b6e" fill-rule="evenodd" d="M32 6 57 55H7L32 6Zm0 13L17 47h30L32 19Z"/>
-  <path fill="#d66a2c" d="M29.5 14h5v33h-5z"/>
-  <path fill="#234b6e" d="M29.5 43h9v4.5h-9z"/>
+  <!-- Generated from lib/brand/orthic-geometry.ts. -->
+  <path fill="#234b6e" fill-rule="evenodd" d="M32 5 58 55H6L32 5Zm0 12.8L16.5 47h31L32 17.8Z"/>
+  <path fill="#234b6e" d="M29.5 13h5v34h-5z"/>
+  <path fill="#234b6e" d="M29.5 43.5h9V48h-9z"/>
 </svg>

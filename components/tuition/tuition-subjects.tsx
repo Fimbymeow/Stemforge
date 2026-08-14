@@ -25,7 +25,7 @@ export function TuitionSubjects() {
         className={`${lora.className} animate-hero-rise mx-auto mb-4 mt-5 max-w-[640px] text-center text-[clamp(30px,4vw,44px)] font-bold leading-[1.15]`}
         style={{ animationDelay: "100ms" }}
       >
-        Structured tutoring, tailored to the <TuitionEmphasis>SQA curriculum</TuitionEmphasis>.
+        Structured tutoring, tailored to the <TuitionEmphasis>Qualifications Scotland curriculum</TuitionEmphasis>.
       </h1>
       <p className="animate-hero-rise mx-auto mb-11 max-w-[560px] text-center text-lg leading-[1.5] text-muted" style={{ animationDelay: "180ms" }}>
         Comprehensive, methodical tutoring built around National 5 and Higher Maths and Physics.
@@ -58,7 +58,7 @@ export function TuitionSubjects() {
 
       <div key={selectedSlug} className="animate-tuition-reveal rounded-xl border border-line bg-white p-8 max-sm:p-6">
         <p className="mb-2 text-[12.5px] font-extrabold uppercase tracking-wide text-warning">
-          SQA {selected.level} · {selected.subject}
+          Qualifications Scotland {selected.level} · {selected.subject}
         </p>
         <h2 className={`${lora.className} m-0 text-2xl font-bold`}>{selected.name}</h2>
         <p className="mt-3 max-w-[640px] leading-relaxed text-muted">{selected.copy}</p>

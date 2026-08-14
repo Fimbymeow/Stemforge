@@ -1,13 +1,15 @@
-import { AboutBand } from "@/components/landing/about-band";
+import type { Metadata } from "next";
 import { Courses } from "@/components/landing/courses";
-import { Features } from "@/components/landing/features";
+import { CourseProof } from "@/components/landing/course-proof";
 import { FinalCta } from "@/components/landing/final-cta";
 import { Footer } from "@/components/landing/footer";
 import { Hero } from "@/components/landing/hero";
 import { HowItWorks } from "@/components/landing/how-it-works";
 import { Navbar } from "@/components/landing/navbar";
-import { Pricing } from "@/components/landing/pricing";
-import { TrustBar } from "@/components/landing/trust";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 
 export default function HomePage() {
   return (
@@ -15,12 +17,9 @@ export default function HomePage() {
       <Navbar />
       <main id="main-content" tabIndex={-1}>
         <Hero />
-        <TrustBar />
-        <Features />
         <HowItWorks />
+        <CourseProof />
         <Courses />
-        <AboutBand />
-        <Pricing />
         <FinalCta />
       </main>
       <Footer />

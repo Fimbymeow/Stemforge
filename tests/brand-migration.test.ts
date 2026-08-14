@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { PROGRESS_STORAGE_KEY } from "../lib/progress/storage";
 import { PRACTICE_SESSIONS_STORAGE_KEY } from "../lib/practice/practice-types";
+import { ORTHIC_ALTITUDE_PATH, ORTHIC_FOOT_PATH, ORTHIC_OUTLINE_PATH } from "../lib/brand/orthic-geometry";
 
 const productFiles = [
   "app/layout.tsx",
@@ -27,7 +28,23 @@ test("Orthic has vector wordmark, standalone mark and application icon assets", 
     const asset = readFileSync(file, "utf8");
     assert.match(asset, /<svg/);
     assert.match(asset, /234b6e/);
+    assert.doesNotMatch(asset, /d66a2c|orange/i);
+    assert.match(asset, new RegExp(ORTHIC_OUTLINE_PATH.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    assert.match(asset, new RegExp(ORTHIC_ALTITUDE_PATH));
+    assert.match(asset, new RegExp(ORTHIC_FOOT_PATH));
   }
+});
+
+test("homepage metadata and proof assets are Orthic-specific and non-fabricated", () => {
+  const layout = readFileSync("app/layout.tsx", "utf8");
+  const home = readFileSync("app/page.tsx", "utf8");
+  const hero = readFileSync("components/landing/hero.tsx", "utf8");
+  assert.match(layout, /summary_large_image/);
+  assert.match(home, /alternates: \{ canonical: "\/" \}/);
+  assert.doesNotMatch(layout, /alternates: \{ canonical: "\/" \}/);
+  assert.doesNotMatch(layout, /stemforge-6an8/);
+  assert.match(hero, /orthic-skill-page\.png/);
+  assert.doesNotMatch(home + hero, /mockup-dashboard|Mechanics|Kinematics|12-day|avatar/i);
 });
 
 test("the rebrand preserves established learner storage contracts", () => {

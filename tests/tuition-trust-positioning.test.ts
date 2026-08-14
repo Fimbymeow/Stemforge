@@ -119,9 +119,9 @@ test("no disguised trust claims (student counts, star ratings, 'proven results',
   }
 });
 
-test("Orthic is described accurately: no claim of course completion, wide use, proven results, or SQA affiliation/endorsement", () => {
+test("Orthic is described accurately: no claim of course completion, wide use, proven results, or exam-board affiliation/endorsement", () => {
   // tuition-footer.tsx is excluded here — it is the one file required to carry the negated
-  // "not affiliated with or endorsed by SQA" disclaimer, checked separately below.
+  // independence disclaimer, checked separately below.
   for (const file of TUITION_FILES.filter((file) => file !== "components/tuition/tuition-footer.tsx")) {
     const text = source(file);
     assert.doesNotMatch(text, /(?<!not )affiliated with (?:the )?SQA/i, `${file} must not claim SQA affiliation`);
@@ -130,7 +130,7 @@ test("Orthic is described accurately: no claim of course completion, wide use, p
     assert.doesNotMatch(text, /widely used/i, `${file} must not claim Orthic is widely used`);
   }
   const footer = source("components/tuition/tuition-footer.tsx");
-  assert.match(footer, /not affiliated with or endorsed by SQA/i, "the independence disclaimer must remain in the footer");
+  assert.match(footer, /not affiliated with or endorsed by Qualifications Scotland/i, "the independence disclaimer must remain in the footer");
 });
 
 test("Orthic positioning copy references structured, original, staged content rather than a finished product claim", () => {
@@ -160,18 +160,11 @@ test("no package, subscription or discount language is introduced", () => {
   }
 });
 
-test("the contact form CTA text accurately reflects mailto behaviour, not a real submission", () => {
+test("the stale placeholder tuition contact route is removed and the limitation is explicit", () => {
   const formSource = source("components/landing/tuition-contact-form.tsx");
-  assert.doesNotMatch(formSource, />\s*Send enquiry\s*</, "the button must not claim to send anything directly");
-  assert.match(formSource, /Open email to send enquiry/);
-  assert.match(formSource, /doesn&apos;t submit anything|does not submit anything/i, "the limitation must be stated explicitly");
-  assert.match(formSource, /mailto:/, "the underlying behaviour is still a mailto handoff");
-});
-
-test("the contact form fallback email link is present and entered field values are never cleared before the mailto navigation", () => {
-  const formSource = source("components/landing/tuition-contact-form.tsx");
-  assert.match(formSource, /mailto:\$\{CONTACT_EMAIL\}/);
-  assert.doesNotMatch(formSource, /setName\(""\)|setEmail\(""\)|setMessage\(""\)/, "submitting must not clear entered details");
+  assert.match(formSource, /Enquiries temporarily unavailable/);
+  assert.match(formSource, /placeholder email address has been removed/);
+  assert.doesNotMatch(formSource, /tuition@stemforge\.app|mailto:/);
 });
 
 test("key Tuition pages exist and import their navbar and footer (structural render check)", () => {

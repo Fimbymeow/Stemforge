@@ -6,7 +6,7 @@ import { TuitionSubjects } from "@/components/tuition/tuition-subjects";
 
 export const metadata: Metadata = {
   title: "Subjects — Tuition",
-  description: "National 5 and Higher Maths and Physics tuition, built around the SQA curriculum.",
+  description: "National 5 and Higher Maths and Physics tuition, built around the Qualifications Scotland curriculum.",
 };
 
 export default function TuitionSubjectsPage() {

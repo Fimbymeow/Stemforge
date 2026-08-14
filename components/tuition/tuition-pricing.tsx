@@ -11,7 +11,7 @@ import { TuitionReveal } from "@/components/tuition/tuition-reveal";
 const INCLUDED = [
   "1-to-1 online sessions",
   "Personalised lesson plans",
-  "Built around the SQA specification",
+  "Built around the Qualifications Scotland specification",
   "Free trial session",
 ];
 
@@ -41,7 +41,7 @@ const FAQS = [
   },
   {
     question: "What happens after I enquire?",
-    answer: "Send an enquiry through the contact form (or email directly) and you'll get a reply to arrange your first free session.",
+    answer: "Online enquiries are temporarily unavailable while a verified Orthic contact route is prepared.",
   },
 ] as const;
 

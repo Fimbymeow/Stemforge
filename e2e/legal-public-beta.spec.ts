@@ -7,7 +7,7 @@ test("public privacy and terms pages are reachable and describe current data bou
 
   await page.getByRole("link", { name: "Privacy" }).click();
   await expect(page.getByRole("heading", { name: "Privacy Notice", level: 1 })).toBeVisible();
-  await expect(page.getByText("Signing in alone never imports guest progress automatically.")).toBeVisible();
+  await expect(page.getByText("Signing in alone never imports guest data automatically.", { exact: false })).toBeVisible();
   await expect(page.getByText(/Formal legal review/)).toBeVisible();
 
   await page.goto("/terms");

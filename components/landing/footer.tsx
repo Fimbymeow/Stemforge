@@ -1,24 +1,23 @@
-import { getActiveSkillPathHref } from "@/lib/learning-paths";
 import Link from "next/link";
+import { OrthicWordmark } from "@/components/brand/orthic-mark";
 
 export function Footer() {
   return (
-    <footer className="grid justify-items-center gap-5 px-5 py-8 text-center text-muted">
-      <nav aria-label="Footer" className="flex flex-wrap justify-center gap-x-8 gap-y-5 font-mono text-[13px] font-bold">
-        <Link href="#about">About</Link>
-        <Link href="/tuition">Tuition</Link>
-        <Link href="/subjects">Subjects</Link>
-        <Link href="/privacy">Privacy</Link>
-        <Link href="/terms">Terms</Link>
-        <Link href={getActiveSkillPathHref()}>Basic differentiation</Link>
-      </nav>
-      <p className="m-0 max-w-3xl text-xs leading-relaxed">
-        Orthic creates original Qualifications Scotland-style practice materials and is not affiliated with or endorsed by Qualifications Scotland.
-      </p>
-      <p className="m-0 max-w-3xl text-xs leading-relaxed">
-        Public beta. Learning and account features may continue to change as they are validated with learners.
-      </p>
+    <footer className="border-t border-line px-5 py-9 text-muted">
+      <div className="mx-auto grid w-[min(1180px,100%)] grid-cols-[1fr_auto] gap-8 max-md:grid-cols-1">
+        <div><OrthicWordmark /><p className="mt-3 max-w-sm text-sm leading-relaxed">Structured STEM learning for Scottish students. Currently in public beta.</p></div>
+        <nav aria-label="Footer" className="grid grid-cols-3 gap-x-8 gap-y-3 text-sm font-bold max-sm:grid-cols-2">
+          <Link href="/subjects">Courses</Link>
+          <Link href="/tuition">Orthic Tuition</Link>
+          <Link href="/account">Account</Link>
+          <Link href="/privacy">Privacy</Link>
+          <Link href="/terms">Terms</Link>
+        </nav>
+      </div>
+      <div className="mx-auto mt-8 grid w-[min(1180px,100%)] gap-2 border-t border-line pt-5 text-xs leading-relaxed">
+        <p>Orthic creates original Qualifications Scotland-style practice materials and is not affiliated with or endorsed by Qualifications Scotland.</p>
+        <p>Public beta. Learning and account features may continue to change as they are validated with learners.</p>
+      </div>
     </footer>
   );
 }
-

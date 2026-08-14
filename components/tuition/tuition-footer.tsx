@@ -32,7 +32,7 @@ export function TuitionFooter() {
         </div>
       </div>
       <p className="mx-auto mt-8 max-w-[900px] text-center text-xs leading-relaxed text-muted">
-        Orthic creates original SQA-style practice materials and is not affiliated with or endorsed by SQA.
+        Orthic creates original Qualifications Scotland-style practice materials and is not affiliated with or endorsed by Qualifications Scotland.
       </p>
     </footer>
   );

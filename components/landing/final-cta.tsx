@@ -1,16 +1,13 @@
-import { ButtonLink } from "@/components/ui";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 
 export function FinalCta() {
   return (
-    <section className="grid justify-items-center gap-7 border-y border-line px-5 py-20 text-center">
-      <h2 className="m-0 max-w-[820px] text-[clamp(44px,7vw,92px)] font-medium leading-[0.96]">
-        Ready to Learn with Precision?
-      </h2>
-      <ButtonLink href="/dashboard" size="lg">
-        Start Learning
-      </ButtonLink>
+    <section className="bg-ink px-5 py-[clamp(56px,8vw,96px)] text-white">
+      <div className="mx-auto flex w-[min(980px,100%)] items-end justify-between gap-10 max-md:grid">
+        <div><p className="text-xs font-extrabold uppercase tracking-[0.16em] text-white/65">Free to start</p><h2 className="mt-3 text-[clamp(38px,6vw,68px)] font-extrabold leading-none tracking-[-0.04em]">Start with Higher Maths.</h2><p className="mt-4 max-w-xl text-white/70">Basic differentiation and Chain rule are available now. No account is required.</p></div>
+        <Link href="/dashboard" className="inline-flex min-h-[52px] shrink-0 items-center justify-center gap-2 rounded-md bg-white px-7 text-sm font-extrabold text-ink">Start Learning <ArrowRight aria-hidden="true" className="size-4" /></Link>
+      </div>
     </section>
   );
 }
-
-
