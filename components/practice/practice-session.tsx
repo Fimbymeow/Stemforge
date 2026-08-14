@@ -509,6 +509,7 @@ function PracticeSummaryCard({ session, summary }: { session: PracticeSessionMod
   });
   const questionStatuses = derivePracticeQuestionStatuses(session, getProgressEvidence() ?? getEmptyProgressEvidence());
   const returnDestination = practiceReturnDestination(session);
+  const subjectDestination = practiceSubjectDestination(session.subjectId);
   useEffect(() => {
     if (claimedRef.current) return;
     claimedRef.current = true;
@@ -570,7 +571,7 @@ function PracticeSummaryCard({ session, summary }: { session: PracticeSessionMod
             {summary.skippedCount ? <button type="button" onClick={retrySkipped} disabled={activation.busy} className="inline-flex min-h-11 items-center rounded-lg border border-forge bg-white px-4 font-extrabold text-forge transition hover:bg-forge-soft">Retry skipped questions</button> : null}
             {!summary.incorrectQuestionIds.length && !summary.skippedCount && nextAction.kind === "practice_again" ? <QuickPracticeAction preferredPathId={nextAction.pathId} label={nextAction.label} /> : null}
             <Link href={returnDestination.href} className="inline-flex min-h-11 items-center rounded-lg border border-line bg-white px-4 font-extrabold transition hover:border-forge">{returnDestination.label}</Link>
-            <Link href={practiceSubjectDestination(session.subjectId)} className="inline-flex min-h-11 items-center rounded-lg border border-line bg-white px-4 font-extrabold transition hover:border-forge">Subject</Link>
+            {returnDestination.href !== subjectDestination ? <Link href={subjectDestination} className="inline-flex min-h-11 items-center rounded-lg border border-line bg-white px-4 font-extrabold transition hover:border-forge">Subject</Link> : null}
             <Link href="/dashboard" className="inline-flex min-h-11 items-center rounded-lg border border-line bg-white px-4 font-extrabold transition hover:border-forge">Dashboard</Link>
           </div>
         </Card>

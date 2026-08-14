@@ -55,6 +55,10 @@ test("Subjects presents a qualification-grouped course list without learner reco
   expect(Math.abs(mathsBox!.width - physicsBox!.width)).toBeLessThan(2);
   await expect(maths).toContainText("2 of 49 skills available");
   await expect(maths).toContainText("Available now");
+  await expect(maths.getByRole("heading", { name: "Higher Maths", level: 3 })).toBeVisible();
+  await expect(maths.getByText("Maths", { exact: true })).toHaveCount(0);
+  await maths.focus();
+  await expect(maths).toBeFocused();
   await expect(physics.getByText("Coming soon", { exact: true })).toBeVisible();
   await expect(physics.getByRole("link")).toHaveCount(0);
   await expect(page.getByTestId("qualification-group-national-5")).toHaveCount(0);

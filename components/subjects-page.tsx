@@ -68,18 +68,20 @@ function CourseRow({ course }: { course: (typeof subjectCatalog)[number] }) {
         <Icon aria-hidden="true" className="size-[18px]" />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block font-extrabold text-ink">{course.subject}</span>
-        <span className="mt-0.5 block text-xs text-muted">{course.name}{course.slug === "higher-maths" ? ` · ${higherMathsScope}` : ""}</span>
+        <h3 className="text-base font-extrabold leading-tight text-ink">{course.name}</h3>
+        {course.slug === "higher-maths" ? <span className="mt-1 block text-xs font-medium text-muted">{higherMathsScope}</span> : null}
       </span>
-      <span className={`shrink-0 text-xs font-extrabold ${course.available ? "text-forge" : "text-muted"}`}>{course.available ? "Available now" : "Coming soon"}</span>
-      {course.available ? <ArrowRight aria-hidden="true" className="size-4 shrink-0 text-forge" /> : <Clock3 aria-hidden="true" className="size-4 shrink-0 text-muted" />}
+      <span className="flex shrink-0 items-center gap-2">
+        <span className={`text-xs font-extrabold ${course.available ? "text-forge" : "text-muted"}`}>{course.available ? "Available now" : "Coming soon"}</span>
+        {course.available ? <ArrowRight aria-hidden="true" className="size-4 shrink-0 text-forge transition-transform group-hover:translate-x-0.5" /> : <Clock3 aria-hidden="true" className="size-4 shrink-0 text-muted" />}
+      </span>
     </>
   );
-  const className = "flex min-h-16 items-center gap-3 px-1 py-2.5 transition max-sm:flex-wrap max-sm:gap-x-3";
+  const className = "group grid min-h-20 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-lg px-3 py-3 transition-colors";
   const testId = `subject-card-${slug(course.name)}`;
 
   return course.available ? (
-    <Link href={course.href} aria-label={`Open ${course.name}`} data-testid={testId} className={`${className} hover:bg-forge-soft focus-visible:bg-forge-soft`}>
+    <Link href={course.href} aria-label={`Open ${course.name}`} data-testid={testId} className={`${className} hover:bg-forge-soft/70 focus-visible:bg-forge-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forge`}>
       {content}
     </Link>
   ) : (

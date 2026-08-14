@@ -25,10 +25,9 @@ export function practiceReturnDestination(
     };
   }
   if (session.origin === "scheduled_review") {
-    const pathId = session.selectedPathIds?.length === 1 ? session.selectedPathIds[0] : null;
     return {
-      href: pathId ? `/practice?review=1&path=${encodeURIComponent(pathId)}` : "/practice?review=1",
-      label: "Review",
+      href: practiceSubjectDestination(session.subjectId),
+      label: session.subjectId === "higher-maths" ? "Back to Higher Maths" : "Back to course",
     };
   }
   return { href: "/practice", label: "Practice" };

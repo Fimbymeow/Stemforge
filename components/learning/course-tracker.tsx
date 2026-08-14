@@ -2,12 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ChevronDown } from "lucide-react";
 import type { Subject } from "@/data/types";
 import { deriveHigherMathsCourseTracker } from "@/lib/course-tracker";
 import { getEmptyProgressEvidence, getProgressEvidence } from "@/lib/local-progress";
 import type { ProgressEvidence } from "@/lib/progress/types";
-import { IconNodePath } from "@/components/learning/icon-node-path";
 import { MasteryMark } from "@/components/learning/mastery-badge";
 import { getReviewPresentationState, ReviewStatus } from "@/components/learning/review-status";
 
@@ -42,22 +41,33 @@ export function CourseTracker({ subject }: { subject: Subject }) {
         <p className="text-sm font-bold text-forge" data-testid="course-tracker-coverage">{model.availableSkillCount} of {model.totalSkillCount} skills available</p>
       </div>
 
-      <nav aria-label="Course areas" data-testid="course-tracker-unit-navigation">
-        <IconNodePath
-          items={model.areas.map((item) => ({ id: item.courseAreaId, label: item.title, available: item.requirements.some((requirement) => requirement.skills.some((skill) => skill.availability === "Available")) }))}
-          selectedIndex={selectedArea}
-          onSelect={setSelectedArea}
-        />
+      <nav aria-label="Course areas" className="min-w-0" data-testid="course-tracker-unit-navigation">
+        <div className="flex gap-2 overflow-x-auto pb-1" data-testid="course-tracker-area-list">
+          {model.areas.map((item, index) => {
+            const isSelected = index === selectedArea;
+            return (
+              <button
+                key={item.courseAreaId}
+                type="button"
+                aria-current={isSelected ? "page" : undefined}
+                onClick={() => setSelectedArea(index)}
+                className={`min-h-11 min-w-max flex-1 whitespace-nowrap rounded-lg border px-3 py-2 text-left text-sm font-extrabold leading-snug transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forge ${isSelected ? "border-forge bg-forge-soft text-forge" : "border-line bg-white text-ink hover:border-forge/50 hover:bg-paper"}`}
+              >
+                {item.title}
+              </button>
+            );
+          })}
+        </div>
       </nav>
 
       {area ? (
         <section aria-labelledby={`tracker-area-${area.courseAreaId}`} className="min-w-0" data-testid={`tracker-area-${area.courseAreaId}`}>
-          <h3 id={`tracker-area-${area.courseAreaId}`} className="border-b-2 border-ink pb-3 text-xl font-extrabold">{area.title}</h3>
+          <h3 id={`tracker-area-${area.courseAreaId}`} className="border-b border-ink pb-3 text-xl font-extrabold">{area.title}</h3>
           <div className="divide-y divide-line">
             {area.requirements.map((requirement) => (
-              <section key={requirement.areaId} aria-labelledby={`tracker-topic-${requirement.areaId}`} className="py-4">
-                <h4 id={`tracker-topic-${requirement.areaId}`} className="text-sm font-extrabold text-ink">{requirement.title}</h4>
-                <ul className="mt-2 divide-y divide-line border-y border-line" aria-label={`${requirement.title} Orthic skills`}>
+              <section key={requirement.areaId} aria-labelledby={`tracker-topic-${requirement.areaId}`} className="py-5">
+                <h4 id={`tracker-topic-${requirement.areaId}`} className="text-sm font-extrabold text-muted">{requirement.title}</h4>
+                <ul className="mt-3 divide-y divide-line border-y border-line" aria-label={`${requirement.title} Orthic skills`}>
                   {requirement.skills.map((skill) => <TrackerSkillRow key={skill.skillPathId} skill={skill} />)}
                 </ul>
               </section>
@@ -92,27 +102,26 @@ function TrackerSkillRow({ skill }: { skill: ReturnType<typeof deriveHigherMaths
   return (
     <li className={`min-w-0 ${isComingSoon ? "py-2" : "py-3"}`} data-testid={`tracker-skill-${skill.skillPathId}`} data-course-tracker-skill="">
       {isComingSoon ? (
-        <div className="flex min-h-11 min-w-0 items-center gap-3">
+        <div className="flex min-h-11 min-w-0 items-center gap-3 px-2">
           <h5 className="min-w-0 flex-1 break-words text-sm font-extrabold text-muted">{skill.name}</h5>
           <span className="text-xs font-bold text-muted">Coming soon</span>
         </div>
       ) : skill.action ? (
-        <Link href={skill.action.href} aria-label={`Open ${skill.name} skill overview`} className="flex min-h-11 min-w-0 items-center gap-3 rounded-sm transition hover:bg-forge-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-forge">
+        <Link href={skill.action.href} aria-label={`Open ${skill.name} skill overview`} className={`flex min-h-14 min-w-0 items-center gap-3 rounded-sm px-2 transition-colors hover:bg-paper focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-forge ${skill.structuralStatus === "In progress" ? "border-l-2 border-forge bg-forge-soft/35 pl-3" : ""}`}>
           <div className="min-w-0 flex-1">
-            <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
-              <h5 className="break-words text-sm font-extrabold text-ink">{skill.name}</h5>
-              {skill.masteryStatus ? <MasteryMark status={skill.masteryStatus} density="labelled" /> : null}
-              {(skill.reviewEligible || skill.reviewDue || skill.reviewDueSoon) ? <ReviewStatus state={reviewState} compact /> : null}
-              {skill.knowledgeStatus === "Needs practice" ? <span className="text-xs font-bold text-muted">Needs practice</span> : null}
-            </div>
-            {skill.knowledgeReason ? <p className="mt-1 text-xs text-muted">{skill.knowledgeReason}</p> : null}
+            <h5 className="break-words text-sm font-extrabold text-ink">{skill.name}</h5>
+            {skill.knowledgeReason ? <p className="mt-1 text-xs text-muted"><span className="font-bold text-ink">Needs practice</span> · {skill.knowledgeReason}</p> : null}
+          </div>
+          <div className="flex shrink-0 flex-col items-end gap-1.5">
+            {skill.masteryStatus ? <MasteryMark status={skill.masteryStatus} density="labelled" /> : null}
+            {(skill.reviewEligible || skill.reviewDue || skill.reviewDueSoon) ? <ReviewStatus state={reviewState} compact /> : null}
           </div>
           <ArrowRight aria-hidden="true" className="size-4 shrink-0 text-forge" />
         </Link>
       ) : null}
-      <details className="mt-1 text-sm text-muted" data-testid={`tracker-requirements-${skill.skillPathId}`}>
-        <summary aria-label={`View official requirements for ${skill.name}`} className="min-h-10 w-fit cursor-pointer py-2 text-xs font-semibold underline-offset-4 hover:underline">
-          Official requirements ({skill.officialPoints.length})
+      <details className="group/requirements mt-1 text-sm text-muted" data-testid={`tracker-requirements-${skill.skillPathId}`}>
+        <summary aria-label={`View official requirements for ${skill.name}`} className="flex min-h-10 w-fit cursor-pointer list-none items-center gap-1.5 px-2 py-2 text-xs font-semibold underline-offset-4 hover:text-ink hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-forge">
+          Official requirements ({skill.officialPoints.length}) <ChevronDown aria-hidden="true" className="size-3.5 transition-transform group-open/requirements:rotate-180" />
         </summary>
         <ul className="grid gap-2 border-l-2 border-line pb-2 pl-3 leading-relaxed">
           {skill.officialPoints.map((point) => <li key={point.id} data-testid="course-tracker-official-point" data-official-point-id={point.id}><span className="font-bold text-ink">{point.reference}:</span> {point.text}</li>)}

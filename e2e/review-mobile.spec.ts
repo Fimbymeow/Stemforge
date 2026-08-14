@@ -14,6 +14,7 @@ test("mobile scheduled Review remains accessible, bounded and uses the existing 
   await page.goto(`/practice?review=1&path=${PATH_ID}`);
   const card = page.getByTestId("review-launch-card");
   await expect(card).toContainText("1 skill due");
+  await expect(page.getByRole("navigation", { name: "Review navigation" }).getByRole("link", { name: "Back to Higher Maths" })).toBeVisible();
   const start = card.getByRole("button", { name: "Start Review" });
   await expect(start).toBeVisible();
   const box = await start.boundingBox();

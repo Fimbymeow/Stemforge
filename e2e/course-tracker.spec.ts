@@ -13,7 +13,8 @@ test("tracker opens the current area and keeps all major course areas directly r
   await page.goto("/subjects/higher-maths/course-tracker");
   const navigation = page.getByTestId("course-tracker-unit-navigation");
   for (const area of ["Algebra and Trigonometry", "Vectors", "Calculus", "Lines, Circles and Sequences"]) await expect(navigation.getByRole("button", { name: area })).toBeVisible();
-  await expect(navigation.getByRole("button", { name: "Calculus" })).toHaveAttribute("aria-current", "true");
+  await expect(navigation.getByRole("button", { name: "Calculus" })).toHaveAttribute("aria-current", "page");
+  await expect(page.getByTestId("course-tracker-area-list")).toBeVisible();
   await expect(page.getByTestId("tracker-skill-basic-differentiation")).toBeVisible();
   await expect(page.getByTestId("tracker-skill-basic-differentiation").locator('[data-mastery-status="not_started"]')).toBeVisible();
   await expect(page.getByTestId("tracker-skill-basic-differentiation").getByRole("link", { name: "Open Basic differentiation skill overview" })).toHaveAttribute("href", "/subjects/higher-maths/calculus/differentiation/basic-differentiation");
@@ -52,6 +53,7 @@ test("needs-practice remains distinct from structural mastery", async ({ page })
   await expect(basic.locator('[data-mastery-status="in_progress"]')).toBeVisible();
   await expect(basic).toContainText("Needs practice");
   await expect(basic).toContainText("Foundations: 1/3 complete");
+  await expect(basic.getByRole("link", { name: "Open Basic differentiation skill overview" })).toHaveClass(/border-l-2/);
 });
 
 test("tracker navigation and disclosures are keyboard-usable and overflow-free at 375px", async ({ page }) => {

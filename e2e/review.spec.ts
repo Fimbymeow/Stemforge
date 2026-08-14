@@ -23,10 +23,15 @@ test("due scheduled Review launches the existing Practice Session without consol
   const card = page.getByTestId("review-launch-card");
   await expect(card).toContainText("1 skill due");
   await expect(card).toContainText("6 questions ready");
+  const reviewNavigation = page.getByRole("navigation", { name: "Review navigation" });
+  await expect(reviewNavigation.getByRole("link", { name: "Back to Higher Maths" })).toHaveAttribute("href", "/subjects/higher-maths");
+  await expect(reviewNavigation.getByRole("link", { name: "Dashboard" })).toHaveAttribute("href", "/dashboard");
+  await expect(reviewNavigation.getByRole("link", { name: "Practice" })).toHaveAttribute("href", "/practice");
   await card.getByRole("button", { name: "Start Review" }).click();
   await expect(page).toHaveURL(/\/practice\/session\/[^?]+$/);
   await expect(page.getByTestId("practice-session-panel")).toContainText("Review");
-  await expect(page.getByTestId("practice-session-panel").getByRole("link", { name: "Review" })).toHaveAttribute("href", reviewHref);
+  const panel = page.getByTestId("practice-session-panel");
+  await expect(panel.getByRole("link", { name: "Back to Higher Maths" })).toHaveAttribute("href", "/subjects/higher-maths");
   const stored = await page.evaluate(() => {
     const raw = localStorage.getItem("stemforge.practiceSessions.v1");
     return raw ? JSON.parse(raw) : null;
@@ -37,6 +42,12 @@ test("due scheduled Review launches the existing Practice Session without consol
   expect(active.origin).toBe("scheduled_review");
   expect(active.reviewTargets).toHaveLength(1);
   expect(active.reviewTargets[0].questionIds).toEqual(active.questionReferences.map((item: { questionId: string }) => item.questionId));
+  await panel.getByRole("button", { name: "Finish session" }).click();
+  const finishDialog = page.getByRole("dialog", { name: "Finish this session?" });
+  await finishDialog.getByRole("button", { name: "Finish session" }).click();
+  await expect(page.getByRole("heading", { name: "Practice summary" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Back to Higher Maths" })).toHaveAttribute("href", "/subjects/higher-maths");
+  await expect(page.locator("#main-content").getByRole("link", { name: "Dashboard" })).toHaveAttribute("href", "/dashboard");
   expect(seriousBrowserErrors).toEqual([]);
 });
 
@@ -63,7 +74,7 @@ test("both due skills create a mixed Review that exposes the current skill and k
   await expect(panel.getByTestId("review-current-skill")).toHaveText("Basic differentiation");
   await panel.getByRole("button", { name: "Next question" }).click();
   await expect(panel.getByTestId("review-current-skill")).toHaveText("Chain rule");
-  await expect(panel.getByRole("link", { name: "Review" })).toHaveAttribute("href", "/practice?review=1");
+  await expect(panel.getByRole("link", { name: "Back to Higher Maths" })).toHaveAttribute("href", "/subjects/higher-maths");
   expect(seriousBrowserErrors).toEqual([]);
 });
 
@@ -77,6 +88,7 @@ test("recent completion produces a calm zero-due Review state", async ({ page })
   await page.goto(reviewHref);
   await expect(page.getByTestId("review-launch-card")).toContainText("Nothing is due right now");
   await expect(page.getByRole("button", { name: "Start Review" })).toHaveCount(0);
+  await expect(page.getByRole("navigation", { name: "Review navigation" }).getByRole("link", { name: "Back to Higher Maths" })).toHaveAttribute("href", "/subjects/higher-maths");
 });
 
 function completedAttempts(pathId: string, sequenceOffset: number) {

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, ChevronDown, Clock, SlidersHorizontal, Target } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChevronDown, Clock, SlidersHorizontal, Target } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { AppTopbar } from "@/components/layout/app-topbar";
 import { QuickPracticeAction } from "@/components/practice/quick-practice-action";
@@ -144,6 +144,11 @@ export function PracticeSetup({
     return (
       <AppShell demo active="Practice" className="py-8 max-xl:pt-5" workingContextPathId={workingContextPathId}>
         <div className="mx-auto grid max-w-[760px] gap-5">
+          <nav aria-label="Review navigation" className="flex min-h-10 flex-wrap items-center gap-x-5 gap-y-1 text-sm font-bold">
+            <Link href="/subjects/higher-maths" className="inline-flex min-h-10 items-center gap-2 text-forge"><ArrowLeft aria-hidden="true" className="size-4" />Back to Higher Maths</Link>
+            <Link href="/dashboard" className="inline-flex min-h-10 items-center text-muted hover:text-forge">Dashboard</Link>
+            <Link href={workingContextPathId ? `/practice?path=${encodeURIComponent(workingContextPathId)}` : "/practice"} className="inline-flex min-h-10 items-center text-muted hover:text-forge">Practice</Link>
+          </nav>
           <header>
             <p className="text-sm font-bold text-muted">Review</p>
             <h1 className="mt-1 text-[28px] font-extrabold leading-tight">Review what is due</h1>
@@ -172,7 +177,6 @@ export function PracticeSetup({
             )}
             {activation.error ? <p role="alert" className="mt-3 text-sm font-bold text-danger">{activation.error}</p> : null}
           </Card>
-          <Link href={workingContextPathId ? `/practice?path=${encodeURIComponent(workingContextPathId)}` : "/practice"} className="text-sm font-bold text-forge">Back to Practice</Link>
         </div>
         {activation.activationUi}
       </AppShell>
