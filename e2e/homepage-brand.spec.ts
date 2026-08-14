@@ -5,19 +5,20 @@ test("public homepage presents truthful product-led Orthic positioning", async (
   await page.goto("/");
   await expect(page).toHaveTitle(/Orthic.*Learn with Precision/);
   await expect(page.getByRole("heading", { level: 1, name: "Learn with Precision." })).toBeVisible();
-  await expect(page.getByRole("img", { name: /Orthic Higher Maths Basic differentiation page/ })).toBeVisible();
+  await expect(page.getByTestId("homepage-product-visual")).toHaveAccessibleName("Orthic Basic differentiation learning journey");
   await expect(page.getByText("Mechanics", { exact: false })).toHaveCount(0);
   await expect(page.getByText("Kinematics", { exact: false })).toHaveCount(0);
   await expect(page.getByText("Chemistry", { exact: true })).toHaveCount(0);
   await expect(page.getByText("Biology", { exact: true })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Higher Maths", level: 3 })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Higher Physics", level: 3 })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Higher Physics", level: 3 }).locator("xpath=parent::*").getByText("Coming soon", { exact: true })).toBeVisible();
+  await expect(page.getByText("Higher Physics", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("Coming soon", { exact: true })).toHaveCount(0);
+  await expect(page.getByText(/public beta/i)).toHaveCount(0);
   await expect(page.getByText("Premium", { exact: false })).toHaveCount(0);
   await expect(page.locator('meta[property="og:image"]')).toHaveAttribute("content", /opengraph-image/);
   await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute("content", "summary_large_image");
   const headingBox = await page.getByRole("heading", { level: 1, name: "Learn with Precision." }).boundingBox();
-  const proofBox = await page.getByRole("img", { name: /Orthic Higher Maths Basic differentiation page/ }).locator("xpath=ancestor::figure").boundingBox();
+  const proofBox = await page.getByTestId("homepage-product-visual").boundingBox();
   const nextSectionBox = await page.locator("#how-it-works").boundingBox();
   expect(headingBox).not.toBeNull();
   expect(proofBox).not.toBeNull();
@@ -47,7 +48,7 @@ test("mobile navigation and product proof remain compact, accessible and overflo
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), `${viewport.width}px overflow`).toBe(0);
     await expect(page.getByRole("heading", { level: 1, name: "Learn with Precision." })).toBeVisible();
     const mobileHeading = page.getByRole("heading", { level: 1, name: "Learn with Precision." });
-    const mobileProof = page.getByRole("img", { name: /Orthic Higher Maths Basic differentiation page/ });
+    const mobileProof = page.getByTestId("homepage-product-visual");
     await expect(mobileProof).toBeVisible();
     expect((await mobileProof.boundingBox())!.y).toBeGreaterThan((await mobileHeading.boundingBox())!.y);
     if (viewport.width < 768) {
@@ -60,12 +61,10 @@ test("mobile navigation and product proof remain compact, accessible and overflo
   }
 });
 
-test("reduced motion resolves the hero construction directly to the static mark", async ({ page }) => {
-  await page.emulateMedia({ reducedMotion: "reduce" });
+test("hero product proof is a static composition without animated brand construction", async ({ page }) => {
   await page.goto("/");
-  const state = await page.locator(".orthic-construction").evaluate((svg) => ({
-    lines: getComputedStyle(svg.querySelector(".orthic-construction-lines")!).display,
-    fill: getComputedStyle(svg.querySelector(".orthic-construction-fill")!).opacity,
-  }));
-  expect(state).toEqual({ lines: "none", fill: "1" });
+  await expect(page.locator(".orthic-construction")).toHaveCount(0);
+  await expect(page.getByTestId("homepage-product-visual")).toBeVisible();
+  const animatedDescendants = await page.getByTestId("homepage-product-visual").locator("*").evaluateAll((elements) => elements.filter((element) => getComputedStyle(element).animationName !== "none").length);
+  expect(animatedDescendants).toBe(0);
 });

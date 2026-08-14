@@ -306,7 +306,7 @@ function LockedSubjectPage({ subject }: { subject: Subject }) {
           <p className="mb-2 text-sm font-extrabold uppercase text-forge">Coming soon</p>
           <h1 className="m-0 text-[32px] font-extrabold leading-none">{subject.subjectName}</h1>
           <p className="mt-2 max-w-2xl leading-relaxed text-muted">
-            This subject is visible for orientation but is not available for learner practice in the public beta.
+            This subject is visible for orientation but is not currently available for learner practice.
           </p>
         </header>
         <LockedCard
@@ -631,7 +631,6 @@ export const SubjectPageTemplate = SubjectCoursePage;
 export const CourseAreaPageTemplate = CourseAreaPage;
 export const TopicHubTemplate = SpecAreaLearningPathPage;
 export const SkillPathPageTemplate = SkillPathLearningPage;
-
 
 
 

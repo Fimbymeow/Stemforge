@@ -22,12 +22,11 @@ test("account product-register controls use sentence case and the established ro
   }
 });
 
-test("product mockups no longer contain the obsolete orange brand accent", () => {
+test("public product visuals use the restrained Orthic palette without the obsolete orange accent", () => {
   for (const file of [
-    "public/assets/mockup-dashboard.svg",
-    "public/assets/mockup-learning-paths.svg",
-    "public/assets/mockup-worked-solutions.svg",
-    "public/assets/mockup-progress.svg",
+    "components/landing/product-visual.tsx",
+    "public/assets/orthic-mark.svg",
+    "public/assets/orthic-wordmark.svg",
   ]) {
     assert.doesNotMatch(readFileSync(file, "utf8"), /#FF7514/i, `${file} contains the obsolete brand accent`);
   }

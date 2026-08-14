@@ -1,14 +1,14 @@
 import { expect, test } from "./fixtures/test";
 import { expectNoHorizontalOverflow } from "./fixtures/student-actions";
 
-test("Courses uses compact qualification rows with explicit availability", async ({ page, seriousBrowserErrors }) => {
+test("Courses presents only usable course access without roadmap placeholders", async ({ page, seriousBrowserErrors }) => {
   await page.goto("/subjects");
   const catalogue = page.getByTestId("qualification-course-list");
   await expect(catalogue.getByRole("heading", { name: "Higher", level: 2 })).toBeVisible();
   await expect(catalogue.getByText("National 5", { exact: true })).toHaveCount(0);
   await expect(catalogue.getByText("Advanced Higher", { exact: true })).toHaveCount(0);
-  await expect(page.getByRole("link", { name: "Open Higher Maths" })).toContainText("2 of 49 skills available");
-  await expect(page.getByTestId("subject-card-higher-physics")).toHaveAccessibleName("Higher Physics, Coming soon");
+  await expect(page.getByRole("link", { name: "Open Higher Maths" })).toContainText("Structured notes, practice and Review");
+  await expect(page.getByTestId("subject-card-higher-physics")).toHaveCount(0);
   await expectNoHorizontalOverflow(page);
   expect(seriousBrowserErrors).toEqual([]);
 });

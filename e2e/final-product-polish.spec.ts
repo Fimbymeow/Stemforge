@@ -2,21 +2,18 @@ import { expect, test } from "./fixtures/test";
 import { QUESTION_IDS } from "./fixtures/progress";
 import { expectNoHorizontalOverflow, openQuestion, submitAnswer } from "./fixtures/student-actions";
 
-test("beta notice stays in flow beside desktop question feedback and mobile dashboard content", async ({ page, seriousBrowserErrors }) => {
+test("product feedback remains available without beta messaging on learner surfaces", async ({ page, seriousBrowserErrors }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await openQuestion(page, QUESTION_IDS[0]);
   await submitAnswer(page, "4x^5");
-  await expectSeparated(
-    page.getByLabel("Public beta notice", { exact: true }),
-    page.getByTestId("question-status"),
-  );
+  await expect(page.getByLabel("Public beta notice", { exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Send feedback" })).toBeVisible();
+  await expect(page.getByTestId("question-status")).toBeVisible();
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/dashboard");
-  await expectSeparated(
-    page.getByLabel("Public beta notice", { exact: true }),
-    page.getByTestId("dashboard-progress-summary"),
-  );
+  await expect(page.getByLabel("Public beta notice", { exact: true })).toHaveCount(0);
+  await expect(page.getByTestId("dashboard-progress-summary")).toBeVisible();
   await expectNoHorizontalOverflow(page);
   expect(seriousBrowserErrors).toEqual([]);
 });
@@ -75,20 +72,3 @@ test("focused recovery shell keeps brand, landmark, headings, skip link and mobi
   await expectNoHorizontalOverflow(page);
   expect(seriousBrowserErrors).toEqual([]);
 });
-
-async function expectSeparated(
-  first: import("@playwright/test").Locator,
-  second: import("@playwright/test").Locator,
-) {
-  await expect(first).toBeVisible();
-  await expect(second).toBeVisible();
-  const firstBox = await first.boundingBox();
-  const secondBox = await second.boundingBox();
-  expect(firstBox).not.toBeNull();
-  expect(secondBox).not.toBeNull();
-  const intersects = firstBox!.x < secondBox!.x + secondBox!.width
-    && firstBox!.x + firstBox!.width > secondBox!.x
-    && firstBox!.y < secondBox!.y + secondBox!.height
-    && firstBox!.y + firstBox!.height > secondBox!.y;
-  expect(intersects).toBe(false);
-}

@@ -1,13 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Clock3, GraduationCap, Orbit, Sigma } from "lucide-react";
+import { ArrowRight, GraduationCap, Orbit, Sigma } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { AppTopbar } from "@/components/layout/app-topbar";
 import { Card } from "@/components/ui";
 import { subjectCatalog } from "@/data/subjects";
 import { groupCoursesByQualification } from "@/lib/course-catalog-presentation";
-import { getActiveSubject, getAllSkillPaths, getAvailableSkillPaths } from "@/lib/learning-paths";
 
 type SubjectsMode = "empty" | "demo";
 
@@ -16,12 +15,9 @@ const subjectIcons = {
   Physics: Orbit,
 } as const;
 
-const activeSubject = getActiveSubject();
-const higherMathsScope = `${getAvailableSkillPaths(activeSubject).length} of ${getAllSkillPaths(activeSubject).length} skills available`;
-
 export function SubjectsPage({ mode }: { mode: SubjectsMode }) {
   const demo = mode === "demo";
-  const qualificationGroups = groupCoursesByQualification(subjectCatalog);
+  const qualificationGroups = groupCoursesByQualification(subjectCatalog.filter((course) => course.available));
 
   return (
     <AppShell demo={demo} active="Subjects">
@@ -35,7 +31,7 @@ export function SubjectsPage({ mode }: { mode: SubjectsMode }) {
           </span>
           <div>
             <h1 className="m-0 text-[28px] font-extrabold leading-tight">Subjects</h1>
-            <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted">Choose a subject and qualification. Only courses with published learning are available.</p>
+            <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted">Choose a course and start with the skill that suits you.</p>
           </div>
         </header>
 
@@ -64,30 +60,26 @@ function CourseRow({ course }: { course: (typeof subjectCatalog)[number] }) {
   const Icon = course.subject in subjectIcons ? subjectIcons[course.subject as keyof typeof subjectIcons] : GraduationCap;
   const content = (
     <>
-      <span className={`grid size-9 shrink-0 place-items-center rounded-lg border ${course.available ? "border-forge/20 bg-forge-soft text-forge" : "border-line bg-paper text-muted"}`}>
+      <span className="grid size-9 shrink-0 place-items-center rounded-lg border border-forge/20 bg-forge-soft text-forge">
         <Icon aria-hidden="true" className="size-[18px]" />
       </span>
       <span className="min-w-0 flex-1">
         <h3 className="text-base font-extrabold leading-tight text-ink">{course.name}</h3>
-        {course.slug === "higher-maths" ? <span className="mt-1 block text-xs font-medium text-muted">{higherMathsScope}</span> : null}
+        {course.slug === "higher-maths" ? <span className="mt-1 block text-xs font-medium text-muted">Structured notes, practice and Review</span> : null}
       </span>
       <span className="flex shrink-0 items-center gap-2">
-        <span className={`text-xs font-extrabold ${course.available ? "text-forge" : "text-muted"}`}>{course.available ? "Available now" : "Coming soon"}</span>
-        {course.available ? <ArrowRight aria-hidden="true" className="size-4 shrink-0 text-forge transition-transform group-hover:translate-x-0.5" /> : <Clock3 aria-hidden="true" className="size-4 shrink-0 text-muted" />}
+        <span className="text-xs font-extrabold text-forge">Open course</span>
+        <ArrowRight aria-hidden="true" className="size-4 shrink-0 text-forge transition-transform group-hover:translate-x-0.5" />
       </span>
     </>
   );
   const className = "group grid min-h-20 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-lg px-3 py-3 transition-colors";
   const testId = `subject-card-${slug(course.name)}`;
 
-  return course.available ? (
+  return (
     <Link href={course.href} aria-label={`Open ${course.name}`} data-testid={testId} className={`${className} hover:bg-forge-soft/70 focus-visible:bg-forge-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forge`}>
       {content}
     </Link>
-  ) : (
-    <div data-testid={testId} className={className} aria-label={`${course.name}, Coming soon`}>
-      {content}
-    </div>
   );
 }
 

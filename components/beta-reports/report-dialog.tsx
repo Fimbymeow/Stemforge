@@ -145,7 +145,7 @@ export function ReportDialog({
           <section ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={descriptionId} className="max-h-[92vh] w-full max-w-xl overflow-auto rounded-2xl border border-line bg-white p-5 shadow-2xl">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="font-mono text-xs font-extrabold uppercase text-forge">Public beta report</p>
+                <p className="font-mono text-xs font-extrabold uppercase text-forge">Product feedback</p>
                 <h2 id={titleId} className="mt-1 text-2xl font-extrabold">Tell us what happened</h2>
                 <p id={descriptionId} className="mt-2 text-sm leading-relaxed text-muted">
                   We only attach safe diagnostics like page, device category and content IDs. We do not send your answers, local progress history, passwords, cookies or browser storage.

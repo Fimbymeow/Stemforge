@@ -35,16 +35,22 @@ test("Orthic has vector wordmark, standalone mark and application icon assets", 
   }
 });
 
-test("homepage metadata and proof assets are Orthic-specific and non-fabricated", () => {
+test("homepage metadata and product visual are Orthic-specific and non-fabricated", () => {
   const layout = readFileSync("app/layout.tsx", "utf8");
   const home = readFileSync("app/page.tsx", "utf8");
   const hero = readFileSync("components/landing/hero.tsx", "utf8");
+  const visual = readFileSync("components/landing/product-visual.tsx", "utf8");
   assert.match(layout, /summary_large_image/);
   assert.match(home, /alternates: \{ canonical: "\/" \}/);
   assert.doesNotMatch(layout, /alternates: \{ canonical: "\/" \}/);
   assert.doesNotMatch(layout, /stemforge-6an8/);
-  assert.match(hero, /orthic-skill-page\.png/);
-  assert.doesNotMatch(home + hero, /mockup-dashboard|Mechanics|Kinematics|12-day|avatar/i);
+  assert.match(hero, /ProductVisual/);
+  assert.match(visual, /Basic differentiation/);
+  assert.match(visual, /Notes/);
+  assert.match(visual, /Foundations/);
+  assert.match(visual, /Applications/);
+  assert.match(visual, /Exam Questions/);
+  assert.doesNotMatch(home + hero + visual, /orthic-skill-page|mockup-dashboard|Mechanics|Kinematics|12-day|avatar/i);
 });
 
 test("the rebrand preserves established learner storage contracts", () => {

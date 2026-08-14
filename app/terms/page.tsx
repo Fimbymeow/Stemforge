@@ -5,7 +5,7 @@ export const metadata: Metadata = { title: "Terms of Use" };
 
 export default function TermsPage() {
   return (
-    <LegalPage title="Terms of Use" summary="The basic rules for using Orthic during its public beta.">
+    <LegalPage title="Terms of Use" summary="The basic rules for using Orthic.">
       <LegalSection title="Using Orthic">
         <p>Orthic provides original learning explanations, practice and progress tools for educational use. It is not an examination board and is not affiliated with or endorsed by Qualifications Scotland. The service cannot guarantee grades, examination outcomes or uninterrupted availability.</p>
         <p>Orthic is designed for school learners. If you are not permitted to use an online service or create an account on your own, involve a parent, guardian, school or other responsible adult. By creating an account, you confirm that you are permitted to use the service.</p>

@@ -149,30 +149,22 @@ test("mobile Functional Honesty surfaces remain compact, semantic and error-free
   expect(seriousBrowserErrors).toEqual([]);
 });
 
-test("at 320x568 the beta notice and feedback dock never visually overlap each other or obscure the answer input", async ({ page }) => {
+test("at 320x568 the feedback dock does not obscure the answer input and beta messaging is absent", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 568 });
   await openQuestion(page, QUESTION_IDS[0]);
-  const notice = page.getByLabel("Public beta notice", { exact: true });
   const dock = page.getByRole("button", { name: "Send feedback" });
-  await expect(notice).toBeVisible();
+  await expect(page.getByLabel("Public beta notice", { exact: true })).toHaveCount(0);
   await expect(dock).toBeVisible();
-  const noticeBox = await notice.boundingBox();
   const dockBox = await dock.boundingBox();
-  expect(noticeBox).not.toBeNull();
   expect(dockBox).not.toBeNull();
-  // The dock must sit entirely below the notice's bottom edge (or vice versa) — never overlapping.
-  const verticallySeparate = dockBox!.y >= noticeBox!.y + noticeBox!.height - 1 || noticeBox!.y >= dockBox!.y + dockBox!.height - 1;
-  expect(verticallySeparate).toBe(true);
   const answer = page.getByLabel("Your answer");
   await expect(answer).toBeVisible();
   const answerBox = await answer.boundingBox();
   expect(answerBox).not.toBeNull();
-  // Neither fixed element's bounding box may intersect the answer input's bounding box.
-  for (const box of [noticeBox!, dockBox!]) {
-    const intersects = box.x < answerBox!.x + answerBox!.width && box.x + box.width > answerBox!.x
-      && box.y < answerBox!.y + answerBox!.height && box.y + box.height > answerBox!.y;
-    expect(intersects).toBe(false);
-  }
+  // The persistent dock must not intersect the answer input.
+  const intersects = dockBox!.x < answerBox!.x + answerBox!.width && dockBox!.x + dockBox!.width > answerBox!.x
+    && dockBox!.y < answerBox!.y + answerBox!.height && dockBox!.y + dockBox!.height > answerBox!.y;
+  expect(intersects).toBe(false);
   await expectNoHorizontalOverflow(page);
 });
 
@@ -210,14 +202,14 @@ test("at 320px practice, questions and resources have no document overflow", asy
   }
 });
 
-test("dismiss controls meet the established 40px mobile touch-target floor", async ({ page }) => {
+test("the persistent feedback control meets the established 40px mobile touch-target floor", async ({ page }) => {
   await page.goto("/dashboard");
-  const dismissNotice = page.getByRole("button", { name: "Dismiss public beta notice" });
-  await expect(dismissNotice).toBeVisible();
-  const noticeBox = await dismissNotice.boundingBox();
-  expect(noticeBox).not.toBeNull();
-  expect(noticeBox!.width).toBeGreaterThanOrEqual(40);
-  expect(noticeBox!.height).toBeGreaterThanOrEqual(40);
+  const feedback = page.getByRole("button", { name: "Send feedback" });
+  await expect(feedback).toBeVisible();
+  const feedbackBox = await feedback.boundingBox();
+  expect(feedbackBox).not.toBeNull();
+  expect(feedbackBox!.width).toBeGreaterThanOrEqual(40);
+  expect(feedbackBox!.height).toBeGreaterThanOrEqual(40);
 });
 
 test("at 390x844 the Question Bank's first result row begins inside the initial viewport", async ({ page }) => {

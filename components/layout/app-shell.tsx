@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, type ReactNode } from "react";
-import { BetaNotice } from "@/components/beta-notice";
 import { GlobalReportDock } from "@/components/beta-reports/global-report-dock";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { PageContainer } from "@/components/layout/page-container";
@@ -44,12 +43,7 @@ export function AppShell({
         active={active}
         workingContextPathId={workingContextPathId}
       />
-      <PageContainer className={className}>
-        <div className="mx-auto mb-3 flex max-w-[1240px] justify-end sm:mb-4">
-          <BetaNotice />
-        </div>
-        {children}
-      </PageContainer>
+      <PageContainer className={className}>{children}</PageContainer>
       <div
         ref={dockRef}
         data-global-report-dock

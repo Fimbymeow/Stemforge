@@ -5,7 +5,7 @@ export const metadata: Metadata = { title: "Privacy Notice" };
 
 export default function PrivacyPage() {
   return (
-    <LegalPage title="Privacy Notice" summary="How Orthic handles account information, learning progress and data stored in your browser during the public beta.">
+    <LegalPage title="Privacy Notice" summary="How Orthic handles account information, learning progress and data stored in your browser.">
       <LegalSection title="Who this is for">
         <p>Orthic is a learning service designed for school learners. If you are not permitted to create or use an online account on your own, involve a parent, guardian, school or other responsible adult. Orthic does not set or infer one universal consent age; the requirements depend on your circumstances.</p>
       </LegalSection>
@@ -26,7 +26,7 @@ export default function PrivacyPage() {
       </LegalSection>
       <LegalSection title="Security, retention and changes">
         <p>Orthic uses HTTPS in production, server-side access controls and bounded account identifiers. No online service can promise absolute security. Browser data remains until you clear it or use the available controls; account learning data remains until erased or a reviewed retention policy requires otherwise.</p>
-        <p>This notice may change as the public beta develops. Material changes should be dated and communicated clearly.</p>
+        <p>This notice may change as the service develops. Material changes should be dated and communicated clearly.</p>
       </LegalSection>
     </LegalPage>
   );
