@@ -42,20 +42,21 @@ export function HigherMathsHub() {
         <section aria-labelledby="course-actions-title" className="min-w-0">
           <h2 id="course-actions-title" className="mb-2 text-base font-extrabold">Course actions</h2>
           <div className="grid min-w-0 grid-cols-5 gap-x-3 border-y border-line max-lg:grid-cols-1" data-testid="higher-maths-destinations">
-            <Destination href="/practice" label="Practice" detail="Choose how to practise" icon={Shuffle} emphasis />
+            <Destination href="/practice" label="Practice" detail="Choose how to practise" icon={Shuffle} emphasis testId="practice-destination" />
             <Destination href="/subjects/higher-maths/question-bank" label="Question Bank" detail="Choose exact questions" icon={Search} testId="question-bank-destination" />
             <ReviewEntryCard headingLevel={3} compact />
-            <Destination href="/subjects/higher-maths/course-tracker" label="Course Tracker" detail="Explore all 49 skills" icon={ListChecks} testId="course-tracker-destination" />
+            <Destination href="/subjects/higher-maths/course-tracker" label="Course Tracker" detail="Explore all 49 skills" icon={ListChecks} testId="course-tracker-destination" emphasis />
             <Destination href="/subjects/higher-maths/past-papers" label="Past Papers" detail="Official exam materials" icon={Files} testId="past-papers-destination" quiet />
           </div>
         </section>
 
         <section aria-labelledby="unit-navigation-title" className="min-w-0">
-          <div className="mb-3">
+          <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
             <div>
               <h2 id="unit-navigation-title" className="text-lg font-extrabold">Course units</h2>
               <p className="mt-1 text-sm text-muted">Select a unit to see its skills.</p>
             </div>
+            <Link href="/subjects/higher-maths/course-tracker" data-testid="course-tracker-context-link" className="inline-flex min-h-9 items-center gap-1 text-sm font-extrabold text-forge">View full Course Tracker <ArrowRight aria-hidden="true" className="size-4" /></Link>
           </div>
           <SubjectRoadmapNavigator subject={subject} />
         </section>
@@ -66,7 +67,7 @@ export function HigherMathsHub() {
 
 function Destination({ href, label, detail, icon: Icon, emphasis = false, quiet = false, testId }: { href: string; label: string; detail: string; icon: typeof Shuffle; emphasis?: boolean; quiet?: boolean; testId?: string }) {
   return (
-    <Link href={href} aria-label={label} data-testid={testId} className={`flex min-h-16 items-center gap-3 px-2 py-2 transition hover:bg-forge-soft ${emphasis ? "text-forge" : quiet ? "text-muted" : "text-ink"}`}>
+    <Link href={href} aria-label={label} data-testid={testId} data-emphasis={emphasis || undefined} className={`flex min-h-16 items-center gap-3 px-2 py-2 transition hover:bg-forge-soft ${emphasis ? "bg-forge-soft/60 text-forge" : quiet ? "text-muted" : "text-ink"}`}>
       <Icon aria-hidden="true" className="size-4 shrink-0" />
       <span className="min-w-0"><span className="block text-sm font-extrabold">{label}</span><span className="block truncate text-xs text-muted">{detail}</span></span>
       <ArrowRight aria-hidden="true" className="ml-auto size-4 shrink-0" />

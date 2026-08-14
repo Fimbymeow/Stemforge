@@ -8,8 +8,7 @@ test("fresh student reaches the Basic differentiation path through the app", asy
 
   await page.getByRole("link", { name: "Subjects" }).click();
   await expect(page).toHaveURL(/\/subjects$/);
-  const mathsCard = page.locator("article").filter({ has: page.getByRole("heading", { name: "Higher Maths", level: 3 }) });
-  await mathsCard.getByRole("link", { name: "Open Higher Maths" }).click();
+  await page.getByRole("link", { name: "Open Higher Maths" }).click();
   await expect(page).toHaveURL(/\/subjects\/higher-maths$/);
   await page.getByRole("link", { name: "Start", exact: true }).click();
   await expect(page).toHaveURL(/\/subjects\/higher-maths\/revision-notes\?path=basic-differentiation$/);
@@ -43,7 +42,8 @@ test("disabled account navigation hydrates without console or page errors and fa
   seriousBrowserErrors,
 }) => {
   await page.goto("/");
-  await expect(page.getByRole("link", { name: "Account" })).toHaveCount(0);
+  await expect(page.getByRole("navigation", { name: "Primary" }).getByRole("link", { name: "Account" })).toHaveAttribute("href", "/account");
+  await expect(page.getByRole("navigation", { name: "Footer" }).getByRole("link", { name: "Account" })).toHaveAttribute("href", "/account");
   await page.goto("/account");
   await expect(page.getByRole("heading", { name: "Accounts are not available" })).toBeVisible();
   await page.getByRole("link", { name: "Continue as a guest" }).click();

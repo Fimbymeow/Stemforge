@@ -41,17 +41,24 @@ test("revised dashboard and subject access remain distinct, ordered and overflow
   expect(seriousBrowserErrors).toEqual([]);
 });
 
-test("Subjects presents equal course cards without learner recommendations", async ({ page }) => {
+test("Subjects presents a qualification-grouped course list without learner recommendations", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/subjects");
+  const group = page.getByTestId("qualification-group-higher");
+  await expect(group.getByRole("heading", { name: "Higher", level: 2 })).toBeVisible();
   const maths = page.getByTestId("subject-card-higher-maths");
   const physics = page.getByTestId("subject-card-higher-physics");
   const [mathsBox, physicsBox] = await Promise.all([maths.boundingBox(), physics.boundingBox()]);
   expect(mathsBox).not.toBeNull();
   expect(physicsBox).not.toBeNull();
+  expect(mathsBox!.y).toBeLessThan(physicsBox!.y);
   expect(Math.abs(mathsBox!.width - physicsBox!.width)).toBeLessThan(2);
-  expect(Math.abs(mathsBox!.height - physicsBox!.height)).toBeLessThan(2);
+  await expect(maths).toContainText("2 of 49 skills available");
+  await expect(maths).toContainText("Available now");
   await expect(physics.getByText("Coming soon", { exact: true })).toBeVisible();
+  await expect(physics.getByRole("link")).toHaveCount(0);
+  await expect(page.getByTestId("qualification-group-national-5")).toHaveCount(0);
+  await expect(page.getByTestId("qualification-group-advanced-higher")).toHaveCount(0);
   await expect(page.getByRole("link", { name: /Resume practice|Review \d+/ })).toHaveCount(0);
 });
 

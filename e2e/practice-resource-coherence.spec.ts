@@ -59,7 +59,9 @@ test("Question Bank exposes both published skills while future paths stay collap
   await page.goto("/subjects/higher-maths/question-bank");
   await expect(page.getByRole("heading", { name: "42 matching questions" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Open Differentiate a power" })).toBeVisible();
-  await page.getByRole("group", { name: "Skills" }).getByLabel("Chain rule").click();
+  const skills = page.getByRole("group", { name: "Skills" });
+  await skills.getByRole("button", { name: "Skills: All skills" }).click();
+  await skills.getByLabel("Chain rule").click();
   await expect(page.getByRole("heading", { name: "34 matching questions" })).toBeVisible();
   await page.getByRole("button", { name: "Reset filters" }).click();
   await expect(page.getByRole("heading", { name: "42 matching questions" })).toBeVisible();

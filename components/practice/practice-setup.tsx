@@ -145,11 +145,11 @@ export function PracticeSetup({
       <AppShell demo active="Practice" className="py-8 max-xl:pt-5" workingContextPathId={workingContextPathId}>
         <div className="mx-auto grid max-w-[760px] gap-5">
           <header>
-            <p className="font-mono text-xs font-extrabold uppercase text-forge">Review</p>
-            <h1 className="mt-2 text-[34px] font-extrabold leading-none">Review what is due</h1>
+            <p className="text-sm font-bold text-muted">Review</p>
+            <h1 className="mt-1 text-[28px] font-extrabold leading-tight">Review what is due</h1>
             <p className="mt-3 text-muted">A short Review uses the same practice screen you already know.</p>
           </header>
-          <Card className="border-forge/30 bg-gradient-to-br from-forge/10 to-white p-5" data-testid="review-launch-card">
+          <Card className="border-forge/30 bg-white p-5" data-testid="review-launch-card">
             {reviewPreview.session ? (
               <>
                 <p className="text-sm font-extrabold text-forge">{dueCount} skill{dueCount === 1 ? "" : "s"} due</p>
@@ -184,16 +184,16 @@ export function PracticeSetup({
       <div className="mx-auto grid max-w-[920px] gap-5">
         <header className="flex items-start justify-between gap-4 max-md:grid">
           <div>
-            <p className="font-mono text-xs font-extrabold uppercase text-forge">Practice</p>
-            <h1 className="m-0 mt-2 text-[34px] font-extrabold leading-none">Practise {workingContextPath?.skillPath.name ?? "Higher Maths"}</h1>
+            <p className="text-sm font-bold text-muted">Practice</p>
+            <h1 className="m-0 mt-1 text-[28px] font-extrabold leading-tight">Practise {workingContextPath?.skillPath.name ?? "Higher Maths"}</h1>
             <p className="mt-3 max-w-3xl text-muted">Start a useful short session now, or choose options when you want more control.</p>
           </div>
           <AppTopbar demo={false} />
         </header>
 
-        <Card className="border-forge/30 bg-gradient-to-br from-forge/10 to-white p-5">
+        <Card className="border-forge/30 bg-white p-5" data-testid="practice-quick-card">
           <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4 max-md:grid-cols-1">
-            <span className="grid size-12 place-items-center rounded-xl bg-forge-soft text-forge"><Target className="size-6" /></span>
+            <span className="grid size-10 place-items-center rounded-lg bg-forge-soft text-forge"><Target className="size-5" /></span>
             <div>
               <p className="mb-1 text-xs font-extrabold uppercase text-forge">Recommended</p>
               <h2 className="m-0 text-xl font-extrabold">Quick Practice</h2>

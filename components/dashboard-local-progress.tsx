@@ -89,9 +89,9 @@ export function DashboardLocalProgressSection() {
         </div>
       </section>
 
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted" data-testid="dashboard-activity-line">
+      <div className="-mt-2 flex w-fit max-w-full flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted" data-testid="dashboard-activity-line">
         {model.weeklyActivity.activeDays > 0 ? <span className="font-semibold">{model.weeklyActivity.label}</span> : null}
-        <Link href="/activity" className="inline-flex min-h-10 items-center font-bold text-forge">View activity <span aria-hidden="true">→</span></Link>
+        <Link href="/activity" className="inline-flex min-h-9 items-center font-extrabold text-forge">Activity <span aria-hidden="true">→</span></Link>
       </div>
     </section>
   );
