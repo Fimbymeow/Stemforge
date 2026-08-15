@@ -22,7 +22,7 @@ export function DashboardLocalProgressSection({ studyPlanEnabled = false }: { st
   const sync = useProgressSync();
   const recommendation = useLearnerNextAction();
   const learnerPreferences = useLearnerPreferences();
-  const [studyPlanState, setStudyPlanState] = useState<StudyPlanDashboardState>({ status: "loading", caughtUp: false, todayItems: [] });
+  const [studyPlanState, setStudyPlanState] = useState<StudyPlanDashboardState>({ status: "loading", caughtUp: false, todayItems: [], planItems: [] });
   const updateStudyPlanState = useCallback((state: StudyPlanDashboardState) => setStudyPlanState(state), []);
 
   useEffect(() => {

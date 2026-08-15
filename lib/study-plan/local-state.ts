@@ -1,8 +1,8 @@
 import { MAX_WEEKLY_MINUTES } from "@/lib/study-plan/constants";
 import { isValidDateOnly } from "@/lib/study-plan/dates";
-import type { StudyPlanPreservationInput, StudyPlanWeekday } from "@/lib/study-plan/types";
+import type { StudyPlanPreservationInput, StudyPlanPreviousWeek, StudyPlanWeekday, StudyPlanWeeklyPlan } from "@/lib/study-plan/types";
 
-export const STUDY_PLAN_LOCAL_STATE_VERSION = 1 as const;
+export const STUDY_PLAN_LOCAL_STATE_VERSION = 2 as const;
 export const STUDY_PLAN_LOCAL_STATE_STORAGE_KEY = "orthic.studyPlan.v1";
 export const STUDY_PLAN_LOCAL_STATE_UPDATED_EVENT = "orthic:study-plan-updated";
 
@@ -19,6 +19,8 @@ export type StudyPlanSetup = {
 export type StudyPlanLocalState = {
   version: typeof STUDY_PLAN_LOCAL_STATE_VERSION;
   setup: StudyPlanSetup | null;
+  plan: StudyPlanWeeklyPlan | null;
+  previousWeek: StudyPlanPreviousWeek | null;
   preservation: {
     itemStates: Record<string, "completed" | "skipped">;
     movedDates: Record<string, string>;
@@ -30,16 +32,20 @@ export function emptyStudyPlanLocalState(): StudyPlanLocalState {
   return {
     version: STUDY_PLAN_LOCAL_STATE_VERSION,
     setup: null,
+    plan: null,
+    previousWeek: null,
     preservation: { itemStates: {}, movedDates: {}, excludedItemKeys: [] },
   };
 }
 
 export function normalizeStudyPlanLocalState(value: unknown): StudyPlanLocalState {
   if (!value || typeof value !== "object") return emptyStudyPlanLocalState();
-  const candidate = value as { setup?: unknown; preservation?: unknown };
+  const candidate = value as { setup?: unknown; plan?: unknown; previousWeek?: unknown; preservation?: unknown };
   return {
     version: STUDY_PLAN_LOCAL_STATE_VERSION,
     setup: normalizeSetup(candidate.setup),
+    plan: normalizeWeeklyPlan(candidate.plan),
+    previousWeek: normalizePreviousWeek(candidate.previousWeek),
     preservation: normalizePreservation(candidate.preservation),
   };
 }
@@ -48,6 +54,7 @@ export function parseStoredStudyPlanLocalState(raw: string | null): StudyPlanLoc
   if (!raw) return emptyStudyPlanLocalState();
   try {
     const parsed = JSON.parse(raw) as { version?: unknown };
+    if (parsed.version === 1) return migrateV1(parsed);
     if (parsed.version !== STUDY_PLAN_LOCAL_STATE_VERSION) return emptyStudyPlanLocalState();
     return normalizeStudyPlanLocalState(parsed);
   } catch {
@@ -96,7 +103,15 @@ export function localDayKey(now: Date, timeZone?: string): string {
 }
 
 export function preservationInput(state: StudyPlanLocalState): StudyPlanPreservationInput {
-  return state.preservation;
+  return state.plan?.preservation ?? state.preservation;
+}
+
+export function previousWeekFrom(plan: StudyPlanWeeklyPlan): StudyPlanPreviousWeek {
+  return {
+    weekStart: plan.weekStart,
+    generatedAt: plan.generatedAt,
+    items: plan.items.slice(0, ITEM_KEY_LIMIT).map(({ itemKey, state, manualOverride }) => ({ itemKey, state, manualOverride })),
+  };
 }
 
 function normalizeSetup(value: unknown): StudyPlanSetup | null {
@@ -120,6 +135,126 @@ function normalizePreservation(value: unknown): StudyPlanLocalState["preservatio
     excludedItemKeys: Array.isArray(candidate.excludedItemKeys)
       ? unique(candidate.excludedItemKeys.filter(validItemKey)).slice(0, ITEM_KEY_LIMIT)
       : [],
+  };
+}
+
+function normalizeWeeklyPlan(value: unknown): StudyPlanWeeklyPlan | null {
+  if (!value || typeof value !== "object") return null;
+  const candidate = value as Partial<StudyPlanWeeklyPlan>;
+  const preferences = normalizePreferences(candidate.preferences);
+  if (!preferences || !isValidDateOnly(String(candidate.weekStart ?? "")) || !Array.isArray(candidate.items)) return null;
+  if (candidate.generationVersion !== 1 || typeof candidate.generatedAt !== "string" || !Number.isFinite(Date.parse(candidate.generatedAt))) return null;
+  const items = candidate.items.filter(isWeeklyItem).slice(0, ITEM_KEY_LIMIT);
+  const preservation = normalizeWeeklyPreservation(candidate.preservation);
+  const diagnostics = normalizeDiagnostics(candidate.rebalanceDiagnostics);
+  if (!diagnostics) return null;
+  return {
+    status: candidate.status === "ok" || candidate.status === "invalid_input" || candidate.status === "course_missing" || candidate.status === "no_available_content" ? candidate.status : "invalid_input",
+    errorCode: typeof candidate.errorCode === "string" ? candidate.errorCode : null,
+    weekStart: candidate.weekStart as string,
+    generatedAt: candidate.generatedAt,
+    generationVersion: 1,
+    courseSlug: preferences.courseSlug,
+    weeklyMinutes: preferences.weeklyMinutes,
+    allocatedMinutes: boundedNumber(candidate.allocatedMinutes, 0, preferences.weeklyMinutes),
+    unusedMinutes: boundedNumber(candidate.unusedMinutes, 0, preferences.weeklyMinutes),
+    examPhase: candidate.examPhase === "close" || candidate.examPhase === "medium" || candidate.examPhase === "far" ? candidate.examPhase : "no_date",
+    caughtUp: candidate.caughtUp === true,
+    preferences,
+    items,
+    preservation,
+    lastRebalancedAt: typeof candidate.lastRebalancedAt === "string" && Number.isFinite(Date.parse(candidate.lastRebalancedAt)) ? candidate.lastRebalancedAt : candidate.generatedAt,
+    rebalanceReasons: Array.isArray(candidate.rebalanceReasons) ? candidate.rebalanceReasons.filter(isRebalanceReason).slice(-8) : [],
+    rebalanceDiagnostics: diagnostics,
+  };
+}
+
+function normalizePreviousWeek(value: unknown): StudyPlanPreviousWeek | null {
+  if (!value || typeof value !== "object") return null;
+  const candidate = value as Partial<StudyPlanPreviousWeek>;
+  if (!isValidDateOnly(String(candidate.weekStart ?? "")) || typeof candidate.generatedAt !== "string" || !Number.isFinite(Date.parse(candidate.generatedAt)) || !Array.isArray(candidate.items)) return null;
+  return {
+    weekStart: candidate.weekStart as string,
+    generatedAt: candidate.generatedAt,
+    items: candidate.items.filter((item): item is StudyPlanPreviousWeek["items"][number] => {
+      if (!item || typeof item !== "object") return false;
+      const entry = item as StudyPlanPreviousWeek["items"][number];
+      return validItemKey(entry.itemKey) && (entry.state === "planned" || entry.state === "completed" || entry.state === "skipped")
+        && (entry.manualOverride === null || ["completed", "skipped", "moved", "later", "pulled_forward"].includes(entry.manualOverride));
+    }).slice(0, ITEM_KEY_LIMIT),
+  };
+}
+
+function normalizePreferences(value: unknown) {
+  if (!value || typeof value !== "object") return null;
+  const candidate = value as { courseSlug?: unknown; weeklyMinutes?: unknown; availableDays?: unknown; examDate?: unknown };
+  const setup = normalizeSetup(candidate);
+  return setup && typeof candidate.courseSlug === "string" && candidate.courseSlug.length > 0 && candidate.courseSlug.length <= 100
+    ? { courseSlug: candidate.courseSlug, ...setup }
+    : null;
+}
+
+function normalizeWeeklyPreservation(value: unknown): StudyPlanWeeklyPlan["preservation"] {
+  const base = normalizePreservation(value);
+  const candidate = value as { unscheduledItemKeys?: unknown } | null;
+  return {
+    ...base,
+    unscheduledItemKeys: Array.isArray(candidate?.unscheduledItemKeys)
+      ? unique(candidate.unscheduledItemKeys.filter(validItemKey)).slice(0, ITEM_KEY_LIMIT)
+      : [],
+  };
+}
+
+function isWeeklyItem(value: unknown): value is StudyPlanWeeklyPlan["items"][number] {
+  if (!value || typeof value !== "object") return false;
+  const item = value as StudyPlanWeeklyPlan["items"][number];
+  return validItemKey(item.itemKey) && typeof item.id === "string" && typeof item.skillPathId === "string"
+    && typeof item.skillName === "string" && typeof item.href === "string" && isValidDateOnly(item.date)
+    && isValidDateOnly(item.originalSuggestedDate) && (item.scheduledDate === null || isValidDateOnly(item.scheduledDate))
+    && Number.isFinite(item.suggestedMinutes) && item.suggestedMinutes > 0
+    && ["review", "notes", "continue_stage", "targeted_practice"].includes(item.actionType)
+    && ["review_overdue", "review_due", "review_due_soon", "continue_with_mistake", "continue", "recent_mistakes", "next_skill"].includes(item.reasonCode)
+    && Number.isInteger(item.tier) && item.tier >= 0 && item.tier <= 6
+    && (item.stageId === null || typeof item.stageId === "string")
+    && (item.stageName === null || typeof item.stageName === "string")
+    && (item.examQualifier === null || item.examQualifier === "close" || item.examQualifier === "medium" || item.examQualifier === "far")
+    && (item.state === "planned" || item.state === "completed" || item.state === "skipped")
+    && (item.manualOverride === null || ["completed", "skipped", "moved", "later", "pulled_forward"].includes(item.manualOverride));
+}
+
+function normalizeDiagnostics(value: unknown): StudyPlanWeeklyPlan["rebalanceDiagnostics"] | null {
+  if (!value || typeof value !== "object") return null;
+  const candidate = value as Partial<StudyPlanWeeklyPlan["rebalanceDiagnostics"]>;
+  if (!isRebalanceReason(candidate.reason)) return null;
+  return {
+    reason: candidate.reason,
+    itemsPreserved: boundedNumber(candidate.itemsPreserved, 0, ITEM_KEY_LIMIT),
+    itemsMoved: boundedNumber(candidate.itemsMoved, 0, ITEM_KEY_LIMIT),
+    itemsAdded: boundedNumber(candidate.itemsAdded, 0, ITEM_KEY_LIMIT),
+    itemsRemoved: boundedNumber(candidate.itemsRemoved, 0, ITEM_KEY_LIMIT),
+    unusedCapacityBefore: boundedNumber(candidate.unusedCapacityBefore, 0, MAX_WEEKLY_MINUTES),
+    unusedCapacityAfter: boundedNumber(candidate.unusedCapacityAfter, 0, MAX_WEEKLY_MINUTES),
+    planDistance: boundedNumber(candidate.planDistance, 0, ITEM_KEY_LIMIT * 3),
+  };
+}
+
+function isRebalanceReason(value: unknown): value is StudyPlanWeeklyPlan["rebalanceReasons"][number] {
+  return typeof value === "string" && [
+    "initial_generation", "day_missed", "review_became_due", "preferences_changed", "item_completed",
+    "manual_move", "manual_skip", "manual_swap", "pull_forward", "weekly_rollover", "explicit_refresh", "evidence_changed",
+  ].includes(value);
+}
+
+function boundedNumber(value: unknown, minimum: number, maximum: number) {
+  return typeof value === "number" && Number.isFinite(value) ? Math.min(maximum, Math.max(minimum, value)) : minimum;
+}
+
+function migrateV1(value: unknown): StudyPlanLocalState {
+  const candidate = value as { setup?: unknown; preservation?: unknown };
+  return {
+    ...emptyStudyPlanLocalState(),
+    setup: normalizeSetup(candidate.setup),
+    preservation: normalizePreservation(candidate.preservation),
   };
 }
 

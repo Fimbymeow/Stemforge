@@ -54,8 +54,15 @@ test("mobile final completion is readable, stacked and free of horizontal overfl
   await expect(primary).toBeVisible();
   await expect(primary).toHaveAttribute("href", "/question/hm-calc-diff-chain-f-001");
   await expect(secondary).toBeVisible();
-  const primaryBox = await primary.boundingBox();
-  const secondaryBox = await secondary.boundingBox();
+  const [primaryBox, secondaryBox] = await panel.getByRole("link").evaluateAll((links) => {
+    const boxFor = (label: string) => {
+      const link = links.find((candidate) => candidate.textContent?.trim() === label);
+      if (!link) return null;
+      const box = link.getBoundingClientRect();
+      return { x: box.x, y: box.y, width: box.width, height: box.height };
+    };
+    return [boxFor("Start learning"), boxFor("Review a stage")];
+  });
   expect(primaryBox).not.toBeNull();
   expect(secondaryBox).not.toBeNull();
   expect(secondaryBox!.y).toBeGreaterThan(primaryBox!.y + primaryBox!.height - 1);

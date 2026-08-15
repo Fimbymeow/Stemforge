@@ -34,7 +34,7 @@ test.describe("feature-flagged Study Plan Today", () => {
     await expect(page.getByTestId("dashboard-resume-course")).toHaveCount(0);
 
     const evidenceBefore = await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY);
-    const actions = today.locator("summary");
+    const actions = today.getByLabel(/Actions for/);
     await expect(actions).toHaveAttribute("aria-label", /Actions for/);
     await actions.click();
     await today.getByRole("button", { name: "Done" }).click();
@@ -65,7 +65,7 @@ test.describe("feature-flagged Study Plan Today", () => {
     for (const day of ["Tuesday", "Thursday", "Friday", "Sunday"]) await setup.getByTitle(day).click();
     await setup.getByRole("button", { name: "Create my plan" }).click();
     const today = page.getByTestId("study-plan-today");
-    await today.locator("summary").click();
+    await today.getByLabel(/Actions for/).click();
     await today.getByRole("button", { name: "Move" }).click();
     await expect(today.getByRole("button", { name: "Thu 13 Aug" })).toBeVisible();
     await expect(today.getByRole("button", { name: "Tue 11 Aug" })).toHaveCount(0);
@@ -79,12 +79,13 @@ test.describe("feature-flagged Study Plan Today", () => {
     for (const day of ["Tuesday", "Thursday", "Friday", "Sunday"]) await setup.getByTitle(day).click();
     await setup.getByRole("button", { name: "Create my plan" }).click();
     const today = page.getByTestId("study-plan-today");
-    await today.locator("summary").click();
+    await today.getByLabel(/Actions for/).click();
     await today.getByRole("button", { name: "Swap" }).click();
     await expect(today.getByRole("status")).toContainText("No other useful recommendation");
     await today.getByRole("button", { name: "Skip" }).click();
     await expect(today.getByTestId("study-plan-item")).toHaveCount(0);
     await expect(today).toContainText("Nothing is planned for today");
+    await today.getByLabel("Plan options").click();
     await today.getByRole("button", { name: "Plan settings" }).click();
     await expect(page.getByTestId("study-plan-setup").getByRole("button", { name: "Save plan" })).toBeVisible();
     expect(seriousBrowserErrors).toEqual([]);

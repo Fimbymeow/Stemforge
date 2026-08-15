@@ -94,3 +94,51 @@ export type StudyPlanResult = {
   items: StudyPlanItem[];
   diagnostics: StudyPlanDiagnostic[];
 };
+
+export type StudyPlanManualOverride = "completed" | "skipped" | "moved" | "later" | "pulled_forward" | null;
+
+export type StudyPlanWeeklyItem = StudyPlanItem & {
+  originalSuggestedDate: string;
+  scheduledDate: string | null;
+  manualOverride: StudyPlanManualOverride;
+};
+
+export type StudyPlanRebalanceReason =
+  | "initial_generation"
+  | "day_missed"
+  | "review_became_due"
+  | "preferences_changed"
+  | "item_completed"
+  | "manual_move"
+  | "manual_skip"
+  | "manual_swap"
+  | "pull_forward"
+  | "weekly_rollover"
+  | "explicit_refresh"
+  | "evidence_changed";
+
+export type StudyPlanRebalanceDiagnostics = {
+  reason: StudyPlanRebalanceReason;
+  itemsPreserved: number;
+  itemsMoved: number;
+  itemsAdded: number;
+  itemsRemoved: number;
+  unusedCapacityBefore: number;
+  unusedCapacityAfter: number;
+  planDistance: number;
+};
+
+export type StudyPlanWeeklyPlan = Omit<StudyPlanResult, "items" | "diagnostics"> & {
+  preferences: StudyPlanPreferences;
+  items: StudyPlanWeeklyItem[];
+  preservation: Required<StudyPlanPreservationInput> & { unscheduledItemKeys: string[] };
+  lastRebalancedAt: string;
+  rebalanceReasons: StudyPlanRebalanceReason[];
+  rebalanceDiagnostics: StudyPlanRebalanceDiagnostics;
+};
+
+export type StudyPlanPreviousWeek = {
+  weekStart: string;
+  generatedAt: string;
+  items: Array<Pick<StudyPlanWeeklyItem, "itemKey" | "state" | "manualOverride">>;
+};

@@ -61,12 +61,16 @@ test("plan distance counts additions, removals and material item changes without
 
 test("Dashboard mode preserves full default, suppresses equivalent Today work and compacts a distinct action", () => {
   const recommendation = action();
-  const setup: StudyPlanDashboardState = { status: "setup", caughtUp: false, todayItems: [] };
-  const duplicate: StudyPlanDashboardState = { status: "configured", caughtUp: false, todayItems: [item({ href: recommendation.href!, skillPathId: recommendation.pathId! })] };
-  const distinct: StudyPlanDashboardState = { status: "configured", caughtUp: false, todayItems: [item({ href: "/question/other", skillPathId: "other" })] };
+  const setup: StudyPlanDashboardState = { status: "setup", caughtUp: false, todayItems: [], planItems: [] };
+  const duplicateItem = item({ href: recommendation.href!, skillPathId: recommendation.pathId! });
+  const distinctItem = item({ href: "/question/other", skillPathId: "other" });
+  const duplicate: StudyPlanDashboardState = { status: "configured", caughtUp: false, todayItems: [duplicateItem], planItems: [duplicateItem] };
+  const distinct: StudyPlanDashboardState = { status: "configured", caughtUp: false, todayItems: [distinctItem], planItems: [distinctItem] };
+  const duplicateLater: StudyPlanDashboardState = { status: "configured", caughtUp: false, todayItems: [], planItems: [duplicateItem] };
   assert.equal(resolveDashboardContinueMode({ studyPlanEnabled: false, plan: duplicate, recommendation }), "full");
   assert.equal(resolveDashboardContinueMode({ studyPlanEnabled: true, plan: setup, recommendation }), "full");
   assert.equal(resolveDashboardContinueMode({ studyPlanEnabled: true, plan: duplicate, recommendation }), "hidden");
+  assert.equal(resolveDashboardContinueMode({ studyPlanEnabled: true, plan: duplicateLater, recommendation }), "hidden");
   assert.equal(resolveDashboardContinueMode({ studyPlanEnabled: true, plan: distinct, recommendation }), "compact");
   assert.equal(resolveDashboardContinueMode({ studyPlanEnabled: true, plan: { ...distinct, caughtUp: true }, recommendation }), "hidden");
 });

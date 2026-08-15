@@ -2,8 +2,8 @@ import type { LearnerNextAction } from "@/lib/learning/next-action";
 import type { StudyPlanItem } from "@/lib/study-plan/types";
 
 export type StudyPlanDashboardState =
-  | { status: "loading" | "setup"; caughtUp: false; todayItems: readonly StudyPlanItem[] }
-  | { status: "configured"; caughtUp: boolean; todayItems: readonly StudyPlanItem[] };
+  | { status: "loading" | "setup"; caughtUp: false; todayItems: readonly StudyPlanItem[]; planItems: readonly StudyPlanItem[] }
+  | { status: "configured"; caughtUp: boolean; todayItems: readonly StudyPlanItem[]; planItems: readonly StudyPlanItem[] };
 
 export type DashboardContinueMode = "full" | "compact" | "hidden";
 
@@ -14,7 +14,7 @@ export function resolveDashboardContinueMode(input: {
 }): DashboardContinueMode {
   if (!input.studyPlanEnabled || input.plan.status !== "configured") return "full";
   if (input.plan.caughtUp || !input.recommendation.href) return "hidden";
-  if (input.plan.todayItems.some((item) => equivalentAction(item, input.recommendation))) return "hidden";
+  if (input.plan.planItems.some((item) => equivalentAction(item, input.recommendation))) return "hidden";
   return "compact";
 }
 
