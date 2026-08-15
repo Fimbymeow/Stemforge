@@ -191,16 +191,16 @@ test("all origins remain distinct and destinations are subject generic", () => {
     label: "Question Bank",
   });
   assert.deepEqual(practiceReturnDestination({ origin: "scheduled_review", subjectId: "higher-maths" }), {
-    href: "/practice?review=1",
-    label: "Review",
+    href: "/subjects/higher-maths",
+    label: "Back to Higher Maths",
   });
   assert.deepEqual(practiceReturnDestination({
     origin: "scheduled_review",
     subjectId: "higher-maths",
     selectedPathIds: ["chain-rule"],
   }), {
-    href: "/practice?review=1&path=chain-rule",
-    label: "Review",
+    href: "/subjects/higher-maths",
+    label: "Back to Higher Maths",
   });
 });
 
