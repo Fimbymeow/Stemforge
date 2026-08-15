@@ -1,7 +1,7 @@
 import { buildStudyPlanCandidates } from "@/lib/study-plan/candidate-builder";
 import { MAX_WEEKLY_MINUTES, STUDY_PLAN_GENERATION_VERSION } from "@/lib/study-plan/constants";
 import { allocateStudyPlan } from "@/lib/study-plan/allocator";
-import { classifyExamPhase, isValidDateOnly, utcWeekStart } from "@/lib/study-plan/dates";
+import { classifyExamPhase, isValidDateOnly, utcDayKey, utcWeekStart } from "@/lib/study-plan/dates";
 import type {
   StudyPlanGenerationInput,
   StudyPlanResult,
@@ -14,8 +14,11 @@ const VALID_WEEKDAYS = new Set<StudyPlanWeekday>(["mon", "tue", "wed", "thu", "f
 export function generateStudyPlan(input: StudyPlanGenerationInput): StudyPlanResult {
   const validationError = validateInput(input);
   const safeNow = Number.isFinite(input.now.getTime()) ? input.now : new Date(0);
-  const weekStart = utcWeekStart(safeNow);
-  const examPhase = classifyExamPhase(safeNow, input.preferences.examDate);
+  const safeCalendarDate = input.calendarDate && Number.isFinite(input.calendarDate.getTime())
+    ? input.calendarDate
+    : safeNow;
+  const weekStart = utcWeekStart(safeCalendarDate);
+  const examPhase = classifyExamPhase(safeCalendarDate, input.preferences.examDate);
   if (validationError) {
     return emptyResult(input, weekStart, examPhase, "invalid_input", validationError);
   }
@@ -40,6 +43,7 @@ export function generateStudyPlan(input: StudyPlanGenerationInput): StudyPlanRes
     weeklyMinutes: input.preferences.weeklyMinutes,
     availableDays: input.preferences.availableDays,
     examPhase,
+    ...(input.calendarDate ? { notBeforeDate: utcDayKey(safeCalendarDate) } : {}),
     preservation: input.preservation,
   });
   return {
@@ -61,6 +65,7 @@ export function generateStudyPlan(input: StudyPlanGenerationInput): StudyPlanRes
 
 function validateInput(input: StudyPlanGenerationInput): string | null {
   if (!Number.isFinite(input.now.getTime())) return "invalid_now";
+  if (input.calendarDate && !Number.isFinite(input.calendarDate.getTime())) return "invalid_calendar_date";
   if (!input.preferences.courseSlug.trim()) return "invalid_course";
   if (!Number.isInteger(input.preferences.weeklyMinutes)
       || input.preferences.weeklyMinutes <= 0
@@ -98,4 +103,3 @@ function emptyResult(
     diagnostics,
   };
 }
-

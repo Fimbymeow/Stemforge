@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { useProgressSync } from "@/components/progress-sync-provider";
 import { useModalFocusTrap } from "@/lib/use-modal-focus-trap";
 import { clearGuestLearnerPreferences } from "@/lib/learner-preferences";
+import { clearStudyPlanLocalState } from "@/lib/study-plan/local-state";
 
 type Confirmation = "association" | "account_progress" | "all_progress" | null;
 
@@ -36,6 +37,7 @@ export function AccountDataControls() {
       } else {
         await sync.clearAllBrowserProgress();
         if (!clearGuestLearnerPreferences(window.localStorage)) throw new Error("preference_clear_failed");
+        if (!clearStudyPlanLocalState(window.localStorage)) throw new Error("study_plan_clear_failed");
         setMessage("All Orthic progress and account information was cleared from this browser. Your account's progress, already kept in sync, was not deleted.");
       }
       setConfirmation(null);

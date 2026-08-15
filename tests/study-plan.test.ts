@@ -10,7 +10,16 @@ import { getStudyPlanConfiguration } from "@/lib/study-plan/config";
 import { classifyExamPhase, datesForAvailableDays, utcWeekStart } from "@/lib/study-plan/dates";
 import { generateStudyPlan } from "@/lib/study-plan/planner";
 import { presentStudyPlanReason } from "@/lib/study-plan/presenter";
-import type { StudyPlanCandidate, StudyPlanGenerationInput } from "@/lib/study-plan/types";
+import {
+  emptyStudyPlanLocalState,
+  localCalendarDate,
+  localDayKey,
+  parseStoredStudyPlanLocalState,
+  readStudyPlanLocalState,
+  STUDY_PLAN_LOCAL_STATE_STORAGE_KEY,
+  writeStudyPlanLocalState,
+} from "@/lib/study-plan/local-state";
+import type { StudyPlanCandidate, StudyPlanGenerationInput, StudyPlanWeekday } from "@/lib/study-plan/types";
 
 const BASIC = context("basic-differentiation");
 const CHAIN = context("chain-rule");
@@ -306,6 +315,68 @@ test("Study Plan inspection configuration fails closed", () => {
   assert.deepEqual(getStudyPlanConfiguration({}), { enabled: false });
   assert.deepEqual(getStudyPlanConfiguration({ STEMFORGE_STUDY_PLAN_ENABLED: "false" }), { enabled: false });
   assert.deepEqual(getStudyPlanConfiguration({ STEMFORGE_STUDY_PLAN_ENABLED: "true" }), { enabled: true });
+});
+
+test("browser-local P1 state is versioned, bounded, and safely rejects malformed setup", () => {
+  assert.deepEqual(parseStoredStudyPlanLocalState("not-json"), emptyStudyPlanLocalState());
+  assert.deepEqual(parseStoredStudyPlanLocalState(JSON.stringify({ version: 999, setup: {} })), emptyStudyPlanLocalState());
+  const normalized = parseStoredStudyPlanLocalState(JSON.stringify({
+    version: 1,
+    setup: { weeklyMinutes: 90, availableDays: ["wed", "mon", "wed", "bad"], examDate: "2026-08-20" },
+    preservation: {
+      itemStates: { valid: "completed", invalid: "planned" },
+      movedDates: { valid: "2026-08-19", invalid: "tomorrow" },
+      excludedItemKeys: ["valid", "valid", 4],
+    },
+  }));
+  assert.deepEqual(normalized.setup, { weeklyMinutes: 90, availableDays: ["wed", "mon"], examDate: "2026-08-20" });
+  assert.deepEqual(normalized.preservation, {
+    itemStates: { valid: "completed" }, movedDates: { valid: "2026-08-19" }, excludedItemKeys: ["valid"],
+  });
+});
+
+test("browser-local P1 state round-trips without touching progress evidence storage", () => {
+  const values = new Map<string, string>();
+  const storage = {
+    getItem: (key: string) => values.get(key) ?? null,
+    setItem: (key: string, value: string) => { values.set(key, value); },
+  };
+  const state = { ...emptyStudyPlanLocalState(), setup: { weeklyMinutes: 120, availableDays: ["tue", "thu"] as StudyPlanWeekday[], examDate: null } };
+  assert.equal(writeStudyPlanLocalState(storage, state), true);
+  assert.deepEqual(readStudyPlanLocalState(storage), state);
+  assert.deepEqual([...values.keys()], [STUDY_PLAN_LOCAL_STATE_STORAGE_KEY]);
+});
+
+test("calendar date separates local Today/week allocation from the real Review instant", () => {
+  const instant = new Date("2026-07-19T23:30:00.000Z");
+  const localMonday = new Date("2026-07-20T00:00:00.000Z");
+  const result = generateStudyPlan({ ...baseInput(emptyEvidence()), now: instant, calendarDate: localMonday });
+  assert.equal(result.weekStart, "2026-07-20");
+  assert.equal(result.generatedAt, instant.toISOString());
+  const sample = new Date("2026-03-29T23:30:00.000Z");
+  assert.equal(localDayKey(sample), `${sample.getFullYear()}-${String(sample.getMonth() + 1).padStart(2, "0")}-${String(sample.getDate()).padStart(2, "0")}`);
+  assert.equal(localCalendarDate(sample).getUTCHours(), 0);
+  const beforeBritishSummerMidnight = new Date("2026-03-29T22:59:00.000Z");
+  const afterBritishSummerMidnight = new Date("2026-03-29T23:01:00.000Z");
+  assert.equal(localDayKey(beforeBritishSummerMidnight, "Europe/London"), "2026-03-29");
+  assert.equal(localDayKey(afterBritishSummerMidnight, "Europe/London"), "2026-03-30");
+  assert.equal(utcWeekStart(localCalendarDate(beforeBritishSummerMidnight, "Europe/London")), "2026-03-23");
+  assert.equal(utcWeekStart(localCalendarDate(afterBritishSummerMidnight, "Europe/London")), "2026-03-30");
+});
+
+test("swap exclusions remove only the chosen deterministic item and allow the next useful candidate", () => {
+  const candidates = ["a", "b"].map((id, index) => syntheticCandidate({
+    candidateKey: `${id}:continue_stage:foundations`, skillPathId: id, skillName: id,
+    actionType: "continue_stage", href: `/question/${id}`, reasonCode: "continue", tier: (3 + index) as 3 | 4,
+  }));
+  const initial = allocateStudyPlan({ ...allocationInput(candidates, "far"), weeklyMinutes: 20 });
+  const swapped = allocateStudyPlan({
+    ...allocationInput(candidates, "far"), weeklyMinutes: 20,
+    preservation: { excludedItemKeys: [initial.items[0].itemKey] },
+  });
+  assert.deepEqual(initial.items.map((item) => item.skillPathId), ["a"]);
+  assert.deepEqual(swapped.items.map((item) => item.skillPathId), ["b"]);
+  assert.equal(swapped.diagnostics.some((item) => item.code === "preserved_exclusion"), true);
 });
 
 function workedInput(): StudyPlanGenerationInput {

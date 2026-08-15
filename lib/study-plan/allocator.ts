@@ -21,6 +21,7 @@ type AllocationInput = {
   weeklyMinutes: number;
   availableDays: readonly StudyPlanWeekday[];
   examPhase: StudyPlanExamPhase;
+  notBeforeDate?: string;
   preservation?: StudyPlanPreservationInput;
 };
 
@@ -29,7 +30,8 @@ export function allocateStudyPlan(input: AllocationInput): {
   allocatedMinutes: number;
   diagnostics: StudyPlanDiagnostic[];
 } {
-  const dates = datesForAvailableDays(input.weekStart, input.availableDays);
+  const dates = datesForAvailableDays(input.weekStart, input.availableDays)
+    .filter((date) => !input.notBeforeDate || date >= input.notBeforeDate);
   const dayMinutes = new Map(dates.map((date) => [date, 0]));
   const dayReviewCounts = new Map(dates.map((date) => [date, 0]));
   const items: StudyPlanItem[] = [];
@@ -45,6 +47,10 @@ export function allocateStudyPlan(input: AllocationInput): {
 
   for (const candidate of ordered) {
     const itemKey = createStudyPlanItemKey(input.weekStart, input.courseSlug, candidate);
+    if (input.preservation?.excludedItemKeys?.includes(itemKey)) {
+      diagnostics.push(diagnostic(candidate, "preserved_exclusion"));
+      continue;
+    }
     const state = input.preservation?.itemStates?.[itemKey] ?? "planned";
     if (!isValidStudyPlanHref(candidate.href)) {
       diagnostics.push(diagnostic(candidate, "invalid_href"));
@@ -174,4 +180,3 @@ function diagnostic(
     ...(detail ? { detail } : {}),
   };
 }
-

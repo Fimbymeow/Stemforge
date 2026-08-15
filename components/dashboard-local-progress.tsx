@@ -13,8 +13,10 @@ import { GuestProgressProtection } from "@/components/account/guest-progress-pro
 import { deriveSubjectReviewSummary } from "@/lib/review/derivation";
 import { resolveEffectiveCourses } from "@/lib/learner-preferences";
 import { useLearnerPreferences } from "@/components/learner-preferences/use-learner-preferences";
+import { StudyPlanToday } from "@/components/study-plan/study-plan-today";
+import { DashboardActivitySummary } from "@/components/activity/dashboard-activity-summary";
 
-export function DashboardLocalProgressSection() {
+export function DashboardLocalProgressSection({ studyPlanEnabled = false }: { studyPlanEnabled?: boolean }) {
   const [evidence, setEvidence] = useState<ProgressEvidence>(() => getEmptyProgressEvidence());
   const sync = useProgressSync();
   const recommendation = useLearnerNextAction();
@@ -54,6 +56,7 @@ export function DashboardLocalProgressSection() {
 
   return (
     <section className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-5" aria-label="Your learning dashboard">
+      {studyPlanEnabled ? <StudyPlanToday evidence={evidence} courseSlug={effectiveCourses[0]?.slug ?? model.course.subjectSlug} courseName={effectiveCourses[0]?.name ?? "Higher Maths"} /> : null}
       <Card data-testid="dashboard-progress-summary" aria-label="Continue learning" className="border-forge/30 p-4 md:p-5">
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-5 max-md:grid-cols-1">
           <div className="min-w-0">
@@ -89,10 +92,7 @@ export function DashboardLocalProgressSection() {
         </div>
       </section>
 
-      <div className="-mt-2 flex w-fit max-w-full flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted" data-testid="dashboard-activity-line">
-        {model.weeklyActivity.activeDays > 0 ? <span className="font-semibold">{model.weeklyActivity.label}</span> : null}
-        <Link href="/activity" className="inline-flex min-h-9 items-center font-extrabold text-forge">Activity <span aria-hidden="true">→</span></Link>
-      </div>
+      <DashboardActivitySummary evidence={evidence} />
     </section>
   );
 }

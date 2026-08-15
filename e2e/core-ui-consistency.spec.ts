@@ -13,16 +13,15 @@ test("Courses presents only usable course access without roadmap placeholders", 
   expect(seriousBrowserErrors).toEqual([]);
 });
 
-test("Dashboard Activity is a compact footer action below course access", async ({ page }) => {
+test("Dashboard Activity is a compact summary below course access", async ({ page }) => {
   await page.goto("/dashboard");
   const courses = await page.getByTestId("dashboard-courses").boundingBox();
-  const activity = page.getByTestId("dashboard-activity-line");
+  const activity = page.getByTestId("dashboard-activity-summary");
   const activityBox = await activity.boundingBox();
   expect(courses).not.toBeNull();
   expect(activityBox).not.toBeNull();
   expect(activityBox!.y).toBeGreaterThanOrEqual(courses!.y + courses!.height);
-  expect(activityBox!.width).toBeLessThan(220);
-  await expect(activity.getByRole("link", { name: "Activity", exact: true })).toHaveAttribute("href", "/activity");
+  await expect(activity.getByRole("link", { name: "View activity" })).toHaveAttribute("href", "/activity");
 });
 
 test("Practice and Review use solid restrained setup surfaces", async ({ page }) => {

@@ -23,10 +23,12 @@ export type StudyPlanPreferences = {
 export type StudyPlanPreservationInput = {
   itemStates?: Readonly<Record<string, Extract<StudyPlanItemState, "completed" | "skipped">>>;
   movedDates?: Readonly<Record<string, string>>;
+  excludedItemKeys?: readonly string[];
 };
 
 export type StudyPlanGenerationInput = {
   now: Date;
+  calendarDate?: Date;
   evidence: ProgressEvidence;
   preferences: StudyPlanPreferences;
   preservation?: StudyPlanPreservationInput;
@@ -92,4 +94,3 @@ export type StudyPlanResult = {
   items: StudyPlanItem[];
   diagnostics: StudyPlanDiagnostic[];
 };
-
