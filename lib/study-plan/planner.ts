@@ -57,10 +57,20 @@ export function generateStudyPlan(input: StudyPlanGenerationInput): StudyPlanRes
     allocatedMinutes: allocated.allocatedMinutes,
     unusedMinutes: input.preferences.weeklyMinutes - allocated.allocatedMinutes,
     examPhase,
-    caughtUp: built.candidates.length === 0,
+    caughtUp: built.candidates.length === 0 && hasOnlyCaughtUpExclusions(built.diagnostics),
     items: allocated.items,
     diagnostics: [...built.diagnostics, ...allocated.diagnostics],
   };
+}
+
+function hasOnlyCaughtUpExclusions(diagnostics: StudyPlanResult["diagnostics"]) {
+  const unresolvedCodes = new Set([
+    "new_start_suppressed_close_exam",
+    "continuation_destination_unavailable",
+    "next_skill_destination_unavailable",
+    "review_history_unavailable",
+  ]);
+  return !diagnostics.some((item) => unresolvedCodes.has(item.code));
 }
 
 function validateInput(input: StudyPlanGenerationInput): string | null {

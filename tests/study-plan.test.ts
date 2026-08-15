@@ -170,6 +170,7 @@ test("exam tomorrow suppresses new starts, while no exam date follows the base p
   const normal = generateStudyPlan(baseInput(emptyEvidence()));
   assert.equal(close.examPhase, "close");
   assert.deepEqual(close.items, []);
+  assert.equal(close.caughtUp, false);
   assert.equal(close.diagnostics.some((item) => item.code === "new_start_suppressed_close_exam"), true);
   assert.equal(normal.examPhase, "no_date");
   assert.equal(normal.items[0].skillPathId, "basic-differentiation");

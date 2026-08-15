@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, BookOpen } from "lucide-react";
 import { Card, ProgressBar } from "@/components/ui";
@@ -15,12 +15,15 @@ import { resolveEffectiveCourses } from "@/lib/learner-preferences";
 import { useLearnerPreferences } from "@/components/learner-preferences/use-learner-preferences";
 import { StudyPlanToday } from "@/components/study-plan/study-plan-today";
 import { DashboardActivitySummary } from "@/components/activity/dashboard-activity-summary";
+import { resolveDashboardContinueMode, type StudyPlanDashboardState } from "@/lib/study-plan/dashboard-dedup";
 
 export function DashboardLocalProgressSection({ studyPlanEnabled = false }: { studyPlanEnabled?: boolean }) {
   const [evidence, setEvidence] = useState<ProgressEvidence>(() => getEmptyProgressEvidence());
   const sync = useProgressSync();
   const recommendation = useLearnerNextAction();
   const learnerPreferences = useLearnerPreferences();
+  const [studyPlanState, setStudyPlanState] = useState<StudyPlanDashboardState>({ status: "loading", caughtUp: false, todayItems: [] });
+  const updateStudyPlanState = useCallback((state: StudyPlanDashboardState) => setStudyPlanState(state), []);
 
   useEffect(() => {
     const update = () => setEvidence(getProgressEvidence());
@@ -53,11 +56,12 @@ export function DashboardLocalProgressSection({ studyPlanEnabled = false }: { st
     ? `${review.dueSkillCount} review${review.dueSkillCount === 1 ? "" : "s"} due`
     : "Up to date";
   const effectiveCourses = useMemo(() => resolveEffectiveCourses({ preferences: learnerPreferences.preferences, evidence }), [evidence, learnerPreferences.preferences]);
+  const continueMode = resolveDashboardContinueMode({ studyPlanEnabled, plan: studyPlanState, recommendation });
 
   return (
     <section className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-5" aria-label="Your learning dashboard">
-      {studyPlanEnabled ? <StudyPlanToday evidence={evidence} courseSlug={effectiveCourses[0]?.slug ?? model.course.subjectSlug} courseName={effectiveCourses[0]?.name ?? "Higher Maths"} /> : null}
-      <Card data-testid="dashboard-progress-summary" aria-label="Continue learning" className="border-forge/30 p-4">
+      {studyPlanEnabled ? <StudyPlanToday evidence={evidence} courseSlug={effectiveCourses[0]?.slug ?? model.course.subjectSlug} courseName={effectiveCourses[0]?.name ?? "Higher Maths"} onDashboardStateChange={updateStudyPlanState} /> : null}
+      {continueMode === "full" ? <Card data-testid="dashboard-progress-summary" aria-label="Continue learning" className="border-forge/30 p-4">
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 max-md:grid-cols-1">
           <div className="min-w-0">
             <p className="text-xs font-extrabold uppercase tracking-wide text-forge">Continue learning · Higher Maths</p>
@@ -70,7 +74,18 @@ export function DashboardLocalProgressSection({ studyPlanEnabled = false }: { st
             <Link href="/practice" className="inline-flex min-h-10 items-center justify-center text-sm font-bold text-forge">Practise your way</Link>
           </div>
         </div>
-      </Card>
+      </Card> : continueMode === "compact" && recommendation.href ? (
+        <section aria-labelledby="dashboard-resume-course-title" data-testid="dashboard-resume-course" className="border-y border-line py-3">
+          <div className="flex items-center justify-between gap-4 max-sm:items-start">
+            <div className="min-w-0">
+              <p className="text-xs font-extrabold uppercase tracking-wide text-muted">Resume course</p>
+              <h2 id="dashboard-resume-course-title" className="mt-0.5 text-base font-extrabold">{recommendedPath?.name ?? recommendation.title}</h2>
+              {recommendedStage ? <p className="mt-0.5 text-xs font-semibold text-muted">{recommendedStage.name} · {recommendedStage.completedQuestions}/{recommendedStage.totalQuestions} complete</p> : null}
+            </div>
+            <Link href={recommendation.href} aria-label={`${recommendation.label}: ${recommendedPath?.name ?? recommendation.title}`} className="inline-flex min-h-10 shrink-0 items-center gap-1 text-sm font-extrabold text-forge">Open <ArrowRight aria-hidden="true" className="size-4" /></Link>
+          </div>
+        </section>
+      ) : null}
 
       <GuestProgressProtection meaningfulEvidenceCount={meaningfulEvidenceCount} signedIn={sync.accountFingerprint !== null} authStateReady={sync.status === "authentication_required"} />
 

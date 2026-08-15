@@ -20,6 +20,7 @@ import { generateStudyPlan } from "@/lib/study-plan/planner";
 import { presentStudyPlanReason } from "@/lib/study-plan/presenter";
 import type { ProgressEvidence } from "@/lib/progress/types";
 import type { StudyPlanItem, StudyPlanWeekday } from "@/lib/study-plan/types";
+import type { StudyPlanDashboardState } from "@/lib/study-plan/dashboard-dedup";
 
 const WEEKDAYS: readonly { id: StudyPlanWeekday; short: string; name: string }[] = [
   { id: "mon", short: "M", name: "Monday" }, { id: "tue", short: "T", name: "Tuesday" },
@@ -28,9 +29,9 @@ const WEEKDAYS: readonly { id: StudyPlanWeekday; short: string; name: string }[]
   { id: "sun", short: "S", name: "Sunday" },
 ];
 
-type Props = { evidence: ProgressEvidence; courseSlug: string; courseName: string };
+type Props = { evidence: ProgressEvidence; courseSlug: string; courseName: string; onDashboardStateChange?: (state: StudyPlanDashboardState) => void };
 
-export function StudyPlanToday({ evidence, courseSlug, courseName }: Props) {
+export function StudyPlanToday({ evidence, courseSlug, courseName, onDashboardStateChange }: Props) {
   const [localState, setLocalState] = useState<StudyPlanLocalState>(() => emptyStudyPlanLocalState());
   const [loaded, setLoaded] = useState(false);
   const [generationNow, setGenerationNow] = useState<Date | null>(null);
@@ -64,7 +65,17 @@ export function StudyPlanToday({ evidence, courseSlug, courseName }: Props) {
     });
   }, [courseSlug, evidence, generationNow, localState]);
   const todayKey = generationNow ? localDayKey(generationNow) : "";
-  const todayItems = result?.items.filter((item) => item.date === todayKey && item.state !== "skipped").slice(0, 4) ?? [];
+  const todayItems = useMemo(() => result?.items.filter((item) => item.date === todayKey && item.state !== "skipped").slice(0, 4) ?? [], [result?.items, todayKey]);
+  const dashboardState = useMemo<StudyPlanDashboardState>(() => {
+    if (!loaded) return { status: "loading", caughtUp: false, todayItems: [] };
+    if (!localState.setup || editingSettings) return { status: "setup", caughtUp: false, todayItems: [] };
+    return { status: "configured", caughtUp: result?.caughtUp ?? false, todayItems };
+  }, [editingSettings, loaded, localState.setup, result?.caughtUp, todayItems]);
+  const dashboardStateSignature = JSON.stringify(dashboardState);
+
+  useEffect(() => {
+    onDashboardStateChange?.(dashboardState);
+  }, [dashboardState, dashboardStateSignature, onDashboardStateChange]);
 
   function save(next: StudyPlanLocalState) {
     if (!writeStudyPlanLocalState(window.localStorage, next)) {

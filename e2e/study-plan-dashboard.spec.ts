@@ -19,7 +19,7 @@ test.describe("feature-flagged Study Plan Today", () => {
     await page.reload();
   });
 
-  test("setup creates a bounded Today plan above Continue Learning and preserves evidence when marked Done", async ({ page, seriousBrowserErrors }) => {
+  test("setup makes Today the sole equivalent next-action surface and preserves evidence when marked Done", async ({ page, seriousBrowserErrors }) => {
     const setup = page.getByTestId("study-plan-setup");
     await expect(setup.getByRole("heading", { name: "Plan your study week" })).toBeVisible();
     for (const day of ["Tuesday", "Thursday", "Friday", "Sunday"]) await setup.getByTitle(day).click();
@@ -27,15 +27,11 @@ test.describe("feature-flagged Study Plan Today", () => {
     await setup.getByRole("button", { name: "Create my plan" }).click();
 
     const today = page.getByTestId("study-plan-today");
-    const continueLearning = page.getByTestId("dashboard-progress-summary");
     await expect(today.getByRole("heading", { name: "Today" })).toBeVisible();
     await expect(today.getByTestId("study-plan-item")).toHaveCount(1);
     await expect(today.getByTestId("study-plan-item").getByRole("link", { name: "Start" })).toHaveAttribute("href", /\/question\/hm-calc-diff-basic-f-001$/);
-    const todayBox = await today.boundingBox();
-    const continueBox = await continueLearning.boundingBox();
-    expect(todayBox).not.toBeNull();
-    expect(continueBox).not.toBeNull();
-    expect(todayBox!.y).toBeLessThan(continueBox!.y);
+    await expect(page.getByTestId("dashboard-progress-summary")).toHaveCount(0);
+    await expect(page.getByTestId("dashboard-resume-course")).toHaveCount(0);
 
     const evidenceBefore = await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY);
     const actions = today.locator("summary");
@@ -47,6 +43,21 @@ test.describe("feature-flagged Study Plan Today", () => {
     await page.reload();
     await expect(page.getByTestId("study-plan-item")).toContainText("Open");
     expect(seriousBrowserErrors).toEqual([]);
+  });
+
+  test("a distinct active Practice action becomes compact Resume course rather than a second large card", async ({ page }) => {
+    await page.goto("/practice");
+    await page.getByTestId("quick-practice-action").click();
+    await expect(page).toHaveURL(/\/practice\/session\//);
+    const sessionPath = new URL(page.url()).pathname;
+    await page.goto("/dashboard");
+    const setup = page.getByTestId("study-plan-setup");
+    for (const day of ["Tuesday", "Thursday", "Friday", "Sunday"]) await setup.getByTitle(day).click();
+    await setup.getByRole("button", { name: "Create my plan" }).click();
+    await expect(page.getByTestId("dashboard-progress-summary")).toHaveCount(0);
+    const resume = page.getByTestId("dashboard-resume-course");
+    await expect(resume).toBeVisible();
+    await expect(resume.getByRole("link")).toHaveAttribute("href", sessionPath);
   });
 
   test("Move offers only available current-week dates and removes the item from Today", async ({ page }) => {
@@ -88,10 +99,14 @@ test.describe("feature-flagged Study Plan Today", () => {
     const today = page.getByTestId("study-plan-today");
     await expect(today).toContainText("You’re caught up for now.");
     await expect(today.getByTestId("study-plan-item")).toHaveCount(0);
+    await expect(page.getByTestId("dashboard-progress-summary")).toHaveCount(0);
+    await expect(page.getByTestId("dashboard-resume-course")).toHaveCount(0);
   });
 
   for (const width of [390, 320]) test(`Today and Activity remain overflow-free at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 800 });
+    await expect(page.getByTestId("study-plan-setup")).toBeVisible();
+    await expect(page.getByTestId("dashboard-progress-summary")).toBeVisible();
     await expectNoHorizontalOverflow(page);
     await expect(page.getByTestId("dashboard-activity-summary")).toBeVisible();
   });
