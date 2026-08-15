@@ -57,15 +57,15 @@ export function DashboardLocalProgressSection({ studyPlanEnabled = false }: { st
   return (
     <section className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-5" aria-label="Your learning dashboard">
       {studyPlanEnabled ? <StudyPlanToday evidence={evidence} courseSlug={effectiveCourses[0]?.slug ?? model.course.subjectSlug} courseName={effectiveCourses[0]?.name ?? "Higher Maths"} /> : null}
-      <Card data-testid="dashboard-progress-summary" aria-label="Continue learning" className="border-forge/30 p-4 md:p-5">
-        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-5 max-md:grid-cols-1">
+      <Card data-testid="dashboard-progress-summary" aria-label="Continue learning" className="border-forge/30 p-4">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 max-md:grid-cols-1">
           <div className="min-w-0">
             <p className="text-xs font-extrabold uppercase tracking-wide text-forge">Continue learning · Higher Maths</p>
             <h2 className="mt-1 text-xl font-extrabold">{recommendedPath?.name ?? "Higher Maths"}</h2>
             {recommendedStage ? <p className="mt-1 text-sm font-bold text-muted" data-testid="dashboard-current-stage">{recommendedStage.name} · {recommendedStage.completedQuestions}/{recommendedStage.totalQuestions} complete</p> : null}
             <p className="mt-1 max-w-2xl text-sm text-muted">{recommendation.reason}</p>
           </div>
-          <div className="flex min-w-[210px] flex-col gap-1 max-md:min-w-0">
+          <div className="flex min-w-[190px] flex-col gap-0.5 max-md:min-w-0">
             {recommendation.href ? <Link href={recommendation.href} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-forge px-5 text-sm font-extrabold text-white">{recommendation.label}<ArrowRight aria-hidden="true" className="size-4" /></Link> : null}
             <Link href="/practice" className="inline-flex min-h-10 items-center justify-center text-sm font-bold text-forge">Practise your way</Link>
           </div>
@@ -78,7 +78,7 @@ export function DashboardLocalProgressSection({ studyPlanEnabled = false }: { st
         <div className="mb-2 flex items-end justify-between gap-3"><h2 id="your-courses-title" className="text-lg font-extrabold">Your courses</h2><span className="text-xs font-bold text-muted">{model.sync.label}</span></div>
         <div className="divide-y divide-line border-y border-line" data-testid="dashboard-courses">
           {effectiveCourses.map((course) => (
-            <Link key={course.slug} href={course.href} aria-label={`Open ${course.name}`} className="flex min-h-16 items-center gap-4 py-2 hover:bg-forge-soft">
+            <Link key={course.slug} href={course.href} aria-label={`Open ${course.name}`} className="flex min-h-16 items-center gap-4 border-l-2 border-ink/20 bg-paper/40 py-2 pl-3 transition-colors hover:border-forge hover:bg-forge-soft/40">
               <BookOpen aria-hidden="true" className="size-5 shrink-0 text-forge" />
               <span className="min-w-0 flex-1">
                 <span className="block font-extrabold">{course.name}</span>

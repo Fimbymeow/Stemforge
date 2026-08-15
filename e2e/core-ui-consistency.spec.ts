@@ -21,7 +21,11 @@ test("Dashboard Activity is a compact summary below course access", async ({ pag
   expect(courses).not.toBeNull();
   expect(activityBox).not.toBeNull();
   expect(activityBox!.y).toBeGreaterThanOrEqual(courses!.y + courses!.height);
-  await expect(activity.getByRole("link", { name: "View activity" })).toHaveAttribute("href", "/activity");
+  await expect(activity.getByRole("link", { name: "View full activity history" })).toHaveAttribute("href", "/activity");
+  await expect(activity.getByTestId("dashboard-activity-strip").locator("[data-intensity]")).toHaveCount(14);
+  const content = await activity.getByTestId("dashboard-activity-content").boundingBox();
+  expect(content).not.toBeNull();
+  expect(content!.width).toBeLessThan(activityBox!.width);
 });
 
 test("Practice and Review use solid restrained setup surfaces", async ({ page }) => {

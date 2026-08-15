@@ -11,8 +11,9 @@ export default function ActivityPage() {
       <div className="mx-auto grid max-w-[1120px] gap-5">
         <header className="flex items-start justify-between gap-4 max-md:grid">
           <div>
+            <p className="mb-2 text-xs font-extrabold uppercase tracking-[0.16em] text-forge">Activity</p>
             <h1 className="m-0 text-[32px] font-extrabold leading-none">Activity</h1>
-            <p className="mt-3 max-w-2xl leading-relaxed text-muted">A record of meaningful learning activity from the last 12 weeks.</p>
+            <p className="mt-3 max-w-2xl leading-relaxed text-muted">See your recent learning activity and the work recorded on each day.</p>
           </div>
           <AppTopbar demo={false} />
         </header>

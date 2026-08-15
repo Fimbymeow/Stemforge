@@ -3,16 +3,22 @@ import { deriveActivityHistory } from "@/lib/activity/derivation";
 import type { ProgressEvidence } from "@/lib/progress/types";
 
 export function DashboardActivitySummary({ evidence, now = new Date() }: { evidence: ProgressEvidence; now?: Date }) {
-  const history = deriveActivityHistory(evidence, now, { rangeDays: 7 });
+  const history = deriveActivityHistory(evidence, now, { rangeDays: 14 });
   const label = history.activeDayCount === 0
-    ? "No activity yet"
-    : `${history.activeDayCount} active day${history.activeDayCount === 1 ? "" : "s"} in the last 7 days`;
+    ? "No activity in the last 14 days"
+    : `${history.activeDayCount} active day${history.activeDayCount === 1 ? "" : "s"} in the last 14 days`;
   return (
     <section aria-labelledby="dashboard-activity-title" data-testid="dashboard-activity-summary" className="border-t border-line pt-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div><h2 id="dashboard-activity-title" className="text-base font-extrabold">Activity</h2><p className="mt-1 text-xs font-semibold text-muted">{label}</p></div>
-        <div className="flex items-center gap-1.5" aria-hidden="true">{history.days.map((day) => <span key={day.dayKey} data-intensity={day.intensityLevel} className={`size-4 rounded-sm ${activityColour(day.intensityLevel)}`} />)}</div>
-        <Link href="/activity" className="inline-flex min-h-10 items-center text-sm font-extrabold text-forge">View activity <span aria-hidden="true">→</span></Link>
+      <p className="sr-only">{label}</p>
+      <div className="inline-grid max-w-full grid-cols-[auto_auto_auto] items-center gap-x-5 gap-y-2 max-sm:grid-cols-[1fr_auto]" data-testid="dashboard-activity-content">
+        <div className="min-w-0">
+          <h2 id="dashboard-activity-title" className="text-base font-extrabold">Activity</h2>
+          <p className="mt-0.5 text-xs font-semibold text-muted" aria-hidden="true">{label}</p>
+        </div>
+        <div className="flex items-center gap-1 max-sm:col-span-2 max-sm:row-start-2" aria-hidden="true" data-testid="dashboard-activity-strip">
+          {history.days.map((day) => <span key={day.dayKey} data-intensity={day.intensityLevel} className={`size-3.5 rounded-sm ${activityColour(day.intensityLevel)}`} />)}
+        </div>
+        <Link href="/activity" aria-label="View full activity history" className="inline-flex min-h-10 items-center whitespace-nowrap text-sm font-extrabold text-forge max-sm:col-start-2 max-sm:row-start-1">View activity <span aria-hidden="true">→</span></Link>
       </div>
     </section>
   );

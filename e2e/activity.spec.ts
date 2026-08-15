@@ -4,6 +4,10 @@ import type { ProgressPayload } from "../lib/progress/types";
 import type { ReviewEvent } from "../lib/review/types";
 
 test("fresh learner sees a calm empty state with the real next action", async ({ page, seriousBrowserErrors }) => {
+  await page.goto("/dashboard");
+  const dashboardActivity = page.getByTestId("dashboard-activity-summary");
+  await expect(dashboardActivity).toContainText("No activity in the last 14 days");
+  await expect(dashboardActivity.getByTestId("dashboard-activity-strip").locator("[data-intensity]")).toHaveCount(14);
   await page.goto("/activity");
   await expect(page.getByRole("heading", { name: "Activity", level: 1 })).toBeVisible();
   await expect(page.getByTestId("activity-empty-state")).toContainText("Your activity will appear here");
@@ -22,8 +26,9 @@ test("meaningful evidence renders week rows, Dashboard signal and bounded day de
     currentAttempt(QUESTION_IDS[1], 3, { eventId: "activity_second", attemptedAt: today, isCorrect: true }),
   ], [review(yesterday)]));
   await page.goto("/dashboard");
-  await expect(page.getByTestId("dashboard-activity-summary")).toContainText("2 active days in the last 7 days");
-  await page.getByRole("link", { name: "View activity" }).click();
+  await expect(page.getByTestId("dashboard-activity-summary")).toContainText("2 active days in the last 14 days");
+  await expect(page.getByTestId("dashboard-activity-strip").locator("[data-intensity]")).toHaveCount(14);
+  await page.getByRole("link", { name: "View full activity history" }).click();
   await expect(page).toHaveURL(/\/activity$/);
   await expect(page.getByTestId("activity-history")).toBeVisible();
   await expect(page.getByRole("group", { name: /Activity by week/ }).getByRole("group")).toHaveCount(12);
@@ -32,7 +37,8 @@ test("meaningful evidence renders week rows, Dashboard signal and bounded day de
   await expect(page.locator('[data-intensity="1"]')).toHaveCount(1);
   await page.locator(`[data-day-key="${today.slice(0, 10)}"]`).click();
   await expect(page.getByTestId("activity-detail-panel")).toContainText("Moderate activity");
-  await expect(page.getByTestId("activity-detail-panel")).toContainText("2 questions worked on · 2 completed independently");
+  await expect(page.getByTestId("activity-detail-panel")).toContainText("Questions worked on2");
+  await expect(page.getByTestId("activity-detail-panel")).toContainText("Completed independently2");
   await page.locator(`[data-day-key="${yesterday.slice(0, 10)}"]`).click();
   await expect(page.getByTestId("activity-detail-panel")).toContainText("Review completed");
   await expect(page.getByTestId("activity-history")).not.toContainText(/weighted score|current streak|longest streak|keep it going/i);
@@ -46,11 +52,14 @@ test("repeated same-question errors do not darken the day beyond its best outcom
     currentAttempt(QUESTION_IDS[0], 2, { eventId: "repeat_2", attemptedAt: today, isCorrect: false }),
   ]));
   await page.goto("/activity");
-  await expect(page.getByTestId("activity-detail-panel")).toContainText("Hover, focus or select a day");
   const cell = page.locator(`[data-day-key="${today.slice(0, 10)}"]`);
   await expect(cell).toHaveAttribute("data-intensity", "1");
   await cell.click();
-  await expect(page.getByTestId("activity-detail-panel")).toContainText("1 question worked on");
+  await expect(page.getByTestId("activity-detail-panel")).toContainText("Questions worked on1");
+  const emptyCell = page.locator('[data-intensity="0"]').first();
+  await emptyCell.click();
+  await expect(emptyCell).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByTestId("activity-detail-panel")).toContainText("No learning activity recorded for this day.");
   expect(seriousBrowserErrors).toEqual([]);
 });
 
@@ -69,6 +78,7 @@ test("each week is one tab stop and arrow navigation updates the persistent deta
   await page.keyboard.press("ArrowRight");
   await expect(days.nth(1)).toBeFocused();
   await expect(days.nth(1)).toHaveAttribute("tabindex", "0");
+  await expect(days.nth(1)).toHaveAttribute("aria-pressed", "true");
   expect(await page.getByTestId("activity-detail-panel").textContent()).not.toBe(firstDetail);
   await page.keyboard.press("Home");
   await expect(days.first()).toBeFocused();
