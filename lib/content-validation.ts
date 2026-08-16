@@ -19,7 +19,10 @@ import { parseNumericLiteral } from "@/lib/marking/numeric";
 import { parsePolynomial } from "@/lib/marking/polynomial";
 import { parseCompositeAlgebraicExpression } from "@/lib/marking/composite-algebraic";
 import { buildVocabulary } from "@/lib/marking/closed-vocabulary-text";
-import { validateMathExpression } from "@/lib/maths/expression-core";
+import { validateGraphDefinition } from "@/lib/maths/graph-validation";
+import { higherMathematicsCalculusPrerequisites } from "@/data/curriculum/higher-mathematics/calculus-prerequisites";
+import { higherMathematicsSkillPackageById } from "@/data/curriculum/higher-mathematics/skill-packages";
+import { validateQuestionCurriculumMetadataReferences, validateRequiredSkillsWithinPrerequisiteClosure } from "@/lib/curriculum/question-curriculum-metadata";
 import { getSubjectFamily, getStudentResourceCapabilities } from "@/lib/resource-capabilities";
 import { validateLessonDocument } from "@/lib/lessons/lesson-document";
 import { pastPapers } from "@/data/past-papers";
@@ -249,6 +252,12 @@ export function validateContent(input: ContentValidationInput): ContentValidatio
           counts.resources += countResources(skillPath);
           countResourceLifecycle(skillPath, counts);
           validatePlaceholderHonesty(skillPath, pathLocation, issue);
+          const declaredPathQuestionCount = (skillPath.learningStages ?? [])
+            .filter((stage) => stage.contentStatus === "active")
+            .reduce((total, stage) => total + stage.questionIds.length, 0);
+          if (skillPath.questions !== declaredPathQuestionCount) {
+            issue("error", "path-question-count-mismatch", `Skill path "${skillPath.slug}" declares ${String(skillPath.questions)} questions but its active stages reference ${String(declaredPathQuestionCount)}.`, pathLocation);
+          }
 
           const existingPath = skillPaths.get(skillPath.slug);
           if (skillPath.contentStatus === "active" && existingPath) {
@@ -263,6 +272,9 @@ export function validateContent(input: ContentValidationInput): ContentValidatio
           for (const stage of skillPath.learningStages ?? []) {
             const stageLocation = `${pathLocation}/stage:${stage.id}`;
             validateStageShape(stage, stageLocation, validateId, issue, "Stage");
+            if (skillPath.isAvailable && stage.contentStatus === "active" && stage.questionIds.length === 0) {
+              issue("error", "empty-live-stage", `Available skill path "${skillPath.slug}" contains empty active stage "${stage.id}".`, pathLocation, stageLocation);
+            }
             countLifecycle(stage.contentStatus, "stage", counts);
             if (skillPath.contentStatus === "active" && stage.contentStatus === "archived") {
               issue("error", "active-path-includes-archived-stage", `Active skill path "${skillPath.slug}" includes archived stage "${stage.id}".`, pathLocation, stageLocation);
@@ -283,6 +295,16 @@ export function validateContent(input: ContentValidationInput): ContentValidatio
               references.push(stageLocation);
               questionReferences.set(questionId, references);
             }
+          }
+        }
+        if ((specArea.skillPaths?.length ?? 0) > 0) {
+          const derivedSpecAreaQuestions = (specArea.skillPaths ?? [])
+            .filter((path) => path.contentStatus === "active")
+            .reduce((total, path) => total + (path.learningStages ?? [])
+              .filter((stage) => stage.contentStatus === "active")
+              .reduce((stageTotal, stage) => stageTotal + stage.questionIds.length, 0), 0);
+          if (specArea.questions !== derivedSpecAreaQuestions) {
+            issue("error", "spec-area-question-count-mismatch", `Spec area "${specArea.slug}" declares ${String(specArea.questions)} questions but its active skill stages reference ${String(derivedSpecAreaQuestions)}.`, specLocation);
           }
         }
       }
@@ -324,7 +346,16 @@ export function validateContent(input: ContentValidationInput): ContentValidatio
       counts.activeQuestions += 1;
     } else if (question.contentStatus === "archived") counts.archivedQuestions += 1;
     if (Number.isInteger(question.questionVersion) && question.questionVersion > 0) counts.versionedQuestions += 1;
-    validateQuestion(question, location, issue);
+    validateQuestion(question, location, issue, new Set(skillPaths.keys()));
+  }
+
+  const prompts = new Map<string, string>();
+  for (const { question, location } of activeQuestions.values()) {
+    const normalized = normalizeQuestionPrompt(question.questionText);
+    if (!normalized) continue;
+    const existing = prompts.get(normalized);
+    if (existing) issue("warning", "duplicate-normalized-question-prompt", `Question "${question.id}" has the same normalized prompt as another active question.`, existing, location);
+    else prompts.set(normalized, location);
   }
 
   for (const [questionId, references] of questionReferences) {
@@ -406,13 +437,19 @@ export function formatValidationReport(report: ContentValidationReport) {
   return lines.join("\n");
 }
 
-function validateQuestion(question: Question, location: string, issue: IssueWriter) {
+function validateQuestion(question: Question, location: string, issue: IssueWriter, knownSkillIds: ReadonlySet<string>) {
   validateRequiredText(question.questionText, "Question text", location, issue);
   validateRequiredText(question.correctAnswer, "Correct answer", location, issue);
   validateRequiredText(question.source, "Source metadata", location, issue);
-  validateRequiredText(question.hint, "Hint", location, issue, "warning");
-  validateRequiredText(question.workedSolution, "Worked solution", location, issue, "warning");
-  validateRequiredText(question.finalAnswer, "Final answer", location, issue, "warning");
+  const completenessSeverity = question.subject === "Higher Maths" && question.contentStatus === "active" ? "error" : "warning";
+  validateRequiredText(question.hint, "Hint", location, issue, completenessSeverity);
+  validateRequiredText(question.workedSolution, "Worked solution", location, issue, completenessSeverity);
+  validateRequiredText(question.finalAnswer, "Final answer", location, issue, completenessSeverity);
+  validateRequiredText(question.commonMistake, "Common mistake", location, issue, completenessSeverity);
+  if (typeof question.calculatorAllowed !== "boolean") issue("error", "invalid-calculator-metadata", `Question "${question.id}" calculatorAllowed must be Boolean.`, location);
+  if (!new Set(["draft", "ready"]).has(question.status)) issue("error", "invalid-question-status", `Question "${question.id}" status must be draft or ready.`, location);
+  if (!new Set(["Foundations", "Applications", "Past Paper-style Questions"]).has(question.stage)) issue("error", "invalid-question-stage-name", `Question "${question.id}" has an unsupported stage name.`, location);
+  if (!new Set(["multiple_choice", "numerical", "algebraic", "written", "multi_step", "graph_structured", "nature_table"]).has(question.answerType)) issue("error", "invalid-answer-type", `Question "${question.id}" has an unsupported answer type.`, location);
   if (!Number.isInteger(question.marks) || question.marks <= 0) issue("error", "invalid-marks", `Question "${question.id}" must have positive whole-number marks.`, location);
   if (!Number.isInteger(question.displayOrder) || question.displayOrder <= 0) issue("error", "invalid-display-order", `Question "${question.id}" must have a positive whole-number displayOrder.`, location);
   if (!Array.isArray(question.acceptedAnswers)) {
@@ -438,6 +475,13 @@ function validateQuestion(question: Question, location: string, issue: IssueWrit
   }
   validateGraphQuestion(question, location, issue);
   validateMarkingContract(question, location, issue);
+  if (question.curriculum && question.skillPathId) {
+    const metadataReport = validateQuestionCurriculumMetadataReferences(question.curriculum, question.skillPathId, knownSkillIds);
+    for (const metadataIssue of metadataReport.issues) issue(metadataIssue.severity, metadataIssue.code, metadataIssue.message, location);
+    const conditionalDependencies = higherMathematicsSkillPackageById.get(question.skillPathId)?.questionLevelRequirements.map((requirement) => requirement.requiredSkillId) ?? [];
+    const dependencyReport = validateRequiredSkillsWithinPrerequisiteClosure(question.curriculum, higherMathematicsCalculusPrerequisites, conditionalDependencies);
+    for (const metadataIssue of dependencyReport.issues) issue(metadataIssue.severity, metadataIssue.code, metadataIssue.message, location);
+  }
 }
 
 function validateMarkingContract(question: Question, location: string, issue: IssueWriter) {
@@ -578,23 +622,11 @@ function validateGraphQuestion(question: Question, location: string, issue: Issu
   if (question.graphConfig) {
     const graphLocation = `${location}/graphConfig`;
     if (question.graphConfig.version !== 1) issue("error", "unsupported-graph-config-version", `Question "${question.id}" graphConfig version must be 1.`, graphLocation);
-    const viewport = question.graphConfig.viewport;
-    if (!Number.isFinite(viewport.xMin) || !Number.isFinite(viewport.xMax) || !Number.isFinite(viewport.yMin) || !Number.isFinite(viewport.yMax) || viewport.xMin >= viewport.xMax || viewport.yMin >= viewport.yMax) {
-      issue("error", "invalid-graph-viewport", `Question "${question.id}" has an invalid graph viewport.`, graphLocation);
-    }
-    const ids = new Set<string>();
-    for (const graphFunction of question.graphConfig.functions) {
-      if (!graphFunction.id || ids.has(graphFunction.id)) issue("error", "invalid-graph-function-id", `Question "${question.id}" has a missing or duplicate graph function ID.`, graphLocation);
-      ids.add(graphFunction.id);
-      const expression = validateMathExpression(graphFunction.expression);
-      if (expression.status !== "valid") issue("error", "invalid-graph-expression", `Question "${question.id}" graph function "${graphFunction.id}" has unsupported expression: ${expression.reasonCode}.`, graphLocation);
-    }
-    if (question.graphConfig.linkedDerivative) {
-      const linked = question.graphConfig.linkedDerivative;
-      if (!ids.has(linked.originalFunctionId) || !ids.has(linked.derivativeFunctionId)) {
-        issue("error", "invalid-linked-derivative-reference", `Question "${question.id}" linked derivative references missing graph functions.`, graphLocation);
-      }
-    }
+    for (const graphIssue of validateGraphDefinition({
+      viewport: question.graphConfig.viewport,
+      functions: question.graphConfig.functions,
+      linkedDerivative: question.graphConfig.linkedDerivative,
+    })) issue("error", graphIssue.code, `Question "${question.id}": ${graphIssue.message}`, graphLocation);
   }
   if (question.natureTableConfig) {
     for (const row of question.natureTableConfig.rows) {
@@ -616,7 +648,12 @@ function validateStageShape(
   validateId(stage.id, kind, location, `declared-stage:${stage.id}:v${String(stage.stageVersion)}`);
   validatePositiveInteger(stage.stageVersion, "stageVersion", kind, stage.id, location, issue, "invalid-stage-version");
   validateContentStatus(stage.contentStatus, kind, stage.id, location, issue);
+  validateRequiredText(stage.title, `${kind} title`, location, issue);
+  validateRequiredText(stage.label, `${kind} label`, location, issue);
   validateRequiredText(stage.name, `${kind} name`, location, issue);
+  const stageHasLearnerContent = stage.status === "available" || stage.questionIds.length > 0;
+  if (stageHasLearnerContent && (!Number.isInteger(stage.estimatedMinutes) || stage.estimatedMinutes <= 0)) issue("error", "invalid-stage-estimated-minutes", `${kind} "${stage.id}" estimatedMinutes must be a positive whole number when the stage contains learner content.`, location);
+  if (!new Set(["available", "coming-soon", "locked"]).has(stage.status)) issue("error", "invalid-stage-availability", `${kind} "${stage.id}" has an unsupported availability status.`, location);
   if (!Array.isArray(stage.questionIds)) issue("error", "invalid-stage-question-list", `${kind} "${stage.id}" questionIds must be an array.`, location);
   if (stage.questions !== stage.questionIds.length) issue("error", "stage-question-count-mismatch", `${kind} "${stage.id}" declares ${stage.questions} questions but references ${stage.questionIds.length}.`, location);
 }
@@ -677,7 +714,10 @@ function validateResources(
     if (kind === "Formula card") validateRequiredText((resource as FormulaCard).formula, "Formula", location, issue, "warning");
     if (kind === "Worked example") validateRequiredText((resource as WorkedExample).finalAnswer, "Worked example final answer", location, issue, "warning");
     if (kind === "Flashcard") validateRequiredText((resource as Flashcard).back, "Flashcard answer", location, issue, "warning");
-    if (kind === "Practice set" && (resource as PracticeSet).questionCount <= 0) issue("warning", "empty-practice-set", `Practice set "${resource.id}" has no questions.`, location);
+    if (kind === "Practice set") {
+      if ((resource as PracticeSet).questionCount <= 0) issue("warning", "empty-practice-set", `Practice set "${resource.id}" has no questions.`, location);
+      if (!Number.isInteger((resource as PracticeSet).estimatedMinutes) || (resource as PracticeSet).estimatedMinutes <= 0) issue("error", "invalid-practice-set-estimated-minutes", `Practice set "${resource.id}" estimatedMinutes must be a positive whole number.`, location);
+    }
   }
 }
 
@@ -794,7 +834,17 @@ function validateParentLifecycle(
 }
 
 function questionLocation(question: Question) {
-  return question.subject === "Higher Maths" ? `content/questions/higher-maths/basic-differentiation.ts#${question.id}` : `content/questions#${question.id}`;
+  return question.subject === "Higher Maths" && question.skillPathId
+    ? `content/questions/higher-maths/${question.skillPathId}.ts#${question.id}`
+    : `content/questions#${question.id}`;
+}
+
+function normalizeQuestionPrompt(value: string) {
+  return value.toLowerCase()
+    .replace(/\\(?:left|right|,|;|!)/g, "")
+    .replace(/[\s$`*_{}()[\]]+/g, " ")
+    .replace(/[^a-z0-9+\-=\/^. ]+/g, "")
+    .trim();
 }
 
 function findDuplicates(values: string[]) {

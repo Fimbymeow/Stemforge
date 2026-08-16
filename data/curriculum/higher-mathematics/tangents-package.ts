@@ -24,7 +24,7 @@ import type { SkillPackageManifest } from "@/lib/curriculum/skill-package";
  * of speculative requirement this package's evidence discipline exists to avoid.
  */
 export const tangentsPackage: SkillPackageManifest = {
-  packageSchemaVersion: 1,
+  packageSchemaVersion: 2,
   packageRevision: 1,
   courseId: "higher-maths",
   skillPathId: "tangents-and-normals",
@@ -163,6 +163,14 @@ export const tangentsPackage: SkillPackageManifest = {
     markingQaComplete: false,
     note: "tangents-and-normals-v1.md is a freshly migrated draft (from chain-rule-v6.md); no structured, repository-level QA or approval record exists for it yet.",
   },
+
+  productionEvidence: {
+    historicalPatternAuditComplete: false,
+    contentApprovalComplete: false,
+    note: "The five migrated questions are source evidence only; no completed pattern audit or final content approval is recorded.",
+  },
+  knownIssues: [],
+  publicationPolicy: "standard",
 
   importReference: {
     bankId: "hm-calc-tangent",

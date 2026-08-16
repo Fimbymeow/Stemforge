@@ -26,7 +26,7 @@ import type { SkillPackageManifest } from "@/lib/curriculum/skill-package";
  * witnesses, never left referencing content that no longer exists in this source.
  */
 export const chainRulePackage: SkillPackageManifest = {
-  packageSchemaVersion: 1,
+  packageSchemaVersion: 2,
   packageRevision: 1,
   courseId: "higher-maths",
   skillPathId: "chain-rule",
@@ -240,6 +240,14 @@ export const chainRulePackage: SkillPackageManifest = {
     note:
       "Step 3 originality audit: all 34 retained prompts and all 34 worked solutions were individually reviewed for wording, values, structure and solution phrasing. All 34 question IDs were re-confirmed unique with no internal duplication, and the 6 previously removed duplicate IDs (ppq-001, ppq-002, ppq-005, ppq-006, ppq-009, ppq-013) were re-confirmed absent. The distinctive, higher-risk questions (comparison, parameter-finding, solving-from-condition, three-term inner functions, sign/reciprocal/root forms) were individually checked against real web search results, including a domain-restricted search against maths.scot. No identified source was found that any question was copied or lightly transformed from; two real identified SQA past questions were found confirming the recurring standard pattern, and neither matches any retained question's values or form. Simple direct-differentiation questions were compared proportionately as a class against that same recurring pattern. A prior internal draft (chain-rule-v5) shows genuine iterative internal authorship, including QA notes documenting edits made specifically to avoid duplication. Worked solutions use Orthic's own explanatory-prose house style, not official SQA marking-instruction phrasing. This audit does not claim that no mathematically similar question has ever existed anywhere, and does not claim exhaustive internet-wide comparison — only that no copied or lightly transformed identifiable source was found for any of the 34.",
   },
+
+  productionEvidence: {
+    historicalPatternAuditComplete: true,
+    contentApprovalComplete: true,
+    note: "The retained 34-question bank has a recorded historical-pattern/originality audit and immutable content-import approval/application receipts.",
+  },
+  knownIssues: [],
+  publicationPolicy: "standard",
 
   importReference: {
     bankId: "hm-calc-diff-chain",

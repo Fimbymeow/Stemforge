@@ -5,6 +5,7 @@ import type {
   LessonDocument,
 } from "@/lib/lessons/types";
 import { LESSON_SCHEMA_VERSION } from "@/lib/lessons/types";
+import { validateGraphDefinition } from "@/lib/maths/graph-validation";
 
 export type LessonValidationIssue = {
   code: string;
@@ -127,6 +128,12 @@ export function validateLessonBlock(input: unknown, path = "block"): LessonValid
       else {
         if (!isRecord(input.figure.viewport)) add(issues, "invalid-figure-viewport", `${path}.figure.viewport`, "Graph viewport is required.");
         if (!Array.isArray(input.figure.functions) || input.figure.functions.length === 0) add(issues, "invalid-figure-functions", `${path}.figure.functions`, "Graph figure requires at least one function.");
+        if (isRecord(input.figure.viewport) && Array.isArray(input.figure.functions) && input.figure.functions.length > 0) {
+          for (const graphIssue of validateGraphDefinition({
+            viewport: input.figure.viewport as import("@/lib/maths/expression-types").GraphViewport,
+            functions: input.figure.functions as import("@/lib/maths/expression-types").GraphFunctionDefinition[],
+          })) add(issues, graphIssue.code, `${path}.figure`, graphIssue.message);
+        }
       }
       break;
     case "self_check":

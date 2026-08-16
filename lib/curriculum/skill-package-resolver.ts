@@ -1,5 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { contentResolver } from "@/lib/content-resolver";
+import { sha256 } from "@/lib/content-import/canonical";
 import { auditBankAssessment } from "@/lib/content-import/classification";
 import { parseMarkdownBank } from "@/lib/content-import/parser";
 import type { ContentBankIR } from "@/lib/content-import/types";
@@ -41,6 +43,17 @@ export function resolveSkillPackageEvidence(manifest: SkillPackageManifest, repo
     if (!exists) {
       return { kind: declaration.kind, exists: false, unsupportedMarkingCapabilities: [] };
     }
+    if (declaration.evidenceMode === "canonical_runtime") {
+      const questions = contentResolver.getPathQuestions(manifest.skillPathId).filter((question) =>
+        declaration.declaredStageName ? question.stage === declaration.declaredStageName : true);
+      return {
+        kind: declaration.kind,
+        exists: true,
+        discoveredQuestionCount: questions.length,
+        currentContentHash: sha256(readFileSync(absolutePath)),
+        unsupportedMarkingCapabilities: [],
+      };
+    }
     if (!declaration.sourcePath.toLowerCase().endsWith(".md")) {
       // Non-markdown source (e.g. a LessonDocument .ts module) — existence only, no question-bank classification applies.
       return { kind: declaration.kind, exists: true, unsupportedMarkingCapabilities: [] };
@@ -65,7 +78,9 @@ export function resolveSkillPackageEvidence(manifest: SkillPackageManifest, repo
     };
   });
 
-  const importConfigurationExists = existsSync(resolve(repoRoot, manifest.importReference.expectedConfigurationPath));
+  const importConfigurationExists = manifest.importReference
+    ? existsSync(resolve(repoRoot, manifest.importReference.expectedConfigurationPath))
+    : false;
 
   return { sources, importConfigurationExists };
 }

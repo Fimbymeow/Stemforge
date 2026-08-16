@@ -2,12 +2,14 @@
 
 ## Status and boundary
 
-Programme 5 implements the Content Import mechanism. It does not publish any supplied question.
+Programme 5 implemented the Content Import mechanism. Chain Rule was subsequently approved and
+published through that mechanism; its approval and import receipts are committed. The compiler is
+still an infrastructure boundary, not the whole content-production workflow. The current end-to-end
+process is documented in `docs/content-production-v1.md`.
 
-The five source banks remain drafts under `content-drafts/higher-maths/calculus`. A real content
-change requires a separately reviewed preview, an explicit approval receipt, a successful staged
-validation and verified apply, and an import receipt. No supplied-bank approval or import receipt
-was created during implementation.
+The remaining source banks under `content-drafts/higher-maths/calculus` are authoring inputs, not
+live content. Any further content change still requires reviewed preview evidence, explicit approval,
+staged validation, verified apply and an import receipt.
 
 ## Assessment-preservation rule
 
@@ -36,15 +38,18 @@ The committed source drafts are:
 - `stationary-points-v2.md`
 - `optimisation-v1.md`
 - `basic-integration-v1.md`
+- `tangents-and-normals-v1.md`
 
-Only Basic Differentiation currently has a production-valid `.import.json`. Its exact path and all
-three stage IDs exist in the live canonical registry.
+Basic Differentiation and Chain Rule have committed import configurations. Chain Rule is now live;
+its 34 canonical questions are no longer merely a pending bank.
 
 The other banks deliberately have no production-valid configuration yet:
 
-- Chain Rule, Optimisation, and Basic Integration have live path slugs but no live stage IDs.
+- Optimisation and Basic Integration have path slugs but no live stage IDs.
 - Stationary Points has no live stages and also requires an unresolved product decision between
   the Stationary Points and Nature of stationary points paths.
+- Tangents has a draft import configuration reference, but its missing Foundations source and
+  unsupported equation-form/structured marking keep it non-importable.
 
 Inventing stage IDs or resolving that split would violate strict configuration and product
 ownership. Tests retain explicit invalid/pending examples to prove these cases fail closed.
@@ -230,9 +235,12 @@ part of the immutable preview identity and apply rereads that exact path rather 
 adjacent filename. Apply refuses stale or incomplete approval, invalid graph output, new-path
 registry wiring, and unacknowledged working-tree changes.
 
-## Five-bank mechanical results
+## Historical five-bank mechanical results
 
-The implemented parser and classifier produced these authoritative results:
+The Programme 5 parser/classifier run produced the snapshot below. It is retained as historical
+compiler evidence, not a current production tracker: Chain Rule was later repartitioned, approved
+and published, and five Tangents questions now live in a separate draft. Use `pnpm run
+content:status` for current all-skill state.
 
 | Bank | Parsed | Ready | Convertible | Blocked |
 |---|---:|---:|---:|---:|
@@ -256,5 +264,5 @@ Blocker occurrences overlap when one question violates more than one contract:
 The valid Basic Differentiation preview separately reported 50 total, 7 eligible, 43 blocked,
 0 unchanged, and all eight exact-ID collisions. No collision decision was made.
 
-These results replace provisional architecture-pass estimates. They describe current compatibility,
-not content quality and not a publication recommendation.
+These figures describe that historical compatibility run, not current content quality or a current
+publication recommendation.

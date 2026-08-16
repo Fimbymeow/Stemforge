@@ -26,7 +26,7 @@ import {
  * doc comment on each type for which question it answers.
  */
 
-export const SKILL_PACKAGE_SCHEMA_VERSION = 1;
+export const SKILL_PACKAGE_SCHEMA_VERSION = 2;
 
 /** Which of the four learner-facing content sources a reference describes. */
 export type SkillPackageSourceKind = "notes" | "foundations" | "applications" | "pastPaperPractice";
@@ -70,6 +70,13 @@ export type SkillPackageSourceDeclaration = {
    * its effect on shape/misconception coverage below.
    */
   expectedSourceHash?: string;
+  /**
+   * Grandfathered live content may use its canonical skill-owned module as evidence.
+   * Ordinary authoring sources continue to use the existing automatic Markdown/file
+   * behaviour. This is evidence resolution only; it never turns canonical output back
+   * into an import source.
+   */
+  evidenceMode?: "authoring_source" | "canonical_runtime";
 };
 
 /**
@@ -110,6 +117,20 @@ export type SkillPackageQaEvidence = {
   note?: string;
 };
 
+export type SkillPackageProductionEvidence = {
+  /** Human sign-off that historical assessment patterns were abstracted for calibration without copying source content. */
+  historicalPatternAuditComplete: boolean;
+  /** Explicit content-owner/founder approval. Import mechanics alone do not imply this flag. */
+  contentApprovalComplete: boolean;
+  note?: string;
+};
+
+export type SkillPackageKnownIssue = {
+  issueId: string;
+  description: string;
+  blocksStandardPublication: boolean;
+};
+
 /**
  * Documents a question-level (not skill-level) dependency policy — e.g. "a Chain Rule
  * question involving a trig composite may require Trigonometric Differentiation." This is
@@ -144,8 +165,12 @@ export type SkillPackageManifest = {
 
   /** Reference to the authoritative CanonicalSkillContract.skillPathId — never a copy of the contract. Answers "does a full skill contract exist?" (§3). */
   contractSkillPathId: string;
-  /** References to authoritative SpecificationCoverageClaim.claimId entries — never copies of the claims. Answers "which verified specification claims does it cover?" (§2). */
-  coverageClaimIds: string[];
+  /**
+   * Legacy optional references to the finer-grained Calculus coverage claims. Whole-course
+   * production readiness derives official coverage from the authoritative official skill
+   * mapping for skillPathId, so new packages do not need to duplicate that mapping.
+   */
+  coverageClaimIds?: string[];
   /** References to authoritative hard PrerequisiteRelationship edges targeting this skill's requiresSkillPathId. */
   hardPrerequisiteSkillIds: string[];
   questionLevelRequirements: SkillPackageQuestionLevelRequirement[];
@@ -154,13 +179,17 @@ export type SkillPackageManifest = {
   expectedShapes: SkillPackageShapeRequirement[];
   expectedMisconceptions: SkillPackageMisconceptionRequirement[];
   qaEvidence: SkillPackageQaEvidence;
-  importReference: SkillPackageImportReference;
+  productionEvidence: SkillPackageProductionEvidence;
+  knownIssues: SkillPackageKnownIssue[];
+  publicationPolicy: "standard" | "grandfathered_live_baseline";
+  importReference?: SkillPackageImportReference;
 };
 
 export type SkillPackageKnownReferences = {
   knownCourseIds: Set<string>;
   knownSkillIds: Set<string>;
   knownContractSkillPathIds: Set<string>;
+  knownOfficialMappedSkillIds: Set<string>;
   knownCoverageClaimIds: Set<string>;
   knownHardPrerequisiteEdges: Set<string>;
 };
@@ -185,21 +214,25 @@ export function validateSkillPackageManifest(
   if (isValidId(manifest.skillPathId) && !known.knownSkillIds.has(manifest.skillPathId)) {
     issue("error", "unknown-skill", `Manifest references unknown canonical skill "${manifest.skillPathId}".`, location);
   }
+  if (isValidId(manifest.skillPathId) && !known.knownOfficialMappedSkillIds.has(manifest.skillPathId)) {
+    issue("error", "missing-official-skill-mapping", `Manifest skill "${manifest.skillPathId}" has no authoritative official specification mapping.`, location);
+  }
 
   requiredId(manifest.contractSkillPathId, "contractSkillPathId", location, issue);
   if (isValidId(manifest.contractSkillPathId) && !known.knownContractSkillPathIds.has(manifest.contractSkillPathId)) {
     issue("error", "unknown-contract-reference", `Manifest references unknown skill contract "${manifest.contractSkillPathId}".`, location);
   }
+  if (manifest.contractSkillPathId !== manifest.skillPathId) {
+    issue("error", "contract-skill-mismatch", `Manifest contract reference "${manifest.contractSkillPathId}" must match skillPathId "${manifest.skillPathId}".`, location);
+  }
 
-  findDuplicates(manifest.coverageClaimIds).forEach((duplicateId) =>
+  const coverageClaimIds = manifest.coverageClaimIds ?? [];
+  findDuplicates(coverageClaimIds).forEach((duplicateId) =>
     issue("error", "duplicate-coverage-claim-reference", `Manifest references coverage claim "${duplicateId}" more than once.`, location));
-  manifest.coverageClaimIds.forEach((claimId, index) => {
+  coverageClaimIds.forEach((claimId, index) => {
     if (!isValidId(claimId)) { issue("error", "invalid-coverage-claim-id", `coverageClaimIds[${index}] is not a valid stable ID.`, location); return; }
     if (!known.knownCoverageClaimIds.has(claimId)) issue("error", "unknown-coverage-claim-reference", `Manifest references unknown coverage claim "${claimId}".`, location);
   });
-  if (manifest.coverageClaimIds.length === 0) {
-    issue("error", "missing-coverage-claim-reference", `Manifest for "${manifest.skillPathId}" declares no coverage-claim references.`, location);
-  }
 
   findDuplicates(manifest.hardPrerequisiteSkillIds).forEach((duplicateId) =>
     issue("error", "duplicate-prerequisite-reference", `Manifest references hard prerequisite "${duplicateId}" more than once.`, location));
@@ -228,6 +261,9 @@ export function validateSkillPackageManifest(
       issue("error", "invalid-source-kind", `Source[${index}] kind "${String(source.kind)}" is not a recognised source kind.`, sourceLocation);
     }
     requiredText(source.sourcePath, "sourcePath", sourceLocation, issue);
+    if (source.evidenceMode !== undefined && source.evidenceMode !== "authoring_source" && source.evidenceMode !== "canonical_runtime") {
+      issue("error", "invalid-source-evidence-mode", `Source[${index}] has an unsupported evidenceMode.`, sourceLocation);
+    }
     if (source.expectedQuestionCount !== undefined) positiveInteger(source.expectedQuestionCount, "expectedQuestionCount", sourceLocation, issue);
   });
 
@@ -247,8 +283,29 @@ export function validateSkillPackageManifest(
     requiredText(entry.description, "description", misconceptionLocation, issue);
   });
 
-  requiredId(manifest.importReference.bankId, "importReference.bankId", location, issue);
-  requiredText(manifest.importReference.expectedConfigurationPath, "importReference.expectedConfigurationPath", location, issue);
+  if (!manifest.productionEvidence || typeof manifest.productionEvidence.historicalPatternAuditComplete !== "boolean" || typeof manifest.productionEvidence.contentApprovalComplete !== "boolean") {
+    issue("error", "invalid-production-evidence", "Manifest must declare explicit historical-pattern and content-approval evidence booleans.", location);
+  }
+  if (!Array.isArray(manifest.knownIssues)) {
+    issue("error", "invalid-known-issues", "Manifest knownIssues must be an array.", location);
+  } else {
+    findDuplicates(manifest.knownIssues.map((entry) => entry.issueId)).forEach((duplicateId) =>
+      issue("error", "duplicate-known-issue", `Manifest repeats known issue "${duplicateId}".`, location));
+    manifest.knownIssues.forEach((entry, index) => {
+      const issueLocation = `${location}/known-issue[${index}]`;
+      requiredId(entry.issueId, "issueId", issueLocation, issue);
+      requiredText(entry.description, "description", issueLocation, issue);
+      if (typeof entry.blocksStandardPublication !== "boolean") issue("error", "invalid-known-issue-blocking-flag", "Known issue must declare blocksStandardPublication as a Boolean.", issueLocation);
+    });
+  }
+  if (manifest.publicationPolicy !== "standard" && manifest.publicationPolicy !== "grandfathered_live_baseline") {
+    issue("error", "invalid-publication-policy", "Manifest publicationPolicy must be standard or grandfathered_live_baseline.", location);
+  }
+
+  if (manifest.importReference) {
+    requiredId(manifest.importReference.bankId, "importReference.bankId", location, issue);
+    requiredText(manifest.importReference.expectedConfigurationPath, "importReference.expectedConfigurationPath", location, issue);
+  }
 
   return finalizeReport(issues);
 }
@@ -327,6 +384,9 @@ const BLOCKER_PRIORITY: string[] = [
   "curriculum-qa-incomplete",
   "originality-audit-incomplete",
   "marking-qa-incomplete",
+  "historical-pattern-audit-incomplete",
+  "content-approval-incomplete",
+  "known-content-issue",
 ];
 
 /**
@@ -369,6 +429,9 @@ const PUBLICATION_BLOCKING_CODES: ReadonlySet<string> = new Set([
   "curriculum-qa-incomplete",
   "originality-audit-incomplete",
   "marking-qa-incomplete",
+  "historical-pattern-audit-incomplete",
+  "content-approval-incomplete",
+  "known-content-issue",
 ]);
 
 /**
@@ -416,7 +479,7 @@ export function deriveSkillPackageReadiness(
     }
   }
 
-  if (!evidence.importConfigurationExists) {
+  if (manifest.importReference && !evidence.importConfigurationExists) {
     blockers.push({ code: "import-config-missing", message: `No import configuration exists at "${manifest.importReference.expectedConfigurationPath}" for bank "${manifest.importReference.bankId}".`, tier: "import" });
   }
 
@@ -443,6 +506,11 @@ export function deriveSkillPackageReadiness(
   if (!manifest.qaEvidence.curriculumQaComplete) blockers.push({ code: "curriculum-qa-incomplete", message: "Curriculum QA has not been recorded as complete.", tier: "publication" });
   if (!manifest.qaEvidence.originalityAuditComplete) blockers.push({ code: "originality-audit-incomplete", message: "The originality/pattern audit has not been recorded as complete.", tier: "publication" });
   if (!manifest.qaEvidence.markingQaComplete) blockers.push({ code: "marking-qa-incomplete", message: "Marking QA has not been recorded as complete.", tier: "publication" });
+  if (!manifest.productionEvidence.historicalPatternAuditComplete) blockers.push({ code: "historical-pattern-audit-incomplete", message: "Historical-paper pattern calibration has not been recorded as complete.", tier: "publication" });
+  if (!manifest.productionEvidence.contentApprovalComplete) blockers.push({ code: "content-approval-incomplete", message: "Explicit content-owner approval has not been recorded as complete.", tier: "publication" });
+  manifest.knownIssues.filter((entry) => entry.blocksStandardPublication).forEach((entry) => {
+    blockers.push({ code: "known-content-issue", message: `${entry.issueId}: ${entry.description}`, tier: "publication" });
+  });
 
   const ordered = [...blockers].sort((a, b) => {
     const rank = (code: string) => { const index = BLOCKER_PRIORITY.indexOf(code); return index === -1 ? BLOCKER_PRIORITY.length : index; };
@@ -487,7 +555,8 @@ export function formatSkillPackageReport(input: {
     `Package schema version: ${String(manifest.packageSchemaVersion)}  (revision ${String(manifest.packageRevision)})`,
     `Manifest valid: ${yesNo(validation.valid)}${validation.valid ? "" : ` (${String(validation.errors.length)} error(s))`}`,
     `Skill contract referenced: ${manifest.contractSkillPathId}`,
-    `Coverage claims referenced: ${manifest.coverageClaimIds.join(", ") || "none"}`,
+    `Official mapping: derived from canonical skill ${manifest.skillPathId}`,
+    `Additional coverage claims referenced: ${(manifest.coverageClaimIds ?? []).join(", ") || "none"}`,
     `Hard prerequisites: ${manifest.hardPrerequisiteSkillIds.join(", ") || "none"}`,
     `Question-level requirement rules: ${String(manifest.questionLevelRequirements.length)}`,
     "",
@@ -508,8 +577,12 @@ export function formatSkillPackageReport(input: {
     `Shape coverage: ${String(shapesCovered)} / ${String(manifest.expectedShapes.length)} observed (${manifest.expectedShapes.filter((shape) => shape.required && !shape.observedInSource).map((shape) => shape.shapeId).join(", ") || "no required gaps"})`,
     `Misconception coverage: ${String(misconceptionsCovered)} / ${String(manifest.expectedMisconceptions.length)} observed (${manifest.expectedMisconceptions.filter((entry) => entry.required && !entry.observedInSource).map((entry) => entry.misconceptionId).join(", ") || "no required gaps"})`,
     "",
-    `QA evidence: mathematical=${yesNo(manifest.qaEvidence.mathematicalQaComplete)} curriculum=${yesNo(manifest.qaEvidence.curriculumQaComplete)} originality=${yesNo(manifest.qaEvidence.originalityAuditComplete)} marking=${yesNo(manifest.qaEvidence.markingQaComplete)}`,
-    `Import configuration present: ${yesNo(evidence.importConfigurationExists)} (expected at ${manifest.importReference.expectedConfigurationPath})`,
+    `Pattern audit: ${yesNo(manifest.productionEvidence.historicalPatternAuditComplete)}`,
+    `QA evidence: mathematical=${yesNo(manifest.qaEvidence.mathematicalQaComplete)} curriculum=${yesNo(manifest.qaEvidence.curriculumQaComplete)} originality=${yesNo(manifest.qaEvidence.originalityAuditComplete)} marking=${yesNo(manifest.qaEvidence.markingQaComplete)} content-approval=${yesNo(manifest.productionEvidence.contentApprovalComplete)}`,
+    manifest.importReference
+      ? `Import configuration present: ${yesNo(evidence.importConfigurationExists)} (expected at ${manifest.importReference.expectedConfigurationPath})`
+      : "Import configuration: not required for this canonical baseline package",
+    `Publication policy: ${manifest.publicationPolicy}`,
     "",
     `Structurally complete: ${yesNo(readiness.structurallyComplete)}`,
     `Ready for package preview: ${yesNo(readiness.readyForPackagePreview)}`,

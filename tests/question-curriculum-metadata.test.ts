@@ -52,14 +52,8 @@ test("the primary skill itself is always allowed in requiredSkillIds", () => {
 });
 
 // ---- Real Tangents question-level dependency policy ----
-// This validator's closure invariant is for boundary-review sanity-checking (see
-// basic-differentiation-question-review.ts and tests/curriculum-boundary-review.test.ts),
-// not for representing a skill's own conditional per-question dependencies. Chain Rule's and
-// Trigonometric Differentiation's conditional relevance to some Tangents questions is
-// deliberately outside Tangents' real prerequisite closure — that policy belongs to a future
-// Tangents skill package's questionLevelRequirements (lib/curriculum/skill-package.ts),
-// mirroring chain-rule-package.ts's existing declaration, and is asserted there once that
-// package exists — not here, and not via a graph edge of any strength.
+// Conditional requirements remain outside the universal prerequisite graph, but a package can
+// explicitly permit them for the individual questions that need them.
 
 test("a Tangents question cannot declare Chain Rule, Trigonometric Differentiation, or any other unrelated skill as required, against the real prerequisite graph", () => {
   for (const unrelatedSkillId of ["chain-rule", "trigonometric-differentiation", "optimisation"]) {
@@ -78,6 +72,15 @@ test("a Tangents question may still declare its own real hard prerequisite, basi
   const report = validateRequiredSkillsWithinPrerequisiteClosure(
     { primarySkillId: "tangents-and-normals", requiredSkillIds: ["basic-differentiation"] },
     higherMathematicsCalculusPrerequisites,
+  );
+  assert.deepEqual(report.errors, []);
+});
+
+test("a Tangents question may declare package-approved conditional Chain Rule without a universal graph edge", () => {
+  const report = validateRequiredSkillsWithinPrerequisiteClosure(
+    { primarySkillId: "tangents-and-normals", requiredSkillIds: ["chain-rule"] },
+    higherMathematicsCalculusPrerequisites,
+    ["chain-rule"],
   );
   assert.deepEqual(report.errors, []);
 });

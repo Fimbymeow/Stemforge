@@ -10,10 +10,10 @@ import {
 /**
  * Declares, for one question, which canonical skill it primarily assesses and which
  * skills it is allowed to assume. This is the future mechanism for checking future-skill
- * contamination (a question quietly requiring a skill the learner hasn't reached yet) —
- * Phase 1 defines the contract and its pure validator only. It does not attempt to infer
- * required skills from question text, and it does not retrofit this metadata onto every
- * existing question; that is explicitly future, question-by-question authoring work.
+ * contamination (a question quietly requiring a skill the learner hasn't reached yet).
+ * Main content validation checks references when metadata is present. It does not infer
+ * required skills from question text or retrofit metadata onto existing questions; those
+ * remain question-by-question authoring decisions.
  */
 export type QuestionCurriculumMetadata = {
   primarySkillId: string;
@@ -41,6 +41,32 @@ export function validateQuestionCurriculumMetadata(metadata: QuestionCurriculumM
 }
 
 /**
+ * Runtime reference validation for optional canonical-question metadata. Conditional
+ * dependencies deliberately need not be edges in the universal prerequisite graph.
+ */
+export function validateQuestionCurriculumMetadataReferences(
+  metadata: QuestionCurriculumMetadata,
+  owningSkillId: string,
+  knownSkillIds: ReadonlySet<string>,
+): CurriculumValidationReport {
+  const { issue, issues } = createIssueCollector();
+  const location = `curriculum/question-metadata/${owningSkillId}`;
+  issues.push(...validateQuestionCurriculumMetadata(metadata).issues);
+  if (metadata.primarySkillId !== owningSkillId) {
+    issue("error", "question-primary-skill-mismatch", `Question metadata primarySkillId "${metadata.primarySkillId}" must match owning skill "${owningSkillId}".`, location);
+  }
+  for (const skillId of new Set([metadata.primarySkillId, ...(metadata.requiredSkillIds ?? [])])) {
+    if (isValidId(skillId) && !knownSkillIds.has(skillId)) issue("error", "unknown-question-required-skill", `Question metadata references unknown canonical skill "${skillId}".`, location);
+  }
+  const seen = new Set<string>();
+  for (const skillId of metadata.requiredSkillIds ?? []) {
+    if (seen.has(skillId)) issue("error", "duplicate-question-required-skill", `Question metadata repeats required skill "${skillId}".`, location);
+    seen.add(skillId);
+  }
+  return finalizeReport(issues);
+}
+
+/**
  * requiredSkillIds must be a subset of {primarySkillId} union the transitive closure of
  * primarySkillId's declared prerequisites (hard and soft), walked through the prerequisite
  * graph. Declared prerequisites are read transitively — not only direct edges — since a
@@ -51,17 +77,18 @@ export function validateQuestionCurriculumMetadata(metadata: QuestionCurriculumM
 export function validateRequiredSkillsWithinPrerequisiteClosure(
   metadata: QuestionCurriculumMetadata,
   edges: PrerequisiteRelationship[],
+  additionalAllowedSkillIds: Iterable<string> = [],
 ): CurriculumValidationReport {
   const { issue, issues } = createIssueCollector();
   const location = `curriculum/question-metadata/${metadata.primarySkillId ?? "unknown"}`;
-  const allowed = new Set([metadata.primarySkillId, ...prerequisiteClosure(metadata.primarySkillId, edges)]);
+  const allowed = new Set([metadata.primarySkillId, ...prerequisiteClosure(metadata.primarySkillId, edges), ...additionalAllowedSkillIds]);
 
   (metadata.requiredSkillIds ?? []).forEach((skillId) => {
     if (!allowed.has(skillId)) {
       issue(
         "error",
         "required-skill-outside-prerequisite-closure",
-        `Question metadata for "${metadata.primarySkillId}" requires "${skillId}", which is neither the primary skill nor a declared (direct or transitive) prerequisite — this is future-skill contamination.`,
+        `Question metadata for "${metadata.primarySkillId}" requires "${skillId}", which is neither the primary skill, a declared (direct or transitive) prerequisite, nor an approved conditional package dependency — this is future-skill contamination.`,
         location,
       );
     }

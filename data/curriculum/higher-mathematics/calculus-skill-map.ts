@@ -34,7 +34,7 @@ export type ProposedCalculusSkillEntry = {
 export const proposedCalculusSkillMap: ProposedCalculusSkillEntry[] = [
   { skillPathId: "basic-differentiation", displayName: "Basic Differentiation", headingGroup: "Differentiating Functions", liveStatus: "live-available" },
   { skillPathId: "trigonometric-differentiation", displayName: "Trigonometric Differentiation", headingGroup: "Differentiating Functions", liveStatus: "live-coming-soon" },
-  { skillPathId: "chain-rule", displayName: "Chain Rule", headingGroup: "Differentiating Functions", liveStatus: "live-coming-soon" },
+  { skillPathId: "chain-rule", displayName: "Chain Rule", headingGroup: "Differentiating Functions", liveStatus: "live-available" },
 
   { skillPathId: "tangents-and-normals", displayName: "Tangents", headingGroup: "Using Differentiation to Investigate Functions", liveStatus: "live-coming-soon", note: "VERIFIED (May 2023 spec, p6): the official statement names only \"the equation of a tangent\" — no normal-line skill appears anywhere in the document. Migrated: the live skillPathId keeps its slug (tangents-and-normals) for compatibility, but its displayed name is now \"Tangents\" — the normal-line implication has been removed from the live registry's name and description." },
   { skillPathId: "increasing-and-decreasing-functions", displayName: "Increasing and Decreasing", headingGroup: "Using Differentiation to Investigate Functions", liveStatus: "live-placeholder" },

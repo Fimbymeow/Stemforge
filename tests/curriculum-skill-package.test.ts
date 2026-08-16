@@ -25,7 +25,7 @@ import {
 
 function baseManifest(overrides: Partial<SkillPackageManifest> = {}): SkillPackageManifest {
   return {
-    packageSchemaVersion: 1,
+    packageSchemaVersion: 2,
     packageRevision: 1,
     courseId: "test-course",
     skillPathId: "test-skill",
@@ -46,6 +46,9 @@ function baseManifest(overrides: Partial<SkillPackageManifest> = {}): SkillPacka
       { misconceptionId: "misc-a", description: "A misconception.", required: true, observedInSource: true },
     ],
     qaEvidence: { mathematicalQaComplete: true, curriculumQaComplete: true, originalityAuditComplete: true, markingQaComplete: true },
+    productionEvidence: { historicalPatternAuditComplete: true, contentApprovalComplete: true },
+    knownIssues: [],
+    publicationPolicy: "standard",
     importReference: { bankId: "test-bank", expectedConfigurationPath: "bank.import.json" },
     ...overrides,
   };
@@ -56,6 +59,7 @@ function baseKnown(overrides: Partial<SkillPackageKnownReferences> = {}): SkillP
     knownCourseIds: new Set(["test-course"]),
     knownSkillIds: new Set(["test-skill", "prior-skill"]),
     knownContractSkillPathIds: new Set(["test-skill"]),
+    knownOfficialMappedSkillIds: new Set(["test-skill"]),
     knownCoverageClaimIds: new Set(["claim-a"]),
     knownHardPrerequisiteEdges: new Set(["test-skill::prior-skill"]),
     ...overrides,
@@ -198,6 +202,25 @@ test("missing QA evidence produces one blocker per incomplete QA flag", () => {
   assert.ok(codes.includes("originality-audit-incomplete"));
   assert.ok(codes.includes("marking-qa-incomplete"));
   assert.equal(readiness.readyForPublication, false);
+});
+
+test("pattern audit, content approval and blocking known issues are independent publication gates", () => {
+  const manifest = baseManifest({
+    productionEvidence: { historicalPatternAuditComplete: false, contentApprovalComplete: false },
+    knownIssues: [{ issueId: "owner-drift", description: "A question has the wrong canonical owner.", blocksStandardPublication: true }],
+  });
+  const readiness = deriveSkillPackageReadiness(manifest, validateSkillPackageManifest(manifest, baseKnown()), baseEvidence());
+  const codes = readiness.blockers.map((blocker) => blocker.code);
+  assert.ok(codes.includes("historical-pattern-audit-incomplete"));
+  assert.ok(codes.includes("content-approval-incomplete"));
+  assert.ok(codes.includes("known-content-issue"));
+  assert.equal(readiness.readyForPublication, false);
+});
+
+test("canonical baseline packages do not invent an import requirement", () => {
+  const manifest = baseManifest({ importReference: undefined });
+  const readiness = deriveSkillPackageReadiness(manifest, validateSkillPackageManifest(manifest, baseKnown()), baseEvidence({ importConfigurationExists: false }));
+  assert.ok(!readiness.blockers.some((blocker) => blocker.code === "import-config-missing"));
 });
 
 test("missing required shape coverage produces a deterministic uncovered-question-shape blocker", () => {
@@ -397,6 +420,7 @@ const knownHigherMathsRefs: SkillPackageKnownReferences = {
   knownCourseIds: new Set(["higher-maths"]),
   knownSkillIds: new Set(proposedCalculusSkillPathIds),
   knownContractSkillPathIds: new Set(higherMathematicsCalculusSkillContracts.map((contract) => contract.skillPathId)),
+  knownOfficialMappedSkillIds: new Set(proposedCalculusSkillPathIds),
   knownCoverageClaimIds: new Set(higherMathematicsCalculusCoverageClaims.map((claim) => claim.claimId)),
   knownHardPrerequisiteEdges: new Set(
     higherMathematicsCalculusPrerequisites.filter((edge) => edge.strength === "hard").map((edge) => `${edge.skillPathId}::${edge.requiresSkillPathId}`),

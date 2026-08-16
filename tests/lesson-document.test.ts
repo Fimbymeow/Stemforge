@@ -43,6 +43,26 @@ test("schema V1 validates every supported block type", () => {
   for (const block of blocks) assert.deepEqual(validateLessonBlock(block).issues, []);
 });
 
+test("lesson graph figures reject invalid bounds and duplicate functions", () => {
+  const graphBlock = {
+    blockId: "invalid-graph",
+    type: "figure",
+    title: "Invalid graph",
+    description: "Validation fixture",
+    figure: {
+      kind: "graph",
+      viewport: { xMin: 1, xMax: -1, yMin: -1, yMax: 1 },
+      functions: [
+        { id: "f", expression: { type: "constant", value: { numerator: 0, denominator: 1 } }, styleRole: "primary" },
+        { id: "f", expression: { type: "constant", value: { numerator: 1, denominator: 1 } }, styleRole: "secondary" },
+      ],
+    },
+  } as unknown as LessonBlock;
+  const codes = validateLessonBlock(graphBlock).issues.map((issue) => issue.code);
+  assert.ok(codes.includes("invalid-graph-viewport"));
+  assert.ok(codes.includes("invalid-graph-function-id"));
+});
+
 test("invalid schema, IDs, duplicate blocks, section anchors and closure aggregate precise issues", () => {
   const invalid = structuredClone(basicDifferentiationLesson) as unknown as Record<string, unknown>;
   invalid.schemaVersion = 2;

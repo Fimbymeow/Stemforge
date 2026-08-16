@@ -189,6 +189,7 @@ import type {
   NatureTableConfig,
 } from "@/lib/maths/expression-types";
 import type { QuestionMarkingContract } from "@/lib/marking/types";
+import type { QuestionCurriculumMetadata } from "@/lib/curriculum/question-curriculum-metadata";
 
 export type AnswerType = "multiple_choice" | "numerical" | "algebraic" | "written" | "multi_step" | "graph_structured" | "nature_table";
 
@@ -216,6 +217,8 @@ export type Question = {
   marks: number;
   answerType: AnswerType;
   marking: QuestionMarkingContract;
+  /** Optional per-question dependencies that do not become universal SkillPath prerequisites. */
+  curriculum?: QuestionCurriculumMetadata;
   correctAnswer: string;
   acceptedAnswers: string[];
   options?: QuestionOption[];

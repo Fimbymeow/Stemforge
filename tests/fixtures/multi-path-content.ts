@@ -34,6 +34,9 @@ function resetOtherPathsToHonestPlaceholders(subject: Subject, keepSlugs: readon
         delete path.workedExamples;
         delete path.flashcards;
       }
+      spec.questions = (spec.skillPaths ?? []).reduce((total, path) => total + (path.learningStages ?? [])
+        .filter((stage) => stage.contentStatus === "active")
+        .reduce((stageTotal, stage) => stageTotal + stage.questionIds.length, 0), 0);
     }
   }
 }

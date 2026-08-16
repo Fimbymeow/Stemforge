@@ -15,6 +15,12 @@ const basicDifferentiationStageQuestionIds = {
   pastPaperStyle: ["hm-calc-diff-basic-ppq-001", "hm-calc-diff-basic-ppq-002"],
 } as const;
 
+const questionCount = (stages: Record<string, readonly string[]>) =>
+  Object.values(stages).reduce((total, ids) => total + ids.length, 0);
+const basicDifferentiationQuestionCount = questionCount(basicDifferentiationStageQuestionIds);
+const chainRuleQuestionCount = questionCount(chainRuleStageQuestionIds);
+const publishedDifferentiationQuestionCount = basicDifferentiationQuestionCount + chainRuleQuestionCount;
+
 export const higherMathsCalculusStrandIds = {
   differentiatingFunctions: "differentiating-functions",
   investigatingFunctions: "using-differentiation-to-investigate-functions",
@@ -111,7 +117,7 @@ export const higherMaths: Subject = {
           href: "/subjects/higher-maths/calculus/differentiation",
           progress: 0,
           completed: 0,
-          questions: 8,
+          questions: publishedDifferentiationQuestionCount,
           skillPaths: [
             {
               slug: "basic-differentiation",
@@ -126,7 +132,7 @@ export const higherMaths: Subject = {
               isAvailable: true,
               progress: 0,
               completed: 0,
-              questions: 8,
+              questions: basicDifferentiationQuestionCount,
               progressStatus: "not_started",
               masteryStatus: "Not started",
               lessonDocument: basicDifferentiationLesson,
@@ -303,7 +309,7 @@ export const higherMaths: Subject = {
               isAvailable: true,
               progress: 0,
               completed: 0,
-              questions: 34,
+              questions: chainRuleQuestionCount,
               progressStatus: "not_started",
               masteryStatus: "Not started",
               lessonDocument: chainRuleLesson,
