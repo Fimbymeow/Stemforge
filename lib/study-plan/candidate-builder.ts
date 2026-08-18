@@ -5,7 +5,7 @@ import { calculateSkillPathProgress } from "@/lib/progress/calculations";
 import type { ProgressEvidence, SkillPathProgress } from "@/lib/progress/types";
 import { createReviewDerivationCache, deriveSkillReviewState } from "@/lib/review/derivation";
 import type { ReviewDueState } from "@/lib/review/types";
-import { assessmentQualifierFor, nearestRelevantAssessment } from "@/lib/study-plan/assessments";
+import { assessmentQualifierFor, nearestRelevantAssessment, topicScopeId } from "@/lib/study-plan/assessments";
 import { OVERDUE_GRACE_MS } from "@/lib/study-plan/constants";
 import { hardPrerequisitesSatisfied, orderStudyPlanContexts } from "@/lib/study-plan/curriculum-order";
 import { estimateReviewMinutes, estimateStageMinutes, estimateTargetedPracticeMinutes } from "@/lib/study-plan/duration";
@@ -95,7 +95,12 @@ export function buildStudyPlanCandidates(
     const review = deriveSkillReviewState(context.skillPath, input.evidence, input.now, reviewCache);
     const openMistakes = mistakesBySkill.get(pathId) ?? [];
     const nextAction = deriveSkillPathNextAction({ pathId, evidence: input.evidence });
-    const assessmentContext = nearestRelevantAssessment(input.assessments, context.courseArea.slug, pathId, input.now);
+    const assessmentContext = nearestRelevantAssessment(
+      input.assessments,
+      topicScopeId(context.courseArea.slug, context.routeTopic.slug),
+      pathId,
+      input.now,
+    );
     const assessmentQualifier = assessmentContext
       ? assessmentQualifierFor(assessmentContext.assessment, assessmentContext.phase, input.now)
       : null;

@@ -172,11 +172,11 @@ function normalizeAssessmentDate(value: unknown): Assessment["date"] | null {
 
 function normalizeAssessmentScope(value: unknown): Assessment["scope"] | null {
   if (!value || typeof value !== "object") return null;
-  const candidate = value as { kind?: unknown; courseAreaIds?: unknown; skillPathIds?: unknown };
+  const candidate = value as { kind?: unknown; topicIds?: unknown; skillPathIds?: unknown };
   if (candidate.kind === "whole_course") return { kind: "whole_course" };
-  if (candidate.kind === "course_areas" && Array.isArray(candidate.courseAreaIds)) {
-    const ids = unique(candidate.courseAreaIds.filter((id): id is string => typeof id === "string" && id.length > 0)).slice(0, ASSESSMENT_SCOPE_LIMIT);
-    return ids.length ? { kind: "course_areas", courseAreaIds: ids } : null;
+  if (candidate.kind === "topics" && Array.isArray(candidate.topicIds)) {
+    const ids = unique(candidate.topicIds.filter((id): id is string => typeof id === "string" && id.length > 0)).slice(0, ASSESSMENT_SCOPE_LIMIT);
+    return ids.length ? { kind: "topics", topicIds: ids } : null;
   }
   if (candidate.kind === "skills" && Array.isArray(candidate.skillPathIds)) {
     const ids = unique(candidate.skillPathIds.filter((id): id is string => typeof id === "string" && id.length > 0)).slice(0, ASSESSMENT_SCOPE_LIMIT);

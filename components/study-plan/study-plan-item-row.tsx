@@ -51,6 +51,11 @@ export function formatStudyPlanDate(date: string) {
   return new Intl.DateTimeFormat("en-GB", { weekday: "long", day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${date}T00:00:00.000Z`));
 }
 
+/** Compact date for dense list rows (e.g. an assessment list), deliberately without a weekday. */
+export function formatAssessmentListDate(date: string) {
+  return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${date}T00:00:00.000Z`));
+}
+
 function formatShortDate(date: string) {
   return new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${date}T00:00:00.000Z`));
 }

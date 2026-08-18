@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { Pencil, Plus, Trash2, X } from "lucide-react";
-import { formatStudyPlanDate } from "@/components/study-plan/study-plan-item-row";
+import { ChevronRight, Pencil, Plus, Trash2, X } from "lucide-react";
+import { formatAssessmentListDate } from "@/components/study-plan/study-plan-item-row";
 import { useModalFocusTrap } from "@/lib/use-modal-focus-trap";
-import { studyPlanScopeOptions } from "@/lib/study-plan/scope-options";
+import { presentAssessmentScopeSummary } from "@/lib/study-plan/presenter";
+import { studyPlanCourseOptions, studyPlanScopeOptions } from "@/lib/study-plan/scope-options";
 import type { StudyPlanSetup } from "@/lib/study-plan/local-state";
 import type { Assessment, AssessmentType, StudyPlanWeekday } from "@/lib/study-plan/types";
 
@@ -21,10 +22,6 @@ const ASSESSMENT_TYPE_OPTIONS: readonly { value: AssessmentType; label: string }
   { value: "final_exam", label: "Final exam" },
   { value: "other", label: "Other" },
 ];
-
-const ASSESSMENT_TYPE_LABELS: Record<AssessmentType, string> = Object.fromEntries(
-  ASSESSMENT_TYPE_OPTIONS.map((option) => [option.value, option.label]),
-) as Record<AssessmentType, string>;
 
 function createAssessmentId() {
   return `assessment:${typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`}`;
@@ -91,7 +88,7 @@ export function StudyPlanSettingsDialog({ open, onClose, courseSlug, courseName,
       <section ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={descriptionId} className="max-h-[92vh] w-full max-w-xl overflow-auto rounded-2xl border border-line bg-white p-5 shadow-2xl">
         {view === "assessment_form" ? (
           <AssessmentForm
-            courseSlug={courseSlug}
+            defaultCourseSlug={courseSlug}
             initial={editingAssessment}
             onCancel={() => { setView("settings"); setEditingAssessmentId(null); }}
             onSave={saveAssessment}
@@ -146,7 +143,11 @@ export function StudyPlanSettingsDialog({ open, onClose, courseSlug, courseName,
                       <li key={assessment.id} className="flex items-center justify-between gap-2 rounded-lg border border-line p-2.5">
                         <div className="min-w-0">
                           <p className="truncate text-sm font-bold">{assessment.title}</p>
-                          <p className="text-xs text-muted">{ASSESSMENT_TYPE_LABELS[assessment.type]} · {assessment.date.precision === "exact" ? formatStudyPlanDate(assessment.date.date) : "date to be confirmed"}</p>
+                          <p className="text-xs text-muted">
+                            {assessment.date.precision === "exact" ? formatAssessmentListDate(assessment.date.date) : "date to be confirmed"}
+                            {" · "}
+                            {presentAssessmentScopeSummary(assessment.scope, assessment.courseSlug)}
+                          </p>
                         </div>
                         {confirmDeleteId === assessment.id ? (
                           <div className="flex shrink-0 items-center gap-1">
@@ -177,34 +178,52 @@ export function StudyPlanSettingsDialog({ open, onClose, courseSlug, courseName,
   );
 }
 
-function AssessmentForm({ courseSlug, initial, onSave, onCancel }: {
-  courseSlug: string;
+function AssessmentForm({ defaultCourseSlug, initial, onSave, onCancel }: {
+  defaultCourseSlug: string;
   initial: Assessment | null;
   onSave: (assessment: Assessment) => void;
   onCancel: () => void;
 }) {
+  const [assessmentCourseSlug, setAssessmentCourseSlug] = useState(initial?.courseSlug ?? defaultCourseSlug);
   const [type, setType] = useState<AssessmentType>(initial?.type ?? "class_test");
   const [title, setTitle] = useState(initial?.title ?? "");
   const [date, setDate] = useState(initial && initial.date.precision === "exact" ? initial.date.date : "");
   const [scopeKind, setScopeKind] = useState<Assessment["scope"]["kind"]>(initial?.scope.kind ?? "whole_course");
-  const [courseAreaIds, setCourseAreaIds] = useState<string[]>(initial?.scope.kind === "course_areas" ? initial.scope.courseAreaIds : []);
+  const [topicIds, setTopicIds] = useState<string[]>(initial?.scope.kind === "topics" ? initial.scope.topicIds : []);
   const [skillPathIds, setSkillPathIds] = useState<string[]>(initial?.scope.kind === "skills" ? initial.scope.skillPathIds : []);
-  const areas = useMemo(() => studyPlanScopeOptions(courseSlug), [courseSlug]);
   const closeRef = useRef<HTMLButtonElement>(null);
 
+  const courseOptions = useMemo(() => studyPlanCourseOptions(), []);
+  const areas = useMemo(() => studyPlanScopeOptions(assessmentCourseSlug), [assessmentCourseSlug]);
+
   useEffect(() => { closeRef.current?.focus(); }, []);
+
+  // A scope built from one subject's topics/skills is meaningless for another subject, so
+  // switching Subject resets to the safe, always-valid "whole course" state rather than carrying
+  // over foreign canonical IDs.
+  function handleCourseChange(nextCourseSlug: string) {
+    setAssessmentCourseSlug(nextCourseSlug);
+    setScopeKind("whole_course");
+    setTopicIds([]);
+    setSkillPathIds([]);
+  }
+
+  function toggleGroup(current: string[], groupIds: string[], setValue: (next: string[]) => void) {
+    const allSelected = groupIds.length > 0 && groupIds.every((id) => current.includes(id));
+    setValue(allSelected ? current.filter((id) => !groupIds.includes(id)) : [...new Set([...current, ...groupIds])]);
+  }
 
   function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!title.trim() || !date) return;
-    if (scopeKind === "course_areas" && courseAreaIds.length === 0) return;
+    if (scopeKind === "topics" && topicIds.length === 0) return;
     if (scopeKind === "skills" && skillPathIds.length === 0) return;
     const scope: Assessment["scope"] = scopeKind === "whole_course" ? { kind: "whole_course" }
-      : scopeKind === "course_areas" ? { kind: "course_areas", courseAreaIds }
+      : scopeKind === "topics" ? { kind: "topics", topicIds }
       : { kind: "skills", skillPathIds };
     onSave({
       id: initial?.id ?? createAssessmentId(),
-      courseSlug,
+      courseSlug: assessmentCourseSlug,
       type,
       title: title.trim(),
       date: { precision: "exact", date },
@@ -226,6 +245,12 @@ function AssessmentForm({ courseSlug, initial, onSave, onCancel }: {
       </div>
       <form onSubmit={submit} className="mt-5 grid gap-4">
         <label className="grid max-w-xs gap-1 text-sm font-bold">
+          Subject
+          <select value={assessmentCourseSlug} onChange={(event) => handleCourseChange(event.target.value)} className={inputClass}>
+            {courseOptions.map((option) => <option key={option.courseSlug} value={option.courseSlug}>{option.courseName}</option>)}
+          </select>
+        </label>
+        <label className="grid max-w-xs gap-1 text-sm font-bold">
           Type
           <select value={type} onChange={(event) => setType(event.target.value as AssessmentType)} className={inputClass}>
             {ASSESSMENT_TYPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
@@ -240,49 +265,100 @@ function AssessmentForm({ courseSlug, initial, onSave, onCancel }: {
           <input aria-label="Assessment date" type="date" value={date} onChange={(event) => setDate(event.target.value)} required className={inputClass} />
         </label>
         <fieldset>
-          <legend className="text-sm font-bold">What does it cover?</legend>
+          <legend className="text-sm font-bold">What&apos;s in it?</legend>
           <div className="mt-2 grid gap-2">
-            <label className="flex items-center gap-2 text-sm font-bold">
-              <input type="radio" name="assessment-scope-kind" checked={scopeKind === "whole_course"} onChange={() => setScopeKind("whole_course")} /> The whole course
+            <label className="flex min-h-10 items-center gap-2 text-sm font-bold">
+              <input type="radio" name="assessment-scope-kind" checked={scopeKind === "whole_course"} onChange={() => setScopeKind("whole_course")} /> Whole course
             </label>
-            <label className="flex items-center gap-2 text-sm font-bold">
-              <input type="radio" name="assessment-scope-kind" checked={scopeKind === "course_areas"} onChange={() => setScopeKind("course_areas")} /> One or more topics
+            <label className="flex min-h-10 items-center gap-2 text-sm font-bold">
+              <input type="radio" name="assessment-scope-kind" checked={scopeKind === "topics"} onChange={() => setScopeKind("topics")} /> Areas of the course
             </label>
-            <label className="flex items-center gap-2 text-sm font-bold">
+            <label className="flex min-h-10 items-center gap-2 text-sm font-bold">
               <input type="radio" name="assessment-scope-kind" checked={scopeKind === "skills"} onChange={() => setScopeKind("skills")} /> Specific skills
             </label>
           </div>
-          {scopeKind === "course_areas" ? (
-            <div className="mt-3 grid gap-1.5 rounded-lg border border-line p-3">
+
+          {scopeKind === "topics" ? (
+            <div className="mt-3 grid gap-3">
               {areas.map((area) => {
-                const checked = courseAreaIds.includes(area.courseAreaId);
+                const topicIdsInArea = area.topics.map((topic) => topic.topicScopeId);
+                const selectedInArea = topicIdsInArea.filter((id) => topicIds.includes(id));
+                const allSelected = topicIdsInArea.length > 0 && selectedInArea.length === topicIdsInArea.length;
                 return (
-                  <label key={area.courseAreaId} className="flex items-center gap-2 text-sm">
-                    <input type="checkbox" checked={checked} onChange={() => setCourseAreaIds(checked ? courseAreaIds.filter((id) => id !== area.courseAreaId) : [...courseAreaIds, area.courseAreaId])} />
-                    {area.courseAreaName}
-                  </label>
+                  <div key={area.courseAreaId} className="border-t border-line pt-3 first:border-t-0 first:pt-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-extrabold">{area.courseAreaName}</p>
+                      {topicIdsInArea.length > 1 ? (
+                        <button type="button" onClick={() => toggleGroup(topicIds, topicIdsInArea, setTopicIds)} className="text-xs font-bold text-forge hover:underline">
+                          {allSelected ? "Clear" : "Select all"}
+                        </button>
+                      ) : null}
+                    </div>
+                    <div className="mt-1 grid gap-1 pl-1">
+                      {area.topics.map((topic) => {
+                        const checked = topicIds.includes(topic.topicScopeId);
+                        return (
+                          <label key={topic.topicScopeId} className="flex min-h-10 cursor-pointer items-center gap-2 text-sm">
+                            <input type="checkbox" checked={checked} onChange={() => setTopicIds(checked ? topicIds.filter((id) => id !== topic.topicScopeId) : [...topicIds, topic.topicScopeId])} />
+                            {topic.topicName}
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
                 );
               })}
             </div>
           ) : null}
+
           {scopeKind === "skills" ? (
-            <div className="mt-3 grid gap-2">
-              {areas.map((area) => (
-                <details key={area.courseAreaId} className="rounded-lg border border-line p-2.5">
-                  <summary className="cursor-pointer text-sm font-bold">{area.courseAreaName} <span className="font-normal text-muted">({area.skills.length})</span></summary>
-                  <div className="mt-2 grid gap-1.5 pl-2">
-                    {area.skills.map((skill) => {
-                      const checked = skillPathIds.includes(skill.skillPathId);
-                      return (
-                        <label key={skill.skillPathId} className="flex items-center gap-2 text-sm">
-                          <input type="checkbox" checked={checked} onChange={() => setSkillPathIds(checked ? skillPathIds.filter((id) => id !== skill.skillPathId) : [...skillPathIds, skill.skillPathId])} />
-                          {skill.skillPathName}
-                        </label>
-                      );
-                    })}
+            <div className="mt-3 grid gap-3">
+              {areas.map((area) => {
+                const allSkillIdsInArea = area.topics.flatMap((topic) => topic.skills.map((skill) => skill.skillPathId));
+                const selectedInArea = allSkillIdsInArea.filter((id) => skillPathIds.includes(id));
+                return (
+                  <div key={area.courseAreaId} className="border-t border-line pt-3 first:border-t-0 first:pt-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-extrabold">{area.courseAreaName}</p>
+                      <p className="text-xs text-muted">{selectedInArea.length > 0 ? `${selectedInArea.length} selected` : ""}</p>
+                    </div>
+                    <div className="mt-2 grid gap-1.5">
+                      {area.topics.map((topic) => {
+                        const topicSkillIds = topic.skills.map((skill) => skill.skillPathId);
+                        const selectedInTopic = topicSkillIds.filter((id) => skillPathIds.includes(id));
+                        const allSelected = topicSkillIds.length > 0 && selectedInTopic.length === topicSkillIds.length;
+                        return (
+                          <details key={topic.topicScopeId} open={selectedInTopic.length > 0} className="group rounded-lg border border-line px-3 py-2">
+                            <summary className="flex min-h-8 cursor-pointer list-none items-center justify-between gap-2 text-sm font-bold [&::-webkit-details-marker]:hidden">
+                              <span className="flex items-center gap-1.5">
+                                <ChevronRight aria-hidden="true" className="size-3.5 shrink-0 text-muted transition-transform group-open:rotate-90" />
+                                {topic.topicName}
+                              </span>
+                              <span className="text-xs font-normal text-muted">{selectedInTopic.length > 0 ? `${selectedInTopic.length} selected` : ""}</span>
+                            </summary>
+                            <div className="mt-2 grid gap-1 pl-1">
+                              {topic.skills.map((skill) => {
+                                const checked = skillPathIds.includes(skill.skillPathId);
+                                return (
+                                  <label key={skill.skillPathId} className="flex min-h-10 cursor-pointer items-center gap-2 text-sm">
+                                    <input type="checkbox" checked={checked} onChange={() => setSkillPathIds(checked ? skillPathIds.filter((id) => id !== skill.skillPathId) : [...skillPathIds, skill.skillPathId])} />
+                                    {skill.skillPathName}
+                                  </label>
+                                );
+                              })}
+                              {topicSkillIds.length > 1 ? (
+                                <button type="button" onClick={() => toggleGroup(skillPathIds, topicSkillIds, setSkillPathIds)} className="justify-self-start text-xs font-bold text-forge hover:underline">
+                                  {allSelected ? "Clear" : "Select all"}
+                                </button>
+                              ) : null}
+                            </div>
+                          </details>
+                        );
+                      })}
+                    </div>
                   </div>
-                </details>
-              ))}
+                );
+              })}
             </div>
           ) : null}
         </fieldset>

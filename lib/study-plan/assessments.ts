@@ -46,21 +46,26 @@ export function phaseForAssessmentDate(date: Assessment["date"], now: Date): Stu
   return date.precision === "exact" ? classifyExamPhase(now, date.date) : classifyMonthPhase(now, date.year, date.month);
 }
 
-export function assessmentScopeIncludesSkill(scope: AssessmentScope, courseAreaId: string, skillPathId: string): boolean {
+/** Qualified topic scope ID — a route topic's slug alone isn't guaranteed unique across course areas. */
+export function topicScopeId(courseAreaId: string, topicId: string): string {
+  return `${courseAreaId}:${topicId}`;
+}
+
+export function assessmentScopeIncludesSkill(scope: AssessmentScope, topicScopeIdValue: string, skillPathId: string): boolean {
   if (scope.kind === "whole_course") return true;
-  if (scope.kind === "course_areas") return scope.courseAreaIds.includes(courseAreaId);
+  if (scope.kind === "topics") return scope.topicIds.includes(topicScopeIdValue);
   return scope.skillPathIds.includes(skillPathId);
 }
 
 /** Nearest relevant assessment for one skill: the soonest assessment whose scope includes it. Never sums multiple assessments. */
 export function nearestRelevantAssessment(
   assessments: readonly Assessment[],
-  courseAreaId: string,
+  topicScopeIdValue: string,
   skillPathId: string,
   now: Date,
 ): { assessment: Assessment; phase: Exclude<StudyPlanExamPhase, "no_date"> } | null {
   const relevant = assessments
-    .filter((assessment) => assessmentScopeIncludesSkill(assessment.scope, courseAreaId, skillPathId))
+    .filter((assessment) => assessmentScopeIncludesSkill(assessment.scope, topicScopeIdValue, skillPathId))
     .map((assessment) => ({ assessment, sortKey: approximateTimestamp(assessment.date) }))
     .sort((left, right) => left.sortKey - right.sortKey);
   const nearest = relevant[0];

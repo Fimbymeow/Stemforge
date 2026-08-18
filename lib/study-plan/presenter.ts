@@ -1,4 +1,5 @@
-import type { StudyPlanAssessmentQualifier, StudyPlanReasonCode, StudyPlanResult } from "@/lib/study-plan/types";
+import { studyPlanScopeOptions } from "@/lib/study-plan/scope-options";
+import type { AssessmentScope, StudyPlanAssessmentQualifier, StudyPlanReasonCode, StudyPlanResult } from "@/lib/study-plan/types";
 
 const REASON_LABELS: Record<StudyPlanReasonCode, string> = {
   review_overdue: "Overdue for Review",
@@ -36,6 +37,24 @@ export function presentStudyPlanAssessmentQualifier(qualifier: StudyPlanAssessme
     return `On your ${label} in ${qualifier.daysUntil} days`;
   }
   return qualifier.phase === "close" ? `On your ${label} this month` : `On your ${label} next month`;
+}
+
+/** Short, learner-facing summary of an assessment's scope for a dense list row (e.g. "Differentiation", "3 skills"). */
+export function presentAssessmentScopeSummary(scope: AssessmentScope, courseSlug: string): string {
+  if (scope.kind === "whole_course") return "Whole course";
+  const areas = studyPlanScopeOptions(courseSlug);
+  if (scope.kind === "topics") {
+    if (scope.topicIds.length === 1) {
+      const topic = areas.flatMap((area) => area.topics).find((entry) => entry.topicScopeId === scope.topicIds[0]);
+      if (topic) return topic.topicName;
+    }
+    return `${scope.topicIds.length} area${scope.topicIds.length === 1 ? "" : "s"}`;
+  }
+  if (scope.skillPathIds.length === 1) {
+    const skill = areas.flatMap((area) => area.topics).flatMap((topic) => topic.skills).find((entry) => entry.skillPathId === scope.skillPathIds[0]);
+    if (skill) return skill.skillPathName;
+  }
+  return `${scope.skillPathIds.length} skill${scope.skillPathIds.length === 1 ? "" : "s"}`;
 }
 
 export function formatStudyPlanDebug(result: StudyPlanResult): string {

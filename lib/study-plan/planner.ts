@@ -100,7 +100,7 @@ function isValidAssessment(assessment: Assessment): boolean {
   } else {
     return false;
   }
-  if (assessment.scope.kind === "course_areas" && !assessment.scope.courseAreaIds.length) return false;
+  if (assessment.scope.kind === "topics" && !assessment.scope.topicIds.length) return false;
   if (assessment.scope.kind === "skills" && !assessment.scope.skillPathIds.length) return false;
   return true;
 }

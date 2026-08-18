@@ -11,6 +11,7 @@ import {
   nearestRelevantAssessment,
   phaseForAssessmentDate,
   PROVISIONAL_COURSE_ASSESSMENTS,
+  topicScopeId,
 } from "@/lib/study-plan/assessments";
 import { buildStudyPlanCandidates } from "@/lib/study-plan/candidate-builder";
 import { classifyMonthPhase } from "@/lib/study-plan/dates";
@@ -44,29 +45,32 @@ test("effectiveAssessments merges the repository provisional default only when t
 });
 
 test("nearestRelevantAssessment resolves scope kinds and picks the nearest relevant assessment per skill, never summing", () => {
+  const basicTopicId = topicScopeId(BASIC.courseArea.slug, BASIC.routeTopic.slug);
+  const chainTopicId = topicScopeId(CHAIN.courseArea.slug, CHAIN.routeTopic.slug);
+
   const wholeCourse = wholeCourseAssessment("whole", "2026-07-28");
   const skillScoped = {
     ...wholeCourseAssessment("skill", "2026-07-14"),
     scope: { kind: "skills" as const, skillPathIds: [CHAIN.skillPath.slug] },
   };
-  const areaScoped = {
-    ...wholeCourseAssessment("area", "2026-07-16"),
-    scope: { kind: "course_areas" as const, courseAreaIds: [BASIC.courseArea.slug] },
+  const topicScoped = {
+    ...wholeCourseAssessment("topic", "2026-07-16"),
+    scope: { kind: "topics" as const, topicIds: [basicTopicId] },
   };
 
-  const forChain = nearestRelevantAssessment([wholeCourse, skillScoped], CHAIN.courseArea.slug, CHAIN.skillPath.slug, NOW);
+  const forChain = nearestRelevantAssessment([wholeCourse, skillScoped], chainTopicId, CHAIN.skillPath.slug, NOW);
   assert.equal(forChain?.assessment.id, "skill", "the nearer, skill-scoped assessment is used for its own skill");
 
-  const forBasic = nearestRelevantAssessment([wholeCourse, areaScoped], BASIC.courseArea.slug, BASIC.skillPath.slug, NOW);
-  assert.equal(forBasic?.assessment.id, "area", "the nearer, area-scoped assessment is used for a skill inside that area");
+  const forBasic = nearestRelevantAssessment([wholeCourse, topicScoped], basicTopicId, BASIC.skillPath.slug, NOW);
+  assert.equal(forBasic?.assessment.id, "topic", "the nearer, topic-scoped assessment is used for a skill inside that topic");
 
   const irrelevantSkill = {
     ...wholeCourseAssessment("irrelevant", "2026-07-14"),
     scope: { kind: "skills" as const, skillPathIds: ["some-other-skill"] },
   };
-  assert.equal(nearestRelevantAssessment([irrelevantSkill], BASIC.courseArea.slug, BASIC.skillPath.slug, NOW), null);
+  assert.equal(nearestRelevantAssessment([irrelevantSkill], basicTopicId, BASIC.skillPath.slug, NOW), null);
 
-  assert.equal(nearestRelevantAssessment([], BASIC.courseArea.slug, BASIC.skillPath.slug, NOW), null);
+  assert.equal(nearestRelevantAssessment([], basicTopicId, BASIC.skillPath.slug, NOW), null);
 });
 
 test("phaseForAssessmentDate dispatches exact dates through day-distance logic and month-precision dates through classifyMonthPhase", () => {
