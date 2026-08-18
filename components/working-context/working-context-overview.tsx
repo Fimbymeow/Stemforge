@@ -1,19 +1,45 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, BookOpen, Check, Circle, Clock3 } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
+import { ConfidenceControl } from "@/components/confidence/confidence-control";
+import { useLearnerConfidence } from "@/components/confidence/use-learner-confidence";
 import { LocalProgressControls, LocalRecommendedNextAction } from "@/components/learning/local-skill-path-progress";
 import { MasteryMark } from "@/components/learning/mastery-badge";
 import { getReviewPresentationState } from "@/components/learning/review-status";
 import { ProgressBar } from "@/components/ui";
 import { useWorkingContextModel } from "@/components/working-context/use-working-context-model";
 import { contentResolver } from "@/lib/content-resolver";
+import { deriveSkillConfidenceSuggestion } from "@/lib/course-tracker";
+import { getEmptyProgressEvidence, getProgressEvidence } from "@/lib/local-progress";
+import type { ProgressEvidence } from "@/lib/progress/types";
 
 export function WorkingContextOverview({ pathId }: { pathId: string }) {
   const model = useWorkingContextModel(pathId);
+  const [evidence, setEvidence] = useState<ProgressEvidence>(() => getEmptyProgressEvidence());
+  useEffect(() => {
+    const update = () => setEvidence(getProgressEvidence());
+    update();
+    window.addEventListener("stemforge:local-progress-updated", update);
+    window.addEventListener("stemforge:progress-sync-updated", update);
+    window.addEventListener("storage", update);
+    return () => {
+      window.removeEventListener("stemforge:local-progress-updated", update);
+      window.removeEventListener("stemforge:progress-sync-updated", update);
+      window.removeEventListener("storage", update);
+    };
+  }, []);
+  const confidence = useLearnerConfidence();
+  const context = contentResolver.getPathContext(pathId);
+  const skillPath = context?.skillPath;
+  const subjectSlug = context?.subject.subjectSlug;
+  const confidenceEvidence = useMemo(
+    () => subjectSlug ? deriveSkillConfidenceSuggestion(pathId, subjectSlug, evidence) : null,
+    [pathId, subjectSlug, evidence],
+  );
   if (!model) return null;
-  const skillPath = contentResolver.getPathContext(pathId)?.skillPath;
 
   return (
     <AppShell demo active="Current Path" workingContextPathId={pathId}>
@@ -34,6 +60,17 @@ export function WorkingContextOverview({ pathId }: { pathId: string }) {
           </div>
           {model.needsAttention ? (
             <p className="mt-3 text-sm font-semibold text-muted" data-testid="skill-attention-reason">{model.attentionDetail}</p>
+          ) : null}
+          {confidenceEvidence ? (
+            <ConfidenceControl
+              skillPathId={pathId}
+              skillName={model.skillName}
+              confidence={confidence}
+              suggestion={confidenceEvidence.suggestion}
+              evidenceFingerprint={confidenceEvidence.evidenceFingerprint}
+              variant="detailed"
+              className="mt-4"
+            />
           ) : null}
         </header>
 

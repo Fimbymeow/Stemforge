@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useLearnerConfidence } from "@/components/confidence/use-learner-confidence";
+import type { ConfidenceLevel } from "@/lib/confidence/types";
 import type { ProgressEvidence } from "@/lib/progress/types";
 import { datesForAvailableDays } from "@/lib/study-plan/dates";
 import {
@@ -32,6 +34,15 @@ export function useStudyPlan(input: { evidence: ProgressEvidence; courseSlug: st
   const [loaded, setLoaded] = useState(false);
   const [now, setNow] = useState<Date | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const confidence = useLearnerConfidence();
+  // Self-reported "needs work" only ever softly nudges Study Plan candidates within a tier (Part R)
+  // — a sibling of `preferences`, not nested inside it, so a confidence change causes the same soft
+  // "evidence_changed"-style rebalance as ordinary evidence changes, never the hard `samePreferences`
+  // reconcile path that assessment/weekly-minutes/day changes trigger.
+  const learnerConfidenceMap = useMemo<ReadonlyMap<string, ConfidenceLevel>>(
+    () => new Map(Object.values(confidence.ratings).map((rating) => [rating.skillPathId, rating.level])),
+    [confidence.ratings],
+  );
 
   const persist = useCallback((next: StudyPlanLocalState, nextMessage?: string) => {
     if (!writeStudyPlanLocalState(window.localStorage, next)) {
@@ -68,8 +79,8 @@ export function useStudyPlan(input: { evidence: ProgressEvidence; courseSlug: st
     const missed = current?.items.some((item) => item.state === "planned" && item.scheduledDate !== null && item.scheduledDate < today) ?? false;
     const reason: StudyPlanRebalanceReason = missed ? "day_missed" : "evidence_changed";
     const plan = current
-      ? rebalanceStudyPlan({ currentPlan: current, evidence: input.evidence, preferences, now, calendarDate, reason })
-      : createInitialWeeklyPlan({ evidence: input.evidence, preferences, now, calendarDate }, state.preservation);
+      ? rebalanceStudyPlan({ currentPlan: current, evidence: input.evidence, preferences, now, calendarDate, reason, learnerConfidence: learnerConfidenceMap })
+      : createInitialWeeklyPlan({ evidence: input.evidence, preferences, now, calendarDate, learnerConfidence: learnerConfidenceMap }, state.preservation);
     if (current && planSignature(current) === planSignature(plan)) return;
     const rollover = current && current.weekStart !== plan.weekStart;
     persist({
@@ -78,7 +89,7 @@ export function useStudyPlan(input: { evidence: ProgressEvidence; courseSlug: st
       previousWeek: rollover ? previousWeekFrom(current) : state.previousWeek,
       preservation: EMPTY_PRESERVATION,
     }, current && plan.rebalanceDiagnostics.planDistance > 0 ? adjustmentMessage(plan) : undefined);
-  }, [input.courseSlug, input.evidence, loaded, now, persist, state]);
+  }, [input.courseSlug, input.evidence, learnerConfidenceMap, loaded, now, persist, state]);
 
   const today = now ? localDayKey(now) : "";
   const plan = state.plan;
@@ -92,8 +103,8 @@ export function useStudyPlan(input: { evidence: ProgressEvidence; courseSlug: st
     const preferences = { courseSlug: input.courseSlug, ...setup };
     const calendarDate = localCalendarDate(actionNow);
     const plan = state.plan
-      ? rebalanceStudyPlan({ currentPlan: state.plan, evidence: input.evidence, preferences, now: actionNow, calendarDate, reason: "preferences_changed" })
-      : createInitialWeeklyPlan({ evidence: input.evidence, preferences, now: actionNow, calendarDate }, state.preservation);
+      ? rebalanceStudyPlan({ currentPlan: state.plan, evidence: input.evidence, preferences, now: actionNow, calendarDate, reason: "preferences_changed", learnerConfidence: learnerConfidenceMap })
+      : createInitialWeeklyPlan({ evidence: input.evidence, preferences, now: actionNow, calendarDate, learnerConfidence: learnerConfidenceMap }, state.preservation);
     const rollover = state.plan && state.plan.weekStart !== plan.weekStart;
     if (persist({ ...state, setup, plan, previousWeek: rollover ? previousWeekFrom(state.plan!) : state.previousWeek, preservation: EMPTY_PRESERVATION }, "Your plan has been updated.")) setNow(actionNow);
   }
@@ -108,6 +119,7 @@ export function useStudyPlan(input: { evidence: ProgressEvidence; courseSlug: st
       now: actionNow,
       calendarDate: localCalendarDate(actionNow),
       reason: "explicit_refresh",
+      learnerConfidence: learnerConfidenceMap,
     });
     persist({ ...state, plan: next }, next.rebalanceDiagnostics.planDistance > 0 ? adjustmentMessage(next) : "Your plan is already up to date.");
     setNow(actionNow);
@@ -139,6 +151,7 @@ export function useStudyPlan(input: { evidence: ProgressEvidence; courseSlug: st
       now,
       calendarDate: localCalendarDate(now),
       reason: "manual_swap",
+      learnerConfidence: learnerConfidenceMap,
     });
     const existingKeys = new Set(plan.items.map((entry) => entry.itemKey));
     const alternative = trial.items.find((entry) => entry.state === "planned" && !existingKeys.has(entry.itemKey));

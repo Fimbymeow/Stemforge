@@ -83,3 +83,48 @@ test("tracker grouping follows course order, official heading order and live ski
   assert.ok(differentiation);
   assert.deepEqual(differentiation.skills.slice(0, 3).map((skill) => skill.skillPathId), ["basic-differentiation", "chain-rule", "trigonometric-differentiation"]);
 });
+
+test("a never-attempted skill carries a confidence object with no suggestion and no learner rating", () => {
+  const skill = findSkill(deriveHigherMathsCourseTracker(higherMaths, empty()), "basic-differentiation");
+  assert.ok(skill);
+  assert.ok(skill.confidence);
+  assert.equal(skill.confidence.suggestion, null);
+  assert.equal(skill.confidence.learnerLevel, null);
+});
+
+test("a Coming soon skill has no confidence surface at all", () => {
+  const skill = findSkill(deriveHigherMathsCourseTracker(higherMaths, empty()), "trigonometric-differentiation");
+  assert.ok(skill);
+  assert.equal(skill.confidence, null);
+});
+
+test("real attempted evidence produces a non-null Orthic suggestion, independent of the learner's own rating", () => {
+  const progress = empty();
+  progress.attempts = attemptsFor("chain-rule", "2026-08-07T10:00:00Z", 1);
+  const skill = findSkill(deriveHigherMathsCourseTracker(higherMaths, progress), "chain-rule");
+  assert.ok(skill);
+  assert.ok(skill.confidence);
+  assert.notEqual(skill.confidence.suggestion, null);
+});
+
+test("a supplied learnerConfidence map surfaces the learner's own rating unchanged, never overwritten by the suggestion", () => {
+  const learnerConfidence = new Map([["basic-differentiation", "confident" as const]]);
+  const skill = findSkill(
+    deriveHigherMathsCourseTracker(higherMaths, empty(), undefined, undefined, learnerConfidence),
+    "basic-differentiation",
+  );
+  assert.ok(skill);
+  assert.ok(skill.confidence);
+  assert.equal(skill.confidence.learnerLevel, "confident");
+});
+
+test("a skill absent from the learnerConfidence map stays Not rated (learnerLevel null)", () => {
+  const learnerConfidence = new Map([["chain-rule", "needs_work" as const]]);
+  const skill = findSkill(
+    deriveHigherMathsCourseTracker(higherMaths, empty(), undefined, undefined, learnerConfidence),
+    "basic-differentiation",
+  );
+  assert.ok(skill);
+  assert.ok(skill.confidence);
+  assert.equal(skill.confidence.learnerLevel, null);
+});

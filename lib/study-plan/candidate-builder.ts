@@ -1,3 +1,4 @@
+import type { ConfidenceLevel } from "@/lib/confidence/types";
 import { contentResolver } from "@/lib/content-resolver";
 import { deriveLearnerNextAction, deriveSkillPathNextAction } from "@/lib/learning/next-action";
 import { deriveMistakeLog, type MistakeLogModel } from "@/lib/mistakes/derivation";
@@ -22,6 +23,7 @@ type CandidateBuildInput = {
   evidence: ProgressEvidence;
   /** Already resolved via `effectiveAssessments` (learner assessments + provisional default, if any). */
   assessments: readonly Assessment[];
+  learnerConfidence?: ReadonlyMap<string, ConfidenceLevel>;
 };
 
 type CandidateBuildResult = {
@@ -146,6 +148,7 @@ export function buildStudyPlanCandidates(
         latestMistakeAt,
         examPractice: stage.name === "Past Paper-style Questions",
         assessmentQualifier,
+        learnerFlaggedNeedsWork: input.learnerConfidence?.get(pathId) === "needs_work",
       });
       candidates.push(candidate);
       diagnostics.push(diagnostic(pathId, candidate.candidateKey, "candidate", `tier_${candidate.tier}`));
@@ -168,6 +171,7 @@ export function buildStudyPlanCandidates(
         latestMistakeAt: latestMistake(openMistakes),
         examPractice: false,
         assessmentQualifier,
+        learnerFlaggedNeedsWork: input.learnerConfidence?.get(pathId) === "needs_work",
       });
       candidates.push(candidate);
       diagnostics.push(diagnostic(pathId, candidate.candidateKey, "candidate", "tier_5"));
@@ -201,6 +205,7 @@ export function buildStudyPlanCandidates(
         latestMistakeAt: null,
         examPractice: false,
         assessmentQualifier,
+        learnerFlaggedNeedsWork: input.learnerConfidence?.get(context.skillPath.slug) === "needs_work",
       });
       candidates.push(candidate);
       diagnostics.push(diagnostic(context.skillPath.slug, candidate.candidateKey, "candidate", "tier_6"));
@@ -229,9 +234,22 @@ export function buildStudyPlanCandidates(
 export function compareStudyPlanCandidates(left: StudyPlanCandidate, right: StudyPlanCandidate): number {
   return left.tier - right.tier
     || examPracticeOrder(left, right)
+    || confidenceOrder(left, right)
     || compareCandidateRecency(left, right)
     || left.skillPathId.localeCompare(right.skillPathId)
     || left.candidateKey.localeCompare(right.candidateKey);
+}
+
+/**
+ * Self-reported "needs work" is a modest tie-breaker among otherwise-equal-tier candidates only —
+ * never a reason to cross tiers (Part R). `left.tier - right.tier` already short-circuited by this
+ * point in the OR-chain, so `left.tier === right.tier` here; gating on `tier > 1` keeps this from
+ * ever reordering Tier 0/1 (review overdue/due), so hard evidence structurally cannot be outranked
+ * by a self-report.
+ */
+function confidenceOrder(left: StudyPlanCandidate, right: StudyPlanCandidate): number {
+  if (left.tier <= 1) return 0;
+  return Number(right.learnerFlaggedNeedsWork) - Number(left.learnerFlaggedNeedsWork);
 }
 
 export function isValidStudyPlanHref(href: string | null): href is string {
@@ -268,6 +286,7 @@ function candidateForReview(
     latestMistakeAt: null,
     examPractice: false,
     assessmentQualifier,
+    learnerFlaggedNeedsWork: input.learnerConfidence?.get(pathId) === "needs_work",
   });
 }
 
@@ -286,6 +305,7 @@ function createCandidate(input: {
   latestMistakeAt: string | null;
   examPractice: boolean;
   assessmentQualifier: StudyPlanAssessmentQualifier | null;
+  learnerFlaggedNeedsWork: boolean;
 }): StudyPlanCandidate {
   return {
     candidateKey: [input.pathId, input.actionType, input.stageId ?? "all"].join(":"),
@@ -304,6 +324,7 @@ function createCandidate(input: {
     examPractice: input.examPractice,
     examQualifier: input.assessmentQualifier?.phase ?? null,
     assessmentQualifier: input.assessmentQualifier,
+    learnerFlaggedNeedsWork: input.learnerFlaggedNeedsWork,
   };
 }
 

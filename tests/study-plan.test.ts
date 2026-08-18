@@ -547,6 +547,7 @@ function syntheticCandidate(overrides: Partial<StudyPlanCandidate> & Pick<StudyP
     examPractice: false,
     examQualifier: "far",
     assessmentQualifier: null,
+    learnerFlaggedNeedsWork: false,
     ...overrides,
   };
 }

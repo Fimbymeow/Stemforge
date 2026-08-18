@@ -7,6 +7,9 @@ import type { Subject } from "@/data/types";
 import { deriveHigherMathsCourseTracker } from "@/lib/course-tracker";
 import { getEmptyProgressEvidence, getProgressEvidence } from "@/lib/local-progress";
 import type { ProgressEvidence } from "@/lib/progress/types";
+import { ConfidenceControl } from "@/components/confidence/confidence-control";
+import { useLearnerConfidence } from "@/components/confidence/use-learner-confidence";
+import type { UseLearnerConfidenceResult } from "@/components/confidence/use-learner-confidence";
 import { MasteryMark } from "@/components/learning/mastery-badge";
 import { getReviewPresentationState, ReviewStatus } from "@/components/learning/review-status";
 
@@ -28,7 +31,15 @@ export function CourseTracker({ subject }: { subject: Subject }) {
       window.removeEventListener("storage", update);
     };
   }, []);
-  const model = useMemo(() => deriveHigherMathsCourseTracker(subject, evidence), [subject, evidence]);
+  const confidence = useLearnerConfidence();
+  const learnerConfidenceMap = useMemo(
+    () => new Map(Object.values(confidence.ratings).map((rating) => [rating.skillPathId, rating.level])),
+    [confidence.ratings],
+  );
+  const model = useMemo(
+    () => deriveHigherMathsCourseTracker(subject, evidence, undefined, undefined, learnerConfidenceMap),
+    [subject, evidence, learnerConfidenceMap],
+  );
   const area = model.areas[selectedArea] ?? model.areas[0];
 
   return (
@@ -68,7 +79,7 @@ export function CourseTracker({ subject }: { subject: Subject }) {
               <section key={requirement.areaId} aria-labelledby={`tracker-topic-${requirement.areaId}`} className="py-5">
                 <h4 id={`tracker-topic-${requirement.areaId}`} className="text-sm font-extrabold text-muted">{requirement.title}</h4>
                 <ul className="mt-3 divide-y divide-line border-y border-line" aria-label={`${requirement.title} Orthic skills`}>
-                  {requirement.skills.map((skill) => <TrackerSkillRow key={skill.skillPathId} skill={skill} />)}
+                  {requirement.skills.map((skill) => <TrackerSkillRow key={skill.skillPathId} skill={skill} confidence={confidence} />)}
                 </ul>
               </section>
             ))}
@@ -96,7 +107,10 @@ export function CourseTracker({ subject }: { subject: Subject }) {
   );
 }
 
-function TrackerSkillRow({ skill }: { skill: ReturnType<typeof deriveHigherMathsCourseTracker>["areas"][number]["requirements"][number]["skills"][number] }) {
+function TrackerSkillRow({ skill, confidence }: {
+  skill: ReturnType<typeof deriveHigherMathsCourseTracker>["areas"][number]["requirements"][number]["skills"][number];
+  confidence: UseLearnerConfidenceResult;
+}) {
   const isComingSoon = skill.availability === "Coming soon";
   const reviewState = getReviewPresentationState({ eligible: skill.reviewEligible, due: skill.reviewDue, dueSoon: skill.reviewDueSoon });
   return (
@@ -107,17 +121,34 @@ function TrackerSkillRow({ skill }: { skill: ReturnType<typeof deriveHigherMaths
           <span className="text-xs font-bold text-muted">Coming soon</span>
         </div>
       ) : skill.action ? (
-        <Link href={skill.action.href} aria-label={`Open ${skill.name} skill overview`} className={`flex min-h-14 min-w-0 items-center gap-3 rounded-sm px-2 transition-colors hover:bg-paper focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-forge ${skill.structuralStatus === "In progress" ? "border-l-2 border-forge bg-forge-soft/35 pl-3" : ""}`}>
-          <div className="min-w-0 flex-1">
+        // A confidence control here is genuinely interactive (opens a menu), so it can't nest inside
+        // the row's own navigation link without producing invalid, unreliable nested-interactive HTML.
+        // The Link now wraps only the title/description; the badge stack (incl. confidence) sits as a
+        // sibling, matching the same Link-plus-sibling-menu structure already used in StudyPlanItemRow.
+        <div className={`flex min-h-14 min-w-0 items-center gap-3 rounded-sm px-2 transition-colors hover:bg-paper ${skill.structuralStatus === "In progress" ? "border-l-2 border-forge bg-forge-soft/35 pl-3" : ""}`}>
+          <Link href={skill.action.href} aria-label={`Open ${skill.name} skill overview`} className="min-w-0 flex-1 rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-forge">
             <h5 className="break-words text-sm font-extrabold text-ink">{skill.name}</h5>
             {skill.knowledgeReason ? <p className="mt-1 text-xs text-muted"><span className="font-bold text-ink">Needs practice</span> · {skill.knowledgeReason}</p> : null}
-          </div>
+          </Link>
           <div className="flex shrink-0 flex-col items-end gap-1.5">
             {skill.masteryStatus ? <MasteryMark status={skill.masteryStatus} density="labelled" /> : null}
             {(skill.reviewEligible || skill.reviewDue || skill.reviewDueSoon) ? <ReviewStatus state={reviewState} compact /> : null}
+            {skill.confidence ? (
+              <ConfidenceControl
+                skillPathId={skill.skillPathId}
+                skillName={skill.name}
+                confidence={confidence}
+                suggestion={skill.confidence.suggestion}
+                evidenceFingerprint={skill.confidence.evidenceFingerprint}
+                variant="compact"
+                className="text-right"
+              />
+            ) : null}
           </div>
-          <ArrowRight aria-hidden="true" className="size-4 shrink-0 text-forge" />
-        </Link>
+          <Link href={skill.action.href} aria-hidden="true" tabIndex={-1} className="shrink-0">
+            <ArrowRight aria-hidden="true" className="size-4 text-forge" />
+          </Link>
+        </div>
       ) : null}
       <details className="group/requirements mt-1 text-sm text-muted" data-testid={`tracker-requirements-${skill.skillPathId}`}>
         <summary aria-label={`View official requirements for ${skill.name}`} className="flex min-h-10 w-fit cursor-pointer list-none items-center gap-1.5 px-2 py-2 text-xs font-semibold underline-offset-4 hover:text-ink hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-forge">

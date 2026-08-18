@@ -1,5 +1,6 @@
 import { generateStudyPlan } from "@/lib/study-plan/planner";
 import { datesForAvailableDays, dateIsInWeek, isAvailableDate, utcDayKey, utcWeekStart } from "@/lib/study-plan/dates";
+import type { ConfidenceLevel } from "@/lib/confidence/types";
 import type { ProgressEvidence } from "@/lib/progress/types";
 import type {
   Assessment,
@@ -19,6 +20,7 @@ type RebalanceInput = {
   now: Date;
   calendarDate: Date;
   reason: StudyPlanRebalanceReason;
+  learnerConfidence?: ReadonlyMap<string, ConfidenceLevel>;
 };
 
 const EMPTY_PRESERVATION: StudyPlanWeeklyPlan["preservation"] = {
@@ -39,6 +41,7 @@ export function rebalanceStudyPlan(input: RebalanceInput): StudyPlanWeeklyPlan {
     evidence: input.evidence,
     preferences: input.preferences,
     preservation,
+    learnerConfidence: input.learnerConfidence,
   });
   const reason = rollover ? "weekly_rollover" : preferencesChanged ? "preferences_changed" : input.reason;
   return reconcileStudyPlanResult({ current: rollover ? null : input.currentPlan, fresh, preferences: input.preferences, preservation, today, reason, now: input.now });

@@ -1,14 +1,29 @@
 import { higherMathematicsOfficialSkillMappings } from "@/data/curriculum/higher-mathematics/official-skill-mappings";
 import { higherMathematicsReasoningAreaIds, higherMathematicsSpecificationRegister } from "@/data/curriculum/higher-mathematics/specification-register";
 import type { Subject } from "@/data/types";
+import { confidenceEvidenceFingerprint, deriveConfidenceSuggestion } from "@/lib/confidence/suggestion";
+import type { ConfidenceLevel, ConfidenceSuggestion } from "@/lib/confidence/types";
 import { contentResolver } from "@/lib/content-resolver";
 import { getSkillPathProgress } from "@/lib/local-progress";
+import { deriveMistakeLog } from "@/lib/mistakes/derivation";
 import type { ProgressEvidence, ProgressStatus } from "@/lib/progress/types";
 import { createReviewDerivationCache, deriveSkillReviewState } from "@/lib/review/derivation";
 
 export type TrackerStructuralStatus = "Not started" | "In progress" | "Completed";
 export type TrackerKnowledgeStatus = "Needs practice" | "Healthy";
 export type CourseTrackerOfficialPoint = { id: string; reference: string; text: string };
+
+/**
+ * Learner confidence and Orthic's own suggestion, kept as one small derived object rather than
+ * flattened onto `CourseTrackerSkill` (Part Q) — `null` only for skills with no confidence surface
+ * at all (Coming soon). `suggestion` is Orthic's own evidence-derived read, entirely separate from
+ * `learnerLevel`; the learner's own rating is what's displayed (Part I).
+ */
+export type CourseTrackerSkillConfidence = {
+  learnerLevel: ConfidenceLevel | null;
+  suggestion: ConfidenceSuggestion;
+  evidenceFingerprint: string;
+};
 
 export type CourseTrackerSkill = {
   skillPathId: string;
@@ -24,6 +39,7 @@ export type CourseTrackerSkill = {
   reviewReason: string | null;
   action: { label: string; href: string } | null;
   officialPoints: CourseTrackerOfficialPoint[];
+  confidence: CourseTrackerSkillConfidence | null;
 };
 
 export type CourseTrackerRequirement = {
@@ -51,6 +67,7 @@ export function deriveHigherMathsCourseTracker(
   evidence: ProgressEvidence,
   now = new Date(),
   wordingMode: "official" | "learner-friendly" = "official",
+  learnerConfidence?: ReadonlyMap<string, ConfidenceLevel>,
 ): CourseTrackerModel {
   const contexts = contentResolver.getAllPathContexts().filter((context) => context.subject.subjectSlug === subject.subjectSlug);
   const contextById = new Map(contexts.map((context) => [context.skillPath.slug, context]));
@@ -67,6 +84,10 @@ export function deriveHigherMathsCourseTracker(
   const activePoints = higherMathematicsSpecificationRegister.points.filter((point) => point.status === "active");
   const activePointById = new Map(activePoints.map((point) => [point.specPointId, point]));
   const reviewCache = createReviewDerivationCache();
+  // Computed once, course-wide, rather than per-row (Part Q) — same amortized-single-pass pattern as `reviewCache`.
+  const openMistakeCountBySkill = new Map(
+    deriveMistakeLog(evidence, subject.subjectSlug).openGroups.map((group) => [group.skillPathId, group.items.length]),
+  );
 
   const areas = subject.courseAreas.map((courseArea) => ({
     courseAreaId: courseArea.slug,
@@ -116,13 +137,22 @@ export function deriveHigherMathsCourseTracker(
       .sort((left, right) => (pointOrder.get(left.specPointId) ?? 0) - (pointOrder.get(right.specPointId) ?? 0))
       .map((point) => pointView(point, wordingMode));
     if (!path.isAvailable) {
-      return { skillPathId, name: path.name, availability: "Coming soon", structuralStatus: null, knowledgeStatus: null, knowledgeReason: null, reviewDue: false, reviewDueSoon: false, reviewEligible: false, masteryStatus: null, reviewReason: null, action: null, officialPoints };
+      return { skillPathId, name: path.name, availability: "Coming soon", structuralStatus: null, knowledgeStatus: null, knowledgeReason: null, reviewDue: false, reviewDueSoon: false, reviewEligible: false, masteryStatus: null, reviewReason: null, action: null, officialPoints, confidence: null };
     }
     const progress = getSkillPathProgress(path, progressEvidence);
     const structuralStatus: TrackerStructuralStatus = progress.status === "not_started" ? "Not started"
       : progress.status === "in_progress" ? "In progress" : "Completed";
     const knowledgeStatus = progress.attemptedCount === 0 ? null : progress.reviewQuestionIds.length > 0 ? "Needs practice" : "Healthy";
     const review = deriveSkillReviewState(path, progressEvidence, at, cache);
+    const reviewDue = review.due && review.reason !== "history_unavailable";
+    const suggestionInput = {
+      attemptedCount: progress.attemptedCount,
+      masteryStatus: progress.status,
+      reviewDue,
+      reviewDueSoon: review.dueSoon,
+      reviewOverdueAt: review.dueAt,
+      openMistakeCount: openMistakeCountBySkill.get(skillPathId) ?? 0,
+    };
     return {
       skillPathId,
       name: path.name,
@@ -130,15 +160,53 @@ export function deriveHigherMathsCourseTracker(
       structuralStatus,
       knowledgeStatus,
       knowledgeReason: knowledgeStatus === "Needs practice" ? needsPracticeReason(path, progress) : null,
-      reviewDue: review.due && review.reason !== "history_unavailable",
+      reviewDue,
       reviewDueSoon: review.dueSoon,
       reviewEligible: review.eligible,
       masteryStatus: progress.status,
       reviewReason: review.due ? review.reason : null,
       action: { label: "Open skill", href: path.href },
       officialPoints,
+      confidence: {
+        learnerLevel: learnerConfidence?.get(skillPathId) ?? null,
+        suggestion: deriveConfidenceSuggestion(suggestionInput, at),
+        evidenceFingerprint: confidenceEvidenceFingerprint(suggestionInput, at),
+      },
     };
   }
+}
+
+/**
+ * Single-skill counterpart to the per-row suggestion computed inside `deriveHigherMathsCourseTracker`
+ * — same evidence pipeline (`getSkillPathProgress`, `deriveSkillReviewState`, `deriveMistakeLog`),
+ * reused rather than re-implemented, for the Skill Page's own confidence control (Part H). Returns
+ * `null` only when the skill can't be resolved for the given subject.
+ */
+export function deriveSkillConfidenceSuggestion(
+  skillPathId: string,
+  subjectSlug: string,
+  evidence: ProgressEvidence,
+  now = new Date(),
+): { suggestion: ConfidenceSuggestion; evidenceFingerprint: string } | null {
+  const context = contentResolver.getPathContext(skillPathId);
+  if (!context || context.subject.subjectSlug !== subjectSlug) return null;
+  const path = context.skillPath;
+  const progress = getSkillPathProgress(path, evidence);
+  const review = deriveSkillReviewState(path, evidence, now);
+  const openMistakeCount = deriveMistakeLog(evidence, subjectSlug).openGroups
+    .find((group) => group.skillPathId === skillPathId)?.items.length ?? 0;
+  const suggestionInput = {
+    attemptedCount: progress.attemptedCount,
+    masteryStatus: progress.status,
+    reviewDue: review.due && review.reason !== "history_unavailable",
+    reviewDueSoon: review.dueSoon,
+    reviewOverdueAt: review.dueAt,
+    openMistakeCount,
+  };
+  return {
+    suggestion: deriveConfidenceSuggestion(suggestionInput, now),
+    evidenceFingerprint: confidenceEvidenceFingerprint(suggestionInput, now),
+  };
 }
 
 function pointView(point: (typeof higherMathematicsSpecificationRegister.points)[number], wordingMode: "official" | "learner-friendly") {

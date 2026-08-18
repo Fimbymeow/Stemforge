@@ -1,3 +1,4 @@
+import type { ConfidenceLevel } from "@/lib/confidence/types";
 import type { ProgressEvidence } from "@/lib/progress/types";
 
 export type StudyPlanWeekday = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
@@ -76,6 +77,13 @@ export type StudyPlanGenerationInput = {
   evidence: ProgressEvidence;
   preferences: StudyPlanPreferences;
   preservation?: StudyPlanPreservationInput;
+  /**
+   * A sibling of `preferences`, deliberately — confidence changes must only ever trigger the same
+   * soft "evidence_changed"-style rebalance ordinary evidence changes already cause, never the hard
+   * reconcile `samePreferences` gates (Part R). Absent entirely for callers with no confidence data
+   * (e.g. the Study Plan simulation scripts), which must produce byte-identical output to before.
+   */
+  learnerConfidence?: ReadonlyMap<string, ConfidenceLevel>;
 };
 
 export type StudyPlanCandidate = {
@@ -95,6 +103,8 @@ export type StudyPlanCandidate = {
   examPractice: boolean;
   examQualifier: Exclude<StudyPlanExamPhase, "no_date"> | null;
   assessmentQualifier: StudyPlanAssessmentQualifier | null;
+  /** Learner self-rated this skill "Needs work" (Part R) — a soft tie-breaker only, see `confidenceOrder` in candidate-builder.ts. */
+  learnerFlaggedNeedsWork: boolean;
 };
 
 export type StudyPlanItem = {

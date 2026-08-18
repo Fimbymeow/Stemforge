@@ -31,6 +31,7 @@ export function generateStudyPlan(input: StudyPlanGenerationInput): StudyPlanRes
     courseSlug: input.preferences.courseSlug,
     evidence: input.evidence,
     assessments,
+    learnerConfidence: input.learnerConfidence,
   });
   if (!built.courseExists) {
     return emptyResult(input, weekStart, examPhase, "course_missing", "selected_course_missing", built.diagnostics);
