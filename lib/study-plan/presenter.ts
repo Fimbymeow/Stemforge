@@ -1,4 +1,4 @@
-import type { StudyPlanReasonCode, StudyPlanResult } from "@/lib/study-plan/types";
+import type { StudyPlanAssessmentQualifier, StudyPlanReasonCode, StudyPlanResult } from "@/lib/study-plan/types";
 
 const REASON_LABELS: Record<StudyPlanReasonCode, string> = {
   review_overdue: "Overdue for Review",
@@ -10,8 +10,32 @@ const REASON_LABELS: Record<StudyPlanReasonCode, string> = {
   next_skill: "Next skill in the course",
 };
 
+const ASSESSMENT_TYPE_LABELS: Record<StudyPlanAssessmentQualifier["type"], string> = {
+  class_test: "test",
+  prelim: "prelim",
+  final_exam: "final exam",
+  other: "assessment",
+};
+
 export function presentStudyPlanReason(code: StudyPlanReasonCode): string {
   return REASON_LABELS[code];
+}
+
+/**
+ * Restrained, secondary text that augments (never replaces) the existing reason label — e.g.
+ * "Due for Review · On your test in 3 days", not a standalone "Test approaching". Only medium/close
+ * phases are surfaced; a "far"-phase assessment stays silent, matching the same medium/close
+ * threshold already used for exam-practice ordering elsewhere in the planner.
+ */
+export function presentStudyPlanAssessmentQualifier(qualifier: StudyPlanAssessmentQualifier | null): string | null {
+  if (!qualifier || qualifier.phase === "far") return null;
+  const label = ASSESSMENT_TYPE_LABELS[qualifier.type];
+  if (qualifier.daysUntil !== null) {
+    if (qualifier.daysUntil <= 0) return `On your ${label} today`;
+    if (qualifier.daysUntil === 1) return `On your ${label} tomorrow`;
+    return `On your ${label} in ${qualifier.daysUntil} days`;
+  }
+  return qualifier.phase === "close" ? `On your ${label} this month` : `On your ${label} next month`;
 }
 
 export function formatStudyPlanDebug(result: StudyPlanResult): string {
@@ -21,12 +45,13 @@ export function formatStudyPlanDebug(result: StudyPlanResult): string {
   ];
   if (!result.items.length) lines.push(result.caughtUp ? "No useful action is currently due." : `No items (${result.errorCode ?? result.status}).`);
   for (const item of result.items) {
+    const assessmentText = presentStudyPlanAssessmentQualifier(item.assessmentQualifier);
     lines.push([
       item.date,
       `Tier ${item.tier}`,
       item.skillName,
       item.actionType,
-      presentStudyPlanReason(item.reasonCode),
+      assessmentText ? `${presentStudyPlanReason(item.reasonCode)} · ${assessmentText}` : presentStudyPlanReason(item.reasonCode),
       `${item.suggestedMinutes} min`,
       item.state,
       item.href,

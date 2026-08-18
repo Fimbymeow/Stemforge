@@ -13,11 +13,52 @@ export type StudyPlanReasonCode =
   | "recent_mistakes"
   | "next_skill";
 
+export type AssessmentType = "class_test" | "prelim" | "final_exam" | "other";
+export type AssessmentSource = "learner" | "orthic_provisional" | "official";
+
+/**
+ * A provisional assessment (e.g. a national exam period announced only as "May 2027") is
+ * represented with month precision, never coerced into a fake exact date. Day-distance logic
+ * must only ever run against `precision: "exact"` entries; month-precision entries resolve
+ * through `classifyMonthPhase` instead. See `lib/study-plan/assessments.ts`.
+ */
+export type AssessmentDate =
+  | { precision: "exact"; date: string }
+  | { precision: "month"; year: number; month: number };
+
+/**
+ * Whole-course assessments never enumerate every skill; course-area/skill scopes always store
+ * canonical `CourseArea`/`SkillPath` slugs, never display labels.
+ */
+export type AssessmentScope =
+  | { kind: "whole_course" }
+  | { kind: "course_areas"; courseAreaIds: string[] }
+  | { kind: "skills"; skillPathIds: string[] };
+
+export type Assessment = {
+  id: string;
+  courseSlug: string;
+  type: AssessmentType;
+  title: string;
+  date: AssessmentDate;
+  scope: AssessmentScope;
+  source: AssessmentSource;
+};
+
+export type StudyPlanAssessmentQualifier = {
+  assessmentId: string;
+  title: string;
+  type: AssessmentType;
+  phase: Exclude<StudyPlanExamPhase, "no_date">;
+  /** Only present for exact-precision assessments; never fabricated for month-precision ones. */
+  daysUntil: number | null;
+};
+
 export type StudyPlanPreferences = {
   courseSlug: string;
   weeklyMinutes: number;
   availableDays: StudyPlanWeekday[];
-  examDate?: string | null;
+  assessments: Assessment[];
 };
 
 export type StudyPlanPreservationInput = {
@@ -50,6 +91,7 @@ export type StudyPlanCandidate = {
   latestMistakeAt: string | null;
   examPractice: boolean;
   examQualifier: Exclude<StudyPlanExamPhase, "no_date"> | null;
+  assessmentQualifier: StudyPlanAssessmentQualifier | null;
 };
 
 export type StudyPlanItem = {
@@ -65,6 +107,7 @@ export type StudyPlanItem = {
   stageId: string | null;
   stageName: string | null;
   examQualifier: StudyPlanCandidate["examQualifier"];
+  assessmentQualifier: StudyPlanAssessmentQualifier | null;
   suggestedMinutes: number;
   state: StudyPlanItemState;
 };

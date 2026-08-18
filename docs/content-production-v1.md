@@ -1,5 +1,7 @@
 # Higher Maths content production v1
 
+**v1.1 update:** added an explicit, coverage-based worked-example requirement to step 4 (Notes) and the publication gate. See that step and the gate list below; the rule is deliberately not a numeric quota. This update strengthens the standard going forward — it does not retroactively require re-authoring already-published Notes such as Chain Rule's.
+
 ## Purpose and source of truth
 
 This is the repository workflow for taking one canonical Higher Maths skill from specification mapping to truthful publication. It coordinates existing systems; it does not replace them.
@@ -13,7 +15,7 @@ The generated production tracker is the operational view. Do not maintain a seco
 1. **Official mapping** — map the skill to one or more of the 58 official Higher Maths requirements.
 2. **Skill contract** — define assessed scope, exclusions and hard prerequisites. Add question-level `curriculum.requiredSkillIds` only where a particular question genuinely needs extra knowledge.
 3. **Historical-paper pattern audit** — record that assessment patterns were abstracted for calibration without copying source questions.
-4. **Notes** — author and validate the native `LessonDocument`.
+4. **Notes** — author and validate the native `LessonDocument`. Notes must include a fully worked example for every distinct method or case the skill's assessed scope introduces. This is a coverage requirement, not a numeric quota: a skill covering one method needs one worked example that actually demonstrates it end to end; a skill covering three genuinely distinct methods or cases (for example, three different differentiation rules, or a split by sign/boundary case) needs a worked example for each, no more and no fewer than the scope demands. A worked example restates the full method — problem, reasoning, and answer — not just a final answer or an isolated formula.
 5. **Foundations** — produce the introductory question stage.
 6. **Applications** — produce standard application questions.
 7. **Past Paper-style Questions** — produce original exam-style questions.
@@ -32,6 +34,7 @@ A standard live skill must have:
 - a matching skill contract;
 - completed historical-pattern audit;
 - validated Notes and non-empty Foundations, Applications and Past Paper-style stages;
+- a worked example covering every distinct method or case in that skill's assessed scope (coverage-based, not a fixed count);
 - supported marking for every question and accepted answer;
 - completed mathematical, curriculum, originality and marking QA;
 - explicit content approval;

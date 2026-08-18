@@ -152,6 +152,7 @@ function toItem(
     stageId: candidate.stageId,
     stageName: candidate.stageName,
     examQualifier: candidate.examQualifier,
+    assessmentQualifier: candidate.assessmentQualifier,
     suggestedMinutes: candidate.suggestedMinutes,
     state,
   };

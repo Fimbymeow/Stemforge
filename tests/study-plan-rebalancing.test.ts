@@ -15,7 +15,7 @@ import type { StudyPlanPreferences, StudyPlanResult, StudyPlanWeeklyItem, StudyP
 import { runP2Simulation } from "@/lib/study-plan/rebalance-simulation";
 
 const NOW = new Date("2026-08-10T09:00:00.000Z");
-const PREFS: StudyPlanPreferences = { courseSlug: "higher-maths", weeklyMinutes: 90, availableDays: ["mon", "wed", "sat"], examDate: null };
+const PREFS: StudyPlanPreferences = { courseSlug: "higher-maths", weeklyMinutes: 90, availableDays: ["mon", "wed", "sat"], assessments: [] };
 
 test("missed work returns to remaining-week allocation without study debt", () => {
   const current = weekly(result([item("a", "2026-08-10", 1)]));
@@ -174,7 +174,7 @@ function result(items: ReturnType<typeof item>[]): StudyPlanResult {
 function item(skill: string, date: string, tier: StudyPlanWeeklyItem["tier"], actionType: StudyPlanWeeklyItem["actionType"] = "continue_stage", minutes = 20) {
   const candidate = `${skill}:${actionType}:stage`;
   const itemKey = `2026-08-10:higher-maths:${candidate}`;
-  return { id: `study-plan:${itemKey}`, itemKey, date, skillPathId: skill, skillName: skill, actionType, href: actionType === "review" ? `/practice?review=1&path=${skill}` : `/question/${skill}`, reasonCode: actionType === "review" ? "review_due" as const : "continue" as const, tier, stageId: actionType === "review" ? null : "stage", stageName: actionType === "review" ? null : "Applications", examQualifier: null, suggestedMinutes: minutes, state: "planned" as const };
+  return { id: `study-plan:${itemKey}`, itemKey, date, skillPathId: skill, skillName: skill, actionType, href: actionType === "review" ? `/practice?review=1&path=${skill}` : `/question/${skill}`, reasonCode: actionType === "review" ? "review_due" as const : "continue" as const, tier, stageId: actionType === "review" ? null : "stage", stageName: actionType === "review" ? null : "Applications", examQualifier: null, assessmentQualifier: null, suggestedMinutes: minutes, state: "planned" as const };
 }
 
 function weeklyItem(value: ReturnType<typeof item>): StudyPlanWeeklyItem {

@@ -1,6 +1,7 @@
 export { generateStudyPlan } from "@/lib/study-plan/planner";
-export { presentStudyPlanReason, formatStudyPlanDebug } from "@/lib/study-plan/presenter";
+export { presentStudyPlanReason, presentStudyPlanAssessmentQualifier, formatStudyPlanDebug } from "@/lib/study-plan/presenter";
 export { getStudyPlanConfiguration } from "@/lib/study-plan/config";
+export { isValidAssessmentType, PROVISIONAL_COURSE_ASSESSMENTS } from "@/lib/study-plan/assessments";
 export {
   canPullForward,
   createInitialWeeklyPlan,
@@ -13,7 +14,13 @@ export {
   updateWeeklyItemState,
 } from "@/lib/study-plan/weekly-plan";
 export type {
+  Assessment,
+  AssessmentDate,
+  AssessmentScope,
+  AssessmentSource,
+  AssessmentType,
   StudyPlanActionType,
+  StudyPlanAssessmentQualifier,
   StudyPlanExamPhase,
   StudyPlanGenerationInput,
   StudyPlanItem,

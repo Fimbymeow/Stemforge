@@ -1,8 +1,10 @@
 import { buildStudyPlanCandidates } from "@/lib/study-plan/candidate-builder";
 import { MAX_WEEKLY_MINUTES, STUDY_PLAN_GENERATION_VERSION } from "@/lib/study-plan/constants";
 import { allocateStudyPlan } from "@/lib/study-plan/allocator";
-import { classifyExamPhase, isValidDateOnly, utcDayKey, utcWeekStart } from "@/lib/study-plan/dates";
+import { courseWidePhase, effectiveAssessments, isValidAssessmentType } from "@/lib/study-plan/assessments";
+import { isValidDateOnly, utcDayKey, utcWeekStart } from "@/lib/study-plan/dates";
 import type {
+  Assessment,
   StudyPlanGenerationInput,
   StudyPlanResult,
   StudyPlanResultStatus,
@@ -18,7 +20,8 @@ export function generateStudyPlan(input: StudyPlanGenerationInput): StudyPlanRes
     ? input.calendarDate
     : safeNow;
   const weekStart = utcWeekStart(safeCalendarDate);
-  const examPhase = classifyExamPhase(safeCalendarDate, input.preferences.examDate);
+  const assessments = effectiveAssessments(input.preferences);
+  const examPhase = courseWidePhase(assessments, safeCalendarDate);
   if (validationError) {
     return emptyResult(input, weekStart, examPhase, "invalid_input", validationError);
   }
@@ -27,7 +30,7 @@ export function generateStudyPlan(input: StudyPlanGenerationInput): StudyPlanRes
     now: input.now,
     courseSlug: input.preferences.courseSlug,
     evidence: input.evidence,
-    examPhase,
+    assessments,
   });
   if (!built.courseExists) {
     return emptyResult(input, weekStart, examPhase, "course_missing", "selected_course_missing", built.diagnostics);
@@ -82,8 +85,24 @@ function validateInput(input: StudyPlanGenerationInput): string | null {
       || input.preferences.weeklyMinutes > MAX_WEEKLY_MINUTES) return "invalid_weekly_minutes";
   if (!input.preferences.availableDays.length
       || input.preferences.availableDays.some((day) => !VALID_WEEKDAYS.has(day))) return "invalid_available_days";
-  if (input.preferences.examDate && !isValidDateOnly(input.preferences.examDate)) return "invalid_exam_date";
+  if (input.preferences.assessments.some((assessment) => !isValidAssessment(assessment))) return "invalid_assessments";
   return null;
+}
+
+function isValidAssessment(assessment: Assessment): boolean {
+  if (!assessment.id.trim() || !assessment.courseSlug.trim() || !assessment.title.trim()) return false;
+  if (!isValidAssessmentType(assessment.type)) return false;
+  if (assessment.date.precision === "exact") {
+    if (!isValidDateOnly(assessment.date.date)) return false;
+  } else if (assessment.date.precision === "month") {
+    if (!Number.isInteger(assessment.date.year) || assessment.date.year < 2000 || assessment.date.year > 2100) return false;
+    if (!Number.isInteger(assessment.date.month) || assessment.date.month < 1 || assessment.date.month > 12) return false;
+  } else {
+    return false;
+  }
+  if (assessment.scope.kind === "course_areas" && !assessment.scope.courseAreaIds.length) return false;
+  if (assessment.scope.kind === "skills" && !assessment.scope.skillPathIds.length) return false;
+  return true;
 }
 
 function emptyResult(

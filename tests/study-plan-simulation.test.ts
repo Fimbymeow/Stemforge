@@ -76,7 +76,7 @@ test("Dashboard mode preserves full default, suppresses equivalent Today work an
 });
 
 function item(overrides: Partial<StudyPlanItem> = {}): StudyPlanItem {
-  return { id: "item", itemKey: "item", date: "2026-08-10", skillPathId: "skill-a", skillName: "Skill A", actionType: "continue_stage", href: "/question/a", reasonCode: "continue", tier: 3, stageId: "foundations", stageName: "Foundations", examQualifier: "far", suggestedMinutes: 20, state: "planned", ...overrides };
+  return { id: "item", itemKey: "item", date: "2026-08-10", skillPathId: "skill-a", skillName: "Skill A", actionType: "continue_stage", href: "/question/a", reasonCode: "continue", tier: 3, stageId: "foundations", stageName: "Foundations", examQualifier: "far", assessmentQualifier: null, suggestedMinutes: 20, state: "planned", ...overrides };
 }
 function action(overrides: Partial<LearnerNextAction> = {}): LearnerNextAction {
   return { kind: "continue_question", intent: "continuing", href: "/question/a", label: "Continue", title: "Continue Skill A", reason: "Continue.", subjectId: "higher-maths", courseId: "calculus", pathId: "skill-a", stageId: "foundations", questionId: "a", questionVersion: 1, practiceSessionId: null, ...overrides };

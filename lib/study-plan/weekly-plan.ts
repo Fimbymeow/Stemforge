@@ -2,6 +2,7 @@ import { generateStudyPlan } from "@/lib/study-plan/planner";
 import { datesForAvailableDays, dateIsInWeek, isAvailableDate, utcDayKey, utcWeekStart } from "@/lib/study-plan/dates";
 import type { ProgressEvidence } from "@/lib/progress/types";
 import type {
+  Assessment,
   StudyPlanPreferences,
   StudyPlanPreservationInput,
   StudyPlanRebalanceDiagnostics,
@@ -164,7 +165,7 @@ export function reconcileStudyPlanResult(input: {
     ...input.fresh,
     allocatedMinutes,
     unusedMinutes,
-    preferences: { ...input.preferences, availableDays: [...input.preferences.availableDays] },
+    preferences: { ...input.preferences, availableDays: [...input.preferences.availableDays], assessments: [...input.preferences.assessments] },
     items,
     preservation: input.preservation,
     lastRebalancedAt: input.now.toISOString(),
@@ -236,8 +237,25 @@ function calculateDiagnostics(current: StudyPlanWeeklyPlan | null, items: StudyP
 function samePreferences(left: StudyPlanPreferences, right: StudyPlanPreferences) {
   return left.courseSlug === right.courseSlug
     && left.weeklyMinutes === right.weeklyMinutes
-    && left.examDate === right.examDate
+    && sameAssessments(left.assessments, right.assessments)
     && [...left.availableDays].sort().join(",") === [...right.availableDays].sort().join(",");
+}
+
+/** Order-independent, structural comparison — an assessment edit (add/remove/change) triggers a hard reconcile (Part K). */
+function sameAssessments(left: readonly Assessment[], right: readonly Assessment[]) {
+  if (left.length !== right.length) return false;
+  const leftSorted = left.map(canonicalJson).sort();
+  const rightSorted = right.map(canonicalJson).sort();
+  return leftSorted.every((value, index) => value === rightSorted[index]);
+}
+
+function canonicalJson(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
+  if (value && typeof value === "object") {
+    const entries = Object.entries(value as Record<string, unknown>).sort(([a], [b]) => a.localeCompare(b));
+    return `{${entries.map(([key, entry]) => `${JSON.stringify(key)}:${canonicalJson(entry)}`).join(",")}}`;
+  }
+  return JSON.stringify(value);
 }
 
 function appendReason(reasons: StudyPlanRebalanceReason[], reason: StudyPlanRebalanceReason) {

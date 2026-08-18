@@ -57,6 +57,22 @@ export function classifyExamPhase(now: Date, examDate?: string | null): StudyPla
   return "far";
 }
 
+/**
+ * Month-precision assessment phase, e.g. a provisional "May 2027" national exam period.
+ * Deliberately coarser than `classifyExamPhase`: it reasons in whole months, never a fake day
+ * count. `close` once the calendar reaches the target month (or later, if the provisional
+ * estimate has gone stale and hasn't been replaced with an official date yet), `medium` for the
+ * one full preceding month, `far` otherwise.
+ */
+export function classifyMonthPhase(now: Date, year: number, month: number): StudyPlanExamPhase {
+  const nowMonths = now.getUTCFullYear() * 12 + now.getUTCMonth();
+  const targetMonths = year * 12 + (month - 1);
+  const monthsUntil = targetMonths - nowMonths;
+  if (monthsUntil <= 0) return "close";
+  if (monthsUntil === 1) return "medium";
+  return "far";
+}
+
 export function isValidDateOnly(value: string): boolean {
   return parseDateOnly(value) !== null;
 }

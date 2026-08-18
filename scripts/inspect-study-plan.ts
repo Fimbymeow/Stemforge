@@ -20,6 +20,7 @@ if (!getStudyPlanConfiguration().enabled) {
       courseSlug: "higher-maths",
       weeklyMinutes: 180,
       availableDays: ["mon", "wed", "sat"],
+      assessments: [],
     },
   });
   console.log(formatStudyPlanDebug(result));

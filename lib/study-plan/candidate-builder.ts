@@ -5,20 +5,23 @@ import { calculateSkillPathProgress } from "@/lib/progress/calculations";
 import type { ProgressEvidence, SkillPathProgress } from "@/lib/progress/types";
 import { createReviewDerivationCache, deriveSkillReviewState } from "@/lib/review/derivation";
 import type { ReviewDueState } from "@/lib/review/types";
+import { assessmentQualifierFor, nearestRelevantAssessment } from "@/lib/study-plan/assessments";
 import { OVERDUE_GRACE_MS } from "@/lib/study-plan/constants";
 import { hardPrerequisitesSatisfied, orderStudyPlanContexts } from "@/lib/study-plan/curriculum-order";
 import { estimateReviewMinutes, estimateStageMinutes, estimateTargetedPracticeMinutes } from "@/lib/study-plan/duration";
 import type {
+  Assessment,
+  StudyPlanAssessmentQualifier,
   StudyPlanCandidate,
   StudyPlanDiagnostic,
-  StudyPlanExamPhase,
 } from "@/lib/study-plan/types";
 
 type CandidateBuildInput = {
   now: Date;
   courseSlug: string;
   evidence: ProgressEvidence;
-  examPhase: StudyPlanExamPhase;
+  /** Already resolved via `effectiveAssessments` (learner assessments + provisional default, if any). */
+  assessments: readonly Assessment[];
 };
 
 type CandidateBuildResult = {
@@ -80,7 +83,11 @@ export function buildStudyPlanCandidates(
 
   const reviewCache = createReviewDerivationCache();
   const candidates: StudyPlanCandidate[] = [];
-  const unstarted: Array<{ context: (typeof availableContexts)[number]; progress: SkillPathProgress }> = [];
+  const unstarted: Array<{
+    context: (typeof availableContexts)[number];
+    progress: SkillPathProgress;
+    assessmentQualifier: StudyPlanAssessmentQualifier | null;
+  }> = [];
 
   for (const context of availableContexts) {
     const pathId = context.skillPath.slug;
@@ -88,12 +95,16 @@ export function buildStudyPlanCandidates(
     const review = deriveSkillReviewState(context.skillPath, input.evidence, input.now, reviewCache);
     const openMistakes = mistakesBySkill.get(pathId) ?? [];
     const nextAction = deriveSkillPathNextAction({ pathId, evidence: input.evidence });
+    const assessmentContext = nearestRelevantAssessment(input.assessments, context.courseArea.slug, pathId, input.now);
+    const assessmentQualifier = assessmentContext
+      ? assessmentQualifierFor(assessmentContext.assessment, assessmentContext.phase, input.now)
+      : null;
 
     if (review.reason === "history_unavailable") {
       diagnostics.push(diagnostic(pathId, null, "excluded", "review_history_unavailable", review.diagnostic));
     }
 
-    const reviewCandidate = candidateForReview(context.skillPath.name, pathId, review, input);
+    const reviewCandidate = candidateForReview(context.skillPath.name, pathId, review, input, assessmentQualifier);
     if (reviewCandidate) {
       candidates.push(reviewCandidate);
       diagnostics.push(diagnostic(pathId, reviewCandidate.candidateKey, "candidate", `tier_${reviewCandidate.tier}`));
@@ -104,7 +115,7 @@ export function buildStudyPlanCandidates(
     }
 
     if (progress.attemptedCount === 0) {
-      unstarted.push({ context, progress });
+      unstarted.push({ context, progress, assessmentQualifier });
       continue;
     }
 
@@ -129,7 +140,7 @@ export function buildStudyPlanCandidates(
         latestActivityAt: latestPathActivity(pathId, input.evidence),
         latestMistakeAt,
         examPractice: stage.name === "Past Paper-style Questions",
-        examPhase: input.examPhase,
+        assessmentQualifier,
       });
       candidates.push(candidate);
       diagnostics.push(diagnostic(pathId, candidate.candidateKey, "candidate", `tier_${candidate.tier}`));
@@ -151,7 +162,7 @@ export function buildStudyPlanCandidates(
         latestActivityAt: latestPathActivity(pathId, input.evidence),
         latestMistakeAt: latestMistake(openMistakes),
         examPractice: false,
-        examPhase: input.examPhase,
+        assessmentQualifier,
       });
       candidates.push(candidate);
       diagnostics.push(diagnostic(pathId, candidate.candidateKey, "candidate", "tier_5"));
@@ -160,47 +171,46 @@ export function buildStudyPlanCandidates(
     }
   }
 
-  if (input.examPhase === "close") {
-    for (const { context } of unstarted) {
-      diagnostics.push(diagnostic(context.skillPath.slug, null, "excluded", "new_start_suppressed_close_exam"));
+  // Close-assessment suppression is per-skill (Part G): a test on one topic in 4 days must not
+  // globally freeze new-skill starts elsewhere in the course, so each unstarted skill is only
+  // suppressed by its own nearest relevant assessment, never by another skill's.
+  const nextUnstarted = unstarted.find(({ context, assessmentQualifier }) =>
+    assessmentQualifier?.phase !== "close" && hardPrerequisitesSatisfied(context.skillPath.slug, progressBySkill));
+  if (nextUnstarted) {
+    const { context, assessmentQualifier } = nextUnstarted;
+    const nextAction = deriveSkillPathNextAction({ pathId: context.skillPath.slug, evidence: input.evidence });
+    const stage = context.skillPath.learningStages?.find((item) => item.id === nextAction.stageId);
+    if (stage?.status === "available" && isValidStudyPlanHref(nextAction.href)) {
+      const candidate = createCandidate({
+        pathId: context.skillPath.slug,
+        skillName: context.skillPath.name,
+        actionType: "continue_stage",
+        href: nextAction.href!,
+        reasonCode: "next_skill",
+        tier: 6,
+        stageId: stage.id,
+        stageName: stage.name,
+        suggestedMinutes: estimateStageMinutes(stage),
+        dueAt: null,
+        latestActivityAt: null,
+        latestMistakeAt: null,
+        examPractice: false,
+        assessmentQualifier,
+      });
+      candidates.push(candidate);
+      diagnostics.push(diagnostic(context.skillPath.slug, candidate.candidateKey, "candidate", "tier_6"));
+    } else {
+      diagnostics.push(diagnostic(context.skillPath.slug, null, "excluded", "next_skill_destination_unavailable"));
     }
-  } else {
-    const nextUnstarted = unstarted.find(({ context }) =>
-      hardPrerequisitesSatisfied(context.skillPath.slug, progressBySkill));
-    if (nextUnstarted) {
-      const { context } = nextUnstarted;
-      const nextAction = deriveSkillPathNextAction({ pathId: context.skillPath.slug, evidence: input.evidence });
-      const stage = context.skillPath.learningStages?.find((item) => item.id === nextAction.stageId);
-      if (stage?.status === "available" && isValidStudyPlanHref(nextAction.href)) {
-        const candidate = createCandidate({
-          pathId: context.skillPath.slug,
-          skillName: context.skillPath.name,
-          actionType: "continue_stage",
-          href: nextAction.href!,
-          reasonCode: "next_skill",
-          tier: 6,
-          stageId: stage.id,
-          stageName: stage.name,
-          suggestedMinutes: estimateStageMinutes(stage),
-          dueAt: null,
-          latestActivityAt: null,
-          latestMistakeAt: null,
-          examPractice: false,
-          examPhase: input.examPhase,
-        });
-        candidates.push(candidate);
-        diagnostics.push(diagnostic(context.skillPath.slug, candidate.candidateKey, "candidate", "tier_6"));
-      } else {
-        diagnostics.push(diagnostic(context.skillPath.slug, null, "excluded", "next_skill_destination_unavailable"));
-      }
-    }
-    for (const { context } of unstarted) {
-      if (context.skillPath.slug === nextUnstarted?.context.skillPath.slug) continue;
-      const code = hardPrerequisitesSatisfied(context.skillPath.slug, progressBySkill)
+  }
+  for (const { context, assessmentQualifier } of unstarted) {
+    if (context.skillPath.slug === nextUnstarted?.context.skillPath.slug) continue;
+    const code = assessmentQualifier?.phase === "close"
+      ? "new_start_suppressed_close_exam"
+      : hardPrerequisitesSatisfied(context.skillPath.slug, progressBySkill)
         ? "not_next_curriculum_skill"
         : "hard_prerequisite_incomplete";
-      diagnostics.push(diagnostic(context.skillPath.slug, null, "excluded", code));
-    }
+    diagnostics.push(diagnostic(context.skillPath.slug, null, "excluded", code));
   }
 
   return {
@@ -231,6 +241,7 @@ function candidateForReview(
   pathId: string,
   review: ReviewDueState,
   input: CandidateBuildInput,
+  assessmentQualifier: StudyPlanAssessmentQualifier | null,
 ): StudyPlanCandidate | null {
   if (!review.eligible || (!review.due && !review.dueSoon) || !review.dueAt) return null;
   const dueTime = Date.parse(review.dueAt);
@@ -251,7 +262,7 @@ function candidateForReview(
     latestActivityAt: latestPathActivity(pathId, input.evidence),
     latestMistakeAt: null,
     examPractice: false,
-    examPhase: input.examPhase,
+    assessmentQualifier,
   });
 }
 
@@ -269,7 +280,7 @@ function createCandidate(input: {
   latestActivityAt: string | null;
   latestMistakeAt: string | null;
   examPractice: boolean;
-  examPhase: StudyPlanExamPhase;
+  assessmentQualifier: StudyPlanAssessmentQualifier | null;
 }): StudyPlanCandidate {
   return {
     candidateKey: [input.pathId, input.actionType, input.stageId ?? "all"].join(":"),
@@ -286,7 +297,8 @@ function createCandidate(input: {
     latestActivityAt: input.latestActivityAt,
     latestMistakeAt: input.latestMistakeAt,
     examPractice: input.examPractice,
-    examQualifier: input.examPhase === "no_date" ? null : input.examPhase,
+    examQualifier: input.assessmentQualifier?.phase ?? null,
+    assessmentQualifier: input.assessmentQualifier,
   };
 }
 

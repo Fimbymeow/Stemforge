@@ -1,19 +1,31 @@
 import { MAX_WEEKLY_MINUTES } from "@/lib/study-plan/constants";
 import { isValidDateOnly } from "@/lib/study-plan/dates";
-import type { StudyPlanPreservationInput, StudyPlanPreviousWeek, StudyPlanWeekday, StudyPlanWeeklyPlan } from "@/lib/study-plan/types";
+import type {
+  Assessment,
+  StudyPlanAssessmentQualifier,
+  StudyPlanPreservationInput,
+  StudyPlanPreviousWeek,
+  StudyPlanWeekday,
+  StudyPlanWeeklyPlan,
+} from "@/lib/study-plan/types";
 
-export const STUDY_PLAN_LOCAL_STATE_VERSION = 2 as const;
+export const STUDY_PLAN_LOCAL_STATE_VERSION = 3 as const;
 export const STUDY_PLAN_LOCAL_STATE_STORAGE_KEY = "orthic.studyPlan.v1";
 export const STUDY_PLAN_LOCAL_STATE_UPDATED_EVENT = "orthic:study-plan-updated";
 
 const WEEKDAYS: readonly StudyPlanWeekday[] = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
 const VALID_WEEKDAYS = new Set<StudyPlanWeekday>(WEEKDAYS);
 const ITEM_KEY_LIMIT = 200;
+const ASSESSMENT_LIMIT = 20;
+const ASSESSMENT_SCOPE_LIMIT = 50;
+
+/** Legacy (pre-v3) single-course hardcode used only to migrate a learner's `examDate` into an Assessment. */
+const LEGACY_FINAL_EXAM_COURSE_SLUG = "higher-maths";
 
 export type StudyPlanSetup = {
   weeklyMinutes: number;
   availableDays: StudyPlanWeekday[];
-  examDate: string | null;
+  assessments: Assessment[];
 };
 
 export type StudyPlanLocalState = {
@@ -55,6 +67,7 @@ export function parseStoredStudyPlanLocalState(raw: string | null): StudyPlanLoc
   try {
     const parsed = JSON.parse(raw) as { version?: unknown };
     if (parsed.version === 1) return migrateV1(parsed);
+    if (parsed.version === 2) return migrateV2(parsed);
     if (parsed.version !== STUDY_PLAN_LOCAL_STATE_VERSION) return emptyStudyPlanLocalState();
     return normalizeStudyPlanLocalState(parsed);
   } catch {
@@ -122,8 +135,63 @@ function normalizeSetup(value: unknown): StudyPlanSetup | null {
     ? unique(candidate.availableDays.filter((day): day is StudyPlanWeekday => typeof day === "string" && VALID_WEEKDAYS.has(day as StudyPlanWeekday)))
     : [];
   if (!Number.isInteger(weeklyMinutes) || weeklyMinutes <= 0 || weeklyMinutes > MAX_WEEKLY_MINUTES || availableDays.length === 0) return null;
-  const examDate = typeof candidate.examDate === "string" && isValidDateOnly(candidate.examDate) ? candidate.examDate : null;
-  return { weeklyMinutes, availableDays, examDate };
+  const assessments = Array.isArray(candidate.assessments)
+    ? candidate.assessments.map(normalizeAssessment).filter((assessment): assessment is Assessment => assessment !== null).slice(0, ASSESSMENT_LIMIT)
+    : [];
+  return { weeklyMinutes, availableDays, assessments };
+}
+
+function normalizeAssessment(value: unknown): Assessment | null {
+  if (!value || typeof value !== "object") return null;
+  const candidate = value as Partial<Assessment>;
+  if (!validItemKey(candidate.id) || !validItemKey(candidate.courseSlug) || !validItemKey(candidate.title)) return null;
+  if (candidate.type !== "class_test" && candidate.type !== "prelim" && candidate.type !== "final_exam" && candidate.type !== "other") return null;
+  const date = normalizeAssessmentDate(candidate.date);
+  if (!date) return null;
+  const scope = normalizeAssessmentScope(candidate.scope);
+  if (!scope) return null;
+  const source = candidate.source === "orthic_provisional" || candidate.source === "official" ? candidate.source : "learner";
+  return { id: candidate.id, courseSlug: candidate.courseSlug, type: candidate.type, title: candidate.title, date, scope, source };
+}
+
+function normalizeAssessmentDate(value: unknown): Assessment["date"] | null {
+  if (!value || typeof value !== "object") return null;
+  const candidate = value as { precision?: unknown; date?: unknown; year?: unknown; month?: unknown };
+  if (candidate.precision === "exact" && typeof candidate.date === "string" && isValidDateOnly(candidate.date)) {
+    return { precision: "exact", date: candidate.date };
+  }
+  if (
+    candidate.precision === "month"
+    && Number.isInteger(candidate.year) && (candidate.year as number) >= 2000 && (candidate.year as number) <= 2100
+    && Number.isInteger(candidate.month) && (candidate.month as number) >= 1 && (candidate.month as number) <= 12
+  ) {
+    return { precision: "month", year: candidate.year as number, month: candidate.month as number };
+  }
+  return null;
+}
+
+function normalizeAssessmentScope(value: unknown): Assessment["scope"] | null {
+  if (!value || typeof value !== "object") return null;
+  const candidate = value as { kind?: unknown; courseAreaIds?: unknown; skillPathIds?: unknown };
+  if (candidate.kind === "whole_course") return { kind: "whole_course" };
+  if (candidate.kind === "course_areas" && Array.isArray(candidate.courseAreaIds)) {
+    const ids = unique(candidate.courseAreaIds.filter((id): id is string => typeof id === "string" && id.length > 0)).slice(0, ASSESSMENT_SCOPE_LIMIT);
+    return ids.length ? { kind: "course_areas", courseAreaIds: ids } : null;
+  }
+  if (candidate.kind === "skills" && Array.isArray(candidate.skillPathIds)) {
+    const ids = unique(candidate.skillPathIds.filter((id): id is string => typeof id === "string" && id.length > 0)).slice(0, ASSESSMENT_SCOPE_LIMIT);
+    return ids.length ? { kind: "skills", skillPathIds: ids } : null;
+  }
+  return null;
+}
+
+function isAssessmentQualifier(value: unknown): value is StudyPlanAssessmentQualifier {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as Partial<StudyPlanAssessmentQualifier>;
+  return validItemKey(candidate.assessmentId) && validItemKey(candidate.title)
+    && (candidate.type === "class_test" || candidate.type === "prelim" || candidate.type === "final_exam" || candidate.type === "other")
+    && (candidate.phase === "close" || candidate.phase === "medium" || candidate.phase === "far")
+    && (candidate.daysUntil === null || (typeof candidate.daysUntil === "number" && Number.isFinite(candidate.daysUntil)));
 }
 
 function normalizePreservation(value: unknown): StudyPlanLocalState["preservation"] {
@@ -187,7 +255,7 @@ function normalizePreviousWeek(value: unknown): StudyPlanPreviousWeek | null {
 
 function normalizePreferences(value: unknown) {
   if (!value || typeof value !== "object") return null;
-  const candidate = value as { courseSlug?: unknown; weeklyMinutes?: unknown; availableDays?: unknown; examDate?: unknown };
+  const candidate = value as { courseSlug?: unknown; weeklyMinutes?: unknown; availableDays?: unknown; assessments?: unknown };
   const setup = normalizeSetup(candidate);
   return setup && typeof candidate.courseSlug === "string" && candidate.courseSlug.length > 0 && candidate.courseSlug.length <= 100
     ? { courseSlug: candidate.courseSlug, ...setup }
@@ -218,6 +286,7 @@ function isWeeklyItem(value: unknown): value is StudyPlanWeeklyPlan["items"][num
     && (item.stageId === null || typeof item.stageId === "string")
     && (item.stageName === null || typeof item.stageName === "string")
     && (item.examQualifier === null || item.examQualifier === "close" || item.examQualifier === "medium" || item.examQualifier === "far")
+    && (item.assessmentQualifier === null || isAssessmentQualifier(item.assessmentQualifier))
     && (item.state === "planned" || item.state === "completed" || item.state === "skipped")
     && (item.manualOverride === null || ["completed", "skipped", "moved", "later", "pulled_forward"].includes(item.manualOverride));
 }
@@ -249,12 +318,59 @@ function boundedNumber(value: unknown, minimum: number, maximum: number) {
   return typeof value === "number" && Number.isFinite(value) ? Math.min(maximum, Math.max(minimum, value)) : minimum;
 }
 
+/**
+ * v1 and v2 stored the same legacy setup shape (`{ weeklyMinutes, availableDays, examDate }`), so
+ * both jump straight to the current version via `migrateV2`, matching the existing v1->v2
+ * precedent of migrating directly to the live shape rather than replaying intermediate versions.
+ */
 function migrateV1(value: unknown): StudyPlanLocalState {
+  return migrateV2(value);
+}
+
+function migrateV2(value: unknown): StudyPlanLocalState {
   const candidate = value as { setup?: unknown; preservation?: unknown };
+  const legacySetup = normalizeLegacySetup(candidate.setup);
+  const setup: StudyPlanSetup | null = legacySetup
+    ? {
+        weeklyMinutes: legacySetup.weeklyMinutes,
+        availableDays: legacySetup.availableDays,
+        assessments: legacySetup.examDate ? [assessmentFromLegacyExamDate(legacySetup.examDate)] : [],
+      }
+    : null;
   return {
     ...emptyStudyPlanLocalState(),
-    setup: normalizeSetup(candidate.setup),
+    setup,
     preservation: normalizePreservation(candidate.preservation),
+  };
+}
+
+function normalizeLegacySetup(value: unknown): { weeklyMinutes: number; availableDays: StudyPlanWeekday[]; examDate: string | null } | null {
+  if (!value || typeof value !== "object") return null;
+  const candidate = value as { weeklyMinutes?: unknown; availableDays?: unknown; examDate?: unknown };
+  const weeklyMinutes = Number(candidate.weeklyMinutes);
+  const availableDays = Array.isArray(candidate.availableDays)
+    ? unique(candidate.availableDays.filter((day): day is StudyPlanWeekday => typeof day === "string" && VALID_WEEKDAYS.has(day as StudyPlanWeekday)))
+    : [];
+  if (!Number.isInteger(weeklyMinutes) || weeklyMinutes <= 0 || weeklyMinutes > MAX_WEEKLY_MINUTES || availableDays.length === 0) return null;
+  const examDate = typeof candidate.examDate === "string" && isValidDateOnly(candidate.examDate) ? candidate.examDate : null;
+  return { weeklyMinutes, availableDays, examDate };
+}
+
+/**
+ * A learner's pre-v3 `examDate` becomes a single learner-owned, exact-precision, whole-course
+ * final-exam Assessment. Because `effectiveAssessments` only adds the repository provisional
+ * default when the learner has no whole-course final exam of their own, this migration can never
+ * produce a duplicate "final exam" entry (Part J/L).
+ */
+function assessmentFromLegacyExamDate(examDate: string): Assessment {
+  return {
+    id: "legacy:final-exam",
+    courseSlug: LEGACY_FINAL_EXAM_COURSE_SLUG,
+    type: "final_exam",
+    title: "Higher Maths final exam",
+    date: { precision: "exact", date: examDate },
+    scope: { kind: "whole_course" },
+    source: "learner",
   };
 }
 

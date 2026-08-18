@@ -6,13 +6,13 @@ import { RefreshCw, Settings2 } from "lucide-react";
 import { getEmptyProgressEvidence, getProgressEvidence } from "@/lib/local-progress";
 import type { ProgressEvidence } from "@/lib/progress/types";
 import { StudyPlanItemRow, formatStudyPlanDate } from "@/components/study-plan/study-plan-item-row";
-import { StudyPlanSetupForm } from "@/components/study-plan/study-plan-today";
+import { StudyPlanSettingsDialog } from "@/components/study-plan/study-plan-settings-dialog";
 import { useStudyPlan } from "@/components/study-plan/use-study-plan";
 import type { StudyPlanWeeklyItem } from "@/lib/study-plan/types";
 
 export function StudyPlanWeek() {
   const [evidence, setEvidence] = useState<ProgressEvidence>(() => getEmptyProgressEvidence());
-  const [editingSettings, setEditingSettings] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [movingItemKey, setMovingItemKey] = useState<string | null>(null);
   useEffect(() => {
     const update = () => setEvidence(getProgressEvidence());
@@ -29,17 +29,35 @@ export function StudyPlanWeek() {
   const studyPlan = useStudyPlan({ evidence, courseSlug: "higher-maths" });
   const groups = useMemo(() => groupItems(studyPlan.plan?.items ?? []), [studyPlan.plan?.items]);
 
+  const dialog = (
+    <StudyPlanSettingsDialog
+      open={settingsOpen}
+      onClose={() => setSettingsOpen(false)}
+      courseSlug="higher-maths"
+      courseName="Higher Maths"
+      initial={studyPlan.state.setup}
+      onSave={studyPlan.saveSetup}
+    />
+  );
+
   if (!studyPlan.loaded) return <p className="text-sm text-muted">Preparing your week…</p>;
   if (!studyPlan.state.setup) {
-    return <section className="rounded-xl border border-line bg-white p-5"><h2 className="text-xl font-extrabold">Set up your Study Plan</h2><p className="mt-2 text-sm text-muted">Create your plan from the Dashboard first.</p><Link href="/dashboard" className="mt-4 inline-flex min-h-11 items-center rounded-lg bg-forge px-4 text-sm font-extrabold text-white">Return to Dashboard</Link></section>;
-  }
-  if (editingSettings) {
-    return <StudyPlanSetupForm courseName="Higher Maths" initial={studyPlan.state.setup} onCancel={() => setEditingSettings(false)} onSave={(setup) => { studyPlan.saveSetup(setup); setEditingSettings(false); }} />;
+    return (
+      <>
+        <section className="rounded-xl border border-line bg-white p-5">
+          <h2 className="text-xl font-extrabold">Set up your Study Plan</h2>
+          <p className="mt-2 text-sm text-muted">Set a realistic rhythm for Higher Maths and Orthic will suggest a short plan for each day.</p>
+          <button type="button" onClick={() => setSettingsOpen(true)} className="mt-4 min-h-11 rounded-lg bg-forge px-4 text-sm font-extrabold text-white">Set up my plan</button>
+        </section>
+        {dialog}
+      </>
+    );
   }
 
   const plan = studyPlan.plan;
   const remaining = plan?.items.filter((item) => item.state === "planned").length ?? 0;
   return (
+    <>
     <section aria-labelledby="study-plan-week-title" data-testid="study-plan-week" className="min-w-0">
       <div className="flex flex-wrap items-start justify-between gap-4 border-b border-line pb-4">
         <div>
@@ -49,7 +67,7 @@ export function StudyPlanWeek() {
         </div>
         <div className="flex flex-wrap gap-1 text-sm">
           <Link href="/dashboard" className="inline-flex min-h-10 items-center rounded-lg px-3 font-extrabold text-forge">← Today</Link>
-          <button type="button" onClick={() => setEditingSettings(true)} className={quietButton}><Settings2 aria-hidden="true" className="size-4" />Plan settings</button>
+          <button type="button" onClick={() => setSettingsOpen(true)} className={quietButton}><Settings2 aria-hidden="true" className="size-4" />Plan settings</button>
           <button type="button" onClick={studyPlan.refresh} className={quietButton}><RefreshCw aria-hidden="true" className="size-4" />Refresh</button>
         </div>
       </div>
@@ -68,6 +86,8 @@ export function StudyPlanWeek() {
         ))}
       {plan && remaining === 0 && plan.items.length > 0 ? <p className="mt-6 rounded-lg bg-paper p-4 text-sm text-muted">You’re caught up for this week. Nothing else is currently worth adding.</p> : null}
     </section>
+    {dialog}
+    </>
   );
 }
 

@@ -31,7 +31,7 @@ export function runP2Simulation(options: { seed: number; runs: number }): P2Simu
     const scenario = generateSimulationScenario(random, index);
     const family = P2_SIMULATION_FAMILIES[index % P2_SIMULATION_FAMILIES.length];
     families[family] += 1;
-    const preferences = { courseSlug: "synthetic-course", weeklyMinutes: scenario.weeklyMinutes, availableDays: scenario.availableDays, examDate: null };
+    const preferences = { courseSlug: "synthetic-course", weeklyMinutes: scenario.weeklyMinutes, availableDays: scenario.availableDays, assessments: [] };
     const initialAllocation = allocateStudyPlan({ candidates: scenario.candidates, weekStart: WEEK_START, courseSlug: "synthetic-course", weeklyMinutes: scenario.weeklyMinutes, availableDays: scenario.availableDays, examPhase: scenario.examPhase, preservation: scenario.preservation });
     let current = reconcileStudyPlanResult({ current: null, fresh: asResult(initialAllocation, WEEK_START, preferences.weeklyMinutes, scenario.examPhase), preferences, preservation: { itemStates: {}, movedDates: {}, excludedItemKeys: [], unscheduledItemKeys: [] }, today: WEEK_START, reason: "initial_generation", now: NOW });
     const manual = current.items.find((item) => item.state === "planned");
@@ -94,7 +94,7 @@ function simulateFamily(family: typeof P2_SIMULATION_FAMILIES[number], current: 
     return canPullForward(completed, WEEK_START) ? pullForwardWeeklyItem(completed, WEEK_START, NOW) : completed;
   }
   if (family === "rollover") { weekStart = "2026-08-17"; today = weekStart; reason = "weekly_rollover"; }
-  const preferences = { courseSlug: "synthetic-course", weeklyMinutes, availableDays, examDate: null };
+  const preferences = { courseSlug: "synthetic-course", weeklyMinutes, availableDays, assessments: [] };
   const preservation = family === "rollover" ? undefined : {
     ...current.preservation,
     movedDates: Object.fromEntries(Object.entries(current.preservation.movedDates)

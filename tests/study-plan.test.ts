@@ -19,7 +19,7 @@ import {
   STUDY_PLAN_LOCAL_STATE_STORAGE_KEY,
   writeStudyPlanLocalState,
 } from "@/lib/study-plan/local-state";
-import type { StudyPlanCandidate, StudyPlanGenerationInput, StudyPlanWeekday } from "@/lib/study-plan/types";
+import type { Assessment, StudyPlanCandidate, StudyPlanGenerationInput, StudyPlanWeekday } from "@/lib/study-plan/types";
 
 const BASIC = context("basic-differentiation");
 const CHAIN = context("chain-rule");
@@ -162,24 +162,24 @@ test("ten hours with two live skills leaves honest unused capacity instead of re
   assert.equal(result.unusedMinutes, 585);
 });
 
-test("exam tomorrow suppresses new starts, while no exam date follows the base plan", () => {
+test("exam tomorrow suppresses new starts, while no explicit assessment still surfaces the provisional far-future default", () => {
   const close = generateStudyPlan({
     ...baseInput(emptyEvidence()),
-    preferences: { ...baseInput(emptyEvidence()).preferences, examDate: "2026-07-14" },
+    preferences: { ...baseInput(emptyEvidence()).preferences, assessments: [wholeCourseAssessment("2026-07-14")] },
   });
   const normal = generateStudyPlan(baseInput(emptyEvidence()));
   assert.equal(close.examPhase, "close");
   assert.deepEqual(close.items, []);
   assert.equal(close.caughtUp, false);
   assert.equal(close.diagnostics.some((item) => item.code === "new_start_suppressed_close_exam"), true);
-  assert.equal(normal.examPhase, "no_date");
+  assert.equal(normal.examPhase, "far");
   assert.equal(normal.items[0].skillPathId, "basic-differentiation");
 });
 
 test("medium exam phase moves exam-practice continuation ahead within its existing tier", () => {
   const evidence = twoInProgressSkillsEvidence();
-  const far = buildStudyPlanCandidates({ now: NOW, courseSlug: "higher-maths", evidence, examPhase: "far" });
-  const medium = buildStudyPlanCandidates({ now: NOW, courseSlug: "higher-maths", evidence, examPhase: "medium" });
+  const far = buildStudyPlanCandidates({ now: NOW, courseSlug: "higher-maths", evidence, assessments: [wholeCourseAssessment("2026-10-01")] });
+  const medium = buildStudyPlanCandidates({ now: NOW, courseSlug: "higher-maths", evidence, assessments: [wholeCourseAssessment("2026-07-25")] });
   const farItems = allocateStudyPlan(allocationInput(far.candidates, "far")).items;
   const mediumItems = allocateStudyPlan(allocationInput(medium.candidates, "medium")).items;
   assert.deepEqual(farItems.map((item) => item.skillPathId), ["basic-differentiation", "chain-rule"]);
@@ -190,13 +190,13 @@ test("medium exam phase moves exam-practice continuation ahead within its existi
 test("Review changes predictably from not due to due soon to due", () => {
   const evidence = completedPathEvidence(BASIC, "2026-07-10T09:00:00.000Z");
   const before = buildStudyPlanCandidates({
-    now: new Date("2026-07-11T08:00:00.000Z"), courseSlug: "higher-maths", evidence, examPhase: "no_date",
+    now: new Date("2026-07-11T08:00:00.000Z"), courseSlug: "higher-maths", evidence, assessments: [],
   });
   const soon = buildStudyPlanCandidates({
-    now: new Date("2026-07-11T12:00:00.000Z"), courseSlug: "higher-maths", evidence, examPhase: "no_date",
+    now: new Date("2026-07-11T12:00:00.000Z"), courseSlug: "higher-maths", evidence, assessments: [],
   });
   const due = buildStudyPlanCandidates({
-    now: new Date("2026-07-12T12:00:00.000Z"), courseSlug: "higher-maths", evidence, examPhase: "no_date",
+    now: new Date("2026-07-12T12:00:00.000Z"), courseSlug: "higher-maths", evidence, assessments: [],
   });
   assert.equal(before.candidates.some((item) => item.skillPathId === BASIC.skillPath.slug && item.actionType === "review"), false);
   assert.equal(soon.candidates.find((item) => item.skillPathId === BASIC.skillPath.slug)?.reasonCode, "review_due_soon");
@@ -232,7 +232,7 @@ test("a course with no live paths returns an honest empty result and malformed i
   for (const [overrides, errorCode] of [
     [{ weeklyMinutes: 0 }, "invalid_weekly_minutes"],
     [{ availableDays: [] }, "invalid_available_days"],
-    [{ examDate: "not-a-date" }, "invalid_exam_date"],
+    [{ assessments: [{ ...wholeCourseAssessment("2026-07-14"), date: { precision: "exact", date: "not-a-date" } }] }, "invalid_assessments"],
   ] as const) {
     const result = generateStudyPlan({
       ...baseInput(emptyEvidence()),
@@ -247,7 +247,7 @@ test("a course with no live paths returns an honest empty result and malformed i
 test("candidate generation derives the Mistake Log exactly once per course", () => {
   let calls = 0;
   const result = buildStudyPlanCandidates(
-    { now: NOW, courseSlug: "higher-maths", evidence: emptyEvidence(), examPhase: "no_date" },
+    { now: NOW, courseSlug: "higher-maths", evidence: emptyEvidence(), assessments: [] },
     { deriveMistakes: (evidence, subjectSlug = "higher-maths") => {
       calls += 1;
       return {
@@ -283,7 +283,7 @@ test("planner invariants hold across fixed budgets, days, and exam phases", () =
         courseSlug: "higher-maths",
         weeklyMinutes: fixture.minutes,
         availableDays: [...fixture.days],
-        examDate: fixture.examDate,
+        assessments: fixture.examDate ? [wholeCourseAssessment(fixture.examDate)] : [],
       },
     };
     const first = generateStudyPlan(input);
@@ -330,7 +330,19 @@ test("browser-local P1 state is versioned, bounded, and safely rejects malformed
       excludedItemKeys: ["valid", "valid", 4],
     },
   }));
-  assert.deepEqual(normalized.setup, { weeklyMinutes: 90, availableDays: ["wed", "mon"], examDate: "2026-08-20" });
+  assert.deepEqual(normalized.setup, {
+    weeklyMinutes: 90,
+    availableDays: ["wed", "mon"],
+    assessments: [{
+      id: "legacy:final-exam",
+      courseSlug: "higher-maths",
+      type: "final_exam",
+      title: "Higher Maths final exam",
+      date: { precision: "exact", date: "2026-08-20" },
+      scope: { kind: "whole_course" },
+      source: "learner",
+    }],
+  });
   assert.deepEqual(normalized.preservation, {
     itemStates: { valid: "completed" }, movedDates: { valid: "2026-08-19" }, excludedItemKeys: ["valid"],
   });
@@ -342,7 +354,7 @@ test("browser-local P1 state round-trips without touching progress evidence stor
     getItem: (key: string) => values.get(key) ?? null,
     setItem: (key: string, value: string) => { values.set(key, value); },
   };
-  const state = { ...emptyStudyPlanLocalState(), setup: { weeklyMinutes: 120, availableDays: ["tue", "thu"] as StudyPlanWeekday[], examDate: null } };
+  const state = { ...emptyStudyPlanLocalState(), setup: { weeklyMinutes: 120, availableDays: ["tue", "thu"] as StudyPlanWeekday[], assessments: [] } };
   assert.equal(writeStudyPlanLocalState(storage, state), true);
   assert.deepEqual(readStudyPlanLocalState(storage), state);
   assert.deepEqual([...values.keys()], [STUDY_PLAN_LOCAL_STATE_STORAGE_KEY]);
@@ -388,7 +400,7 @@ function workedInput(): StudyPlanGenerationInput {
       courseSlug: "higher-maths",
       weeklyMinutes: 180,
       availableDays: ["mon", "wed", "sat"],
-      examDate: "2026-10-01",
+      assessments: [wholeCourseAssessment("2026-10-01")],
     },
   };
 }
@@ -401,7 +413,20 @@ function baseInput(evidence: ProgressEvidence): StudyPlanGenerationInput {
       courseSlug: "higher-maths",
       weeklyMinutes: 180,
       availableDays: ["mon", "wed", "sat"],
+      assessments: [],
     },
+  };
+}
+
+function wholeCourseAssessment(date: string): Assessment {
+  return {
+    id: `test-assessment:${date}`,
+    courseSlug: "higher-maths",
+    type: "final_exam",
+    title: "Test assessment",
+    date: { precision: "exact", date },
+    scope: { kind: "whole_course" },
+    source: "learner",
   };
 }
 
@@ -521,6 +546,7 @@ function syntheticCandidate(overrides: Partial<StudyPlanCandidate> & Pick<StudyP
     latestMistakeAt: null,
     examPractice: false,
     examQualifier: "far",
+    assessmentQualifier: null,
     ...overrides,
   };
 }
