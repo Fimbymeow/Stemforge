@@ -356,7 +356,10 @@ function AssessmentForm({ defaultCourseSlug, initial, onSave, onCancel }: {
                                 return (
                                   <label key={skill.skillPathId} className="flex min-h-10 cursor-pointer items-center gap-2 text-sm">
                                     <input type="checkbox" checked={checked} onChange={() => setSkillPathIds(checked ? skillPathIds.filter((id) => id !== skill.skillPathId) : [...skillPathIds, skill.skillPathId])} />
-                                    {skill.skillPathName}
+                                    <span>
+                                      <span className="block">{skill.skillPathName}</span>
+                                      {!skill.isAvailable ? <span className="block text-xs font-normal text-muted">Not yet available in Orthic</span> : null}
+                                    </span>
                                   </label>
                                 );
                               })}

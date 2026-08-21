@@ -17,30 +17,31 @@ test("studyPlanCourseOptions exposes only genuinely live subjects, derived from 
   assert.equal(options.some((option) => option.courseSlug === "higher-physics"), false, "Coming Soon subjects must not be offered");
 });
 
-test("studyPlanScopeOptions groups by course area then route topic, sourced from the real canonical curriculum, and only includes live skills", () => {
+test("studyPlanScopeOptions groups the full canonical course and labels live versus unavailable skills", () => {
   const areas = studyPlanScopeOptions("higher-maths");
-  assert.equal(areas.length, 1, "only Calculus is live today");
-  const calculus = areas[0];
+  assert(areas.length > 1, "real assessment scope must not shrink to Orthic's live content");
+  const calculus = areas.find((area) => area.courseAreaId === "calculus")!;
   assert.equal(calculus.courseAreaId, "calculus");
   assert.equal(calculus.courseAreaName, "Calculus");
 
   // The topic layer is real grouping, not a flat area->skills list: both live skills sit under
   // one "Differentiation" topic rather than being enumerated directly on the area.
-  assert.equal(calculus.topics.length, 1);
-  const differentiation = calculus.topics[0];
+  assert(calculus.topics.length > 1);
+  const differentiation = calculus.topics.find((topic) => topic.topicScopeId === topicScopeId("calculus", "differentiation"))!;
   assert.equal(differentiation.topicName, "Differentiation");
   assert.equal(differentiation.topicScopeId, topicScopeId("calculus", "differentiation"));
   assert.deepEqual(
-    differentiation.skills.map((skill) => skill.skillPathId).sort(),
+    differentiation.skills.filter((skill) => skill.isAvailable).map((skill) => skill.skillPathId).sort(),
     ["basic-differentiation", "chain-rule"],
   );
 
-  // Not-yet-published skills in the same topic (e.g. Tangents) must not leak into the selector.
-  assert.equal(differentiation.skills.some((skill) => skill.skillPathId === "tangents-and-normals"), false);
+  const tangents = differentiation.skills.find((skill) => skill.skillPathId === "tangents-and-normals");
+  assert.equal(tangents?.isAvailable, false, "canonical unavailable skills remain selectable without looking live");
 });
 
-test("studyPlanScopeOptions returns an empty list for a course with no live skills, never throwing", () => {
-  assert.deepEqual(studyPlanScopeOptions("higher-physics"), []);
+test("studyPlanScopeOptions does not invent skill paths for a course whose canonical structure has none", () => {
+  const options = studyPlanScopeOptions("higher-physics");
+  assert.deepEqual(options, []);
 });
 
 test("assessment scope summaries stay short and learner-facing", () => {

@@ -65,6 +65,7 @@ export function nearestRelevantAssessment(
   now: Date,
 ): { assessment: Assessment; phase: Exclude<StudyPlanExamPhase, "no_date"> } | null {
   const relevant = assessments
+    .filter((assessment) => assessmentTemporalState(assessment, now) !== "expired")
     .filter((assessment) => assessmentScopeIncludesSkill(assessment.scope, topicScopeIdValue, skillPathId))
     .map((assessment) => ({ assessment, sortKey: approximateTimestamp(assessment.date) }))
     .sort((left, right) => left.sortKey - right.sortKey);
@@ -72,6 +73,36 @@ export function nearestRelevantAssessment(
   if (!nearest) return null;
   const phase = phaseForAssessmentDate(nearest.assessment.date, now);
   return phase === "no_date" ? null : { assessment: nearest.assessment, phase };
+}
+
+export type AssessmentTemporalState = "upcoming" | "current" | "expired";
+
+/**
+ * Calendar-precision lifecycle for assessment output and prioritisation. Exact dates expire after
+ * their UTC calendar day; month-precision estimates remain current for their named month and then
+ * require confirmation. No synthetic day is ever assigned to a month-only date.
+ */
+export function assessmentTemporalState(assessment: Assessment, now: Date): AssessmentTemporalState {
+  if (assessment.date.precision === "exact") {
+    const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+    const target = Date.parse(`${assessment.date.date}T00:00:00.000Z`);
+    if (!Number.isFinite(target)) return "expired";
+    return target < today ? "expired" : target === today ? "current" : "upcoming";
+  }
+  const currentMonth = now.getUTCFullYear() * 12 + now.getUTCMonth();
+  const targetMonth = assessment.date.year * 12 + assessment.date.month - 1;
+  return targetMonth < currentMonth ? "expired" : targetMonth === currentMonth ? "current" : "upcoming";
+}
+
+/** Active assessment ordering for learner-facing readiness: exact commitments first, then honest month estimates. */
+export function orderUpcomingAssessments(assessments: readonly Assessment[], now: Date): Assessment[] {
+  return assessments
+    .filter((assessment) => assessmentTemporalState(assessment, now) !== "expired")
+    .sort((left, right) => assessmentPrecisionOrder(left) - assessmentPrecisionOrder(right)
+      || approximateTimestamp(left.date) - approximateTimestamp(right.date)
+      || assessmentScopeOrder(left.scope) - assessmentScopeOrder(right.scope)
+      || assessmentScopeSize(left.scope) - assessmentScopeSize(right.scope)
+      || left.id.localeCompare(right.id));
 }
 
 export function assessmentQualifierFor(
@@ -96,7 +127,9 @@ export function mostUrgentPhase(phases: readonly StudyPlanExamPhase[]): StudyPla
 
 /** Course-wide urgency signal used only for the plan's overall Review time-budget cap (Part G/allocator). Never used to suppress individual new-skill starts, that decision stays per-skill. */
 export function courseWidePhase(assessments: readonly Assessment[], now: Date): StudyPlanExamPhase {
-  return mostUrgentPhase(assessments.map((assessment) => phaseForAssessmentDate(assessment.date, now)));
+  return mostUrgentPhase(assessments
+    .filter((assessment) => assessmentTemporalState(assessment, now) !== "expired")
+    .map((assessment) => phaseForAssessmentDate(assessment.date, now)));
 }
 
 export function isValidAssessmentType(value: unknown): value is AssessmentType {
@@ -106,6 +139,18 @@ export function isValidAssessmentType(value: unknown): value is AssessmentType {
 function approximateTimestamp(date: Assessment["date"]): number {
   // Sort key only, never surfaced as a claimed exact date for month-precision entries.
   return date.precision === "exact" ? Date.parse(date.date) : Date.UTC(date.year, date.month - 1, 1);
+}
+
+function assessmentPrecisionOrder(assessment: Assessment) {
+  return assessment.date.precision === "exact" ? 0 : 1;
+}
+
+function assessmentScopeOrder(scope: AssessmentScope) {
+  return scope.kind === "skills" ? 0 : scope.kind === "topics" ? 1 : 2;
+}
+
+function assessmentScopeSize(scope: AssessmentScope) {
+  return scope.kind === "skills" ? scope.skillPathIds.length : scope.kind === "topics" ? scope.topicIds.length : Number.MAX_SAFE_INTEGER;
 }
 
 function daysUntilExact(date: string, now: Date): number | null {

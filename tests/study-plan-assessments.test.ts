@@ -6,9 +6,11 @@ import type { ResolvedSkillPath } from "@/lib/content-resolver";
 import type { ProgressEvidence } from "@/lib/progress/types";
 import {
   assessmentQualifierFor,
+  assessmentTemporalState,
   courseWidePhase,
   effectiveAssessments,
   nearestRelevantAssessment,
+  orderUpcomingAssessments,
   phaseForAssessmentDate,
   PROVISIONAL_COURSE_ASSESSMENTS,
   topicScopeId,
@@ -73,6 +75,29 @@ test("nearestRelevantAssessment resolves scope kinds and picks the nearest relev
   assert.equal(nearestRelevantAssessment([], basicTopicId, BASIC.skillPath.slug, NOW), null);
 });
 
+test("expired assessments never remain relevant or influence current urgency", () => {
+  const past = wholeCourseAssessment("past", "2026-07-12");
+  const future = wholeCourseAssessment("future", "2026-07-20");
+  const topicId = topicScopeId(BASIC.courseArea.slug, BASIC.routeTopic.slug);
+  assert.equal(assessmentTemporalState(past, NOW), "expired");
+  assert.equal(nearestRelevantAssessment([past, future], topicId, BASIC.skillPath.slug, NOW)?.assessment.id, "future");
+});
+
+test("month assessments are current only for their named month and expire afterwards", () => {
+  const month: Assessment = { ...wholeCourseAssessment("month", "2026-07-13"), date: { precision: "month", year: 2026, month: 7 } };
+  assert.equal(assessmentTemporalState(month, new Date("2026-06-30T23:59:59.999Z")), "upcoming");
+  assert.equal(assessmentTemporalState(month, NOW), "current");
+  assert.equal(assessmentTemporalState(month, new Date("2026-08-01T00:00:00.000Z")), "expired");
+});
+
+test("upcoming ordering is exact then month, with narrow scope and stable IDs as tie-breakers", () => {
+  const exactWhole = wholeCourseAssessment("z-whole", "2026-07-20");
+  const exactSkill = { ...wholeCourseAssessment("a-skill", "2026-07-20"), scope: { kind: "skills" as const, skillPathIds: [BASIC.skillPath.slug] } };
+  const month: Assessment = { ...wholeCourseAssessment("month", "2026-07-13"), date: { precision: "month", year: 2026, month: 7 } };
+  const expired = wholeCourseAssessment("expired", "2026-07-12");
+  assert.deepEqual(orderUpcomingAssessments([month, exactWhole, expired, exactSkill], NOW).map((item) => item.id), ["a-skill", "z-whole", "month"]);
+});
+
 test("phaseForAssessmentDate dispatches exact dates through day-distance logic and month-precision dates through classifyMonthPhase", () => {
   assert.equal(phaseForAssessmentDate({ precision: "exact", date: "2026-07-14" }, NOW), "close");
   assert.equal(phaseForAssessmentDate({ precision: "exact", date: "2026-08-10" }, NOW), "medium");
@@ -102,7 +127,9 @@ test("assessmentQualifierFor only carries daysUntil for exact-precision assessme
 test("courseWidePhase reflects the single most urgent assessment across the whole course, used only for the review-time budget", () => {
   const far = wholeCourseAssessment("far", "2026-12-01");
   const close = wholeCourseAssessment("close", "2026-07-14");
+  const expired = wholeCourseAssessment("expired", "2026-07-12");
   assert.equal(courseWidePhase([far, close], NOW), "close");
+  assert.equal(courseWidePhase([far, expired], NOW), "far");
   assert.equal(courseWidePhase([far], NOW), "far");
   assert.equal(courseWidePhase([], NOW), "no_date");
 });

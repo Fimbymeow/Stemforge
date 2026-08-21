@@ -10,7 +10,11 @@ export function studyPlanCourseOptions(): StudyPlanCourseOption[] {
     .map((subject) => ({ courseSlug: subject.subjectSlug, courseName: subject.subjectName }));
 }
 
-export type StudyPlanScopeSkillOption = { skillPathId: string; skillPathName: string };
+export type StudyPlanScopeSkillOption = {
+  skillPathId: string;
+  skillPathName: string;
+  isAvailable: boolean;
+};
 export type StudyPlanScopeTopicOption = {
   topicScopeId: string;
   topicName: string;
@@ -28,11 +32,12 @@ export type StudyPlanScopeAreaOption = {
  * duplicated taxonomy. Grouped by course area then route topic (e.g. "Calculus" -> "Differentiation")
  * so the UI can collapse at the topic level instead of a flat checkbox dump of every skill in the
  * course, and so a topic-scoped assessment ("just Differentiation") is representable without
- * enumerating individual skill IDs.
+ * enumerating individual skill IDs. Canonical unavailable skills remain selectable because school
+ * assessment scope is broader than Orthic's current published-content coverage.
  */
 export function studyPlanScopeOptions(courseSlug: string): StudyPlanScopeAreaOption[] {
   const contexts = contentResolver.getAllPathContexts()
-    .filter((context) => context.subject.subjectSlug === courseSlug && context.skillPath.isAvailable);
+    .filter((context) => context.subject.subjectSlug === courseSlug && context.skillPath.contentStatus === "active");
   const areas = new Map<string, StudyPlanScopeAreaOption>();
   for (const context of contexts) {
     const areaId = context.courseArea.slug;
@@ -45,7 +50,11 @@ export function studyPlanScopeOptions(courseSlug: string): StudyPlanScopeAreaOpt
       topic = { topicScopeId: topicId, topicName: context.routeTopic.name, skills: [] };
       area.topics.push(topic);
     }
-    topic.skills.push({ skillPathId: context.skillPath.slug, skillPathName: context.skillPath.name });
+    topic.skills.push({
+      skillPathId: context.skillPath.slug,
+      skillPathName: context.skillPath.name,
+      isAvailable: context.skillPath.isAvailable,
+    });
   }
   return [...areas.values()];
 }
