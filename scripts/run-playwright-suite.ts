@@ -18,6 +18,7 @@ const realSyncMode = process.argv.includes("--real-sync");
 const realAccountSafetyMode = process.argv.includes("--real-account-safety");
 const realInternalMode = process.argv.includes("--real-internal");
 const hardeningMode = process.argv.includes("--hardening");
+const studyPlanEnabledMode = process.argv.includes("--study-plan-enabled");
 const realAuthMode = realImportMode || realSyncMode || realAccountSafetyMode || realInternalMode;
 const separatorIndex = process.argv.indexOf("--");
 const forwardedArgs = separatorIndex >= 0 ? process.argv.slice(separatorIndex + 1) : [];
@@ -43,6 +44,7 @@ let isolatedEnvironment: NodeJS.ProcessEnv = {
   STEMFORGE_AUTH_SITE_URL: enabledMode ? baseURL : "",
   STEMFORGE_DATABASE_URL: "",
   STEMFORGE_DATABASE_MIGRATION_URL: "",
+  STEMFORGE_STUDY_PLAN_ENABLED: studyPlanEnabledMode ? "true" : "false",
   STEMFORGE_E2E_FIXTURES: "true",
   STEMFORGE_AUTH_TEST_EMAIL: "",
   STEMFORGE_AUTH_TEST_PASSWORD: "",
@@ -61,6 +63,7 @@ if (realAuthMode) {
     STEMFORGE_AUTH_SITE_URL: baseURL,
     STEMFORGE_DATABASE_URL: "",
     STEMFORGE_DATABASE_MIGRATION_URL: "",
+    STEMFORGE_STUDY_PLAN_ENABLED: studyPlanEnabledMode ? "true" : "false",
   };
 }
 

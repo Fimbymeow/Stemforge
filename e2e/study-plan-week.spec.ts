@@ -13,7 +13,8 @@ test.describe("feature-flagged Study Plan This Week", () => {
     await page.goto("/dashboard");
     await page.evaluate(({ studyPlanKey, progressKey }) => { localStorage.removeItem(studyPlanKey); localStorage.removeItem(progressKey); }, { studyPlanKey, progressKey: STORAGE_KEY });
     await page.reload();
-    await page.getByTestId("study-plan-setup").getByRole("button", { name: "Create my plan" }).click();
+    await page.getByTestId("study-plan-setup").getByRole("button", { name: "Set up my plan" }).click();
+    await page.getByRole("dialog", { name: "Plan your study week" }).getByRole("button", { name: "Create my plan" }).click();
   });
 
   test("Today and This Week project the same canonical item and keep Dashboard sparse", async ({ page, seriousBrowserErrors }) => {
@@ -72,7 +73,7 @@ test.describe("feature-flagged Study Plan This Week", () => {
     await week.getByRole("button", { name: "Refresh" }).click();
     await expect(week.getByRole("status")).toContainText(/already up to date|Plan adjusted/);
     await week.getByRole("button", { name: "Plan settings" }).click();
-    await expect(page.getByTestId("study-plan-setup").getByRole("button", { name: "Save plan" })).toBeVisible();
+    await expect(page.getByRole("dialog", { name: "Plan settings" }).getByRole("button", { name: "Save plan" })).toBeVisible();
   });
 
   for (const width of [390, 320]) test(`weekly groups and action menus remain overflow-free at ${width}px`, async ({ page }) => {

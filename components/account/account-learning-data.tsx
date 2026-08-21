@@ -96,12 +96,12 @@ export function AccountLearningData() {
           <button className={secondaryButton} type="button" disabled={busy || !password} onClick={() => void exportRemote()}>Download account data</button>
           <p className="mb-0 mt-4 text-sm">Download progress and account-related information stored on this browser.</p>
           <button className={secondaryButton} type="button" onClick={() => downloadCurrentBrowserExport(window.localStorage)}>Download this browser&apos;s data</button>
-          <p className="mb-0 mt-2 text-xs text-muted">The account export covers learning progress and learner preferences stored in your account. The browser export contains only this browser&apos;s local data and works without an account.</p>
+          <p className="mb-0 mt-2 text-xs text-muted">The account export covers learning progress, preferences, Study Plan inputs and confidence stored in your account. The browser export contains only this browser&apos;s local data and works without an account.</p>
         </div>
 
         <div className="rounded-lg border border-danger/30 bg-danger-soft p-4">
           <h3 className="m-0 text-base font-extrabold">Delete account learning data</h3>
-          <p className="mb-0 mt-2 text-sm">This deletes attempts, help activity, achievements and saved progress conflicts stored in your account. Your login will remain active.</p>
+          <p className="mb-0 mt-2 text-sm">This deletes attempts, help activity, achievements, preferences, Study Plan inputs, assessments and confidence stored in your account. Your login will remain active.</p>
           <p className="mb-0 mt-2 text-sm">Progress created without an account may remain on this browser unless you clear it separately. Offline browsers may need reconciliation.</p>
           <p className="mb-0 mt-2 text-xs">Deleted data may remain in secure backups for up to 30 days before those backups expire. This is a provisional target and may change.</p>
           {!request || request.status === "cancelled" ? <button className={dangerButton} type="button" disabled={busy} onClick={() => void mutate("/api/account-data/erasure", {})}>Start deletion</button> : null}

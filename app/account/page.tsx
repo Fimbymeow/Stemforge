@@ -15,7 +15,7 @@ import { AccountLearningReturn } from "@/components/account/account-learning-ret
 import { createSupabaseServerClient } from "@/lib/auth/supabase.server";
 import { safeLearningReturnDestination } from "@/lib/auth/redirects";
 import { AccountLearnerPreferences } from "@/components/learner-preferences/account-learner-preferences";
-import { GuestPreferencesImport } from "@/components/account/guest-preferences-import";
+import { GuestAccountStateImport } from "@/components/account/guest-account-state-import";
 
 export const dynamic = "force-dynamic";
 
@@ -73,7 +73,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
       result={result}
     >
       {accountFingerprint ? <GuestProgressImport accountFingerprint={accountFingerprint} returnDestination={next} /> : null}
-      {accountFingerprint ? <GuestPreferencesImport /> : null}
+      {accountFingerprint ? <GuestAccountStateImport accountFingerprint={accountFingerprint} /> : null}
       <AccountLearningReturn requestedDestination={next} />
       {accountFingerprint ? <AccountLearnerPreferences /> : null}
       {accountFingerprint ? <ProgressSyncPanel accountFingerprint={accountFingerprint} /> : null}

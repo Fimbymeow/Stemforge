@@ -53,7 +53,7 @@ export function createInitialWeeklyPlan(input: Omit<RebalanceInput, "currentPlan
     current: null,
     fresh,
     preferences: input.preferences,
-    preservation: { ...EMPTY_PRESERVATION, ...preservation, unscheduledItemKeys: [] },
+    preservation: { ...EMPTY_PRESERVATION, ...preservation, unscheduledItemKeys: [...(preservation?.unscheduledItemKeys ?? [])] },
     today: utcDayKey(input.calendarDate),
     reason: "initial_generation",
     now: input.now,

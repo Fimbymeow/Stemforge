@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import { AuthFeatureProvider } from "@/components/auth-feature-provider";
 import { isAuthFeatureAvailable } from "@/lib/auth/config";
 import { ProgressSyncProvider } from "@/components/progress-sync-provider";
+import { AccountStateSyncProvider } from "@/components/account-state-sync-provider";
 import "katex/dist/katex.min.css";
 import "mathlive/fonts.css";
 import "./globals.css";
@@ -35,7 +36,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body className={inter.className}>
         <a href="#main-content" className="skip-link">Skip to main content</a>
         <AuthFeatureProvider accountsAvailable={accountsAvailable}>
-          <ProgressSyncProvider accountsAvailable={accountsAvailable}>{children}</ProgressSyncProvider>
+          <ProgressSyncProvider accountsAvailable={accountsAvailable}>
+            <AccountStateSyncProvider accountsAvailable={accountsAvailable}>{children}</AccountStateSyncProvider>
+          </ProgressSyncProvider>
         </AuthFeatureProvider>
       </body>
     </html>

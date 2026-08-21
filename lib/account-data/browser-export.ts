@@ -4,6 +4,7 @@ import { LocalStorageProgressStorage } from "@/lib/progress/storage";
 import { EVIDENCE_PROVENANCE_KEY, readEvidenceProvenance } from "@/lib/progress/evidence-provenance";
 import { PROGRESS_SYNC_METADATA_KEY, readProgressSyncMetadata } from "@/lib/progress/sync-metadata";
 import { readGuestLearnerPreferences } from "@/lib/learner-preferences";
+import { readLocalAccountState } from "@/lib/account-state/client-state";
 
 export function buildCurrentBrowserExport(storage: Storage, generatedAt = new Date().toISOString()) {
   const progress = new LocalStorageProgressStorage(storage).load();
@@ -11,7 +12,7 @@ export function buildCurrentBrowserExport(storage: Storage, generatedAt = new Da
   const provenance = readEvidenceProvenance(storage.getItem(EVIDENCE_PROVENANCE_KEY), progress.payload);
   if (provenance.status === "unsupported_future") throw new Error("Browser provenance uses a newer format.");
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     generatedAt,
     scope: "current_browser_only",
     scopeDescription: "This file contains only progress and account-related information stored by Orthic in this browser.",
@@ -21,6 +22,7 @@ export function buildCurrentBrowserExport(storage: Storage, generatedAt = new Da
     syncMetadata: readProgressSyncMetadata(storage.getItem(PROGRESS_SYNC_METADATA_KEY), storage.getItem(PROGRESS_IMPORT_METADATA_KEY)),
     celebrationState: safeJson(storage.getItem(CELEBRATION_STORAGE_KEY)),
     learnerPreferences: readGuestLearnerPreferences(storage),
+    learnerState: readLocalAccountState(storage, new Date(generatedAt)),
   };
 }
 

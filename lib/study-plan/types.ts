@@ -69,6 +69,8 @@ export type StudyPlanPreservationInput = {
   itemStates?: Readonly<Record<string, Extract<StudyPlanItemState, "completed" | "skipped">>>;
   movedDates?: Readonly<Record<string, string>>;
   excludedItemKeys?: readonly string[];
+  /** Manual "Later" state; account sync carries it without persisting a generated plan. */
+  unscheduledItemKeys?: readonly string[];
 };
 
 export type StudyPlanGenerationInput = {

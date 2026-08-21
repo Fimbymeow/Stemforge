@@ -53,7 +53,10 @@ test("needs-practice remains distinct from structural mastery", async ({ page })
   await expect(basic.locator('[data-mastery-status="in_progress"]')).toBeVisible();
   await expect(basic).toContainText("Needs practice");
   await expect(basic).toContainText("Foundations: 1/3 complete");
-  await expect(basic.getByRole("link", { name: "Open Basic differentiation skill overview" })).toHaveClass(/border-l-2/);
+  await expect(basic.getByRole("link", { name: "Open Basic differentiation skill overview" })).toHaveAttribute(
+    "href",
+    "/subjects/higher-maths/calculus/differentiation/basic-differentiation",
+  );
 });
 
 test("tracker navigation and disclosures are keyboard-usable and overflow-free at 375px", async ({ page }) => {

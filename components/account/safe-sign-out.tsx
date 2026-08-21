@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { useProgressSync } from "@/components/progress-sync-provider";
 import { useModalFocusTrap } from "@/lib/use-modal-focus-trap";
 import { useLearnerNextAction } from "@/components/learning/use-learner-next-action";
+import { clearAssociatedAccountState } from "@/lib/account-state/client-state";
 
 export function SafeSignOut({ action }: { action: (formData: FormData) => void | Promise<void> }) {
   const sync = useProgressSync();
@@ -27,6 +28,9 @@ export function SafeSignOut({ action }: { action: (formData: FormData) => void |
     setError(null);
     try {
       await sync.prepareForSignOut(removeAccountData);
+      if (removeAccountData && sync.accountFingerprint && !clearAssociatedAccountState(window.localStorage, sync.accountFingerprint)) {
+        throw new Error("account_state_clear_failed");
+      }
       formRef.current?.requestSubmit();
     } catch {
       setBusy(false);

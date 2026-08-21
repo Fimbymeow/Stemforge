@@ -13,6 +13,7 @@ import { EVIDENCE_PROVENANCE_KEY } from "../lib/progress/evidence-provenance";
 import { PROGRESS_SYNC_METADATA_KEY } from "../lib/progress/sync-protocol";
 import { attempt, supportEvent } from "./progress-fixtures";
 import { LEARNER_PREFERENCES_STORAGE_KEY, normalizeLearnerPreferences } from "../lib/learner-preferences";
+import { normalizeAccountLearnerState } from "../lib/account-state/types";
 
 test("remote account export is bounded, counted and digest-verifiable", () => {
   const records: AccountExportRecord[] = [
@@ -21,12 +22,14 @@ test("remote account export is bounded, counted and digest-verifiable", () => {
     { kind: "attempt", disposition: "conflict_retained", eventId: "attempt_export", evidence: attempt({ eventId: "attempt_export", answer: "retained" }), accountGeneration: "1", receiveCursor: "3", receivedAt: "2026-07-17T10:00:02.000Z" },
   ];
   const preferences = normalizeLearnerPreferences({ version: 1, firstName: "Finlay", namePromptDismissed: true, selectedCourseSlugs: ["higher-maths"] });
-  const exported = buildAccountLearningDataExport(records, "2026-07-17T09:00:00.000Z", "2026-07-17T11:00:00.000Z", preferences);
+  const learnerState = normalizeAccountLearnerState({ settings: { weeklyMinutes: 240, availableDays: ["mon", "wed", "sat"], changedAt: "2026-07-17T10:30:00.000Z" } });
+  const exported = buildAccountLearningDataExport(records, "2026-07-17T09:00:00.000Z", "2026-07-17T11:00:00.000Z", preferences, learnerState);
   assert.deepEqual(exported.categoryCounts, { attempts: 1, supportEvents: 1, guidedSelfAssessments: 0, achievementSnapshots: 0, reviewEvents: 0, flashcardReviews: 0, retainedConflicts: 1 });
   assert.equal(exported.integrity.algorithm, "SHA-256");
   assert.match(exported.integrity.canonicalDataDigest, /^[a-f0-9]{64}$/);
   assert.equal(exported.learnerPreferences.firstName, "Finlay");
-  assert.equal(buildAccountLearningDataExport(records, "2026-07-17T09:00:00.000Z", "2026-07-17T11:00:00.000Z", preferences).integrity.canonicalDataDigest, exported.integrity.canonicalDataDigest);
+  assert.equal(exported.learnerState.settings?.weeklyMinutes, 240);
+  assert.equal(buildAccountLearningDataExport(records, "2026-07-17T09:00:00.000Z", "2026-07-17T11:00:00.000Z", preferences, learnerState).integrity.canonicalDataDigest, exported.integrity.canonicalDataDigest);
   assert.equal(safeAccountExportFilename(new Date("2026-07-17T12:34:56.000Z")), "orthic-account-data-2026-07-17.json");
   assert.throws(() => buildAccountLearningDataExport(Array.from({ length: MAX_ACCOUNT_EXPORT_RECORDS + 1 }, () => records[0]), "2026-07-17T09:00:00.000Z"), AccountExportBoundsError);
 });

@@ -37,6 +37,7 @@ export type StudyPlanLocalState = {
     itemStates: Record<string, "completed" | "skipped">;
     movedDates: Record<string, string>;
     excludedItemKeys: string[];
+    unscheduledItemKeys?: string[];
   };
 };
 
@@ -197,12 +198,16 @@ function isAssessmentQualifier(value: unknown): value is StudyPlanAssessmentQual
 function normalizePreservation(value: unknown): StudyPlanLocalState["preservation"] {
   if (!value || typeof value !== "object") return { itemStates: {}, movedDates: {}, excludedItemKeys: [] };
   const candidate = value as Partial<StudyPlanLocalState["preservation"]>;
+  const unscheduledItemKeys = Array.isArray(candidate.unscheduledItemKeys)
+    ? unique(candidate.unscheduledItemKeys.filter(validItemKey)).slice(0, ITEM_KEY_LIMIT)
+    : [];
   return {
     itemStates: normalizeRecord(candidate.itemStates, (entry): entry is "completed" | "skipped" => entry === "completed" || entry === "skipped"),
     movedDates: normalizeRecord(candidate.movedDates, (entry): entry is string => typeof entry === "string" && isValidDateOnly(entry)),
     excludedItemKeys: Array.isArray(candidate.excludedItemKeys)
       ? unique(candidate.excludedItemKeys.filter(validItemKey)).slice(0, ITEM_KEY_LIMIT)
       : [],
+    ...(unscheduledItemKeys.length ? { unscheduledItemKeys } : {}),
   };
 }
 

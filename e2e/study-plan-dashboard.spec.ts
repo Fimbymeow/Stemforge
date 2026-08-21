@@ -20,7 +20,8 @@ test.describe("feature-flagged Study Plan Today", () => {
   });
 
   test("setup makes Today the sole equivalent next-action surface and preserves evidence when marked Done", async ({ page, seriousBrowserErrors }) => {
-    const setup = page.getByTestId("study-plan-setup");
+    await page.getByTestId("study-plan-setup").getByRole("button", { name: "Set up my plan" }).click();
+    const setup = page.getByRole("dialog", { name: "Plan your study week" });
     await expect(setup.getByRole("heading", { name: "Plan your study week" })).toBeVisible();
     for (const day of ["Tuesday", "Thursday", "Friday", "Sunday"]) await setup.getByTitle(day).click();
     await setup.getByLabel("Weekly study time in hours").fill("1.5");
@@ -51,7 +52,8 @@ test.describe("feature-flagged Study Plan Today", () => {
     await expect(page).toHaveURL(/\/practice\/session\//);
     const sessionPath = new URL(page.url()).pathname;
     await page.goto("/dashboard");
-    const setup = page.getByTestId("study-plan-setup");
+    await page.getByTestId("study-plan-setup").getByRole("button", { name: "Set up my plan" }).click();
+    const setup = page.getByRole("dialog", { name: "Plan your study week" });
     for (const day of ["Tuesday", "Thursday", "Friday", "Sunday"]) await setup.getByTitle(day).click();
     await setup.getByRole("button", { name: "Create my plan" }).click();
     await expect(page.getByTestId("dashboard-progress-summary")).toHaveCount(0);
@@ -61,7 +63,8 @@ test.describe("feature-flagged Study Plan Today", () => {
   });
 
   test("Move offers only available current-week dates and removes the item from Today", async ({ page }) => {
-    const setup = page.getByTestId("study-plan-setup");
+    await page.getByTestId("study-plan-setup").getByRole("button", { name: "Set up my plan" }).click();
+    const setup = page.getByRole("dialog", { name: "Plan your study week" });
     for (const day of ["Tuesday", "Thursday", "Friday", "Sunday"]) await setup.getByTitle(day).click();
     await setup.getByRole("button", { name: "Create my plan" }).click();
     const today = page.getByTestId("study-plan-today");
@@ -75,7 +78,8 @@ test.describe("feature-flagged Study Plan Today", () => {
   });
 
   test("Skip hides the item, Swap is honest without an alternative, and settings remain editable", async ({ page, seriousBrowserErrors }) => {
-    const setup = page.getByTestId("study-plan-setup");
+    await page.getByTestId("study-plan-setup").getByRole("button", { name: "Set up my plan" }).click();
+    const setup = page.getByRole("dialog", { name: "Plan your study week" });
     for (const day of ["Tuesday", "Thursday", "Friday", "Sunday"]) await setup.getByTitle(day).click();
     await setup.getByRole("button", { name: "Create my plan" }).click();
     const today = page.getByTestId("study-plan-today");
@@ -85,16 +89,16 @@ test.describe("feature-flagged Study Plan Today", () => {
     await today.getByRole("button", { name: "Skip" }).click();
     await expect(today.getByTestId("study-plan-item")).toHaveCount(0);
     await expect(today).toContainText("Nothing is planned for today");
-    await today.getByLabel("Plan options").click();
     await today.getByRole("button", { name: "Plan settings" }).click();
-    await expect(page.getByTestId("study-plan-setup").getByRole("button", { name: "Save plan" })).toBeVisible();
+    await expect(page.getByRole("dialog", { name: "Plan settings" }).getByRole("button", { name: "Save plan" })).toBeVisible();
     expect(seriousBrowserErrors).toEqual([]);
   });
 
   test("a learner with all live work recently completed sees the calm caught-up state", async ({ page }) => {
     await seedStoredProgress(page, v3Payload(completedLiveAttempts()));
     await page.goto("/dashboard");
-    const setup = page.getByTestId("study-plan-setup");
+    await page.getByTestId("study-plan-setup").getByRole("button", { name: "Set up my plan" }).click();
+    const setup = page.getByRole("dialog", { name: "Plan your study week" });
     for (const day of ["Tuesday", "Thursday", "Friday", "Sunday"]) await setup.getByTitle(day).click();
     await setup.getByRole("button", { name: "Create my plan" }).click();
     const today = page.getByTestId("study-plan-today");

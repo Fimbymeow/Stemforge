@@ -116,7 +116,7 @@ test("real sign-in and sign-out preserve the useful learning destination without
   expect(seriousBrowserErrors).toEqual([]);
 });
 
-test("guest preferences import explicitly, remain editable and can be cleared without blocking learning", async ({ page, seriousBrowserErrors }) => {
+test("guest account setup imports explicitly, remains editable and can be cleared without blocking learning", async ({ page, seriousBrowserErrors }) => {
   await page.goto("/");
   await page.evaluate((key) => localStorage.setItem(key, JSON.stringify({
     version: 1,
@@ -125,9 +125,9 @@ test("guest preferences import explicitly, remain editable and can be cleared wi
     selectedCourseSlugs: ["higher-maths"],
   })), LEARNER_PREFERENCES_STORAGE_KEY);
   await signIn(page);
-  await expect(page.getByTestId("guest-preferences-import")).toBeVisible();
-  await page.getByRole("button", { name: "Add preferences" }).click();
-  await expect(page.getByTestId("guest-preferences-import")).toHaveCount(0);
+  await expect(page.getByTestId("guest-account-state-import")).toBeVisible();
+  await page.getByRole("button", { name: "Add browser setup" }).click();
+  await expect(page.getByTestId("guest-account-state-import")).toHaveCount(0);
 
   const editor = page.getByTestId("account-learner-preferences");
   await expect(editor.getByLabel("First name")).toHaveValue("Guest name");

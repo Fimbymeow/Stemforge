@@ -109,7 +109,7 @@ test("mobile question interaction reaches the task early and keeps feedback and 
 
   await answer.focus();
   await page.getByRole("button", { name: "Show maths keyboard" }).click();
-  await page.getByRole("group", { name: "Maths keyboard" }).getByRole("button", { name: "x", exact: true }).click();
+  await page.getByRole("group", { name: "Maths keyboard" }).getByRole("button", { name: "Variable x", exact: true }).click();
   await page.getByRole("button", { name: "Power", exact: true }).click();
   await page.getByRole("group", { name: "Maths keyboard" }).getByRole("button", { name: "2", exact: true }).click();
   await expectMathFieldValue(answer, "x^2");

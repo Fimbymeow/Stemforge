@@ -5,6 +5,7 @@ import { useProgressSync } from "@/components/progress-sync-provider";
 import { useModalFocusTrap } from "@/lib/use-modal-focus-trap";
 import { clearGuestLearnerPreferences } from "@/lib/learner-preferences";
 import { clearStudyPlanLocalState } from "@/lib/study-plan/local-state";
+import { ACCOUNT_STATE_SYNC_STORAGE_KEY, clearAssociatedAccountState } from "@/lib/account-state/client-state";
 
 type Confirmation = "association" | "account_progress" | "all_progress" | null;
 
@@ -33,11 +34,14 @@ export function AccountDataControls() {
         setMessage("This browser is no longer linked for sync. Your progress on this browser is unchanged.");
       } else if (action === "account_progress") {
         const removed = await sync.removeCurrentAccountData();
+        if (sync.accountFingerprint && !clearAssociatedAccountState(window.localStorage, sync.accountFingerprint)) throw new Error("account_state_clear_failed");
         setMessage(`${removed} item${removed === 1 ? " was" : "s were"} removed from this browser. Progress that might belong to another account, or whose origin isn't known, was left alone to avoid deleting anything by mistake.`);
       } else {
         await sync.clearAllBrowserProgress();
         if (!clearGuestLearnerPreferences(window.localStorage)) throw new Error("preference_clear_failed");
         if (!clearStudyPlanLocalState(window.localStorage)) throw new Error("study_plan_clear_failed");
+        window.localStorage.removeItem("orthic.confidence.v1");
+        window.localStorage.removeItem(ACCOUNT_STATE_SYNC_STORAGE_KEY);
         setMessage("All Orthic progress and account information was cleared from this browser. Your account's progress, already kept in sync, was not deleted.");
       }
       setConfirmation(null);

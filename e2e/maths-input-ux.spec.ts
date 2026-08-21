@@ -109,7 +109,7 @@ test("rich maths keyboard remains overflow-free at 320px", async ({ page }) => {
   expect(geometry.scroll).toBeLessThanOrEqual(geometry.client);
   const keyboardGeometry = await keyboard.evaluate((element) => ({ scroll: element.scrollWidth, client: element.clientWidth }));
   expect(keyboardGeometry.scroll).toBeLessThanOrEqual(keyboardGeometry.client);
-  for (const name of ["0", "x", "Minus", "Multiply"]) {
+  for (const name of ["0", "Variable x", "Minus", "Multiply"]) {
     const box = await keyboard.getByRole("button", { name, exact: true }).boundingBox();
     expect(box?.height).toBeGreaterThanOrEqual(44);
     expect(box?.width).toBeGreaterThanOrEqual(44);
@@ -126,8 +126,12 @@ test("maths keyboard groups structure and editing controls without affecting Sub
   await expect(structures.getByRole("button", { name: "Power" })).toHaveAttribute("data-key-tier", "structure");
   await expect(editing.getByRole("button", { name: "Move left" })).toHaveAttribute("data-key-tier", "utility");
   await expect(page.getByTestId("maths-keyboard-group-functions")).toHaveCount(0);
+  const variable = keyboard.getByRole("button", { name: "Variable x", exact: true });
+  const multiply = keyboard.getByRole("button", { name: "Multiply", exact: true });
+  await expect(variable).toHaveText("x");
+  await expect(multiply).toHaveText("×");
   await keyboard.getByRole("button", { name: "5", exact: true }).click();
-  await keyboard.getByRole("button", { name: "x", exact: true }).click();
+  await variable.click();
   await keyboard.getByRole("button", { name: "Power", exact: true }).click();
   await keyboard.getByRole("button", { name: "4", exact: true }).click();
   await editing.getByRole("button", { name: "Move left" }).click();

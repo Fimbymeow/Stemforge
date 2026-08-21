@@ -12,6 +12,7 @@ import { PostgresRemoteEvidenceRepository } from "../lib/remote-evidence/postgre
 import { PostgresOwnerMappingRepository } from "../lib/auth/postgres-owner-repository.server";
 import { PostgresAccountDataRepository } from "../lib/account-data/postgres-account-data.server";
 import { PostgresLearnerPreferencesRepository } from "../lib/learner-preferences/postgres-learner-preferences.server";
+import { PostgresAccountStateRepository } from "../lib/account-state/postgres-account-state.server";
 import { PostgresBetaReportRepository, BetaReportRateLimitError } from "../lib/beta-reports/report-repository.server";
 import {
   InternalReportConflictError,
@@ -35,6 +36,7 @@ let repository: PostgresRemoteEvidenceRepository;
 let ownerRepository: PostgresOwnerMappingRepository;
 let accountDataRepository: PostgresAccountDataRepository;
 let learnerPreferencesRepository: PostgresLearnerPreferencesRepository;
+let accountStateRepository: PostgresAccountStateRepository;
 let betaReportRepository: PostgresBetaReportRepository;
 let internalReportRepository: PostgresInternalBetaReportRepository;
 let databaseUrl: string;
@@ -65,6 +67,7 @@ before(async () => {
   ownerRepository = new PostgresOwnerMappingRepository(pool);
   accountDataRepository = new PostgresAccountDataRepository(pool);
   learnerPreferencesRepository = new PostgresLearnerPreferencesRepository(pool);
+  accountStateRepository = new PostgresAccountStateRepository(pool);
   betaReportRepository = new PostgresBetaReportRepository(pool);
   internalReportRepository = new PostgresInternalBetaReportRepository(pool);
 });
@@ -93,6 +96,65 @@ test("clean migrations create dedicated mutable learner preferences", async () =
     WHERE table_schema = 'stemforge_account_data' AND table_name = 'learner_preferences'
   `);
   assert.deepEqual(result.rows.map((row) => row.table_name), ["learner_preferences"]);
+});
+
+test("clean migrations create owner-scoped account learner state without generated plans", async () => {
+  const result = await pool.query<{ table_name: string }>(`
+    SELECT table_name FROM information_schema.tables WHERE table_schema='stemforge_account_data'
+      AND table_name IN ('study_plan_settings','learner_assessments','learner_confidence','study_plan_item_states')
+    ORDER BY table_name
+  `);
+  assert.deepEqual(result.rows.map((row) => row.table_name), ["learner_assessments", "learner_confidence", "study_plan_item_states", "study_plan_settings"]);
+  assert.equal(result.rows.some((row) => /weekly_plan|snapshot/.test(row.table_name)), false);
+});
+
+test("account learner state is owner isolated and merges independent device item mutations", async () => {
+  const ownerA = await ownerId();
+  const ownerB = await ownerId();
+  const first = "2026-08-17T10:00:00.000Z";
+  await accountStateRepository.apply(ownerA, [
+    { kind: "settings_replace", settings: { weeklyMinutes: 240, availableDays: ["mon", "wed", "sat"] }, changedAt: first },
+    { kind: "assessment_upsert", assessment: { id: "assessment:db-stable", courseSlug: "higher-maths", type: "class_test", title: "Calculus test",
+      date: { precision: "exact", date: "2026-09-10" }, scope: { kind: "skills", skillPathIds: ["chain-rule"] }, source: "learner" }, changedAt: first },
+    { kind: "confidence_upsert", skillPathId: "chain-rule", level: "developing", setAt: first, changedAt: first },
+    { kind: "override_upsert", override: { skillPathId: "chain-rule", learnerLevel: "developing", suggestedLevel: "needs_work",
+      evidenceFingerprint: "evidence-v1", decidedAt: first }, changedAt: first },
+    { kind: "plan_item_upsert", item: { itemKey: "item-a", weekStart: "2026-08-17", plannerVersion: 1,
+      state: "completed", movedDate: null, excluded: false, unscheduled: false }, changedAt: first },
+  ]);
+  await accountStateRepository.apply(ownerA, [{ kind: "plan_item_upsert", item: { itemKey: "item-b", weekStart: "2026-08-17", plannerVersion: 1,
+    state: null, movedDate: "2026-08-19", excluded: false, unscheduled: false }, changedAt: "2026-08-17T10:01:00.000Z" }]);
+  const state = await accountStateRepository.read(ownerA);
+  assert.equal(state.settings?.weeklyMinutes, 240);
+  assert.equal(state.assessments[0].assessment.id, "assessment:db-stable");
+  assert.equal(state.ratings[0].level, "developing");
+  assert.equal(state.overrides[0].evidenceFingerprint, "evidence-v1");
+  assert.deepEqual(state.planItems.map((item) => [item.itemKey, item.state, item.movedDate]), [
+    ["item-a", "completed", null], ["item-b", null, "2026-08-19"],
+  ]);
+  assert.deepEqual(await accountStateRepository.read(ownerB), { settings: null, assessments: [], ratings: [], overrides: [], planItems: [] });
+});
+
+test("assessment deletion and per-record timestamps prevent stale resurrection", async () => {
+  const owner = await ownerId();
+  const assessment = { id: "assessment:delete", courseSlug: "higher-maths", type: "prelim" as const, title: "Prelim",
+    date: { precision: "month" as const, year: 2027, month: 1 }, scope: { kind: "whole_course" as const }, source: "learner" as const };
+  await accountStateRepository.apply(owner, [{ kind: "assessment_upsert", assessment, changedAt: "2026-08-17T10:00:00.000Z" }]);
+  await accountStateRepository.apply(owner, [{ kind: "assessment_delete", assessmentId: assessment.id, changedAt: "2026-08-17T10:02:00.000Z" }]);
+  await accountStateRepository.apply(owner, [{ kind: "assessment_upsert", assessment: { ...assessment, title: "Stale title" }, changedAt: "2026-08-17T10:01:00.000Z" }]);
+  assert.deepEqual((await accountStateRepository.read(owner)).assessments, []);
+  const tombstone = await pool.query<{ title: string | null; content_fingerprint: string | null }>(
+    "SELECT title,content_fingerprint FROM stemforge_account_data.learner_assessments WHERE owner_id=$1 AND assessment_id=$2", [owner, assessment.id]);
+  assert.deepEqual(tombstone.rows[0], { title: null, content_fingerprint: null });
+});
+
+test("account learner-state writes reject a stale account generation", async () => {
+  const owner = await ownerId();
+  await assert.rejects(
+    accountStateRepository.apply(owner, [{ kind: "settings_replace", settings: { weeklyMinutes: 120, availableDays: ["mon"] }, changedAt: "2026-08-17T10:00:00.000Z" }], "2"),
+    (error) => error instanceof AccountDataAccessError && error.code === "account_generation_mismatch",
+  );
+  assert.equal((await accountStateRepository.read(owner)).settings, null);
 });
 
 test("learner preferences replace and conservatively merge guest state", async () => {
@@ -639,6 +701,12 @@ test("scheduled erasure pauses account writes and cancellation restores active g
 test("processing erasure hard-deletes retained evidence and advances generation", async () => {
   const owner = await ownerId();
   await learnerPreferencesRepository.replace(owner, { version: 1, firstName: "Erase", namePromptDismissed: true, selectedCourseSlugs: ["higher-maths"] });
+  await accountStateRepository.apply(owner, [
+    { kind: "settings_replace", settings: { weeklyMinutes: 180, availableDays: ["mon", "thu"] }, changedAt: "2026-08-17T10:00:00.000Z" },
+    { kind: "confidence_upsert", skillPathId: "chain-rule", level: "confident", setAt: "2026-08-17T10:00:00.000Z", changedAt: "2026-08-17T10:00:00.000Z" },
+    { kind: "plan_item_upsert", item: { itemKey: "erase-item", weekStart: "2026-08-17", plannerVersion: 1,
+      state: "completed", movedDate: null, excluded: false, unscheduled: false }, changedAt: "2026-08-17T10:00:00.000Z" },
+  ]);
   const accepted = attempt({ eventId: "attempt_erasure_delete", answer: "accepted" });
   const conflict = attempt({ eventId: "attempt_erasure_delete", answer: "conflict" });
   await repository.append(owner, batch(
@@ -667,6 +735,7 @@ test("processing erasure hard-deletes retained evidence and advances generation"
   assert.equal(state.generation, "2");
   assert.equal(await evidenceRowCountForOwner(owner), "0");
   assert.deepEqual(await learnerPreferencesRepository.read(owner), { version: 1, firstName: null, namePromptDismissed: false, selectedCourseSlugs: [] });
+  assert.deepEqual(await accountStateRepository.read(owner), { settings: null, assessments: [], ratings: [], overrides: [], planItems: [] });
   await assert.rejects(
     repository.append(owner, batch([attempt({ eventId: "attempt_after_erase_stale" })]), "1"),
     (error) => error instanceof AccountDataAccessError && error.code === "account_generation_mismatch",
