@@ -6,6 +6,7 @@ import { formatAssessmentListDate } from "@/components/study-plan/study-plan-ite
 import { useModalFocusTrap } from "@/lib/use-modal-focus-trap";
 import { presentAssessmentScopeSummary } from "@/lib/study-plan/presenter";
 import { studyPlanCourseOptions, studyPlanScopeOptions } from "@/lib/study-plan/scope-options";
+import { MAX_WEEKLY_HOURS, MIN_WEEKLY_HOURS, minutesToWeeklyHours, WEEKLY_TIME_HOUR_STEP, weeklyHoursToMinutes } from "@/lib/study-plan/weekly-time";
 import type { StudyPlanSetup } from "@/lib/study-plan/local-state";
 import type { Assessment, AssessmentType, StudyPlanWeekday } from "@/lib/study-plan/types";
 
@@ -37,7 +38,7 @@ export function StudyPlanSettingsDialog({ open, onClose, courseSlug, courseName,
   initial: StudyPlanSetup | null;
   onSave: (setup: StudyPlanSetup) => void;
 }) {
-  const [weeklyMinutes, setWeeklyMinutes] = useState(initial?.weeklyMinutes ?? 90);
+  const [weeklyHours, setWeeklyHours] = useState(() => minutesToWeeklyHours(initial?.weeklyMinutes ?? 90));
   const [availableDays, setAvailableDays] = useState<StudyPlanWeekday[]>(initial?.availableDays ?? ["mon", "wed", "sat"]);
   const [assessments, setAssessments] = useState<Assessment[]>(initial?.assessments ?? []);
   const [view, setView] = useState<DialogView>("settings");
@@ -53,7 +54,7 @@ export function StudyPlanSettingsDialog({ open, onClose, courseSlug, courseName,
   // previous open-then-cancel cycle never leaks into the next one.
   useEffect(() => {
     if (!open) return;
-    setWeeklyMinutes(initial?.weeklyMinutes ?? 90);
+    setWeeklyHours(minutesToWeeklyHours(initial?.weeklyMinutes ?? 90));
     setAvailableDays(initial?.availableDays ?? ["mon", "wed", "sat"]);
     setAssessments(initial?.assessments ?? []);
     setView("settings");
@@ -79,7 +80,7 @@ export function StudyPlanSettingsDialog({ open, onClose, courseSlug, courseName,
 
   function submitSettings(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    onSave({ weeklyMinutes, availableDays, assessments });
+    onSave({ weeklyMinutes: weeklyHoursToMinutes(weeklyHours), availableDays, assessments });
     onClose();
   }
 
@@ -108,8 +109,21 @@ export function StudyPlanSettingsDialog({ open, onClose, courseSlug, courseName,
 
             <form onSubmit={submitSettings} className="mt-5 grid gap-5">
               <label className="grid max-w-xs gap-1 text-sm font-bold">
-                Minutes each week
-                <input aria-label="Minutes each week" type="number" min={15} max={10080} step={5} required value={weeklyMinutes} onChange={(event) => setWeeklyMinutes(event.currentTarget.valueAsNumber)} className={inputClass} />
+                Weekly study time
+                <div className="flex items-center gap-2">
+                  <input
+                    aria-label="Weekly study time in hours"
+                    type="number"
+                    min={MIN_WEEKLY_HOURS}
+                    max={MAX_WEEKLY_HOURS}
+                    step={WEEKLY_TIME_HOUR_STEP}
+                    required
+                    value={weeklyHours}
+                    onChange={(event) => setWeeklyHours(event.currentTarget.valueAsNumber)}
+                    className={`${inputClass} w-24`}
+                  />
+                  <span className="text-sm font-bold text-muted">hours per week</span>
+                </div>
               </label>
 
               <fieldset>
@@ -167,7 +181,7 @@ export function StudyPlanSettingsDialog({ open, onClose, courseSlug, courseName,
               </div>
 
               <div className="flex flex-wrap gap-2">
-                <button type="submit" disabled={availableDays.length === 0 || !Number.isFinite(weeklyMinutes)} className="min-h-11 rounded-lg bg-forge px-5 text-sm font-extrabold text-white disabled:opacity-50">{initial ? "Save plan" : "Create my plan"}</button>
+                <button type="submit" disabled={availableDays.length === 0 || !Number.isFinite(weeklyHours) || weeklyHours <= 0} className="min-h-11 rounded-lg bg-forge px-5 text-sm font-extrabold text-white disabled:opacity-50">{initial ? "Save plan" : "Create my plan"}</button>
                 <button type="button" onClick={onClose} className="min-h-11 rounded-lg border border-line px-5 text-sm font-extrabold">Cancel</button>
               </div>
             </form>

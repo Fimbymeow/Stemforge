@@ -23,7 +23,7 @@ test.describe("feature-flagged Study Plan Today", () => {
     const setup = page.getByTestId("study-plan-setup");
     await expect(setup.getByRole("heading", { name: "Plan your study week" })).toBeVisible();
     for (const day of ["Tuesday", "Thursday", "Friday", "Sunday"]) await setup.getByTitle(day).click();
-    await setup.getByLabel("Minutes each week").fill("90");
+    await setup.getByLabel("Weekly study time in hours").fill("1.5");
     await setup.getByRole("button", { name: "Create my plan" }).click();
 
     const today = page.getByTestId("study-plan-today");

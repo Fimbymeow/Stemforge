@@ -31,6 +31,36 @@ test("the synthetic contract exposes its complete structured keyboard through th
   await expect(keyboard.getByRole("button", { name: ")", exact: true })).toBeVisible();
 });
 
+test("the variable x is grouped separately from multiplication with distinct accessible names", async ({ page }) => {
+  await page.goto(fixtureHref("sin"));
+  await richField(page);
+  await page.getByRole("button", { name: "Show maths keyboard" }).click();
+  const keyboard = page.getByRole("group", { name: "Maths keyboard" });
+
+  // Still exactly 4 top-level sections (Basic, Structures, Functions, Editing) — the variable
+  // lives inside Basic as a labelled sub-cluster, not a new competing top-level section.
+  await expect(keyboard.locator("section")).toHaveCount(4);
+
+  const variableGroup = page.getByTestId("maths-keyboard-variables");
+  await expect(variableGroup).toBeVisible();
+  await expect(variableGroup.getByText("Variable", { exact: true })).toBeVisible();
+
+  const variableKey = keyboard.getByRole("button", { name: "Variable x", exact: true });
+  await expect(variableKey).toBeVisible();
+  await expect(variableKey).toHaveText("x");
+
+  const multiplyKey = keyboard.getByRole("button", { name: "Multiply", exact: true });
+  await expect(multiplyKey).toBeVisible();
+  await expect(multiplyKey).toHaveText("×");
+
+  // The two keys must not be the same element and must not share an accessible name.
+  expect(await variableKey.evaluate((node) => node.outerHTML)).not.toEqual(await multiplyKey.evaluate((node) => node.outerHTML));
+
+  const field = await richField(page);
+  await variableKey.click();
+  await expect.poll(() => field.evaluate((node) => (node as HTMLElement & { getValue(format: string): string }).getValue("latex"))).toContain("x");
+});
+
 test("elementary expressions normalize and mark through the real rich editor", async ({ page }) => {
   const cases = [
     { caseId: "sin", correct: "3\\sin(x)", canonical: "3sin(x)", wrong: "3\\cos(x)" },

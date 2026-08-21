@@ -156,13 +156,20 @@ export function RichMathAnswerField({ value, onChange, capabilities, disabled, i
               {capabilities.numericLiterals ? <span aria-hidden="true" /> : null}
               {capabilities.numericLiterals ? <Key label="0" onClick={() => insert("0")} /> : null}
             </div>
-            <div className="grid grid-cols-2 content-start gap-1.5 max-[340px]:grid-cols-3">
-              {capabilities.variable ? <Key label="x" onClick={() => insert("x")} /> : null}
-              {capabilities.additionSubtraction ? <Key label="+" onClick={() => insert("+")} /> : null}
-              {capabilities.additionSubtraction ? <Key label="−" accessibleLabel="Minus" onClick={() => insert("-")} /> : null}
-              {capabilities.multiplication ? <Key label="×" accessibleLabel="Multiply" onClick={() => insert("\\cdot ")} /> : null}
-              {capabilities.brackets ? <Key label="(" onClick={() => insert("(")} /> : null}
-              {capabilities.brackets ? <Key label=")" onClick={() => insert(")")} /> : null}
+            <div className="grid content-start gap-2">
+              {capabilities.variable ? (
+                <div data-testid="maths-keyboard-variables">
+                  <p className="mb-1 text-[10px] font-extrabold uppercase tracking-wide text-muted">Variable</p>
+                  <Key label="x" accessibleLabel="Variable x" onClick={() => insert("x")} />
+                </div>
+              ) : null}
+              <div className={`grid grid-cols-2 gap-1.5 max-[340px]:grid-cols-3 ${capabilities.variable ? "border-t border-line pt-2" : ""}`}>
+                {capabilities.additionSubtraction ? <Key label="+" onClick={() => insert("+")} /> : null}
+                {capabilities.additionSubtraction ? <Key label="−" accessibleLabel="Minus" onClick={() => insert("-")} /> : null}
+                {capabilities.multiplication ? <Key label="×" accessibleLabel="Multiply" onClick={() => insert("\\cdot ")} /> : null}
+                {capabilities.brackets ? <Key label="(" onClick={() => insert("(")} /> : null}
+                {capabilities.brackets ? <Key label=")" onClick={() => insert(")")} /> : null}
+              </div>
             </div>
           </KeyboardGroup>
 
