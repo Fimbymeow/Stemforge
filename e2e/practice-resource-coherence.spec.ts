@@ -22,7 +22,7 @@ test("Quick Practice starts one deterministic untimed session without creating a
       progress: localStorage.getItem(progressKey),
     };
   }, { sessionKey: PRACTICE_SESSIONS_STORAGE_KEY, progressKey: STORAGE_KEY });
-  expect(stored).toMatchObject({ mode: "targeted", timing: { type: "untimed" }, count: 6, progress: null });
+  expect(stored).toMatchObject({ mode: "targeted", timing: { type: "untimed" }, count: 4, progress: null });
   expect(stored.versions.every((version: number) => version > 0)).toBe(true);
   expect(seriousBrowserErrors).toEqual([]);
 });

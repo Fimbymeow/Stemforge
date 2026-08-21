@@ -2,12 +2,17 @@ import { canonicalContent, type CanonicalContentSource } from "@/data/canonical-
 import type { Flashcard, FormulaCard, NoteBlock, Question, SkillPath, WorkedExample } from "@/data/types";
 import { contentResolver, createContentResolver } from "@/lib/content-resolver";
 import { getActiveRecords } from "@/lib/content-selectors";
-import { deriveLearnerNextAction } from "@/lib/learning/next-action";
-import { createPracticeSessionSelection } from "@/lib/practice/practice-selection";
-import type { PracticeSelectionResult } from "@/lib/practice/practice-types";
+import {
+  createAdaptiveQuickPracticeSelection,
+  quickPracticeQuestionCount,
+  type AdaptiveQuickPracticeSelection,
+  type QuickPracticeDurationMinutes,
+} from "@/lib/practice/adaptive-practice";
 import type { ProgressEvidence } from "@/lib/progress/types";
+import type { ConfidenceLevel } from "@/lib/confidence/types";
+import type { Assessment } from "@/lib/study-plan/types";
 
-export const QUICK_PRACTICE_QUESTION_COUNT = 6;
+export const QUICK_PRACTICE_QUESTION_COUNT = quickPracticeQuestionCount(20);
 
 export type StudyResourceType = "revision-notes" | "formula-cards" | "worked-examples" | "flashcards";
 export type StudyResource = NoteBlock | FormulaCard | WorkedExample | Flashcard;
@@ -20,46 +25,19 @@ export type StudyResourceLink = {
   href: string;
 };
 
-export type QuickPracticeSelection = {
-  path: SkillPath | null;
-  result: PracticeSelectionResult;
-};
+export type QuickPracticeSelection = AdaptiveQuickPracticeSelection;
 
 export function createQuickPracticeSelection(input: {
   evidence: ProgressEvidence;
   preferredPathId?: string | null;
   source?: CanonicalContentSource;
   now?: Date;
+  assessments?: readonly Assessment[];
+  learnerConfidence?: ReadonlyMap<string, ConfidenceLevel>;
+  durationMinutes?: QuickPracticeDurationMinutes;
+  seed?: string;
 }): QuickPracticeSelection {
-  const source = input.source ?? canonicalContent;
-  const resolver = input.source ? createContentResolver(source) : contentResolver;
-  const available = resolver.getAllPathContexts().filter((context) => context.skillPath.isAvailable);
-  const canonicalAction = deriveLearnerNextAction({ evidence: input.evidence, source });
-  const preferredPathId = input.preferredPathId ?? canonicalAction.pathId;
-  const context = available.find((candidate) => candidate.skillPath.slug === preferredPathId) ?? available[0];
-
-  if (!context) {
-    return {
-      path: null,
-      result: { session: null, eligibleQuestions: [], excludedByReason: {}, shortageReason: "No questions are available for practice yet." },
-    };
-  }
-
-  return {
-    path: context.skillPath,
-    result: createPracticeSessionSelection({
-      origin: "quick_practice",
-      mode: "targeted",
-      courseId: context.courseArea.slug,
-      selectedPathIds: [context.skillPath.slug],
-      requestedCount: QUICK_PRACTICE_QUESTION_COUNT,
-      seed: `quick-practice:${context.skillPath.slug}`,
-      evidence: input.evidence,
-      source,
-      now: input.now,
-      timing: { type: "untimed" },
-    }),
-  };
+  return createAdaptiveQuickPracticeSelection(input);
 }
 
 export function getRelatedResourcesForQuestion(

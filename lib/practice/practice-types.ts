@@ -97,6 +97,10 @@ export type PracticeSelectionInput = {
   seed: string;
   timing?: PracticeTiming;
   now?: Date;
+  /** Quick Practice only: prefer these paths in order without changing manual-mode semantics. */
+  pathPriority?: readonly string[];
+  /** Quick Practice only: try alternate questions before these exact recent mistakes. */
+  deferredQuestionIds?: readonly string[];
 };
 
 export type PracticeSelectionResult = {

@@ -10,11 +10,19 @@ import { usePracticeActivation } from "@/components/practice/use-practice-activa
 import { Card } from "@/components/ui";
 import { contentResolver } from "@/lib/content-resolver";
 import { getEmptyProgressEvidence, getProgressEvidence } from "@/lib/local-progress";
+import { readConfidenceLocalState } from "@/lib/confidence/local-state";
+import {
+  QUICK_PRACTICE_DURATION_OPTIONS,
+  type QuickPracticeDurationMinutes,
+  type QuickPracticeReason,
+} from "@/lib/practice/adaptive-practice";
 import { createPracticeSessionSelection } from "@/lib/practice/practice-selection";
 import { derivePracticeSetupVisibility, deriveVisiblePracticeModes } from "@/lib/practice/practice-setup";
 import { MAX_PRACTICE_QUESTIONS, type PracticeMode, type PracticeTiming } from "@/lib/practice/practice-types";
 import { useHasMounted } from "@/lib/use-mounted";
 import { createReviewSessionSelection } from "@/lib/review/selection";
+import { readStudyPlanLocalState } from "@/lib/study-plan/local-state";
+import { createQuickPracticeSelection } from "@/lib/study-context";
 
 type ConfigurablePracticeMode = Exclude<PracticeMode, "review">;
 
@@ -54,6 +62,7 @@ export function PracticeSetup({
   const [questionCount, setQuestionCount] = useState(6);
   const [timed, setTimed] = useState(false);
   const [timeLimitMinutes, setTimeLimitMinutes] = useState(15);
+  const [quickDuration, setQuickDuration] = useState<QuickPracticeDurationMinutes>(20);
   const selectedPathIds = mode === "mixed" ? availablePaths.map((context) => context.skillPath.slug) : selectedPathId ? [selectedPathId] : [];
   const needsWorkPreview = createPracticeSessionSelection({
     origin: sessionOrigin,
@@ -101,6 +110,15 @@ export function PracticeSetup({
   const reviewPreview = createReviewSessionSelection({
     evidence,
     targetPathId: workingContextPathId ?? undefined,
+  });
+  const localStudyPlan = hasMounted ? readStudyPlanLocalState(window.localStorage) : null;
+  const localConfidence = hasMounted ? readConfidenceLocalState(window.localStorage) : null;
+  const quickPreview = createQuickPracticeSelection({
+    evidence,
+    preferredPathId: workingContextPathId,
+    durationMinutes: quickDuration,
+    assessments: localStudyPlan?.setup?.assessments ?? [],
+    learnerConfidence: new Map(Object.values(localConfidence?.ratings ?? {}).map((rating) => [rating.skillPathId, rating.level])),
   });
 
   function startConfiguredSession() {
@@ -196,14 +214,58 @@ export function PracticeSetup({
         </header>
 
         <Card className="border-forge/30 bg-white p-5" data-testid="practice-quick-card">
-          <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4 max-md:grid-cols-1">
+          <div className="grid grid-cols-[auto_1fr] items-start gap-4 max-md:grid-cols-[auto_1fr]">
             <span className="grid size-10 place-items-center rounded-lg bg-forge-soft text-forge"><Target className="size-5" /></span>
             <div>
               <p className="mb-1 text-xs font-extrabold uppercase text-forge">Recommended</p>
               <h2 className="m-0 text-xl font-extrabold">Quick Practice</h2>
-              <p className="mt-1 text-sm text-muted">Six untimed questions picked from what you&apos;re working on right now.</p>
+              {quickPreview.recommendation ? (
+                <p className="mt-1 text-sm text-muted" data-testid="quick-practice-recommendation">
+                  <strong className="text-ink">{quickPreview.recommendation.primarySkillName}</strong>
+                  {" — "}{quickReasonCopy(quickPreview.recommendation.reasons, quickPreview.recommendation.assessment?.title)}.
+                </p>
+              ) : (
+                <p className="mt-1 text-sm text-muted">Orthic will choose a useful set from the practice available now.</p>
+              )}
             </div>
-            <QuickPracticeAction className="max-md:w-full" preferredPathId={workingContextPathId} />
+          </div>
+
+          {quickPreview.reviewOffer ? (
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line bg-paper px-4 py-3" data-testid="quick-practice-review-advisory">
+              <p className="text-sm text-muted">
+                <strong className="text-ink">Review due: {quickPreview.reviewOffer.skillName}</strong>
+                <span className="ml-1">Scheduled Review stays separate from this practice.</span>
+              </p>
+              <Link href={quickPreview.reviewOffer.href} className="inline-flex min-h-10 items-center font-extrabold text-forge">Start Review</Link>
+            </div>
+          ) : null}
+
+          <div className="mt-5 flex items-end justify-between gap-4 max-md:grid">
+            <fieldset>
+              <legend className="mb-2 text-sm font-extrabold">Choose a session length</legend>
+              <div className="inline-flex rounded-lg border border-line bg-paper p-1" data-testid="quick-practice-duration-options">
+                {QUICK_PRACTICE_DURATION_OPTIONS.map((minutes) => (
+                  <button
+                    key={minutes}
+                    type="button"
+                    aria-pressed={quickDuration === minutes}
+                    onClick={() => setQuickDuration(minutes)}
+                    className={`min-h-10 rounded-md px-3 text-sm font-extrabold ${quickDuration === minutes ? "bg-white text-forge shadow-sm" : "text-muted"}`}
+                  >
+                    {minutes} min
+                  </button>
+                ))}
+              </div>
+              <p className="mt-2 text-xs text-muted">
+                About {quickPreview.recommendation?.requestedCount ?? 0} question{quickPreview.recommendation?.requestedCount === 1 ? "" : "s"}; fewer if suitable content is limited.
+              </p>
+            </fieldset>
+            <QuickPracticeAction
+              className="max-md:w-full"
+              preferredPathId={workingContextPathId}
+              durationMinutes={quickDuration}
+              preview={quickPreview}
+            />
           </div>
         </Card>
 
@@ -300,6 +362,15 @@ export function PracticeSetup({
       {activation.activationUi}
     </AppShell>
   );
+}
+
+function quickReasonCopy(reasons: readonly QuickPracticeReason[], assessmentTitle?: string) {
+  return reasons.map((reason) => {
+    if (reason === "open_mistake") return "recent mistake";
+    if (reason === "on_your_test") return assessmentTitle ? `on ${assessmentTitle}` : "on your upcoming test";
+    if (reason === "you_marked_needs_work") return "you marked this as Needs work";
+    return "the clearest next step in your learning";
+  }).join(" · ");
 }
 
 function timing(timed: boolean, minutes: number): PracticeTiming {

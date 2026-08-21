@@ -3,9 +3,12 @@
 import { useMemo } from "react";
 import { ArrowRight } from "lucide-react";
 import { usePracticeActivation } from "@/components/practice/use-practice-activation";
+import { readConfidenceLocalState } from "@/lib/confidence/local-state";
 import { getEmptyProgressEvidence, getProgressEvidence } from "@/lib/local-progress";
 import { deriveLearnerNextAction } from "@/lib/learning/next-action";
-import { createQuickPracticeSelection } from "@/lib/study-context";
+import type { QuickPracticeDurationMinutes } from "@/lib/practice/adaptive-practice";
+import { readStudyPlanLocalState } from "@/lib/study-plan/local-state";
+import { createQuickPracticeSelection, type QuickPracticeSelection } from "@/lib/study-context";
 import { useHasMounted } from "@/lib/use-mounted";
 
 export function QuickPracticeAction({
@@ -14,26 +17,25 @@ export function QuickPracticeAction({
   label = "Start Quick Practice",
   testId = "quick-practice-action",
   describedBy,
+  durationMinutes = 20,
+  preview,
 }: {
   preferredPathId?: string | null;
   className?: string;
   label?: string;
   testId?: string;
   describedBy?: string;
+  durationMinutes?: QuickPracticeDurationMinutes;
+  preview?: QuickPracticeSelection;
 }) {
   const activation = usePracticeActivation();
   const hasMounted = useHasMounted();
   const evidence = hasMounted ? getProgressEvidence() : getEmptyProgressEvidence();
   const nextAction = deriveLearnerNextAction({ evidence });
-  const quick = useMemo(
-    () => createQuickPracticeSelection({ evidence, preferredPathId: preferredPathId ?? nextAction.pathId }),
-    [evidence, nextAction.pathId, preferredPathId],
-  );
+  const quick = useMemo(() => preview ?? createSelection(evidence, preferredPathId ?? nextAction.pathId, durationMinutes, hasMounted),
+    [durationMinutes, evidence, hasMounted, nextAction.pathId, preferredPathId, preview]);
   function begin() {
-    const selection = createQuickPracticeSelection({
-      evidence: getProgressEvidence(),
-      preferredPathId: preferredPathId ?? nextAction.pathId,
-    });
+    const selection = createSelection(getProgressEvidence(), preferredPathId ?? nextAction.pathId, durationMinutes, true);
     if (!selection.result.session) return;
     void activation.begin(selection.result.session);
   }
@@ -55,4 +57,24 @@ export function QuickPracticeAction({
       {activation.activationUi}
     </>
   );
+}
+
+function createSelection(
+  evidence: ReturnType<typeof getProgressEvidence>,
+  preferredPathId: string | null,
+  durationMinutes: QuickPracticeDurationMinutes,
+  canReadBrowserState: boolean,
+) {
+  if (!canReadBrowserState || typeof window === "undefined") {
+    return createQuickPracticeSelection({ evidence, preferredPathId, durationMinutes });
+  }
+  const studyPlan = readStudyPlanLocalState(window.localStorage);
+  const confidence = readConfidenceLocalState(window.localStorage);
+  return createQuickPracticeSelection({
+    evidence,
+    preferredPathId,
+    durationMinutes,
+    assessments: studyPlan.setup?.assessments ?? [],
+    learnerConfidence: new Map(Object.values(confidence.ratings).map((rating) => [rating.skillPathId, rating.level])),
+  });
 }

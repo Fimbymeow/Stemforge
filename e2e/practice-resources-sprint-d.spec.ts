@@ -96,7 +96,7 @@ test("Practice destinations reuse Quick Practice and preserve Question Bank acce
     const session = store.sessions.find((item: { sessionId: string }) => item.sessionId === store.activeSessionId);
     return { mode: session.mode, timing: session.timing.type, count: session.questionReferences.length };
   }, PRACTICE_SESSIONS_STORAGE_KEY);
-  expect(quick).toEqual({ mode: "targeted", timing: "untimed", count: 6 });
+  expect(quick).toEqual({ mode: "targeted", timing: "untimed", count: 4 });
 
   await page.evaluate((key) => localStorage.removeItem(key), PRACTICE_SESSIONS_STORAGE_KEY);
   await page.goto("/subjects/higher-maths");

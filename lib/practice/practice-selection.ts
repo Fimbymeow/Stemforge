@@ -35,7 +35,16 @@ export function createPracticeSessionSelection(
     ? courseFiltered.filter((item) => input.selectedPathIds.includes(item.reference.pathId))
     : courseFiltered;
   const candidates = filterForMode(input.mode, pathFiltered, input.evidence, source);
-  const selected = selectForMode(input.mode, candidates, requestedCount, input.seed, input.evidence);
+  const selected = selectForMode(
+    input.mode,
+    candidates,
+    requestedCount,
+    input.seed,
+    input.evidence,
+    now,
+    input.pathPriority,
+    input.deferredQuestionIds,
+  );
   const shortageReason = selected.length === 0
     ? emptyReason(input.mode)
     : selected.length < requestedCount
@@ -190,15 +199,18 @@ function selectForMode(
   requestedCount: number,
   seed: string,
   evidence: ProgressEvidence,
+  now: Date,
+  pathPriority?: readonly string[],
+  deferredQuestionIds?: readonly string[],
 ) {
-  if (mode === "mixed") return balancedSelection(candidates, requestedCount, seed, evidence);
-  return prioritySelection(candidates, requestedCount, seed, evidence);
+  if (mode === "mixed") return balancedSelection(candidates, requestedCount, seed, evidence, now);
+  return prioritySelection(candidates, requestedCount, seed, evidence, now, pathPriority, deferredQuestionIds);
 }
 
-function balancedSelection(candidates: EligiblePracticeQuestion[], requestedCount: number, seed: string, evidence: ProgressEvidence) {
+function balancedSelection(candidates: EligiblePracticeQuestion[], requestedCount: number, seed: string, evidence: ProgressEvidence, now: Date) {
   const byPath = new Map<string, EligiblePracticeQuestion[]>();
   for (const candidate of candidates) byPath.set(candidate.reference.pathId, [...(byPath.get(candidate.reference.pathId) ?? []), candidate]);
-  for (const [pathId, pool] of byPath) byPath.set(pathId, prioritySelection(pool, pool.length, `${seed}:${pathId}`, evidence));
+  for (const [pathId, pool] of byPath) byPath.set(pathId, prioritySelection(pool, pool.length, `${seed}:${pathId}`, evidence, now));
   const selected: EligiblePracticeQuestion[] = [];
   const pathIds = shuffle([...byPath.keys()].sort(), seed);
   while (selected.length < requestedCount && [...byPath.values()].some((pool) => pool.length)) {
@@ -211,22 +223,45 @@ function balancedSelection(candidates: EligiblePracticeQuestion[], requestedCoun
   return selected;
 }
 
-function prioritySelection(candidates: EligiblePracticeQuestion[], requestedCount: number, seed: string, evidence: ProgressEvidence) {
+function prioritySelection(
+  candidates: EligiblePracticeQuestion[],
+  requestedCount: number,
+  seed: string,
+  evidence: ProgressEvidence,
+  now: Date,
+  pathPriority: readonly string[] = [],
+  deferredQuestionIds: readonly string[] = [],
+) {
+  const pathOrder = new Map(pathPriority.map((pathId, index) => [pathId, index]));
+  const deferred = new Set(deferredQuestionIds);
   return [...candidates]
-    .sort((left, right) => scoreQuestion(right, evidence) - scoreQuestion(left, evidence) || seededCompare(left.reference.questionId, right.reference.questionId, seed))
+    .sort((left, right) =>
+      (pathOrder.get(left.reference.pathId) ?? Number.MAX_SAFE_INTEGER)
+        - (pathOrder.get(right.reference.pathId) ?? Number.MAX_SAFE_INTEGER)
+      || Number(deferred.has(left.reference.questionId)) - Number(deferred.has(right.reference.questionId))
+      || scoreQuestion(right, evidence, now) - scoreQuestion(left, evidence, now)
+      || seededCompare(left.reference.questionId, right.reference.questionId, seed))
     .slice(0, requestedCount);
 }
 
-function scoreQuestion(candidate: EligiblePracticeQuestion, evidence: ProgressEvidence) {
+function scoreQuestion(candidate: EligiblePracticeQuestion, evidence: ProgressEvidence, now: Date) {
   const progress = getQuestionProgressForVersion(candidate.reference.questionId, candidate.reference.questionVersion, evidence, candidate.reference.pathId);
   const latest = latestCurrentGradedAttempt(candidate, evidence);
   let score = 0;
   if (!latest) score += 1000;
   if (latest && isGradedIncorrectAttempt(latest)) score += 500;
   if (progress.reviewRecommended) score += 350;
-  if (latest) score -= Math.max(0, Math.floor(Date.parse(latest.attemptedAt) / 86400000) % 300);
+  if (latest) score -= questionRecencyPenalty(latest.attemptedAt, now);
   score -= candidate.question.displayOrder ?? 0;
   return score;
+}
+
+/** A recent exposure is deprioritised most; the penalty decreases monotonically to zero at 300 days. */
+export function questionRecencyPenalty(attemptedAt: string, now: Date): number {
+  const attempted = Date.parse(attemptedAt);
+  if (!Number.isFinite(attempted)) return 0;
+  const ageDays = Math.max(0, Math.floor((now.getTime() - attempted) / 86_400_000));
+  return Math.max(0, 300 - ageDays);
 }
 
 function latestCurrentGradedAttempt(candidate: EligiblePracticeQuestion, evidence: ProgressEvidence) {

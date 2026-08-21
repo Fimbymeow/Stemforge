@@ -11,7 +11,7 @@ import {
 } from "../lib/study-context";
 import { isPracticeSession } from "../lib/practice/practice-validation";
 
-test("Quick Practice selects the preferred available path with a short untimed pinned session", () => {
+test("Quick Practice focuses the preferred path and does not pad a sparse session with unrelated work", () => {
   const source = createTwoPathFixture();
   const quick = createQuickPracticeSelection({
     evidence: evidence(),
@@ -26,7 +26,12 @@ test("Quick Practice selects the preferred available path with a short untimed p
   assert.equal(isPracticeSession(quick.result.session), true);
   assert.equal(quick.result.session?.timing.type, "untimed");
   assert.equal(quick.result.session?.selectionMetadata.requestedCount, QUICK_PRACTICE_QUESTION_COUNT);
-  assert(quick.result.session?.questionReferences.every((reference) => reference.pathId === fixtureIds.path));
+  assert.deepEqual(
+    quick.result.session?.questionReferences.slice(0, fixtureIds.questions.length).map((reference) => reference.pathId),
+    fixtureIds.questions.map(() => fixtureIds.path),
+  );
+  assert.deepEqual(quick.result.session?.selectionMetadata.includedPathIds, [fixtureIds.path]);
+  assert.match(quick.result.shortageReason ?? "", /3 questions are currently available/);
   assert(quick.result.session?.questionReferences.every((reference) => reference.questionVersion > 0));
 });
 
