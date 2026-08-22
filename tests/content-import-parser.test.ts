@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { MAX_IMPORT_SOURCE_BYTES } from "@/lib/content-import/types";
-import { parseAnswerFieldsYaml, parseMarkdownBank } from "@/lib/content-import/parser";
+import { parseAnswerFieldsYaml, parseCurriculumYaml, parseMarkdownBank } from "@/lib/content-import/parser";
 import { BANKS, BANK_DIRECTORY, loadBank } from "@/tests/content-import-fixtures";
 
 test("all six byte-identical banks parse their exact authoritative 166-question total", () => {
@@ -30,6 +30,33 @@ test("the migrated Tangents bank uses the same structured answer-field shape as 
   const tangents = loadBank("tangents-and-normals-v1.md");
   assert.equal(tangents.questions[0].answerDeclarationShape, "yaml_answer_fields");
   assert.equal(tangents.questions[0].id, "hm-calc-tangent-a-001");
+  assert.ok(tangents.questions.every((question) => question.curriculum?.primarySkillId === "tangents-and-normals"));
+  assert.ok(tangents.questions.every((question) =>
+    JSON.stringify(question.curriculum?.requiredSkillIds) === JSON.stringify(["chain-rule"])));
+});
+
+test("canonical curriculum YAML parses exact owner and conditional requirement fields", () => {
+  const parsed = parseCurriculumYaml(`curriculum:
+  primarySkillId: tangents-and-normals
+  requiredSkillIds:
+    - chain-rule
+    - equation-of-a-circle`);
+  assert.deepEqual(parsed.diagnostics, []);
+  assert.deepEqual(parsed.curriculum, {
+    primarySkillId: "tangents-and-normals",
+    requiredSkillIds: ["chain-rule", "equation-of-a-circle"],
+  });
+});
+
+test("curriculum YAML fails closed on missing canonical fields, invalid IDs and duplicates", () => {
+  const parsed = parseCurriculumYaml(`curriculum:
+  primarySkillId: Tangents
+  requiredSkillIds:
+    - chain-rule
+    - chain-rule`);
+  assert.equal(parsed.curriculum, undefined);
+  assert.ok(parsed.diagnostics.some((item) => item.code === "invalid_curriculum_skill_id"));
+  assert.ok(parsed.diagnostics.some((item) => item.code === "duplicate_curriculum_required_skill"));
 });
 
 test("skim and QA summary copies never duplicate questions", () => {

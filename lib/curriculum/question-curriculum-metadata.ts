@@ -8,9 +8,10 @@ import {
 } from "@/lib/curriculum/validation-report";
 
 /**
- * Declares, for one question, which canonical skill it primarily assesses and which
- * skills it is allowed to assume. This is the future mechanism for checking future-skill
- * contamination (a question quietly requiring a skill the learner hasn't reached yet).
+ * Declares, for one question, which canonical skill owns its primary assessed objective and
+ * which additional skills it is allowed to assume. Topics that merely appear as context or
+ * working do not change primarySkillId; they belong in requiredSkillIds when genuinely needed.
+ * This metadata checks future-skill contamination and drives learner availability filtering.
  * Main content validation checks references when metadata is present. It does not infer
  * required skills from question text or retrofit metadata onto existing questions; those
  * remain question-by-question authoring decisions.
@@ -42,7 +43,8 @@ export function validateQuestionCurriculumMetadata(metadata: QuestionCurriculumM
 
 /**
  * Runtime reference validation for optional canonical-question metadata. Conditional
- * dependencies deliberately need not be edges in the universal prerequisite graph.
+ * dependencies deliberately need not be edges in the universal prerequisite graph; the
+ * owning package's questionLevelRequirements supplies the additional approved IDs.
  */
 export function validateQuestionCurriculumMetadataReferences(
   metadata: QuestionCurriculumMetadata,
@@ -71,8 +73,8 @@ export function validateQuestionCurriculumMetadataReferences(
  * primarySkillId's declared prerequisites (hard and soft), walked through the prerequisite
  * graph. Declared prerequisites are read transitively — not only direct edges — since a
  * question may legitimately draw on a prerequisite's own prerequisite. This transitive
- * reading is a deliberate design decision, not an incidental default; see the completion
- * report's unresolved-decisions section.
+ * reading is a deliberate design decision. Package-approved conditional dependencies extend
+ * this set without becoming universal prerequisite-graph edges.
  */
 export function validateRequiredSkillsWithinPrerequisiteClosure(
   metadata: QuestionCurriculumMetadata,

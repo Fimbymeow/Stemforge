@@ -33,6 +33,17 @@ question, represented at question and package level, never as a universal skill-
 prerequisite. The old Chain Rule IDs were draft-only (no import receipt, no progress evidence,
 no live registry entry) and are retired, not aliased.
 
+Ownership and stage rule: Foundations should isolate tangent construction using only Basic
+Differentiation as the universal hard prerequisite. Applications may use light, already-learned
+context. Past Paper-style Questions may integrate authentic prior topics. In every stage the
+owner is determined by the primary assessed objective, not every topic appearing in the prompt;
+conditional knowledge is declared through `curriculum.requiredSkillIds`. The current five
+questions remain Tangents-owned because constructing the tangent line is their primary assessed
+objective, while Chain Rule is declared as a conditional requirement on every question. A future
+circle- or trigonometry-based Tangents question should follow the same rule, but must not be added
+until its actual required skill IDs are declared and eligibility can withhold it while those paths
+are unavailable.
+
 Storage note: this is a content-bank draft, not active app data. Import later only after
 architecture, QA, and testing are ready.
 
@@ -48,6 +59,14 @@ Type: multi_step
 Marks: 4  
 Calculator/non-calculator: Non-calculator  
 Command word: Find
+
+Curriculum metadata:
+```yaml
+curriculum:
+  primarySkillId: tangents-and-normals
+  requiredSkillIds:
+    - chain-rule
+```
 
 Question:  
 A curve has equation \(y=(2x-1)^3\). Find the equation of the tangent to the curve at the point where \(x=1\).
@@ -121,6 +140,14 @@ Type: multi_step
 Marks: 5  
 Calculator/non-calculator: Non-calculator  
 Command word: Find
+
+Curriculum metadata:
+```yaml
+curriculum:
+  primarySkillId: tangents-and-normals
+  requiredSkillIds:
+    - chain-rule
+```
 
 Question:  
 A curve has equation
@@ -227,6 +254,14 @@ Marks: 5
 Calculator/non-calculator: Non-calculator  
 Command word: Find
 
+Curriculum metadata:
+```yaml
+curriculum:
+  primarySkillId: tangents-and-normals
+  requiredSkillIds:
+    - chain-rule
+```
+
 Question:  
 A curve has equation
 \[
@@ -331,6 +366,14 @@ Type: multi_step
 Marks: 5  
 Calculator/non-calculator: Non-calculator  
 Command word: Find
+
+Curriculum metadata:
+```yaml
+curriculum:
+  primarySkillId: tangents-and-normals
+  requiredSkillIds:
+    - chain-rule
+```
 
 Question:  
 A curve has equation
@@ -456,6 +499,14 @@ Type: multi_step
 Marks: 5  
 Calculator/non-calculator: Non-calculator  
 Command word: Find
+
+Curriculum metadata:
+```yaml
+curriculum:
+  primarySkillId: tangents-and-normals
+  requiredSkillIds:
+    - chain-rule
+```
 
 Question:  
 A curve has equation

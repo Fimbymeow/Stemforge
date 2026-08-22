@@ -27,7 +27,10 @@ export function createPracticeQuestionReference(question: Question): PracticeQue
   };
 }
 
-export function checkPracticeEligibility(question: Question): PracticeEligibility {
+export function checkPracticeEligibility(
+  question: Question,
+  resolver: ReturnType<typeof createContentResolver> = contentResolver,
+): PracticeEligibility {
   if (question.contentStatus !== "active") return { eligible: false, reason: "archived" };
   if (!question.skillPathId || !question.stageId || !Number.isInteger(question.questionVersion) || !Number.isInteger(question.contentRevision)) {
     return { eligible: false, reason: "missing_metadata" };
@@ -39,6 +42,12 @@ export function checkPracticeEligibility(question: Question): PracticeEligibilit
   if (question.answerType === "nature_table" && (!question.natureTableConfig || !question.structuredAnswer)) {
     return { eligible: false, reason: "missing_metadata" };
   }
+  for (const requiredSkillId of question.curriculum?.requiredSkillIds ?? []) {
+    const requiredPath = resolver.getPathContext(requiredSkillId)?.skillPath;
+    if (!requiredPath?.isAvailable || requiredPath.contentStatus !== "active") {
+      return { eligible: false, reason: "unavailable_required_skill" };
+    }
+  }
   return { eligible: true };
 }
 
@@ -49,7 +58,7 @@ export function discoverEligiblePracticeQuestions(source: CanonicalContentSource
   for (const pathContext of resolver.getAllPathContexts()) {
     if (!pathContext.skillPath.isAvailable || pathContext.skillPath.contentStatus !== "active") continue;
     for (const question of resolver.getPathQuestions(pathContext.skillPath)) {
-      const eligibility = checkPracticeEligibility(question);
+      const eligibility = checkPracticeEligibility(question, resolver);
       const questionContext = resolver.getQuestionContext(question.id);
       if (!questionContext) {
         excludedByReason.unresolvable = (excludedByReason.unresolvable ?? 0) + 1;
@@ -92,7 +101,7 @@ export function resolvePracticeReference(reference: PracticeQuestionReference, s
   if (context.question.questionVersion !== reference.questionVersion || context.question.contentRevision !== reference.contentRevision) {
     return { status: "version_incompatible" as const };
   }
-  const eligibility = checkPracticeEligibility(context.question);
+  const eligibility = checkPracticeEligibility(context.question, resolver);
   if (!eligibility.eligible) return { status: eligibility.reason };
   return { status: "resolved" as const, context, question: context.question };
 }

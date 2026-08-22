@@ -47,6 +47,14 @@ export function classifyBank(
     }
     const assessed = selectAssessedCandidate(question);
     const blockers = [...assessed.blockers];
+    if (question.curriculum) {
+      if (question.curriculum.primarySkillId !== placement.targetSkillPathSlug) {
+        blockers.push({ code: "curriculum_primary_skill_mismatch", message: `Question curriculum owner "${question.curriculum.primarySkillId}" does not match configured target "${placement.targetSkillPathSlug}".` });
+      }
+      for (const requiredSkillId of question.curriculum.requiredSkillIds) {
+        if (!registry.paths.has(requiredSkillId)) blockers.push({ code: "unknown_curriculum_required_skill", message: `Question curriculum requires unknown canonical skill "${requiredSkillId}".` });
+      }
+    }
     if (question.diagnostics.some((item) => item.severity === "error")) {
       blockers.push({
         code: "invalid_source_question",
@@ -300,6 +308,7 @@ function toCanonicalQuestion(
     marks: source.marks,
     answerType,
     marking,
+    ...(source.curriculum ? { curriculum: source.curriculum } : {}),
     correctAnswer,
     acceptedAnswers: marking.strategy === "multiple_choice"
       ? [marking.correctOptionId]
@@ -341,6 +350,7 @@ function compareSourceQuestion(existing: Question, source: ImportQuestionIR): Co
     marks: source.marks,
     correctAnswer: first?.correctAnswer,
     acceptedAnswers: first?.acceptedAnswers,
+    curriculum: source.curriculum,
     workedSolution: source.workedSolution,
     hint: source.hint,
     commonMistake: source.commonMistake,

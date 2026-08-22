@@ -251,6 +251,29 @@ test("archived questions are excluded and supported graph questions are adopted 
   assert(discovered.eligible.some((item) => item.reference.questionId === "fixture-graph-001"));
 });
 
+test("conditional curriculum requirements exclude questions until every required skill path is available", () => {
+  const source = createTwoPathFixture();
+  const question = source.questions.find((candidate) => candidate.id === fixtureIds.questions[0])!;
+  question.curriculum = {
+    primarySkillId: fixtureIds.path,
+    requiredSkillIds: ["chain-rule"],
+  };
+
+  const unavailable = discoverEligiblePracticeQuestions(source);
+  assert(!unavailable.eligible.some((entry) => entry.question.id === question.id));
+  assert.equal(unavailable.excludedByReason.unavailable_required_skill, 1);
+
+  const chainRulePath = source.subjects[0].courseAreas
+    .flatMap((area) => area.specAreas)
+    .flatMap((area) => area.skillPaths ?? [])
+    .find((path) => path.slug === "chain-rule")!;
+  chainRulePath.isAvailable = true;
+  chainRulePath.status = "available";
+
+  const available = discoverEligiblePracticeQuestions(source);
+  assert(available.eligible.some((entry) => entry.question.id === question.id));
+});
+
 function withArchivedAndGraphQuestion(source: CanonicalContentSource): CanonicalContentSource {
   const cloned = structuredClone(source);
   const subject = cloned.subjects[0];

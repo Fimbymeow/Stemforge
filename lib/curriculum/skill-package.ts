@@ -132,9 +132,9 @@ export type SkillPackageKnownIssue = {
 };
 
 /**
- * Documents a question-level (not skill-level) dependency policy — e.g. "a Chain Rule
- * question involving a trig composite may require Trigonometric Differentiation." This is
- * documentation of intent for future question authoring via
+ * Documents a question-level (not skill-level) dependency policy — e.g. "a Tangents
+ * question using circle geometry may require Equation of a Circle." This is
+ * documentation of allowed intent for question authoring via
  * QuestionCurriculumMetadata.requiredSkillIds; it does not itself tag any question, and it
  * is never promoted to a prerequisite-graph edge (see lib/curriculum/prerequisite-graph.ts,
  * which stays hard/soft-only). Answers "what prerequisite rules apply?" (§4).

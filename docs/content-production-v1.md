@@ -1,5 +1,7 @@
 # Higher Maths content production v1
 
+**v1.2 update:** formalised question ownership and stage-specific cross-topic integration. Ownership follows the primary assessed objective; conditional prior knowledge remains attached to the owning question through the existing curriculum metadata and must be honoured by eligibility.
+
 **v1.1 update:** added an explicit, coverage-based worked-example requirement to step 4 (Notes) and the publication gate. See that step and the gate list below; the rule is deliberately not a numeric quota. This update strengthens the standard going forward — it does not retroactively require re-authoring already-published Notes such as Chain Rule's.
 
 ## Purpose and source of truth
@@ -13,7 +15,7 @@ The generated production tracker is the operational view. Do not maintain a seco
 ## Required production sequence
 
 1. **Official mapping** — map the skill to one or more of the 58 official Higher Maths requirements.
-2. **Skill contract** — define assessed scope, exclusions and hard prerequisites. Add question-level `curriculum.requiredSkillIds` only where a particular question genuinely needs extra knowledge.
+2. **Skill contract** — define assessed scope, exclusions and hard prerequisites. Set each question's `curriculum.primarySkillId` from its primary assessed objective, not from every topic appearing in its prompt. Add question-level `curriculum.requiredSkillIds` only where that particular question genuinely needs extra knowledge.
 3. **Historical-paper pattern audit** — record that assessment patterns were abstracted for calibration without copying source questions.
 4. **Notes** — author and validate the native `LessonDocument`. Notes must include a fully worked example for every distinct method or case the skill's assessed scope introduces. This is a coverage requirement, not a numeric quota: a skill covering one method needs one worked example that actually demonstrates it end to end; a skill covering three genuinely distinct methods or cases (for example, three different differentiation rules, or a split by sign/boundary case) needs a worked example for each, no more and no fewer than the scope demands. A worked example restates the full method — problem, reasoning, and answer — not just a final answer or an isolated formula.
 5. **Foundations** — produce the introductory question stage.
@@ -25,6 +27,27 @@ The generated production tracker is the operational view. Do not maintain a seco
 11. **Integration and publication** — use the existing preview/approval/apply workflow where import is required, validate the final graph, and verify the live skill.
 
 Every stage must use real evidence. Missing evidence stays incomplete; filenames, hashes and manifests are references, not proof of human review.
+
+## Question ownership and cross-topic integration
+
+Question ownership is determined by the primary assessed objective: the mathematical evidence the learner must produce for the question to have done its main job. A method, representation or context used on the way does not become the owner merely because it appears in the prompt or solution.
+
+- **Foundations** should isolate the canonical skill as far as practical. Use only the universal hard prerequisites and incidental algebra/notation needed to execute the new skill; avoid conditional cross-topic demands.
+- **Applications** may combine the canonical skill with light, already-learned prerequisite or context skills, while keeping the canonical skill as the primary assessed objective.
+- **Past Paper-style Questions** may use authentic cross-topic integration with previously learned skills. Do not strip realistic context merely to make the question single-topic.
+
+Keep ownership and requirements separate using the repository's existing fields:
+
+- `curriculum.primarySkillId` is the canonical owner and must match the skill path that contains the question;
+- `curriculum.requiredSkillIds` lists actual additional skills required by that question;
+- package-schema-v2 `questionLevelRequirements` documents which conditional requirements the package permits, but does not tag questions;
+- `hardPrerequisiteSkillIds` and the canonical prerequisite graph are only for knowledge required throughout the whole skill.
+
+Every triggering question must carry its own `curriculum.requiredSkillIds`; do not infer dependencies from prompt text and do not invent a second metadata system. Conditional requirements must name known canonical skills, be permitted by the owning package, and remain question-level rather than being promoted to universal graph edges.
+
+Learner delivery must fail closed when a declared required skill is not currently available: Practice and Question Bank eligibility exclude that question. This availability check prevents exposure before the supporting path is published; it does not claim that an individual learner has completed or mastered the required skill. Teaching sequence and curriculum QA remain responsible for the stronger "previously learned" authoring judgement.
+
+Example: a Tangents Past Paper-style question may use circle geometry, Chain Rule or Trigonometric Differentiation while remaining owned by `tangents-and-normals` when constructing the tangent is the primary assessed objective. The question must declare each genuine conditional dependency in `curriculum.requiredSkillIds`, the Tangents package must permit it in `questionLevelRequirements`, and eligibility must exclude it while any required path is unavailable.
 
 ## Publication gate
 
@@ -89,6 +112,7 @@ Main validation checks include:
 - no empty stage on a live skill;
 - required live question fields and bounded metadata enums;
 - question-level curriculum-reference integrity;
+- conditional requirement integrity against the owning package, plus required-skill availability in learner eligibility;
 - exact normalized duplicate-prompt warnings;
 - graph viewport, expression and derivative-link structure;
 - package identity, source freshness, stage counts, marking capability and QA evidence;

@@ -84,6 +84,23 @@ test("configuration and classification fail closed when a source stage is not co
   assert.ok(classification.blockers.some((item) => item.code === "unmapped_source_stage"));
 });
 
+test("classification carries canonical curriculum metadata into generated questions", () => {
+  const configuration = JSON.parse(basicConfigurationText()) as BankImportConfiguration;
+  const curriculum = { primarySkillId: "basic-differentiation", requiredSkillIds: ["chain-rule"] };
+  const classification = classifyBank(syntheticBank(questionIR({ curriculum })), configuration, registry).classifications[0];
+  assert.deepEqual(classification.canonicalQuestion?.curriculum, curriculum);
+});
+
+test("classification rejects curriculum ownership mismatches and unknown required skills", () => {
+  const configuration = JSON.parse(basicConfigurationText()) as BankImportConfiguration;
+  const classification = classifyBank(syntheticBank(questionIR({
+    curriculum: { primarySkillId: "tangents-and-normals", requiredSkillIds: ["not-a-skill"] },
+  })), configuration, registry).classifications[0];
+  assert.equal(classification.status, "blocked");
+  assert.ok(classification.blockers.some((item) => item.code === "curriculum_primary_skill_mismatch"));
+  assert.ok(classification.blockers.some((item) => item.code === "unknown_curriculum_required_skill"));
+});
+
 test("all eight real Basic Differentiation exact-ID collisions are surfaced without resolution", () => {
   const bank = loadBank("basic-differentiation-v1.md");
   const config = parseAndValidateBankConfiguration(basicConfigurationText(), registry, bank);

@@ -25,7 +25,7 @@ import type { SkillPackageManifest } from "@/lib/curriculum/skill-package";
  */
 export const tangentsPackage: SkillPackageManifest = {
   packageSchemaVersion: 2,
-  packageRevision: 1,
+  packageRevision: 2,
   courseId: "higher-maths",
   skillPathId: "tangents-and-normals",
 
@@ -33,19 +33,13 @@ export const tangentsPackage: SkillPackageManifest = {
   coverageClaimIds: ["claim-tangent"],
   hardPrerequisiteSkillIds: ["basic-differentiation"],
   /**
-   * This is a package-level policy declaration only — same discipline as chainRulePackage's
-   * own trigonometric-composite entry above. It is validated only against known skill IDs
-   * (lib/curriculum/skill-package.ts), never against the prerequisite graph, and it does not
-   * itself tag any question. Real per-question tagging via
-   * QuestionCurriculumMetadata.requiredSkillIds is deliberately NOT added in this migration:
-   * validateRequiredSkillsWithinPrerequisiteClosure (lib/curriculum/question-curriculum-
-   * metadata.ts) checks a question's requiredSkillIds against its primary skill's real
-   * hard/soft prerequisite closure, and "chain-rule" is correctly outside tangents-and-
-   * normals' closure (no edge of any strength exists, by design — see
-   * calculus-prerequisites.ts). Tagging real questions with "chain-rule" today would fail
-   * that validator, not pass it — confirmed by running it directly, not assumed. Per-question
-   * tagging is future work, contingent on how (or whether) that validator's invariant is
-   * revisited; it is out of this migration's bounded scope.
+   * This is package-level permission, not a universal prerequisite and not an automatic tag.
+   * The importer carries each triggering question's canonical curriculum metadata; main
+   * content validation combines this package permission with the prerequisite closure. All
+   * five current source questions therefore declare primarySkillId "tangents-and-normals"
+   * and requiredSkillIds ["chain-rule"]. Future circle- or trig-based Tangents questions
+   * must add the corresponding package rule only when real source questions justify it, then
+   * attach the same dependency to each affected question. Do not add speculative rules.
    */
   questionLevelRequirements: [
     {
@@ -60,14 +54,14 @@ export const tangentsPackage: SkillPackageManifest = {
       sourcePath: "content-drafts/higher-maths/calculus/tangents-and-normals-v1.md",
       declaredStageName: "Applications",
       expectedQuestionCount: 1,
-      expectedSourceHash: "75f6461459f398bc5c3bb8c7dfbf53a4c93327d87c2f1f5ff8839505db9b050e",
+      expectedSourceHash: "d658055adcf726a4e1db665823746243e5a2fbf649afb1508b186bf72457a577",
     },
     {
       kind: "pastPaperPractice",
       sourcePath: "content-drafts/higher-maths/calculus/tangents-and-normals-v1.md",
       declaredStageName: "Past Paper-style Questions",
       expectedQuestionCount: 4,
-      expectedSourceHash: "75f6461459f398bc5c3bb8c7dfbf53a4c93327d87c2f1f5ff8839505db9b050e",
+      expectedSourceHash: "d658055adcf726a4e1db665823746243e5a2fbf649afb1508b186bf72457a577",
     },
   ],
 

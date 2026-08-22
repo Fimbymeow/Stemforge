@@ -10,7 +10,7 @@ export const BANKS = [
   ["stationary-points-v2.md", 43, "d59be41090a888698fad4ce3ea2d15f67f3614bb267b2b3ecfefe9b2308ad53a"],
   ["optimisation-v1.md", 14, "097edffe69b37fad6b8147617c2e5d1a141aef5dc91a9ebd5c667d13ea17792b"],
   ["basic-integration-v1.md", 20, "288d3d25181abc641e322acb7a8f30b7f0df0a0646f970d36aebd7c160230fcd"],
-  ["tangents-and-normals-v1.md", 5, "75f6461459f398bc5c3bb8c7dfbf53a4c93327d87c2f1f5ff8839505db9b050e"],
+  ["tangents-and-normals-v1.md", 5, "d658055adcf726a4e1db665823746243e5a2fbf649afb1508b186bf72457a577"],
 ] as const;
 
 export function loadBank(name: string) {

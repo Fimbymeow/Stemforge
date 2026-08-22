@@ -79,9 +79,9 @@ Markdown and LaTeX remain opaque source strings. The parser does not render or e
 ## Intermediate representation and parser security
 
 The IR records compiler version, source path and hash, bank identity/version, source line ranges,
-declared stage, marks, calculator status, command word, question text, hint, solution, mistake,
-QA note, answer candidates, original answer declaration shape, explicit assessment metadata, and
-diagnostics.
+declared stage, marks, calculator status, command word, canonical question curriculum metadata,
+question text, hint, solution, mistake, QA note, answer candidates, original answer declaration
+shape, explicit assessment metadata, and diagnostics.
 
 It contains no resolved version decision, inferred placement, marking capability claim, or approval
 state.
@@ -90,6 +90,13 @@ The parser supports the two real bank patterns:
 
 - bare `Correct answer` plus Markdown `Accepted answers`;
 - fenced YAML `answerFields`.
+
+It also supports a fenced `Curriculum metadata` YAML block using the existing canonical shape only:
+`curriculum.primarySkillId` and `curriculum.requiredSkillIds`. Classification requires the primary
+skill to match the configured target and every required skill ID to exist in the canonical registry;
+the generated question carries this metadata unchanged. Main content validation then enforces the
+owning package's `questionLevelRequirements` and prerequisite policy. The importer does not infer
+requirements from prompt text or maintain a second dependency map.
 
 It supports the real level-two and level-three question headings and ignores skim/QA summary
 copies. It bounds source size, question count, fields, aliases, and text, while rejecting malformed

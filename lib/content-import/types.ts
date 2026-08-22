@@ -1,4 +1,5 @@
 import type { Question } from "@/data/types";
+import type { QuestionCurriculumMetadata } from "@/lib/curriculum/question-curriculum-metadata";
 import type { MarkerOutcomeKind, MarkingStrategy } from "@/lib/marking/types";
 
 export const CONTENT_IMPORT_COMPILER_VERSION = 1;
@@ -49,6 +50,7 @@ export type ImportQuestionIR = {
   answerCandidates: ImportAnswerCandidate[];
   answerDeclarationShape: AnswerDeclarationShape;
   explicitFieldAssessment: boolean;
+  curriculum?: QuestionCurriculumMetadata;
   diagnostics: ImportDiagnostic[];
 };
 

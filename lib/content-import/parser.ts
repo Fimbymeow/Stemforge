@@ -19,7 +19,7 @@ const SAFE_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const PROTOTYPE_KEYS = new Set(["__proto__", "prototype", "constructor"]);
 const QUESTION_LABELS = [
   "Stage", "Subskill", "Type", "Marks", "Calculator/non-calculator", "Command word",
-  "Question", "Correct answer", "Accepted answers", "Answer fields", "Hint", "Worked solution",
+  "Curriculum metadata", "Question", "Correct answer", "Accepted answers", "Answer fields", "Hint", "Worked solution",
   "Common mistake", "QA note",
 ];
 
@@ -110,6 +110,11 @@ function parseQuestion(block: string[], id: string, sourceLineRange: SourceLineR
   const hint = field("Hint");
   const workedSolution = field("Worked solution");
   const commonMistake = field("Common mistake");
+  const curriculumYaml = extractFencedYaml(block, "Curriculum metadata");
+  const curriculumResult = curriculumYaml
+    ? parseCurriculumYaml(curriculumYaml.text, curriculumYaml.lineOffset + sourceLineRange.start)
+    : undefined;
+  if (curriculumResult) diagnostics.push(...curriculumResult.diagnostics.map((item) => ({ ...item, questionId: id })));
   const yaml = extractAnswerYaml(block);
   let answerCandidates: ImportAnswerCandidate[] = [];
   let answerDeclarationShape: ImportQuestionIR["answerDeclarationShape"] = "bare_correct_answer";
@@ -192,6 +197,7 @@ function parseQuestion(block: string[], id: string, sourceLineRange: SourceLineR
     answerCandidates,
     answerDeclarationShape,
     explicitFieldAssessment,
+    ...(curriculumResult?.curriculum ? { curriculum: curriculumResult.curriculum } : {}),
     diagnostics,
   };
 }
@@ -212,13 +218,77 @@ function extractSection(lines: string[], label: string) {
 }
 
 function extractAnswerYaml(lines: string[]) {
-  const labelIndex = lines.findIndex((line) => /^Answer fields:\s*$/i.test(line.trim()));
+  return extractFencedYaml(lines, "Answer fields");
+}
+
+function extractFencedYaml(lines: string[], label: string) {
+  const expression = new RegExp(`^${escapeRegex(label)}:\\s*$`, "i");
+  const labelIndex = lines.findIndex((line) => expression.test(line.trim()));
   if (labelIndex < 0) return null;
   const open = lines.findIndex((line, index) => index > labelIndex && /^```ya?ml\s*$/i.test(line.trim()));
   if (open < 0) return { text: "", lineOffset: labelIndex + 1 };
   const close = lines.findIndex((line, index) => index > open && /^```\s*$/.test(line.trim()));
   if (close < 0) return { text: lines.slice(open + 1).join("\n"), lineOffset: open + 1 };
   return { text: lines.slice(open + 1, close).join("\n"), lineOffset: open + 1 };
+}
+
+export function parseCurriculumYaml(text: string, absoluteStartLine = 1) {
+  const diagnostics: ImportDiagnostic[] = [];
+  const lines = text.replace(/\r\n/g, "\n").split("\n");
+  let primarySkillId = "";
+  const requiredSkillIds: string[] = [];
+  let inRequiredSkillIds = false;
+  let sawCurriculum = false;
+  let sawPrimary = false;
+  let sawRequired = false;
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const raw = lines[index];
+    if (!raw.trim() || /^\s*#/.test(raw)) continue;
+    if (/^curriculum:\s*$/.test(raw)) {
+      if (sawCurriculum) diagnostics.push({ code: "duplicate_curriculum_key", severity: "error", message: "Curriculum YAML repeats the curriculum object.", lineRange: { start: absoluteStartLine + index, end: absoluteStartLine + index } });
+      sawCurriculum = true;
+      inRequiredSkillIds = false;
+      continue;
+    }
+    const primary = /^\s{2}primarySkillId:\s*(.+)$/.exec(raw);
+    if (primary) {
+      if (sawPrimary) diagnostics.push({ code: "duplicate_curriculum_key", severity: "error", message: "Curriculum YAML repeats primarySkillId.", lineRange: { start: absoluteStartLine + index, end: absoluteStartLine + index } });
+      sawPrimary = true;
+      primarySkillId = parseYamlScalar(primary[1]);
+      inRequiredSkillIds = false;
+      continue;
+    }
+    if (/^\s{2}requiredSkillIds:\s*$/.test(raw)) {
+      if (sawRequired) diagnostics.push({ code: "duplicate_curriculum_key", severity: "error", message: "Curriculum YAML repeats requiredSkillIds.", lineRange: { start: absoluteStartLine + index, end: absoluteStartLine + index } });
+      sawRequired = true;
+      inRequiredSkillIds = true;
+      continue;
+    }
+    const required = /^\s{4}-\s+(.+)$/.exec(raw);
+    if (required && inRequiredSkillIds) {
+      requiredSkillIds.push(parseYamlScalar(required[1]));
+      continue;
+    }
+    diagnostics.push({ code: "malformed_curriculum_yaml", severity: "error", message: "Curriculum YAML must use the canonical curriculum.primarySkillId and curriculum.requiredSkillIds fields.", lineRange: { start: absoluteStartLine + index, end: absoluteStartLine + index } });
+  }
+
+  if (!sawCurriculum || !sawPrimary || !sawRequired) {
+    diagnostics.push({ code: "incomplete_curriculum_metadata", severity: "error", message: "Curriculum YAML requires curriculum.primarySkillId and curriculum.requiredSkillIds.", lineRange: { start: absoluteStartLine, end: absoluteStartLine + lines.length - 1 } });
+  }
+  const curriculumSkillIds: Array<[string, string]> = [
+    ["primarySkillId", primarySkillId],
+    ...requiredSkillIds.map((skillId): [string, string] => ["requiredSkillIds", skillId]),
+  ];
+  for (const [field, skillId] of curriculumSkillIds) {
+    if (!SAFE_ID.test(skillId)) diagnostics.push({ code: "invalid_curriculum_skill_id", severity: "error", message: `${field} contains an invalid canonical skill ID.`, lineRange: { start: absoluteStartLine, end: absoluteStartLine + lines.length - 1 } });
+  }
+  if (new Set(requiredSkillIds).size !== requiredSkillIds.length) diagnostics.push({ code: "duplicate_curriculum_required_skill", severity: "error", message: "Curriculum YAML repeats a required skill ID.", lineRange: { start: absoluteStartLine, end: absoluteStartLine + lines.length - 1 } });
+
+  return {
+    curriculum: diagnostics.some((item) => item.severity === "error") ? undefined : { primarySkillId, requiredSkillIds },
+    diagnostics,
+  };
 }
 
 export function parseAnswerFieldsYaml(text: string, absoluteStartLine = 1) {

@@ -76,6 +76,7 @@ export type PracticeEligibilityReason =
   | "unresolvable"
   | "unsupported_question_type"
   | "missing_metadata"
+  | "unavailable_required_skill"
   | "version_incompatible";
 
 export type PracticeEligibility = { eligible: true } | { eligible: false; reason: PracticeEligibilityReason };
