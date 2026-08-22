@@ -26,10 +26,11 @@ import {
   updateWeeklyItemState,
 } from "@/lib/study-plan/weekly-plan";
 import type { StudyPlanRebalanceReason, StudyPlanWeeklyItem, StudyPlanWeeklyPlan } from "@/lib/study-plan/types";
+import { premiumAssessmentContext } from "@/lib/premium-preview";
 
 const EMPTY_PRESERVATION: StudyPlanLocalState["preservation"] = { itemStates: {}, movedDates: {}, excludedItemKeys: [] };
 
-export function useStudyPlan(input: { evidence: ProgressEvidence; courseSlug: string }) {
+export function useStudyPlan(input: { evidence: ProgressEvidence; courseSlug: string; assessmentAware: boolean }) {
   const [state, setState] = useState<StudyPlanLocalState>(() => emptyStudyPlanLocalState());
   const [loaded, setLoaded] = useState(false);
   const [now, setNow] = useState<Date | null>(null);
@@ -72,7 +73,8 @@ export function useStudyPlan(input: { evidence: ProgressEvidence; courseSlug: st
 
   useEffect(() => {
     if (!loaded || !now || !state.setup) return;
-    const preferences = { courseSlug: input.courseSlug, ...state.setup };
+    const preferences = { courseSlug: input.courseSlug, ...state.setup,
+      assessments: [...premiumAssessmentContext(input.assessmentAware, state.setup.assessments)] };
     const calendarDate = localCalendarDate(now);
     const today = localDayKey(now);
     const current = state.plan;
@@ -89,7 +91,7 @@ export function useStudyPlan(input: { evidence: ProgressEvidence; courseSlug: st
       previousWeek: rollover ? previousWeekFrom(current) : state.previousWeek,
       preservation: EMPTY_PRESERVATION,
     }, current && plan.rebalanceDiagnostics.planDistance > 0 ? adjustmentMessage(plan) : undefined);
-  }, [input.courseSlug, input.evidence, learnerConfidenceMap, loaded, now, persist, state]);
+  }, [input.assessmentAware, input.courseSlug, input.evidence, learnerConfidenceMap, loaded, now, persist, state]);
 
   const today = now ? localDayKey(now) : "";
   const plan = state.plan;
@@ -100,7 +102,8 @@ export function useStudyPlan(input: { evidence: ProgressEvidence; courseSlug: st
 
   function saveSetup(setup: StudyPlanSetup) {
     const actionNow = new Date();
-    const preferences = { courseSlug: input.courseSlug, ...setup };
+    const preferences = { courseSlug: input.courseSlug, ...setup,
+      assessments: [...premiumAssessmentContext(input.assessmentAware, setup.assessments)] };
     const calendarDate = localCalendarDate(actionNow);
     const plan = state.plan
       ? rebalanceStudyPlan({ currentPlan: state.plan, evidence: input.evidence, preferences, now: actionNow, calendarDate, reason: "preferences_changed", learnerConfidence: learnerConfidenceMap })
@@ -115,7 +118,8 @@ export function useStudyPlan(input: { evidence: ProgressEvidence; courseSlug: st
     const next = rebalanceStudyPlan({
       currentPlan: plan,
       evidence: input.evidence,
-      preferences: { courseSlug: input.courseSlug, ...state.setup },
+      preferences: { courseSlug: input.courseSlug, ...state.setup,
+        assessments: [...premiumAssessmentContext(input.assessmentAware, state.setup.assessments)] },
       now: actionNow,
       calendarDate: localCalendarDate(actionNow),
       reason: "explicit_refresh",
@@ -147,7 +151,8 @@ export function useStudyPlan(input: { evidence: ProgressEvidence; courseSlug: st
     const trial = rebalanceStudyPlan({
       currentPlan: trialCurrent,
       evidence: input.evidence,
-      preferences: { courseSlug: input.courseSlug, ...state.setup },
+      preferences: { courseSlug: input.courseSlug, ...state.setup,
+        assessments: [...premiumAssessmentContext(input.assessmentAware, state.setup.assessments)] },
       now,
       calendarDate: localCalendarDate(now),
       reason: "manual_swap",

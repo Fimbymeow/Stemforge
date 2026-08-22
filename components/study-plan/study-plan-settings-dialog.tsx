@@ -30,12 +30,13 @@ function createAssessmentId() {
 
 type DialogView = "settings" | "assessment_form";
 
-export function StudyPlanSettingsDialog({ open, onClose, courseSlug, courseName, initial, onSave }: {
+export function StudyPlanSettingsDialog({ open, onClose, courseSlug, courseName, initial, assessmentFeaturesEnabled, onSave }: {
   open: boolean;
   onClose: () => void;
   courseSlug: string;
   courseName: string;
   initial: StudyPlanSetup | null;
+  assessmentFeaturesEnabled: boolean;
   onSave: (setup: StudyPlanSetup) => void;
 }) {
   const [weeklyHours, setWeeklyHours] = useState(() => minutesToWeeklyHours(initial?.weeklyMinutes ?? 90));
@@ -141,7 +142,7 @@ export function StudyPlanSettingsDialog({ open, onClose, courseSlug, courseName,
                 </div>
               </fieldset>
 
-              <div>
+              {assessmentFeaturesEnabled ? <div data-testid="premium-assessment-settings">
                 <div className="flex items-center justify-between gap-2">
                   <h3 className="text-sm font-bold">Assessments <span className="font-normal text-muted">(optional)</span></h3>
                   <button type="button" onClick={() => { setEditingAssessmentId(null); setView("assessment_form"); }} className="inline-flex min-h-10 items-center gap-1 rounded-lg border border-line px-3 text-xs font-extrabold text-forge hover:border-forge">
@@ -178,7 +179,7 @@ export function StudyPlanSettingsDialog({ open, onClose, courseSlug, courseName,
                     ))}
                   </ul>
                 )}
-              </div>
+              </div> : null}
 
               <div className="flex flex-wrap gap-2">
                 <button type="submit" disabled={availableDays.length === 0 || !Number.isFinite(weeklyHours) || weeklyHours <= 0} className="min-h-11 rounded-lg bg-forge px-5 text-sm font-extrabold text-white disabled:opacity-50">{initial ? "Save plan" : "Create my plan"}</button>

@@ -6,6 +6,7 @@ import { AUTH_RESULT_MESSAGES, readAuthResultCode } from "@/lib/auth/results";
 import { CurrentBrowserExportButton } from "@/components/account/account-learning-data";
 import { AccountResultMessage } from "@/components/account/account-result-message";
 import { FocusedProductShell } from "@/components/layout/focused-product-shell";
+import { PremiumPreviewToggle } from "@/components/account/premium-preview-toggle";
 
 export function AccountShell({
   title,
@@ -47,6 +48,7 @@ export function AccountShell({
 export function AccountUnavailable() {
   return (
     <AccountShell title="Accounts are not available" introduction="Accounts aren't available right now.">
+      <PremiumPreviewToggle />
       <Link href="/dashboard" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-lg bg-forge px-6 text-sm font-extrabold text-white">
         Continue as a guest
       </Link>

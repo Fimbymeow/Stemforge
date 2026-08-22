@@ -23,6 +23,8 @@ import { useHasMounted } from "@/lib/use-mounted";
 import { createReviewSessionSelection } from "@/lib/review/selection";
 import { readStudyPlanLocalState } from "@/lib/study-plan/local-state";
 import { createQuickPracticeSelection } from "@/lib/study-context";
+import { usePremiumPreview } from "@/components/premium-preview-provider";
+import { premiumAssessmentContext } from "@/lib/premium-preview";
 
 type ConfigurablePracticeMode = Exclude<PracticeMode, "review">;
 
@@ -43,6 +45,7 @@ export function PracticeSetup({
   reviewMode?: boolean;
 }) {
   const activation = usePracticeActivation();
+  const premiumPreview = usePremiumPreview();
   const hasMounted = useHasMounted();
   const evidence = hasMounted ? getProgressEvidence() : getEmptyProgressEvidence();
   const paths = useMemo(() => contentResolver.getAllPathContexts().filter((context) => context.skillPath.isAvailable), []);
@@ -117,7 +120,7 @@ export function PracticeSetup({
     evidence,
     preferredPathId: workingContextPathId,
     durationMinutes: quickDuration,
-    assessments: localStudyPlan?.setup?.assessments ?? [],
+    assessments: premiumAssessmentContext(premiumPreview.enabled, localStudyPlan?.setup?.assessments ?? []),
     learnerConfidence: new Map(Object.values(localConfidence?.ratings ?? {}).map((rating) => [rating.skillPathId, rating.level])),
   });
 

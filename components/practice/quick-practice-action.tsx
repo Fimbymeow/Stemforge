@@ -10,6 +10,8 @@ import type { QuickPracticeDurationMinutes } from "@/lib/practice/adaptive-pract
 import { readStudyPlanLocalState } from "@/lib/study-plan/local-state";
 import { createQuickPracticeSelection, type QuickPracticeSelection } from "@/lib/study-context";
 import { useHasMounted } from "@/lib/use-mounted";
+import { usePremiumPreview } from "@/components/premium-preview-provider";
+import { premiumAssessmentContext } from "@/lib/premium-preview";
 
 export function QuickPracticeAction({
   preferredPathId,
@@ -29,13 +31,14 @@ export function QuickPracticeAction({
   preview?: QuickPracticeSelection;
 }) {
   const activation = usePracticeActivation();
+  const premiumPreview = usePremiumPreview();
   const hasMounted = useHasMounted();
   const evidence = hasMounted ? getProgressEvidence() : getEmptyProgressEvidence();
   const nextAction = deriveLearnerNextAction({ evidence });
-  const quick = useMemo(() => preview ?? createSelection(evidence, preferredPathId ?? nextAction.pathId, durationMinutes, hasMounted),
-    [durationMinutes, evidence, hasMounted, nextAction.pathId, preferredPathId, preview]);
+  const quick = useMemo(() => preview ?? createSelection(evidence, preferredPathId ?? nextAction.pathId, durationMinutes, hasMounted, premiumPreview.enabled),
+    [durationMinutes, evidence, hasMounted, nextAction.pathId, preferredPathId, premiumPreview.enabled, preview]);
   function begin() {
-    const selection = createSelection(getProgressEvidence(), preferredPathId ?? nextAction.pathId, durationMinutes, true);
+    const selection = createSelection(getProgressEvidence(), preferredPathId ?? nextAction.pathId, durationMinutes, true, premiumPreview.enabled);
     if (!selection.result.session) return;
     void activation.begin(selection.result.session);
   }
@@ -64,6 +67,7 @@ function createSelection(
   preferredPathId: string | null,
   durationMinutes: QuickPracticeDurationMinutes,
   canReadBrowserState: boolean,
+  assessmentAware: boolean,
 ) {
   if (!canReadBrowserState || typeof window === "undefined") {
     return createQuickPracticeSelection({ evidence, preferredPathId, durationMinutes });
@@ -74,7 +78,7 @@ function createSelection(
     evidence,
     preferredPathId,
     durationMinutes,
-    assessments: studyPlan.setup?.assessments ?? [],
+    assessments: premiumAssessmentContext(assessmentAware, studyPlan.setup?.assessments ?? []),
     learnerConfidence: new Map(Object.values(confidence.ratings).map((rating) => [rating.skillPathId, rating.level])),
   });
 }

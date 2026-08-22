@@ -5,12 +5,14 @@ import { expectNoHorizontalOverflow } from "./fixtures/student-actions";
 
 const enabled = process.env.STEMFORGE_STUDY_PLAN_ENABLED === "true";
 const STUDY_PLAN_KEY = "orthic.studyPlan.v1";
+const PREMIUM_PREVIEW_KEY = "orthic.premiumPreview.v1";
 
 test.describe("feature-flagged assessment readiness", () => {
   test.skip(!enabled, "Assessment readiness belongs to the feature-flagged Study Plan surface.");
 
   test.beforeEach(async ({ page }) => {
     await page.clock.setFixedTime(new Date("2026-08-12T10:00:00.000Z"));
+    await page.addInitScript(({ key }) => localStorage.setItem(key, JSON.stringify({ version: 1, enabled: true })), { key: PREMIUM_PREVIEW_KEY });
   });
 
   test("shows a real supported skill state and routes the best focus through Review", async ({ page }) => {

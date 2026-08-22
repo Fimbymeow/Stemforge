@@ -9,11 +9,13 @@ import { useStudyPlan } from "@/components/study-plan/use-study-plan";
 import { canPullForward } from "@/lib/study-plan/weekly-plan";
 import type { ProgressEvidence } from "@/lib/progress/types";
 import type { StudyPlanDashboardState } from "@/lib/study-plan/dashboard-dedup";
+import { usePremiumPreview } from "@/components/premium-preview-provider";
 
 type Props = { evidence: ProgressEvidence; courseSlug: string; courseName: string; onDashboardStateChange?: (state: StudyPlanDashboardState) => void };
 
 export function StudyPlanToday({ evidence, courseSlug, courseName, onDashboardStateChange }: Props) {
-  const studyPlan = useStudyPlan({ evidence, courseSlug });
+  const premiumPreview = usePremiumPreview();
+  const studyPlan = useStudyPlan({ evidence, courseSlug, assessmentAware: premiumPreview.enabled });
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [movingItemKey, setMovingItemKey] = useState<string | null>(null);
   const dashboardState = useMemo<StudyPlanDashboardState>(() => {
@@ -33,6 +35,7 @@ export function StudyPlanToday({ evidence, courseSlug, courseName, onDashboardSt
       courseSlug={courseSlug}
       courseName={courseName}
       initial={studyPlan.state.setup}
+      assessmentFeaturesEnabled={premiumPreview.enabled}
       onSave={studyPlan.saveSetup}
     />
   );

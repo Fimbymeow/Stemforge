@@ -10,8 +10,10 @@ import { AssessmentReadinessSection } from "@/components/study-plan/assessment-r
 import { StudyPlanSettingsDialog } from "@/components/study-plan/study-plan-settings-dialog";
 import { useStudyPlan } from "@/components/study-plan/use-study-plan";
 import type { StudyPlanWeeklyItem } from "@/lib/study-plan/types";
+import { usePremiumPreview } from "@/components/premium-preview-provider";
 
 export function StudyPlanWeek() {
+  const premiumPreview = usePremiumPreview();
   const [evidence, setEvidence] = useState<ProgressEvidence>(() => getEmptyProgressEvidence());
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [movingItemKey, setMovingItemKey] = useState<string | null>(null);
@@ -27,7 +29,7 @@ export function StudyPlanWeek() {
       window.removeEventListener("storage", update);
     };
   }, []);
-  const studyPlan = useStudyPlan({ evidence, courseSlug: "higher-maths" });
+  const studyPlan = useStudyPlan({ evidence, courseSlug: "higher-maths", assessmentAware: premiumPreview.enabled });
   const groups = useMemo(() => groupItems(studyPlan.plan?.items ?? []), [studyPlan.plan?.items]);
 
   const dialog = (
@@ -37,6 +39,7 @@ export function StudyPlanWeek() {
       courseSlug="higher-maths"
       courseName="Higher Maths"
       initial={studyPlan.state.setup}
+      assessmentFeaturesEnabled={premiumPreview.enabled}
       onSave={studyPlan.saveSetup}
     />
   );
@@ -74,11 +77,11 @@ export function StudyPlanWeek() {
       </div>
 
       {studyPlan.message ? <p role="status" className="mt-4 rounded-lg bg-forge-soft p-3 text-sm text-ink">{studyPlan.message}</p> : null}
-      <AssessmentReadinessSection
+      {premiumPreview.enabled ? <AssessmentReadinessSection
         assessments={studyPlan.state.setup.assessments}
         courseSlug="higher-maths"
         evidence={evidence}
-      />
+      /> : null}
       {!plan || plan.status !== "ok" ? <p className="mt-5 rounded-lg bg-paper p-4 text-sm text-muted">A useful weekly plan is not available for this course yet.</p>
         : remaining === 0 && !plan.items.length ? <div className="mt-5 rounded-lg bg-paper p-5"><h2 className="text-lg font-extrabold">You’re caught up for this week.</h2><p className="mt-1 text-sm text-muted">Orthic will update the plan when Review becomes due or your progress changes.</p></div>
         : groups.map((group) => (

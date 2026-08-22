@@ -4,6 +4,8 @@ import { AuthFeatureProvider } from "@/components/auth-feature-provider";
 import { isAuthFeatureAvailable } from "@/lib/auth/config";
 import { ProgressSyncProvider } from "@/components/progress-sync-provider";
 import { AccountStateSyncProvider } from "@/components/account-state-sync-provider";
+import { PremiumPreviewProvider } from "@/components/premium-preview-provider";
+import { isPremiumPreviewAvailable } from "@/lib/premium-preview";
 import "katex/dist/katex.min.css";
 import "mathlive/fonts.css";
 import "./globals.css";
@@ -31,14 +33,17 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const accountsAvailable = isAuthFeatureAvailable();
+  const premiumPreviewAvailable = isPremiumPreviewAvailable();
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <a href="#main-content" className="skip-link">Skip to main content</a>
         <AuthFeatureProvider accountsAvailable={accountsAvailable}>
-          <ProgressSyncProvider accountsAvailable={accountsAvailable}>
-            <AccountStateSyncProvider accountsAvailable={accountsAvailable}>{children}</AccountStateSyncProvider>
-          </ProgressSyncProvider>
+          <PremiumPreviewProvider available={premiumPreviewAvailable}>
+            <ProgressSyncProvider accountsAvailable={accountsAvailable}>
+              <AccountStateSyncProvider accountsAvailable={accountsAvailable}>{children}</AccountStateSyncProvider>
+            </ProgressSyncProvider>
+          </PremiumPreviewProvider>
         </AuthFeatureProvider>
       </body>
     </html>

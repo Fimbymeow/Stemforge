@@ -16,6 +16,7 @@ import { createSupabaseServerClient } from "@/lib/auth/supabase.server";
 import { safeLearningReturnDestination } from "@/lib/auth/redirects";
 import { AccountLearnerPreferences } from "@/components/learner-preferences/account-learner-preferences";
 import { GuestAccountStateImport } from "@/components/account/guest-account-state-import";
+import { PremiumPreviewToggle } from "@/components/account/premium-preview-toggle";
 
 export const dynamic = "force-dynamic";
 
@@ -59,6 +60,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           <Link href={authHref("/account/sign-up", next)} className="inline-flex min-h-12 items-center justify-center rounded-lg border border-ink px-5 text-sm font-extrabold">Create account</Link>
         </div>
         <AccountLearningReturn requestedDestination={next} />
+        <PremiumPreviewToggle />
         <CurrentBrowserExportButton />
       </AccountShell>
     );
@@ -75,6 +77,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
       {accountFingerprint ? <GuestProgressImport accountFingerprint={accountFingerprint} returnDestination={next} /> : null}
       {accountFingerprint ? <GuestAccountStateImport accountFingerprint={accountFingerprint} /> : null}
       <AccountLearningReturn requestedDestination={next} />
+      <PremiumPreviewToggle />
       {accountFingerprint ? <AccountLearnerPreferences /> : null}
       {accountFingerprint ? <ProgressSyncPanel accountFingerprint={accountFingerprint} /> : null}
       {accountFingerprint ? (
