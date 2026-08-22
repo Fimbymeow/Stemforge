@@ -11,7 +11,7 @@ import {
   type ImportQuestionIR,
   type SourceLineRange,
 } from "@/lib/content-import/types";
-import { sha256 } from "@/lib/content-import/canonical";
+import { hashCanonicalTextSource } from "@/lib/content-import/canonical";
 
 const QUESTION_HEADING = /^#{2,3}\s+((?:F|A|PPQ)\d{3})\s+[—-]\s+([a-z0-9]+(?:-[a-z0-9]+)*)\s*$/i;
 const SUMMARY_HEADING = /^#{1,3}\s+.*(?:all questions together for skim|QA check|Import readiness checklist)/i;
@@ -91,7 +91,7 @@ export function parseMarkdownBank(input: { sourcePath: string; bytes: Uint8Array
   return {
     compilerVersion: CONTENT_IMPORT_COMPILER_VERSION,
     sourcePath: input.sourcePath,
-    rawSourceHash: sha256(input.bytes),
+    rawSourceHash: hashCanonicalTextSource(input.bytes),
     sourceBankId,
     sourceBankVersion: versionMatch?.[1] ?? "unknown",
     ...(advisorySkillPathId ? { advisorySkillPathId } : {}),
@@ -445,7 +445,7 @@ function emptyBank(input: { sourcePath: string; bytes: Uint8Array }, diagnostics
   return {
     compilerVersion: CONTENT_IMPORT_COMPILER_VERSION,
     sourcePath: input.sourcePath,
-    rawSourceHash: sha256(input.bytes),
+    rawSourceHash: hashCanonicalTextSource(input.bytes),
     sourceBankId: "unknown-bank",
     sourceBankVersion: "unknown",
     questions: [],

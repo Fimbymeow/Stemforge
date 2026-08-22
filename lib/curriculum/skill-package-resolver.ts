@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { contentResolver } from "@/lib/content-resolver";
-import { sha256 } from "@/lib/content-import/canonical";
+import { hashCanonicalTextSource } from "@/lib/content-import/canonical";
 import { auditBankAssessment } from "@/lib/content-import/classification";
 import { parseMarkdownBank } from "@/lib/content-import/parser";
 import type { ContentBankIR } from "@/lib/content-import/types";
@@ -50,7 +50,7 @@ export function resolveSkillPackageEvidence(manifest: SkillPackageManifest, repo
         kind: declaration.kind,
         exists: true,
         discoveredQuestionCount: questions.length,
-        currentContentHash: sha256(readFileSync(absolutePath)),
+        currentContentHash: hashCanonicalTextSource(readFileSync(absolutePath)),
         unsupportedMarkingCapabilities: [],
       };
     }

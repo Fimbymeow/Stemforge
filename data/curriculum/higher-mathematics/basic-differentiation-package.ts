@@ -22,7 +22,7 @@ export const basicDifferentiationPackage: SkillPackageManifest = {
       sourcePath: "content/questions/higher-maths/basic-differentiation.ts",
       declaredStageName: "Foundations",
       expectedQuestionCount: 3,
-      expectedSourceHash: "846c394aba000094b65ae96922faf8ff694230e894debb56da82d372f6e12720",
+      expectedSourceHash: "a71b091cee4337c5cb9c3c0cc76527bdecab67f9cb1e5a62fd76eeeccf76a1f5",
       evidenceMode: "canonical_runtime",
     },
     {
@@ -30,7 +30,7 @@ export const basicDifferentiationPackage: SkillPackageManifest = {
       sourcePath: "content/questions/higher-maths/basic-differentiation.ts",
       declaredStageName: "Applications",
       expectedQuestionCount: 3,
-      expectedSourceHash: "846c394aba000094b65ae96922faf8ff694230e894debb56da82d372f6e12720",
+      expectedSourceHash: "a71b091cee4337c5cb9c3c0cc76527bdecab67f9cb1e5a62fd76eeeccf76a1f5",
       evidenceMode: "canonical_runtime",
     },
     {
@@ -38,7 +38,7 @@ export const basicDifferentiationPackage: SkillPackageManifest = {
       sourcePath: "content/questions/higher-maths/basic-differentiation.ts",
       declaredStageName: "Past Paper-style Questions",
       expectedQuestionCount: 2,
-      expectedSourceHash: "846c394aba000094b65ae96922faf8ff694230e894debb56da82d372f6e12720",
+      expectedSourceHash: "a71b091cee4337c5cb9c3c0cc76527bdecab67f9cb1e5a62fd76eeeccf76a1f5",
       evidenceMode: "canonical_runtime",
     },
   ],

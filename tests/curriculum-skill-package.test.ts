@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import test from "node:test";
-import { sha256 } from "../lib/content-import/canonical";
+import { hashCanonicalTextSource } from "../lib/content-import/canonical";
 import { higherMaths } from "../data/higher-maths";
 import { validateContent } from "../lib/content-validation";
 import { canonicalContent } from "../data/canonical-content";
@@ -536,13 +538,13 @@ test("real Chain Rule package blocker count is 0 after Step 4 created the real i
   assert.equal(readiness.readyForPublication, true, "import readiness gates publication readiness at this layer");
 });
 
-test("the Step 3 originality audit did not change the declared source hashes, and recorded real evidence for all four QA flags", () => {
+test("the Step 3 originality audit retained the source content, and recorded real evidence for all four QA flags", () => {
   for (const source of chainRulePackage.sources) {
     if (source.kind === "notes") continue;
     assert.equal(
       source.expectedSourceHash,
-      "7c45e31b926d24829e30031890d80429fcb74fe3d2780d7531032efea6e00d89",
-      `${source.kind}: no content correction was needed, so no hash should have changed`,
+      "6aa38c610b2827cdd34ec22476558baa6b9e44419e61e8b04bf6da344fe1c769",
+      `${source.kind}: the declaration should use the canonical line-ending-independent source hash`,
     );
   }
   assert.equal(chainRulePackage.qaEvidence.mathematicalQaComplete, true);
@@ -612,10 +614,51 @@ test("real Chain Rule source evidence resolves the actual draft's declared quest
 
 test("the Chain Rule manifest's declared source hash matches the live draft's actual content hash", () => {
   const bytes = readFileSync("content-drafts/higher-maths/calculus/chain-rule-v6.md");
-  const actualHash = sha256(bytes);
+  const actualHash = hashCanonicalTextSource(bytes);
   for (const source of chainRulePackage.sources) {
     if (source.kind === "notes") continue;
     assert.equal(source.expectedSourceHash, actualHash, source.kind);
+  }
+});
+
+test("Chain Rule package readiness is identical for LF and CRLF source checkouts", () => {
+  const repoRoot = mkdtempSync(join(tmpdir(), "orthic-chain-source-hash-"));
+  const lfSource = readFileSync("content-drafts/higher-maths/calculus/chain-rule-v6.md", "utf8").replace(/\r\n?/g, "\n");
+  const portableManifest: SkillPackageManifest = {
+    ...chainRulePackage,
+    sources: chainRulePackage.sources.map((source) => ({
+      ...source,
+      sourcePath: source.kind === "notes" ? "notes.ts" : "bank.md",
+    })),
+    importReference: chainRulePackage.importReference
+      ? { ...chainRulePackage.importReference, expectedConfigurationPath: "bank.import.json" }
+      : undefined,
+  };
+
+  try {
+    writeFileSync(join(repoRoot, "notes.ts"), "export {};\n");
+    writeFileSync(join(repoRoot, "bank.import.json"), "{}\n");
+    const results = [lfSource, lfSource.replace(/\n/g, "\r\n")].map((source) => {
+      writeFileSync(join(repoRoot, "bank.md"), source);
+      const evidence = resolveSkillPackageEvidence(portableManifest, repoRoot);
+      const readiness = deriveSkillPackageReadiness(
+        portableManifest,
+        validateSkillPackageManifest(portableManifest, knownHigherMathsRefs),
+        evidence,
+      );
+      return {
+        hashes: evidence.sources.filter((item) => item.kind !== "notes").map((item) => item.currentContentHash),
+        blockers: readiness.blockers.map((blocker) => blocker.code),
+        readyForPublication: readiness.readyForPublication,
+      };
+    });
+
+    assert.deepEqual(results[0], results[1]);
+    assert.deepEqual(results[0].hashes, Array(3).fill("6aa38c610b2827cdd34ec22476558baa6b9e44419e61e8b04bf6da344fe1c769"));
+    assert.deepEqual(results[0].blockers, []);
+    assert.equal(results[0].readyForPublication, true);
+  } finally {
+    rmSync(repoRoot, { recursive: true, force: true });
   }
 });
 
@@ -686,7 +729,7 @@ test("real Tangents source evidence resolves the actual migrated draft's declare
 
 test("the Tangents manifest's declared source hash matches the live migrated draft's actual content hash", () => {
   const bytes = readFileSync("content-drafts/higher-maths/calculus/tangents-and-normals-v1.md");
-  const actualHash = sha256(bytes);
+  const actualHash = hashCanonicalTextSource(bytes);
   for (const source of tangentsPackage.sources) {
     assert.equal(source.expectedSourceHash, actualHash, source.kind);
   }

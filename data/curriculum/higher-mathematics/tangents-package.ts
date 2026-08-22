@@ -54,14 +54,14 @@ export const tangentsPackage: SkillPackageManifest = {
       sourcePath: "content-drafts/higher-maths/calculus/tangents-and-normals-v1.md",
       declaredStageName: "Applications",
       expectedQuestionCount: 1,
-      expectedSourceHash: "d658055adcf726a4e1db665823746243e5a2fbf649afb1508b186bf72457a577",
+      expectedSourceHash: "082d0f5c979095054dd2791f063e2b2b0630d4fd840f36e28c292a184c99e101",
     },
     {
       kind: "pastPaperPractice",
       sourcePath: "content-drafts/higher-maths/calculus/tangents-and-normals-v1.md",
       declaredStageName: "Past Paper-style Questions",
       expectedQuestionCount: 4,
-      expectedSourceHash: "d658055adcf726a4e1db665823746243e5a2fbf649afb1508b186bf72457a577",
+      expectedSourceHash: "082d0f5c979095054dd2791f063e2b2b0630d4fd840f36e28c292a184c99e101",
     },
   ],
 

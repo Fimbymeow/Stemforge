@@ -2,8 +2,21 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { MAX_IMPORT_SOURCE_BYTES } from "@/lib/content-import/types";
+import { hashCanonicalTextSource, sha256 } from "@/lib/content-import/canonical";
 import { parseAnswerFieldsYaml, parseCurriculumYaml, parseMarkdownBank } from "@/lib/content-import/parser";
 import { BANKS, BANK_DIRECTORY, loadBank } from "@/tests/content-import-fixtures";
+
+test("text-source hashes normalize line endings only", () => {
+  const lf = "a\nb\n";
+  assert.equal(hashCanonicalTextSource(lf), sha256(lf));
+  assert.equal(hashCanonicalTextSource("a\r\nb\r\n"), sha256(lf));
+  assert.equal(hashCanonicalTextSource("a\rb\r"), sha256(lf));
+  assert.equal(hashCanonicalTextSource("a\r\nb\r"), sha256(lf));
+
+  assert.notEqual(hashCanonicalTextSource("a \nb\n"), sha256(lf), "trailing spaces remain significant");
+  assert.notEqual(hashCanonicalTextSource("a\nb"), sha256(lf), "final-newline presence remains significant");
+  assert.notEqual(hashCanonicalTextSource("a\nB\n"), sha256(lf), "content changes remain significant");
+});
 
 test("all six byte-identical banks parse their exact authoritative 166-question total", () => {
   let total = 0;
