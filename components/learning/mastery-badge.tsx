@@ -1,4 +1,5 @@
 import type { ProgressStatus } from "@/lib/local-progress";
+import { StatusPill } from "@/components/ui";
 
 export type CompletedTierStatus = "completed" | "secure" | "mastered";
 
@@ -84,9 +85,5 @@ export function formatProgressStatusLabel(status: string): string {
 /** The one reserved-but-unused semantic token (`warning`) in the design system, used for exactly its intended meaning. */
 export function ReviewBadge({ count, className = "" }: { count: number; className?: string }) {
   if (count <= 0) return null;
-  return (
-    <span className={`inline-flex items-center rounded-full bg-warning-soft px-3 py-1 text-xs font-extrabold text-warning ${className}`}>
-      Needs more practice
-    </span>
-  );
+  return <StatusPill variant="warning" className={className}>Needs more practice</StatusPill>;
 }

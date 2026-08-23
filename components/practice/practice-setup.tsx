@@ -7,7 +7,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { AppTopbar } from "@/components/layout/app-topbar";
 import { QuickPracticeAction } from "@/components/practice/quick-practice-action";
 import { usePracticeActivation } from "@/components/practice/use-practice-activation";
-import { Card } from "@/components/ui";
+import { Button, Card } from "@/components/ui";
 import { contentResolver } from "@/lib/content-resolver";
 import { getEmptyProgressEvidence, getProgressEvidence } from "@/lib/local-progress";
 import { readConfidenceLocalState } from "@/lib/confidence/local-state";
@@ -272,7 +272,7 @@ export function PracticeSetup({
           </div>
         </Card>
 
-        <details className="group rounded-xl border border-line bg-white">
+        <details className="group disclosure-motion rounded-xl border border-line bg-white">
           <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-5 py-3 font-extrabold">
             <span className="inline-flex items-center gap-2"><SlidersHorizontal className="size-5 text-forge" />Choose practice options</span>
             <ChevronDown className="size-5 text-muted transition group-open:rotate-180" />
@@ -326,7 +326,7 @@ export function PracticeSetup({
               </label>
             ) : null}
 
-            <details className="group/advanced rounded-xl border border-line bg-paper">
+            <details className="group/advanced disclosure-motion rounded-xl border border-line bg-paper">
               <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-4 py-2 font-bold">
                 Advanced options
                 <ChevronDown className="size-4 transition group-open/advanced:rotate-180" />
@@ -351,9 +351,9 @@ export function PracticeSetup({
                 <h2 className="m-0 text-lg font-extrabold">Session preview</h2>
                 <p className="mt-1 text-sm text-muted">{preview.shortageReason ?? `${preview.session?.questionReferences.length ?? 0} question${preview.session?.questionReferences.length === 1 ? "" : "s"} selected from available content.`}</p>
               </div>
-              <button type="button" onClick={startConfiguredSession} disabled={!preview.session || activation.busy} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-forge px-4 font-extrabold text-white disabled:opacity-45 max-md:w-full">
+              <Button onClick={startConfiguredSession} disabled={!preview.session || activation.busy} className="max-md:w-full">
                 {mode === "retry_incorrect" ? "Start mistake practice" : "Start configured practice"} <ArrowRight className="size-5" />
-              </button>
+              </Button>
             </div>
           </div>
         </details>

@@ -138,6 +138,28 @@ math-field::part(menu-toggle) {
   animation: fade-rise 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+/* Native-details enhancement: semantics and keyboard behaviour remain browser-owned.
+   Browsers supporting ::details-content animate the content box; others keep the
+   accessible native snap-open fallback. */
+.disclosure-motion {
+  interpolate-size: allow-keywords;
+}
+
+.disclosure-motion::details-content {
+  block-size: 0;
+  overflow-y: clip;
+  opacity: 0;
+  transition:
+    block-size 180ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 150ms ease-out,
+    content-visibility 180ms allow-discrete;
+}
+
+.disclosure-motion[open]::details-content {
+  block-size: auto;
+  opacity: 1;
+}
+
 .orthic-construction .orthic-draw {
   stroke-dasharray: 1;
   stroke-dashoffset: 1;

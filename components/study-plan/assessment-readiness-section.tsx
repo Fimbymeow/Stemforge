@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ChevronRight } from "lucide-react";
 import { CONFIDENCE_LABEL } from "@/components/confidence/confidence-control";
 import { useLearnerConfidence } from "@/components/confidence/use-learner-confidence";
+import { Eyebrow, StatusPill, type StatusPillVariant } from "@/components/ui";
 import type { ProgressEvidence } from "@/lib/progress/types";
 import {
   deriveCourseAssessmentReadiness,
@@ -88,7 +89,7 @@ function BestFocus({ skill }: { skill: AssessmentSkillReadiness }) {
   return (
     <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-l-2 border-forge pl-3" data-testid="assessment-best-focus">
       <div>
-        <p className="text-xs font-extrabold uppercase tracking-wide text-muted">Useful next focus</p>
+        <Eyebrow className="text-muted">Useful next focus</Eyebrow>
         <p className="mt-0.5 text-sm font-extrabold text-ink">{skill.skillName}{reason ? <span className="font-medium text-muted"> · {reason}</span> : null}</p>
       </div>
       {skill.action ? <Link href={skill.action.href} className="inline-flex min-h-10 items-center rounded-lg bg-forge px-3 text-sm font-extrabold text-white">{skill.action.label}</Link> : null}
@@ -103,20 +104,20 @@ function LargeScopeDetails({ summary }: { summary: AssessmentReadinessSummary })
   const groups = groupByTopic(supported);
   return (
     <div className="mt-4 border-t border-line pt-3">
-      <details className="group">
-        {preview.length ? <div className="mb-3 group-open:hidden"><p className="text-xs font-extrabold uppercase tracking-wide text-muted">Needs attention</p><SkillRows skills={preview} compact /></div> : null}
+      <details className="group disclosure-motion">
+        {preview.length ? <div className="mb-3 group-open:hidden"><Eyebrow className="text-muted">Needs attention</Eyebrow><SkillRows skills={preview} compact /></div> : null}
         <summary className="inline-flex min-h-10 cursor-pointer list-none items-center gap-1 text-sm font-extrabold text-forge focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forge">
           View readiness <ChevronRight aria-hidden="true" className="size-4 transition-transform group-open:rotate-90" />
         </summary>
         <div className="mt-2">
           {groups.map((group) => (
             <section key={group.id} aria-labelledby={`readiness-topic-${summary.assessment.id}-${group.id}`} className="mt-4 first:mt-0">
-              <h4 id={`readiness-topic-${summary.assessment.id}-${group.id}`} className="text-xs font-extrabold uppercase tracking-wide text-muted">{group.name}</h4>
+              <Eyebrow as="h4" id={`readiness-topic-${summary.assessment.id}-${group.id}`} className="text-muted">{group.name}</Eyebrow>
               <div className="mt-1 border-t border-line"><SkillRows skills={group.skills} /></div>
             </section>
           ))}
           {unavailable.length ? (
-            <details className="mt-4 border-t border-line pt-2">
+            <details className="mt-4 disclosure-motion border-t border-line pt-2">
               <summary className="min-h-10 cursor-pointer py-2 text-sm font-bold text-muted">Not available in Orthic yet ({unavailable.length})</summary>
               <SkillRows skills={unavailable} />
             </details>
@@ -139,7 +140,7 @@ function SkillRows({ skills, compact = false, showTopic = true }: { skills: read
               {!compact ? <p className="mt-0.5 text-xs text-muted">{showTopic ? `${skill.topicName} · ` : ""}{reason}{skill.learnerConfidence ? ` · Your confidence: ${CONFIDENCE_LABEL[skill.learnerConfidence]}` : ""}</p> : null}
             </div>
             <div className="flex shrink-0 items-center gap-2">
-              <span className={stateClass(skill)}>{skill.state ? READINESS_STATE_LABEL[skill.state] : "Not available"}</span>
+              <StatusPill variant={stateVariant(skill)}>{skill.state ? READINESS_STATE_LABEL[skill.state] : "Not available"}</StatusPill>
               {skill.action && !compact ? <Link href={skill.action.href} aria-label={`${skill.action.label}: ${skill.skillName}`} className="inline-flex min-h-10 items-center rounded-lg px-2 text-sm font-extrabold text-forge">{skill.action.label}</Link> : null}
             </div>
           </li>
@@ -159,10 +160,9 @@ function groupByTopic(skills: readonly AssessmentSkillReadiness[]) {
   return [...groups.values()];
 }
 
-function stateClass(skill: AssessmentSkillReadiness) {
-  const base = "rounded-full px-2 py-1 text-xs font-extrabold";
-  if (skill.coverage === "content_unavailable") return `${base} bg-paper text-muted`;
-  if (skill.state === "needs_attention") return `${base} bg-amber-50 text-amber-900`;
-  if (skill.state === "secure") return `${base} bg-emerald-50 text-emerald-800`;
-  return `${base} bg-forge-soft text-forge`;
+function stateVariant(skill: AssessmentSkillReadiness): StatusPillVariant {
+  if (skill.coverage === "content_unavailable") return "neutral";
+  if (skill.state === "needs_attention") return "warning";
+  if (skill.state === "secure") return "success";
+  return "forge";
 }

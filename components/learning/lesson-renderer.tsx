@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowRight, BookOpen, CheckCircle2, ChevronDown, Lightbulb, ShieldAlert, Sparkles } from "lucide-react";
 import { MathGraph } from "@/components/maths/math-graph";
 import { MathContent } from "@/components/questions/math-content";
+import { Eyebrow } from "@/components/ui";
 import {
   getLessonBlockHighlightEligibility,
   getLessonBlockPlainText,
@@ -47,7 +48,7 @@ export function LessonRenderer({ document, typography = "system_sans", continuat
       </header>
 
       {hasContents ? (
-        <details className="mt-4 rounded-xl border border-line bg-white lg:hidden" data-lesson-contents>
+        <details className="mt-4 disclosure-motion rounded-xl border border-line bg-white lg:hidden" data-lesson-contents>
           <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-4 py-2 font-extrabold">
             On this page <ChevronDown aria-hidden="true" className="size-4" />
           </summary>
@@ -59,7 +60,7 @@ export function LessonRenderer({ document, typography = "system_sans", continuat
         {hasContents ? (
           <aside className="hidden lg:block" aria-label="Lesson contents">
             <div className="sticky top-6">
-              <p className="mb-2 text-xs font-extrabold uppercase tracking-wide text-muted">On this page</p>
+              <Eyebrow className="mb-2 text-muted">On this page</Eyebrow>
               <SectionLinks document={document} />
             </div>
           </aside>
@@ -140,7 +141,7 @@ function LessonBlockView({ block, document }: { block: LessonBlock; document: Le
   if (block.type === "worked_example") {
     return (
       <section {...annotationProps} className="scroll-mt-24 rounded-xl border-l-4 border-forge/55 bg-forge-soft/45 p-5 sm:p-6" data-testid="lesson-worked-example">
-        <p className="text-xs font-extrabold uppercase tracking-wide text-forge">Worked example</p>
+        <Eyebrow className="text-forge">Worked example</Eyebrow>
         <h3 className="mt-1 text-xl font-extrabold">{block.title}</h3>
         <div className="mt-3 font-bold"><MathContent>{block.prompt}</MathContent></div>
         <ol className="mt-5 grid gap-4 border-l border-forge/25 pl-5" aria-label="Worked solution steps" data-testid="static-worked-solution">
@@ -169,9 +170,9 @@ function LessonBlockView({ block, document }: { block: LessonBlock; document: Le
     );
   }
   return (
-    <details {...annotationProps} className="group scroll-mt-24 rounded-2xl border border-forge/25 bg-white" data-testid="lesson-self-check" data-lesson-collapsible>
+    <details {...annotationProps} className="group disclosure-motion scroll-mt-24 rounded-2xl border border-forge/25 bg-white" data-testid="lesson-self-check" data-lesson-collapsible>
       <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-5 py-4">
-        <span><span className="block text-xs font-extrabold uppercase tracking-wide text-forge">Self-check</span><span className="mt-1 block text-lg font-extrabold">{block.title}</span></span>
+        <span><Eyebrow as="span" className="block text-forge">Self-check</Eyebrow><span className="mt-1 block text-lg font-extrabold">{block.title}</span></span>
         <ChevronDown aria-hidden="true" className="size-5 transition group-open:rotate-180" />
       </summary>
       <div className="lesson-collapsible-content border-t border-line px-5 py-4" data-collapsible-content>
@@ -191,7 +192,9 @@ function Callout({ block, annotationProps }: { block: LessonCalloutBlock; annota
     : family === "strategy"
       ? "border-forge/50 text-forge"
       : family === "depth"
-        ? "border-[#76629b]/50 text-[#5d477e]"
+        // Depth is optional supporting material, not a distinct status. Forge preserves
+        // hierarchy without introducing a one-off palette meaning.
+        ? "border-forge/35 text-forge"
         : "border-success/50 text-success";
   const content = (
     <div className="lesson-collapsible-content border-t border-current/15 px-5 py-4 text-ink" data-collapsible-content>
@@ -201,7 +204,7 @@ function Callout({ block, annotationProps }: { block: LessonCalloutBlock; annota
   );
   if (block.defaultCollapsed !== undefined || family === "depth") {
     return (
-      <details {...annotationProps} open={!block.defaultCollapsed} className={`group scroll-mt-24 rounded-xl border-l-4 bg-white ${style}`} data-callout-family={family} data-lesson-collapsible>
+      <details {...annotationProps} open={!block.defaultCollapsed} className={`group disclosure-motion scroll-mt-24 rounded-xl border-l-4 bg-white ${style}`} data-callout-family={family} data-lesson-collapsible>
         <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-5 py-3">
           <span className="inline-flex items-center gap-2 font-extrabold"><Icon aria-hidden="true" className="size-4" />{block.title}</span>
           <ChevronDown aria-hidden="true" className="size-4 transition group-open:rotate-180" />

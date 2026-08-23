@@ -1,9 +1,10 @@
 "use client";
 
 import { useId, useRef } from "react";
-import { X } from "lucide-react";
 import { useModalFocusTrap } from "@/lib/use-modal-focus-trap";
 import { CONFIDENCE_LABEL } from "@/components/confidence/confidence-control";
+import { DialogCloseButton, DialogShell } from "@/components/dialog-shell";
+import { Button } from "@/components/ui";
 import type { ConfidenceLevel, ConfidenceSuggestionReason } from "@/lib/confidence/types";
 
 /**
@@ -34,23 +35,19 @@ export function ConfidenceDisagreementDialog({ open, skillName, chosenLevel, sug
   const chosenLabel = CONFIDENCE_LABEL[chosenLevel];
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-ink/35 p-4" role="presentation">
-      <section ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={descriptionId} className="w-full max-w-sm rounded-2xl border border-line bg-white p-5 shadow-2xl">
+    <DialogShell ref={dialogRef} labelledBy={titleId} describedBy={descriptionId} size="sm">
         <div className="flex items-start justify-between gap-4">
           <h2 id={titleId} className="text-lg font-extrabold">Keep {skillName} as {chosenLabel.toLowerCase()}?</h2>
-          <button ref={closeRef} type="button" onClick={onClose} aria-label="Close" className="grid min-h-10 min-w-10 shrink-0 place-items-center rounded-full border border-line text-muted hover:text-ink">
-            <X className="size-4" />
-          </button>
+          <DialogCloseButton ref={closeRef} onClick={onClose} label="Close" />
         </div>
         <p id={descriptionId} className="mt-2 text-sm leading-relaxed text-muted">
           Your recent work {hintPhrase(suggestionReason)}. Orthic isn&apos;t completely certain, so you can keep your own rating.
         </p>
         <div className="mt-5 grid gap-2">
-          <button ref={keepRef} type="button" onClick={onKeepOwn} className="min-h-11 rounded-lg bg-forge px-4 text-sm font-extrabold text-white">Keep as {chosenLabel.toLowerCase()}</button>
-          <button type="button" onClick={onUseSuggestion} className="min-h-11 rounded-lg border border-line px-4 text-sm font-extrabold hover:bg-paper">Use Orthic&apos;s suggestion</button>
+          <Button ref={keepRef} onClick={onKeepOwn}>Keep as {chosenLabel.toLowerCase()}</Button>
+          <Button variant="secondary" onClick={onUseSuggestion}>Use Orthic&apos;s suggestion</Button>
         </div>
-      </section>
-    </div>
+    </DialogShell>
   );
 }
 

@@ -87,12 +87,12 @@ export function CourseTracker({ subject }: { subject: Subject }) {
         </section>
       ) : null}
 
-      <details className="border-t border-line pt-3" data-testid="course-wide-requirements">
+      <details className="disclosure-motion border-t border-line pt-3" data-testid="course-wide-requirements">
         <summary className="min-h-11 cursor-pointer py-2 text-sm font-extrabold">Reasoning across the course</summary>
         <p className="mb-3 text-sm text-muted">These requirements develop through contextual skills rather than separate learning paths.</p>
         <div className="grid gap-2">
           {model.courseWideRequirements.map((requirement) => (
-            <details key={requirement.areaId} className="border-b border-line">
+            <details key={requirement.areaId} className="disclosure-motion border-b border-line">
               <summary className="min-h-11 cursor-pointer py-3 font-bold">{requirement.title}</summary>
               <div className="border-l-2 border-line pb-4 pl-3 text-sm leading-relaxed text-muted">
                 {requirement.officialPoints.map((point) => <p key={point.id} data-testid="course-tracker-official-point" data-official-point-id={point.id}><span className="font-bold text-ink">{point.reference}:</span> {point.text}</p>)}
@@ -150,7 +150,7 @@ function TrackerSkillRow({ skill, confidence }: {
           </Link>
         </div>
       ) : null}
-      <details className="group/requirements mt-1 text-sm text-muted" data-testid={`tracker-requirements-${skill.skillPathId}`}>
+      <details className="mt-1 group/requirements disclosure-motion text-sm text-muted" data-testid={`tracker-requirements-${skill.skillPathId}`}>
         <summary aria-label={`View official requirements for ${skill.name}`} className="flex min-h-10 w-fit cursor-pointer list-none items-center gap-1.5 px-2 py-2 text-xs font-semibold underline-offset-4 hover:text-ink hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-forge">
           Official requirements ({skill.officialPoints.length}) <ChevronDown aria-hidden="true" className="size-3.5 transition-transform group-open/requirements:rotate-180" />
         </summary>

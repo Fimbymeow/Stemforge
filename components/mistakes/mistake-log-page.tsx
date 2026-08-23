@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, BookOpen, CheckCircle2, Dumbbell, RotateCcw } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { AppTopbar } from "@/components/layout/app-topbar";
+import { Eyebrow, StatusPill } from "@/components/ui";
 import { getEmptyProgressEvidence, getProgressEvidence } from "@/lib/local-progress";
 import {
   deriveMistakeLog,
@@ -43,7 +44,7 @@ export function MistakeLogPage() {
           <div className="grid grid-cols-[48px_minmax(0,1fr)] items-center gap-3 max-sm:grid-cols-1">
             <span className="grid size-12 place-items-center rounded-xl border border-forge-soft bg-forge-soft text-forge"><BookOpen aria-hidden="true" className="size-6" /></span>
             <div>
-              <p className="text-xs font-extrabold uppercase tracking-wide text-forge">Higher Maths</p>
+              <Eyebrow className="text-forge">Higher Maths</Eyebrow>
               <h1 className="mt-1 text-[32px] font-extrabold leading-tight">Mistake Log</h1>
               <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted">A quiet record of questions to revisit, grouped by skill. Items clear automatically after later independent success.</p>
             </div>
@@ -77,7 +78,7 @@ export function MistakeLogPage() {
         </section>
 
         {historyCount > 0 ? (
-          <details className="border-y border-line" data-testid="mistake-history-disclosure">
+          <details className="disclosure-motion border-y border-line" data-testid="mistake-history-disclosure">
             <summary className="flex min-h-12 cursor-pointer items-center gap-2 py-3 font-extrabold">
               <CheckCircle2 aria-hidden="true" className="size-5 text-forge" /> Show resolved and previous-version history ({historyCount})
             </summary>
@@ -141,7 +142,7 @@ function MistakeRow({ item }: { item: MistakeItem }) {
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <h4 className="font-extrabold">Question {item.questionNumber}: {item.questionTitle}</h4>
-          <span className={`rounded-full px-2 py-1 text-xs font-extrabold ${item.state === "open" ? "bg-amber-50 text-amber-900" : "bg-paper text-muted"}`}>{stateLabel}</span>
+          <StatusPill variant={item.state === "open" ? "warning" : "neutral"}>{stateLabel}</StatusPill>
         </div>
         <p className="mt-2 text-sm font-semibold text-muted">
           {displayStageName(item.stageName)} · {mistakeCount(item.incorrectAttemptCount, "incorrect attempt")}

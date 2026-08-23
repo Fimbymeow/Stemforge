@@ -1,6 +1,13 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { renderToStaticMarkup } from "react-dom/server";
+import {
+  BUTTON_VARIANT_CLASSES,
+  STATUS_PILL_VARIANT_CLASSES,
+  SURFACE_LEVEL_CLASSES,
+  StatusPill,
+} from "../components/ui";
 import { formatProgressStatusLabel } from "../components/learning/mastery-badge";
 import { getReviewPresentationState } from "../components/learning/review-status";
 
@@ -31,4 +38,51 @@ test("core redesigned surfaces retain the intended information hierarchy", () =>
   assert.match(hub, />Courses</);
   assert.match(tracker, /<details className="mt-1/);
   assert.match(tracker, /Open \$\{skill\.name\} skill overview/);
+});
+
+test("shared visual primitives encode the restrained semantic hierarchy", () => {
+  assert.match(SURFACE_LEVEL_CLASSES.primary, /rounded-2xl.*shadow-card/);
+  assert.match(SURFACE_LEVEL_CLASSES.secondary, /rounded-xl.*border-line/);
+  assert.doesNotMatch(SURFACE_LEVEL_CLASSES.secondary, /shadow/);
+  assert.match(SURFACE_LEVEL_CLASSES.inline, /bg-paper/);
+
+  assert.match(STATUS_PILL_VARIANT_CLASSES.forge, /bg-forge-soft.*text-forge/);
+  assert.match(STATUS_PILL_VARIANT_CLASSES.success, /bg-success-soft.*text-success/);
+  assert.match(STATUS_PILL_VARIANT_CLASSES.warning, /bg-warning-soft.*text-warning/);
+  assert.match(STATUS_PILL_VARIANT_CLASSES.danger, /bg-danger-soft.*text-danger/);
+  assert.match(BUTTON_VARIANT_CLASSES.destructive, /bg-danger.*text-white/);
+
+  const warning = renderToStaticMarkup(
+    StatusPill({ variant: "warning", dot: true, children: "Needs attention" }),
+  );
+  assert.match(warning, />Needs attention</);
+  assert.match(warning, /aria-hidden="true"/);
+});
+
+test("known semantic-colour debt is removed without adding a depth-only palette", () => {
+  const readiness = readFileSync("components/study-plan/assessment-readiness-section.tsx", "utf8");
+  const mistakes = readFileSync("components/mistakes/mistake-log-page.tsx", "utf8");
+  const notes = readFileSync("components/learning/lesson-renderer.tsx", "utf8");
+  for (const [file, source] of [["readiness", readiness], ["mistakes", mistakes], ["notes", notes]] as const) {
+    assert.doesNotMatch(source, /bg-amber-50|text-amber-900|bg-emerald-50|text-emerald-800|#76629b|#5d477e/, `${file} retains ad-hoc colour debt`);
+  }
+  assert.match(notes, /family === "depth"[\s\S]*border-forge\/35 text-forge/);
+});
+
+test("dialog and native disclosure foundations are adopted on representative surfaces", () => {
+  const confidenceDialog = readFileSync("components/confidence/confidence-disagreement-dialog.tsx", "utf8");
+  const reportDialog = readFileSync("components/beta-reports/report-dialog.tsx", "utf8");
+  const globalCss = readFileSync("app/globals.css", "utf8");
+  assert.match(confidenceDialog, /<DialogShell/);
+  assert.match(reportDialog, /<DialogShell/);
+  assert.match(globalCss, /\.disclosure-motion::details-content/);
+  assert.match(globalCss, /prefers-reduced-motion: reduce/);
+  for (const file of [
+    "components/practice/practice-setup.tsx",
+    "components/learning/course-tracker.tsx",
+    "components/learning/lesson-renderer.tsx",
+    "components/mistakes/mistake-log-page.tsx",
+  ]) {
+    assert.match(readFileSync(file, "utf8"), /disclosure-motion/, `${file} has no representative native disclosure motion`);
+  }
 });
