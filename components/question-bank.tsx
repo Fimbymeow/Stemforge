@@ -7,6 +7,7 @@ import { ArrowLeft, ArrowRight, ChevronDown, Filter, Lock, Search, X } from "luc
 import { AppShell } from "@/components/layout/app-shell";
 import { AppTopbar } from "@/components/layout/app-topbar";
 import { MathContent } from "@/components/questions/math-content";
+import { QuestionGraphVisual } from "@/components/questions/question-graph-visual";
 import { Card } from "@/components/ui";
 import type { AnswerType } from "@/data/types";
 import { contentResolver } from "@/lib/content-resolver";
@@ -620,7 +621,7 @@ function QuestionRow({ entry, selected, expanded, onSelected, onToggleExpand }: 
   const excerpt = buildQuestionBankExcerpt(entry.question);
   const panelId = `question-bank-preview-${entry.question.id}`;
   const label = `Select ${entry.context.skillPath.name}, ${entry.context.stage.name}, Question ${position}`;
-  const isVisual = VISUAL_ANSWER_TYPES.has(entry.question.answerType);
+  const hasInteractiveVisualAnswer = VISUAL_ANSWER_TYPES.has(entry.question.answerType);
   return <li className="grid min-w-0 gap-2 px-4 py-3">
     <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 max-sm:grid-cols-[auto_minmax(0,1fr)]">
       <input type="checkbox" checked={selected} disabled={!eligibility.eligible} onChange={(event) => onSelected(event.target.checked)} aria-label={label} className="size-5" />
@@ -643,7 +644,8 @@ function QuestionRow({ entry, selected, expanded, onSelected, onToggleExpand }: 
     </div>
     {expanded ? <div id={panelId} className="min-w-0 rounded-lg bg-paper p-3 text-sm leading-relaxed">
       <MathContent>{entry.question.questionText}</MathContent>
-      {isVisual ? <p className="mt-2 font-bold text-muted">Open the question page to use the interactive {entry.question.answerType === "nature_table" ? "table" : "graph"} tool.</p> : null}
+      <QuestionGraphVisual question={entry.question} />
+      {hasInteractiveVisualAnswer ? <p className="mt-2 font-bold text-muted">Open the question page to use the interactive {entry.question.answerType === "nature_table" ? "table" : "graph"} answer tool.</p> : null}
     </div> : null}
   </li>;
 }

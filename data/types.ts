@@ -182,8 +182,11 @@ export type Subject = {
 };
 
 import type {
+  GraphAxisConfig,
+  GraphBoundary,
   GraphFunctionDefinition,
   GraphPoint,
+  GraphRegion,
   GraphTransformation,
   GraphViewport,
   NatureTableConfig,
@@ -251,6 +254,9 @@ export type GraphQuestionConfig = {
     showTangent: boolean;
   };
   keyPoints?: GraphPoint[];
+  axes?: GraphAxisConfig;
+  boundaries?: GraphBoundary[];
+  regions?: GraphRegion[];
   transformations?: GraphTransformation[];
 };
 

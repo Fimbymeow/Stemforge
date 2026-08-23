@@ -40,13 +40,56 @@ export type GraphFunctionDefinition = {
   id: string;
   expression: MathExpression;
   label?: string;
+  labelAtX?: number;
+  labelPlacement?: GraphLabelPlacement;
   styleRole: "primary" | "secondary" | "derivative" | "construction" | "answer";
 };
 
 export type GraphPoint = {
+  id?: string;
   x: ExactNumber;
   y: ExactNumber;
   label?: string;
+  labelPlacement?: GraphLabelPlacement;
+};
+
+export type GraphLabelPlacement = "above" | "below" | "left" | "right";
+
+export type GraphBoundary = {
+  id: string;
+  axis: "x" | "y";
+  value: number;
+  label?: string;
+  labelPlacement?: GraphLabelPlacement;
+  style?: "solid" | "dashed";
+};
+
+export type GraphRegion =
+  | {
+      id: string;
+      type: "curve-to-constant";
+      curveId: string;
+      fromX: number;
+      toX: number;
+      baseline: number;
+      description: string;
+    }
+  | {
+      id: string;
+      type: "between-curves";
+      curveAId: string;
+      curveBId: string;
+      fromX: number;
+      toX: number;
+      description: string;
+    };
+
+export type GraphAxisConfig = {
+  xLabel?: string;
+  yLabel?: string;
+  xTicks?: number[];
+  yTicks?: number[];
+  grid?: "none" | "selected";
 };
 
 export type GraphTransformation =

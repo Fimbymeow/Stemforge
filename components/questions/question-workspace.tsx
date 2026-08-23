@@ -11,6 +11,7 @@ import { StageCompletionPanel } from "@/components/learning/stage-completion-pan
 import { useLearnerNextAction } from "@/components/learning/use-learner-next-action";
 import { MathContent } from "@/components/questions/math-content";
 import { QuestionAnswerInput } from "@/components/questions/answer-inputs";
+import { QuestionGraphVisual } from "@/components/questions/question-graph-visual";
 import { WorkedSolutionContent } from "@/components/questions/worked-solution-content";
 import { FormulaSheetDrawer } from "@/components/questions/formula-sheet-drawer";
 import { Card, ProgressBar } from "@/components/ui";
@@ -487,6 +488,7 @@ export function QuestionWorkspace({
             ) : null}
             <div className="mt-3 rounded-xl border border-line bg-white p-5 shadow-card max-sm:p-4" data-testid="question-interaction">
               <div className="text-lg leading-relaxed"><MathContent>{question.questionText}</MathContent></div>
+              <QuestionGraphVisual question={question} />
               <div className="mt-5 border-t border-line pt-4">
                 <label id="answer-label" htmlFor="question-answer" className="mb-2 block text-sm font-extrabold">Your answer</label>
                 <form

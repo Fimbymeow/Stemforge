@@ -626,6 +626,10 @@ function validateGraphQuestion(question: Question, location: string, issue: Issu
       viewport: question.graphConfig.viewport,
       functions: question.graphConfig.functions,
       linkedDerivative: question.graphConfig.linkedDerivative,
+      axes: question.graphConfig.axes,
+      boundaries: question.graphConfig.boundaries,
+      regions: question.graphConfig.regions,
+      keyPoints: question.graphConfig.keyPoints,
     })) issue("error", graphIssue.code, `Question "${question.id}": ${graphIssue.message}`, graphLocation);
   }
   if (question.natureTableConfig) {

@@ -1,8 +1,6 @@
 "use client";
 
 import { useMemo } from "react";
-import { LinkedDerivativeGraphs } from "@/components/maths/linked-derivative-graphs";
-import { MathGraph } from "@/components/maths/math-graph";
 import { NatureTable } from "@/components/maths/nature-table";
 import type { Question } from "@/data/types";
 import type { NatureTableExpectedCell, StructuredGraphAnswer } from "@/lib/maths/expression-types";
@@ -17,7 +15,6 @@ type Props = {
 export function GraphAnswerInput({ question, value, submitted, onChange }: Props) {
   const answer = useMemo(() => parseAnswer(value), [value]);
   const config = question.structuredAnswer;
-  const graph = question.graphConfig;
 
   function setAnswer(next: StructuredGraphAnswer) {
     onChange(JSON.stringify(next));
@@ -25,12 +22,6 @@ export function GraphAnswerInput({ question, value, submitted, onChange }: Props
 
   return (
     <div className="grid gap-4">
-      {graph?.linkedDerivative ? (
-        <LinkedDerivativeGraphs expression={graph.functions[0].expression} viewport={graph.viewport} initialX={graph.linkedDerivative.initialX} />
-      ) : graph ? (
-        <MathGraph title={graph.title} description={graph.description} viewport={graph.viewport} functions={graph.functions} points={graph.keyPoints} />
-      ) : null}
-
       {config?.type === "nature-table" && question.natureTableConfig ? (
         <NatureTable
           config={question.natureTableConfig}

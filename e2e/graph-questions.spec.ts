@@ -57,3 +57,29 @@ test("mobile graph demo stacks without horizontal overflow", async ({ page }) =>
   await expect(page.getByTestId("nature-table")).toBeVisible();
   await expectNoHorizontalOverflow(page);
 });
+
+test("declarative graph fixtures render curves, regions and boundaries without browser errors", async ({ page, seriousBrowserErrors }) => {
+  await page.goto("/graph-demo/visuals");
+  await expect(page.getByRole("heading", { name: "Mathematical graph fixtures" })).toBeVisible();
+  await expect(page.getByTestId("math-graph")).toHaveCount(4);
+  await expect(page.getByTestId("graph-region-area")).toBeVisible();
+  await expect(page.getByTestId("graph-boundary-lower-bound")).toBeVisible();
+  await expect(page.getByTestId("graph-boundary-upper-bound")).toBeVisible();
+  await expect(page.getByTestId("graph-region-between")).toBeVisible();
+  await expect(page.getByTestId("graph-curve-reciprocal")).toHaveCount(2);
+  await expect(page.getByTestId("math-graph-invalid")).toHaveCount(0);
+  await expectNoHorizontalOverflow(page);
+  expect(seriousBrowserErrors).toEqual([]);
+});
+
+test("graph fixtures preserve their responsive viewBox at mobile and tablet widths", async ({ page, seriousBrowserErrors }) => {
+  for (const width of [320, 375, 390, 768]) {
+    await page.setViewportSize({ width, height: width < 700 ? 844 : 1024 });
+    await page.goto("/graph-demo/visuals");
+    await expect(page.getByTestId("math-graph")).toHaveCount(4);
+    const graph = page.getByTestId("math-graph").first().locator("svg");
+    await expect(graph).toHaveAttribute("viewBox", "0 0 640 360");
+    await expectNoHorizontalOverflow(page);
+  }
+  expect(seriousBrowserErrors).toEqual([]);
+});
