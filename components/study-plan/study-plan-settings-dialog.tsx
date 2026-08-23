@@ -3,20 +3,14 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { ChevronRight, Pencil, Plus, Trash2, X } from "lucide-react";
 import { formatAssessmentListDate } from "@/components/study-plan/study-plan-item-row";
+import { StudyRhythmFields } from "@/components/study-plan/study-rhythm-fields";
 import { resolveSkillsForRequirements } from "@/lib/curriculum/requirement-resolution";
 import { useModalFocusTrap } from "@/lib/use-modal-focus-trap";
 import { presentAssessmentScopeSummary } from "@/lib/study-plan/presenter";
 import { studyPlanCourseOptions, studyPlanRequirementScopeOptions, studyPlanScopeOptions } from "@/lib/study-plan/scope-options";
-import { MAX_WEEKLY_HOURS, MIN_WEEKLY_HOURS, minutesToWeeklyHours, WEEKLY_TIME_HOUR_STEP, weeklyHoursToMinutes } from "@/lib/study-plan/weekly-time";
+import { minutesToWeeklyHours, weeklyHoursToMinutes } from "@/lib/study-plan/weekly-time";
 import type { StudyPlanSetup } from "@/lib/study-plan/local-state";
 import type { Assessment, AssessmentType, StudyPlanWeekday } from "@/lib/study-plan/types";
-
-const WEEKDAYS: readonly { id: StudyPlanWeekday; short: string; name: string }[] = [
-  { id: "mon", short: "M", name: "Monday" }, { id: "tue", short: "T", name: "Tuesday" },
-  { id: "wed", short: "W", name: "Wednesday" }, { id: "thu", short: "T", name: "Thursday" },
-  { id: "fri", short: "F", name: "Friday" }, { id: "sat", short: "S", name: "Saturday" },
-  { id: "sun", short: "S", name: "Sunday" },
-];
 
 const ASSESSMENT_TYPE_OPTIONS: readonly { value: AssessmentType; label: string }[] = [
   { value: "class_test", label: "Class test" },
@@ -110,38 +104,12 @@ export function StudyPlanSettingsDialog({ open, onClose, courseSlug, courseName,
             </div>
 
             <form onSubmit={submitSettings} className="mt-5 grid gap-5">
-              <label className="grid max-w-xs gap-1 text-sm font-bold">
-                Weekly study time
-                <div className="flex items-center gap-2">
-                  <input
-                    aria-label="Weekly study time in hours"
-                    type="number"
-                    min={MIN_WEEKLY_HOURS}
-                    max={MAX_WEEKLY_HOURS}
-                    step={WEEKLY_TIME_HOUR_STEP}
-                    required
-                    value={weeklyHours}
-                    onChange={(event) => setWeeklyHours(event.currentTarget.valueAsNumber)}
-                    className={`${inputClass} w-24`}
-                  />
-                  <span className="text-sm font-bold text-muted">hours per week</span>
-                </div>
-              </label>
-
-              <fieldset>
-                <legend className="text-sm font-bold">Days you can study</legend>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {WEEKDAYS.map((day) => {
-                    const checked = availableDays.includes(day.id);
-                    return (
-                      <label key={day.id} className={`flex min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-lg border px-3 text-sm font-extrabold ${checked ? "border-forge bg-forge-soft text-forge" : "border-line bg-white text-muted"}`} title={day.name}>
-                        <input type="checkbox" className="sr-only" checked={checked} aria-label={day.name} onChange={() => setAvailableDays(checked ? availableDays.filter((entry) => entry !== day.id) : [...availableDays, day.id])} />
-                        {day.short}
-                      </label>
-                    );
-                  })}
-                </div>
-              </fieldset>
+              <StudyRhythmFields
+                weeklyHours={weeklyHours}
+                availableDays={availableDays}
+                onWeeklyHoursChange={setWeeklyHours}
+                onAvailableDaysChange={setAvailableDays}
+              />
 
               {assessmentFeaturesEnabled ? <div data-testid="premium-assessment-settings">
                 <div className="flex items-center justify-between gap-2">

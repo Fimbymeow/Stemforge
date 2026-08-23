@@ -1,15 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AppTopbar } from "@/components/layout/app-topbar";
 import { MAX_FIRST_NAME_LENGTH } from "@/lib/learner-preferences";
 import { useLearnerPreferences } from "@/components/learner-preferences/use-learner-preferences";
+import { ONBOARDING_UPDATED_EVENT, readOnboardingState } from "@/lib/onboarding";
 
 export function DashboardPersonalisation() {
   const { loaded, preferences, save, error } = useLearnerPreferences();
   const [firstName, setFirstName] = useState("");
   const [busy, setBusy] = useState(false);
-  const showPrompt = loaded && !error && !preferences.firstName && !preferences.namePromptDismissed;
+  const [onboardingComplete, setOnboardingComplete] = useState(false);
+  useEffect(() => {
+    const read = () => setOnboardingComplete(readOnboardingState(window.localStorage)?.status === "completed");
+    read();
+    window.addEventListener(ONBOARDING_UPDATED_EVENT, read);
+    window.addEventListener("storage", read);
+    return () => {
+      window.removeEventListener(ONBOARDING_UPDATED_EVENT, read);
+      window.removeEventListener("storage", read);
+    };
+  }, []);
+  const showPrompt = loaded && !error && !onboardingComplete && !preferences.firstName && !preferences.namePromptDismissed;
 
   async function persistName() {
     setBusy(true);

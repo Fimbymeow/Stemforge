@@ -1,6 +1,24 @@
 import { expect, test as base } from "@playwright/test";
 
-export const test = base.extend<{ seriousBrowserErrors: string[] }>({
+type OrthicFixtures = {
+  seriousBrowserErrors: string[];
+  newLearner: boolean;
+  onboardingBaseline: void;
+};
+
+export const test = base.extend<OrthicFixtures>({
+  newLearner: [false, { option: true }],
+  onboardingBaseline: [async ({ page, newLearner }, use) => {
+    if (!newLearner) {
+      await page.addInitScript(() => {
+        const key = "orthic.onboarding.v1";
+        if (!window.localStorage.getItem(key)) {
+          window.localStorage.setItem(key, JSON.stringify({ version: 1, status: "completed", step: 3 }));
+        }
+      });
+    }
+    await use();
+  }, { auto: true }],
   seriousBrowserErrors: [
     async ({ page }, use) => {
       const errors: string[] = [];

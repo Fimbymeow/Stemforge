@@ -6,6 +6,7 @@ import { useModalFocusTrap } from "@/lib/use-modal-focus-trap";
 import { clearGuestLearnerPreferences } from "@/lib/learner-preferences";
 import { clearStudyPlanLocalState } from "@/lib/study-plan/local-state";
 import { ACCOUNT_STATE_SYNC_STORAGE_KEY, clearAssociatedAccountState } from "@/lib/account-state/client-state";
+import { clearOnboardingState } from "@/lib/onboarding";
 
 type Confirmation = "association" | "account_progress" | "all_progress" | null;
 
@@ -40,6 +41,7 @@ export function AccountDataControls() {
         await sync.clearAllBrowserProgress();
         if (!clearGuestLearnerPreferences(window.localStorage)) throw new Error("preference_clear_failed");
         if (!clearStudyPlanLocalState(window.localStorage)) throw new Error("study_plan_clear_failed");
+        if (!clearOnboardingState(window.localStorage)) throw new Error("onboarding_clear_failed");
         window.localStorage.removeItem("orthic.confidence.v1");
         window.localStorage.removeItem(ACCOUNT_STATE_SYNC_STORAGE_KEY);
         setMessage("All Orthic progress and account information was cleared from this browser. Your account's progress, already kept in sync, was not deleted.");

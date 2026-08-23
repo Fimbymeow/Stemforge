@@ -8,27 +8,31 @@ test.beforeEach(async ({ page }) => {
   await page.evaluate((key) => window.localStorage.removeItem(key), preferenceKey);
 });
 
-test("new guest can save an optional first name without Dashboard focus theft", async ({ page, seriousBrowserErrors }) => {
+test.use({ newLearner: true });
+
+test("new guest saves an optional first name through onboarding without focus theft", async ({ page, seriousBrowserErrors }) => {
   await page.goto("/dashboard");
-  const prompt = page.getByTestId("learner-name-prompt");
-  const input = prompt.getByRole("textbox", { name: "What should we call you?" });
-  await expect(prompt).toBeVisible();
+  const input = page.getByRole("textbox", { name: "What should we call you?" });
   await expect(input).not.toBeFocused();
-  await expect(page.getByRole("link", { name: "Open Higher Maths" })).toBeVisible();
 
   await input.fill("  Finlay  ");
-  await prompt.getByRole("button", { name: "Save" }).click();
+  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByRole("button", { name: "Skip for now" }).click();
+  await page.getByRole("button", { name: "Go to Dashboard" }).click();
   await expect(page.getByRole("heading", { name: "Welcome back, Finlay" })).toBeVisible();
-  await expect(prompt).toHaveCount(0);
   await page.reload();
   await expect(page.getByRole("heading", { name: "Welcome back, Finlay" })).toBeVisible();
   await expect(page.getByTestId("learner-name-prompt")).toHaveCount(0);
   expect(seriousBrowserErrors).toEqual([]);
 });
 
-test("Skip is persistent, non-blocking and retains the generic greeting", async ({ page }) => {
+test("an unnamed learner completes onboarding and retains the generic greeting", async ({ page }) => {
   await page.goto("/dashboard");
-  await page.getByTestId("learner-name-prompt").getByRole("button", { name: "Skip" }).click();
+  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByRole("button", { name: "Skip for now" }).click();
+  await page.getByRole("button", { name: "Go to Dashboard" }).click();
   await expect(page.getByRole("heading", { name: "Welcome back", exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "Start learning" })).toBeVisible();
   await page.reload();
