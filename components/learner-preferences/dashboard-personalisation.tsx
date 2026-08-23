@@ -43,7 +43,7 @@ export function DashboardPersonalisation() {
           <h1 className="mt-1 text-[28px] font-extrabold leading-tight">
             {preferences.firstName ? `Welcome back, ${preferences.firstName}` : "Welcome back"}
           </h1>
-          <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted">Continue learning or open your course.</p>
+          <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted">Your plan, courses and recent learning.</p>
         </div>
         <AppTopbar demo={false} />
       </header>

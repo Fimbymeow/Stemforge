@@ -44,16 +44,15 @@ export function GuestProgressProtection({
   }
 
   return (
-    <aside data-testid="guest-progress-protection" className="relative rounded-xl border border-forge/25 bg-forge-soft p-4 pr-14" aria-labelledby="guest-progress-protection-title">
-      <h2 id="guest-progress-protection-title" className="m-0 text-lg font-extrabold">Protect the progress you’ve made</h2>
-      <p className="mb-0 mt-2 text-sm leading-relaxed text-muted">
-        Your progress currently lives on this browser. An optional account can protect it after you review and confirm what to add.
-      </p>
-      <div className="mt-4 flex flex-wrap items-center gap-4">
-        <Link href={accountHrefFor("/dashboard")} className="inline-flex min-h-11 items-center justify-center rounded-lg border border-forge bg-white px-4 text-sm font-extrabold text-forge">
+    <aside data-testid="guest-progress-protection" className="relative border-y border-forge/20 bg-forge-soft/35 px-3 py-3 pr-12" aria-labelledby="guest-progress-protection-title">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <div className="min-w-[220px] flex-1">
+          <h2 id="guest-progress-protection-title" className="m-0 text-sm font-extrabold">Protect your browser progress</h2>
+          <p className="mb-0 mt-0.5 text-xs leading-relaxed text-muted">Your progress currently lives on this browser. You can keep learning as a guest.</p>
+        </div>
+        <Link href={accountHrefFor("/dashboard")} className="inline-flex min-h-10 items-center justify-center rounded-lg px-2 text-sm font-extrabold text-forge">
           Review account options
         </Link>
-        <span className="text-xs font-semibold text-muted">You can keep learning as a guest.</span>
       </div>
       <button type="button" onClick={dismiss} aria-label="Dismiss account protection reminder" className="absolute right-2 top-2 grid size-10 place-items-center rounded-lg text-muted hover:bg-white">
         <X className="size-5" />

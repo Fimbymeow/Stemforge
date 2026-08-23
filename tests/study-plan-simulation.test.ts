@@ -59,7 +59,7 @@ test("plan distance counts additions, removals and material item changes without
   assert.equal(planDistance([base], []), 1);
 });
 
-test("Dashboard mode preserves full default, suppresses equivalent Today work and compacts a distinct action", () => {
+test("Dashboard mode preserves the unconfigured fallback, suppresses configured continuation and only compacts it when caught up", () => {
   const recommendation = action();
   const setup: StudyPlanDashboardState = { status: "setup", caughtUp: false, todayItems: [], planItems: [] };
   const duplicateItem = item({ href: recommendation.href!, skillPathId: recommendation.pathId! });
@@ -71,8 +71,9 @@ test("Dashboard mode preserves full default, suppresses equivalent Today work an
   assert.equal(resolveDashboardContinueMode({ studyPlanEnabled: true, plan: setup, recommendation }), "full");
   assert.equal(resolveDashboardContinueMode({ studyPlanEnabled: true, plan: duplicate, recommendation }), "hidden");
   assert.equal(resolveDashboardContinueMode({ studyPlanEnabled: true, plan: duplicateLater, recommendation }), "hidden");
-  assert.equal(resolveDashboardContinueMode({ studyPlanEnabled: true, plan: distinct, recommendation }), "compact");
-  assert.equal(resolveDashboardContinueMode({ studyPlanEnabled: true, plan: { ...distinct, caughtUp: true }, recommendation }), "hidden");
+  assert.equal(resolveDashboardContinueMode({ studyPlanEnabled: true, plan: distinct, recommendation }), "hidden");
+  assert.equal(resolveDashboardContinueMode({ studyPlanEnabled: true, plan: { ...distinct, caughtUp: true }, recommendation }), "compact");
+  assert.equal(resolveDashboardContinueMode({ studyPlanEnabled: true, plan: { ...distinct, caughtUp: true }, recommendation: action({ href: null }) }), "hidden");
 });
 
 function item(overrides: Partial<StudyPlanItem> = {}): StudyPlanItem {

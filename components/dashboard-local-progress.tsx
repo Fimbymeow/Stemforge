@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, BookOpen } from "lucide-react";
-import { Card, ProgressBar } from "@/components/ui";
+import { Card, Eyebrow, ProgressBar } from "@/components/ui";
 import { useProgressSync } from "@/components/progress-sync-provider";
 import { deriveLearnerDashboardModel } from "@/lib/dashboard-derivations";
 import { getEmptyProgressEvidence, getProgressEvidence } from "@/lib/local-progress";
@@ -61,7 +61,7 @@ export function DashboardLocalProgressSection({ studyPlanEnabled = false }: { st
   return (
     <section className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-5" aria-label="Your learning dashboard">
       {studyPlanEnabled ? <StudyPlanToday evidence={evidence} courseSlug={effectiveCourses[0]?.slug ?? model.course.subjectSlug} courseName={effectiveCourses[0]?.name ?? "Higher Maths"} onDashboardStateChange={updateStudyPlanState} /> : null}
-      {continueMode === "full" ? <Card data-testid="dashboard-progress-summary" aria-label="Continue learning" className="border-forge/30 p-4">
+      {continueMode === "full" ? <Card data-testid="dashboard-progress-summary" aria-label="Continue learning" className="border-forge/25 p-4 md:p-5">
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 max-md:grid-cols-1">
           <div className="min-w-0">
             <p className="text-xs font-extrabold uppercase tracking-wide text-forge">Continue learning · Higher Maths</p>
@@ -75,10 +75,10 @@ export function DashboardLocalProgressSection({ studyPlanEnabled = false }: { st
           </div>
         </div>
       </Card> : continueMode === "compact" && recommendation.href ? (
-        <section aria-labelledby="dashboard-resume-course-title" data-testid="dashboard-resume-course" className="border-y border-line py-3">
+        <section aria-labelledby="dashboard-resume-course-title" data-testid="dashboard-resume-course" className="rounded-lg bg-paper px-4 py-3">
           <div className="flex items-center justify-between gap-4 max-sm:items-start">
             <div className="min-w-0">
-              <p className="text-xs font-extrabold uppercase tracking-wide text-muted">Resume course</p>
+              <p className="text-xs font-extrabold uppercase tracking-wide text-muted">Continue learning</p>
               <h2 id="dashboard-resume-course-title" className="mt-0.5 text-base font-extrabold">{recommendedPath?.name ?? recommendation.title}</h2>
               {recommendedStage ? <p className="mt-0.5 text-xs font-semibold text-muted">{recommendedStage.name} · {recommendedStage.completedQuestions}/{recommendedStage.totalQuestions} complete</p> : null}
             </div>
@@ -87,25 +87,31 @@ export function DashboardLocalProgressSection({ studyPlanEnabled = false }: { st
         </section>
       ) : null}
 
-      <GuestProgressProtection meaningfulEvidenceCount={meaningfulEvidenceCount} signedIn={sync.accountFingerprint !== null} authStateReady={sync.status === "authentication_required"} />
-
-      <section aria-labelledby="your-courses-title">
-        <div className="mb-2 flex items-end justify-between gap-3"><h2 id="your-courses-title" className="text-lg font-extrabold">Your courses</h2><span className="text-xs font-bold text-muted">{model.sync.label}</span></div>
-        <div className="divide-y divide-line border-y border-line" data-testid="dashboard-courses">
+      <section aria-labelledby="your-courses-title" data-testid="dashboard-courses-section" className="pt-1">
+        <div className="mb-3 flex items-end justify-between gap-3">
+          <div>
+            <Eyebrow className="text-muted">Course overview</Eyebrow>
+            <h2 id="your-courses-title" className="mt-1 text-lg font-extrabold">Your courses</h2>
+          </div>
+          <span className="text-xs font-bold text-muted">{model.sync.label}</span>
+        </div>
+        <div className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-white" data-testid="dashboard-courses">
           {effectiveCourses.map((course) => (
-            <Link key={course.slug} href={course.href} aria-label={`Open ${course.name}`} className="flex min-h-16 items-center gap-4 border-l-2 border-ink/20 bg-paper/40 py-2 pl-3 transition-colors hover:border-forge hover:bg-forge-soft/40">
-              <BookOpen aria-hidden="true" className="size-5 shrink-0 text-forge" />
+            <Link key={course.slug} href={course.href} aria-label={`Open ${course.name}`} className="flex min-h-16 items-center gap-3 px-4 py-3 transition-colors hover:bg-paper focus-visible:bg-paper">
+              <BookOpen aria-hidden="true" className="size-5 shrink-0 text-muted" />
               <span className="min-w-0 flex-1">
                 <span className="block font-extrabold">{course.name}</span>
                 {course.slug === model.course.subjectSlug ? (
-                  <><span className="block text-xs text-muted">{model.course.completedPathCount} of {model.course.availablePathCount} skills learned · {reviewSummary}</span><ProgressBar value={learnedSkillPercentage} className="mt-2 max-w-sm" /></>
+                  <><span className="block text-xs text-muted">{model.course.completedPathCount} of {model.course.availablePathCount} skills learned · {reviewSummary}</span><ProgressBar value={learnedSkillPercentage} label={`${course.name}: ${model.course.completedPathCount} of ${model.course.availablePathCount} available skills learned`} className="mt-2 max-w-sm" /></>
                 ) : null}
               </span>
-              <ArrowRight aria-hidden="true" className="size-4 shrink-0 text-forge" />
+              <ArrowRight aria-hidden="true" className="size-4 shrink-0 text-muted" />
             </Link>
           ))}
         </div>
       </section>
+
+      <GuestProgressProtection meaningfulEvidenceCount={meaningfulEvidenceCount} signedIn={sync.accountFingerprint !== null} authStateReady={sync.status === "authentication_required"} />
 
       <DashboardActivitySummary evidence={evidence} />
     </section>

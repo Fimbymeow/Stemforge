@@ -43,7 +43,7 @@ export function StudyPlanToday({ evidence, courseSlug, courseName, onDashboardSt
   if (!studyPlan.state.setup) {
     return (
       <>
-        <section aria-labelledby="study-plan-setup-title" data-testid="study-plan-setup" className="rounded-2xl border border-forge/30 bg-white p-4 shadow-card md:p-5">
+        <section aria-labelledby="study-plan-setup-title" data-testid="study-plan-setup" className="rounded-2xl border border-forge/25 bg-white p-4 shadow-card md:p-5">
           <p className="text-xs font-extrabold uppercase tracking-wide text-forge">Study Plan</p>
           <h2 id="study-plan-setup-title" className="mt-1 text-xl font-extrabold">Plan your study week</h2>
           <p className="mt-1 max-w-2xl text-sm text-muted">Set a realistic rhythm for {courseName} and Orthic will suggest a short plan for each day.</p>
@@ -58,12 +58,12 @@ export function StudyPlanToday({ evidence, courseSlug, courseName, onDashboardSt
   const oneMore = plan ? canPullForward(plan, studyPlan.today) : false;
   return (
     <>
-      <section aria-labelledby="study-plan-today-title" data-testid="study-plan-today" className="rounded-2xl border border-line bg-white p-4 shadow-card md:p-5">
+      <section aria-labelledby="study-plan-today-title" data-testid="study-plan-today" className="rounded-2xl border border-forge/25 bg-white p-4 shadow-card md:p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="text-xs font-extrabold uppercase tracking-wide text-forge">Study Plan</p>
             <h2 id="study-plan-today-title" className="mt-1 text-xl font-extrabold">Today</h2>
-            <p className="mt-1 text-sm text-muted">A short plan for {courseName}, based on your learning so far.</p>
+            <p className="mt-1 text-sm text-muted">What Orthic recommends next for {courseName}, based on your learning so far.</p>
           </div>
           <div className="flex flex-wrap items-center gap-1 text-sm">
             <Link href="/study-plan" className="inline-flex min-h-10 items-center rounded-lg px-3 font-extrabold text-forge">View this week <span aria-hidden="true">→</span></Link>

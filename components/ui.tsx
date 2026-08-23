@@ -130,10 +130,11 @@ export function Card({ children, className = "", ...props }: CardProps) {
 
 type ProgressBarProps = {
   value: number;
+  label?: string;
   className?: string;
 };
 
-export function ProgressBar({ value, className = "" }: ProgressBarProps) {
+export function ProgressBar({ value, label, className = "" }: ProgressBarProps) {
   const safeValue = Math.max(0, Math.min(100, value));
   return (
     <div
@@ -141,6 +142,7 @@ export function ProgressBar({ value, className = "" }: ProgressBarProps) {
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={safeValue}
+      aria-label={label}
       className={`h-2 overflow-hidden rounded-full bg-line ${className}`}
     >
       <span
