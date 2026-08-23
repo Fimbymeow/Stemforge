@@ -1,4 +1,5 @@
 import { canonicalContent, type CanonicalContentSource } from "@/data/canonical-content";
+import { higherMathematicsSpecificationRegister } from "@/data/curriculum/higher-mathematics/specification-register";
 import type { ResolvedSkillPath } from "@/lib/content-resolver";
 import { contentResolver, createContentResolver } from "@/lib/content-resolver";
 import type { ConfidenceLevel } from "@/lib/confidence/types";
@@ -8,6 +9,7 @@ import { calculateSkillPathProgress } from "@/lib/progress/calculations";
 import type { ProgressEvidence, SkillPathProgress } from "@/lib/progress/types";
 import { createReviewDerivationCache, deriveSkillReviewState } from "@/lib/review/derivation";
 import type { ReviewDueState } from "@/lib/review/types";
+import { resolveSkillsForRequirements } from "@/lib/curriculum/requirement-resolution";
 import {
   assessmentTemporalState,
   effectiveAssessments,
@@ -299,6 +301,14 @@ function scopedSkills(
       .map((context) => snapshot.get(context.skillPath.slug)!).filter(Boolean);
   }
   const knownSkills = new Set(contexts.map((context) => context.skillPath.slug));
+  if (assessment.scope.kind === "requirements") {
+    const knownPointIds = new Set(higherMathematicsSpecificationRegister.points
+      .filter((point) => point.status === "active").map((point) => point.specPointId));
+    for (const id of assessment.scope.specPointIds) if (!knownPointIds.has(id)) diagnostics.push(`${assessment.id}:unknown_requirement:${id}`);
+    const selectedRequirements = new Set(resolveSkillsForRequirements(assessment.scope.specPointIds));
+    return contexts.filter((context) => selectedRequirements.has(context.skillPath.slug))
+      .map((context) => snapshot.get(context.skillPath.slug)!).filter(Boolean);
+  }
   for (const id of assessment.scope.skillPathIds) if (!knownSkills.has(id)) diagnostics.push(`${assessment.id}:unknown_skill:${id}`);
   const selected = new Set(assessment.scope.skillPathIds);
   return contexts.filter((context) => selected.has(context.skillPath.slug))

@@ -82,6 +82,36 @@ test("topic scope expands to unpublished canonical skills instead of shrinking t
   assert(summary.totalCanonicalSkillCount > summary.supportedSkillCount);
 });
 
+test("a requirements-scoped assessment resolves through canonical skills exactly like an equivalent skills-scoped one, including unavailable-skill honesty", () => {
+  // hm-calc-diff-chain-rule -> chain-rule; hm-calc-tangent -> tangents-and-normals (not yet available).
+  const requirementsScoped: Assessment = { ...assessedSkills([]), scope: { kind: "requirements", specPointIds: ["hm-calc-diff-chain-rule", "hm-calc-tangent"] } };
+  const model = deriveCourseAssessmentReadiness({ courseSlug: "higher-maths", assessments: [requirementsScoped], evidence: evidence(), now: NOW });
+  const summary = model.assessments[0];
+  assert.equal(summary.totalCanonicalSkillCount, 2);
+  assert.equal(summary.supportedSkillCount, 1, "chain-rule is live; tangents-and-normals is not");
+  assert.equal(summary.unavailableSkillCount, 1);
+  assert.equal(summary.skills.find((item) => item.skillPathId === "chain-rule")?.coverage, "supported");
+  assert.equal(summary.skills.find((item) => item.skillPathId === "tangents-and-normals")?.coverage, "content_unavailable");
+  // Readiness must never quietly claim full coverage just because one requirement's skill isn't live yet.
+  assert.notEqual(summary.unavailableSkillCount, 0);
+});
+
+test("an unknown official requirement ID in scope fails safely — no skills resolved, a diagnostic recorded, never a crash", () => {
+  const assessment: Assessment = { ...assessedSkills([]), scope: { kind: "requirements", specPointIds: ["not-a-real-requirement"] } };
+  const model = deriveCourseAssessmentReadiness({ courseSlug: "higher-maths", assessments: [assessment], evidence: evidence(), now: NOW });
+  const summary = model.assessments[0];
+  assert.equal(summary.totalCanonicalSkillCount, 0);
+  assert(model.diagnostics.includes("assessment:test:unknown_requirement:not-a-real-requirement"));
+});
+
+test("a requirement mapped to two skills (many-to-one) scopes readiness across both", () => {
+  // hm-geom-circle-intersections maps to both circle-circle-intersections and line-circle-intersections.
+  const assessment: Assessment = { ...assessedSkills([]), scope: { kind: "requirements", specPointIds: ["hm-geom-circle-intersections"] } };
+  const model = deriveCourseAssessmentReadiness({ courseSlug: "higher-maths", assessments: [assessment], evidence: evidence(), now: NOW });
+  const skillIds = model.assessments[0].skills.map((item) => item.skillPathId).sort();
+  assert.deepEqual(skillIds, ["circle-circle-intersections", "line-circle-intersections"]);
+});
+
 test("confidence is context only and never changes hard or insufficient-evidence states", () => {
   const first = questionsFor(canonicalContent, "basic-differentiation")[0];
   const confident = new Map([["basic-differentiation", "confident" as const]]);

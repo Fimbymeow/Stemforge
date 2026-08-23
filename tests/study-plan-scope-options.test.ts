@@ -8,7 +8,7 @@ import {
   readStudyPlanLocalState,
   writeStudyPlanLocalState,
 } from "@/lib/study-plan/local-state";
-import { studyPlanCourseOptions, studyPlanScopeOptions } from "@/lib/study-plan/scope-options";
+import { studyPlanCourseOptions, studyPlanRequirementScopeOptions, studyPlanScopeOptions } from "@/lib/study-plan/scope-options";
 import type { Assessment } from "@/lib/study-plan/types";
 
 test("studyPlanCourseOptions exposes only genuinely live subjects, derived from the same availability flag the rest of the app uses", () => {
@@ -90,6 +90,121 @@ test("a topics-scoped assessment persists and rehydrates through the full local-
   assert.equal(writeStudyPlanLocalState(storage, state), true);
   const rehydrated = readStudyPlanLocalState(storage);
   assert.deepEqual(rehydrated.setup?.assessments, [assessment]);
+});
+
+test("studyPlanRequirementScopeOptions groups the official specification by course area then strand, using real official wording and honest skill coverage", () => {
+  const areas = studyPlanRequirementScopeOptions("higher-maths");
+  assert(areas.length > 1, "the official specification must not collapse to Orthic's live content");
+  const calculus = areas.find((area) => area.courseAreaId === "calculus")!;
+  assert.ok(calculus, "Calculus course area must be present");
+
+  const differentiating = calculus.strands.find((strand) => strand.strandId === "differentiating-functions")!;
+  assert.ok(differentiating, "the Differentiating functions strand must be present");
+  assert.equal(differentiating.strandName, "Differentiating functions");
+
+  const chainRule = differentiating.requirements.find((requirement) => requirement.specPointId === "hm-calc-diff-chain-rule")!;
+  assert.ok(chainRule, "the chain rule requirement must be present");
+  assert.match(chainRule.wording, /chain rule/i);
+  assert.deepEqual(chainRule.skillPathIds, ["chain-rule"]);
+  assert.equal(chainRule.availableSkillCount, 1, "chain-rule is a live skill");
+  assert.equal(chainRule.totalSkillCount, 1);
+
+  const tangent = differentiating.requirements.find((requirement) => requirement.specPointId === "hm-calc-tangent")
+    ?? calculus.strands.flatMap((strand) => strand.requirements).find((requirement) => requirement.specPointId === "hm-calc-tangent")!;
+  assert.equal(tangent.availableSkillCount, 0, "tangents-and-normals is not yet available in Orthic");
+  assert.equal(tangent.totalSkillCount, 1);
+});
+
+test("studyPlanRequirementScopeOptions returns no options for a course with no specification register", () => {
+  assert.deepEqual(studyPlanRequirementScopeOptions("higher-physics"), []);
+});
+
+test("a requirements-scoped assessment summary shows the single requirement's wording, or an honest count for many", () => {
+  const oneRequirement: Assessment["scope"] = { kind: "requirements", specPointIds: ["hm-calc-diff-chain-rule"] };
+  assert.match(presentAssessmentScopeSummary(oneRequirement, "higher-maths"), /chain rule/i);
+
+  const twoRequirements: Assessment["scope"] = { kind: "requirements", specPointIds: ["hm-calc-diff-chain-rule", "hm-calc-tangent"] };
+  assert.equal(presentAssessmentScopeSummary(twoRequirements, "higher-maths"), "2 requirements");
+
+  // An ID that no longer resolves to real wording still degrades to an honest count, never a crash.
+  const unknownRequirement: Assessment["scope"] = { kind: "requirements", specPointIds: ["not-a-real-requirement"] };
+  assert.equal(presentAssessmentScopeSummary(unknownRequirement, "higher-maths"), "1 requirement");
+});
+
+test("a requirements-scoped assessment persists and rehydrates through the full local-state round trip", () => {
+  const values = new Map<string, string>();
+  const storage = {
+    getItem: (key: string) => values.get(key) ?? null,
+    setItem: (key: string, value: string) => { values.set(key, value); },
+  };
+  const assessment: Assessment = {
+    id: "assessment:requirement-test",
+    courseSlug: "higher-maths",
+    type: "class_test",
+    title: "Calculus test",
+    date: { precision: "exact", date: "2026-08-28" },
+    scope: { kind: "requirements", specPointIds: ["hm-calc-diff-chain-rule", "hm-calc-tangent"] },
+    source: "learner",
+  };
+  const state = {
+    version: 3 as const,
+    setup: { weeklyMinutes: 90, availableDays: ["mon", "wed", "sat"] as ("mon" | "wed" | "sat")[], assessments: [assessment] },
+    plan: null,
+    previousWeek: null,
+    preservation: { itemStates: {}, movedDates: {}, excludedItemKeys: [] },
+  };
+  assert.equal(writeStudyPlanLocalState(storage, state), true);
+  const rehydrated = readStudyPlanLocalState(storage);
+  assert.deepEqual(rehydrated.setup?.assessments, [assessment]);
+});
+
+test("existing skills/topics-scoped assessments remain fully readable and unchanged after adding the requirements scope kind (backward compatibility)", () => {
+  const legacySkillsScoped = parseStoredStudyPlanLocalState(JSON.stringify({
+    version: 3,
+    setup: {
+      weeklyMinutes: 90,
+      availableDays: ["mon"],
+      assessments: [{
+        id: "legacy-skills", courseSlug: "higher-maths", type: "class_test", title: "Legacy skills test",
+        date: { precision: "exact", date: "2026-08-01" },
+        scope: { kind: "skills", skillPathIds: ["chain-rule"] },
+        source: "learner",
+      }],
+    },
+  }));
+  assert.deepEqual(legacySkillsScoped.setup?.assessments[0]?.scope, { kind: "skills", skillPathIds: ["chain-rule"] });
+});
+
+test("a requirements scope with an empty or malformed specPointIds array is dropped, matching topics/skills normalization", () => {
+  const emptyArray = parseStoredStudyPlanLocalState(JSON.stringify({
+    version: 3,
+    setup: {
+      weeklyMinutes: 90,
+      availableDays: ["mon"],
+      assessments: [{
+        id: "empty-requirements", courseSlug: "higher-maths", type: "class_test", title: "Empty",
+        date: { precision: "exact", date: "2026-08-01" },
+        scope: { kind: "requirements", specPointIds: [] },
+        source: "learner",
+      }],
+    },
+  }));
+  assert.deepEqual(emptyArray.setup?.assessments, []);
+
+  const malformed = parseStoredStudyPlanLocalState(JSON.stringify({
+    version: 3,
+    setup: {
+      weeklyMinutes: 90,
+      availableDays: ["mon"],
+      assessments: [{
+        id: "malformed-requirements", courseSlug: "higher-maths", type: "class_test", title: "Malformed",
+        date: { precision: "exact", date: "2026-08-01" },
+        scope: { kind: "requirements" },
+        source: "learner",
+      }],
+    },
+  }));
+  assert.deepEqual(malformed.setup?.assessments, []);
 });
 
 test("a malformed legacy course_areas scope is safely dropped rather than crashing normalization", () => {

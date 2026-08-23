@@ -12,6 +12,8 @@ export function assessmentContentFingerprint(assessment: Assessment) {
     date: assessment.date,
     scope: assessment.scope.kind === "whole_course" ? assessment.scope : assessment.scope.kind === "topics"
       ? { kind: "topics", topicIds: [...assessment.scope.topicIds].sort() }
+      : assessment.scope.kind === "requirements"
+      ? { kind: "requirements", specPointIds: [...assessment.scope.specPointIds].sort() }
       : { kind: "skills", skillPathIds: [...assessment.scope.skillPathIds].sort() },
   };
   return createHash("sha256").update(stableStringify(canonical), "utf8").digest("hex");

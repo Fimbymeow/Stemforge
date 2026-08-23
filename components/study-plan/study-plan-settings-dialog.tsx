@@ -3,9 +3,10 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { ChevronRight, Pencil, Plus, Trash2, X } from "lucide-react";
 import { formatAssessmentListDate } from "@/components/study-plan/study-plan-item-row";
+import { resolveSkillsForRequirements } from "@/lib/curriculum/requirement-resolution";
 import { useModalFocusTrap } from "@/lib/use-modal-focus-trap";
 import { presentAssessmentScopeSummary } from "@/lib/study-plan/presenter";
-import { studyPlanCourseOptions, studyPlanScopeOptions } from "@/lib/study-plan/scope-options";
+import { studyPlanCourseOptions, studyPlanRequirementScopeOptions, studyPlanScopeOptions } from "@/lib/study-plan/scope-options";
 import { MAX_WEEKLY_HOURS, MIN_WEEKLY_HOURS, minutesToWeeklyHours, WEEKLY_TIME_HOUR_STEP, weeklyHoursToMinutes } from "@/lib/study-plan/weekly-time";
 import type { StudyPlanSetup } from "@/lib/study-plan/local-state";
 import type { Assessment, AssessmentType, StudyPlanWeekday } from "@/lib/study-plan/types";
@@ -206,21 +207,29 @@ function AssessmentForm({ defaultCourseSlug, initial, onSave, onCancel }: {
   const [scopeKind, setScopeKind] = useState<Assessment["scope"]["kind"]>(initial?.scope.kind ?? "whole_course");
   const [topicIds, setTopicIds] = useState<string[]>(initial?.scope.kind === "topics" ? initial.scope.topicIds : []);
   const [skillPathIds, setSkillPathIds] = useState<string[]>(initial?.scope.kind === "skills" ? initial.scope.skillPathIds : []);
+  const [specPointIds, setSpecPointIds] = useState<string[]>(initial?.scope.kind === "requirements" ? initial.scope.specPointIds : []);
   const closeRef = useRef<HTMLButtonElement>(null);
 
   const courseOptions = useMemo(() => studyPlanCourseOptions(), []);
   const areas = useMemo(() => studyPlanScopeOptions(assessmentCourseSlug), [assessmentCourseSlug]);
+  const requirementAreas = useMemo(() => studyPlanRequirementScopeOptions(assessmentCourseSlug), [assessmentCourseSlug]);
+  const resolvedSkillIds = useMemo(() => resolveSkillsForRequirements(specPointIds), [specPointIds]);
+  const skillAvailabilityById = useMemo(() => new Map(
+    areas.flatMap((area) => area.topics).flatMap((topic) => topic.skills).map((skill) => [skill.skillPathId, skill.isAvailable]),
+  ), [areas]);
+  const resolvedAvailableCount = resolvedSkillIds.filter((id) => skillAvailabilityById.get(id)).length;
 
   useEffect(() => { closeRef.current?.focus(); }, []);
 
-  // A scope built from one subject's topics/skills is meaningless for another subject, so
-  // switching Subject resets to the safe, always-valid "whole course" state rather than carrying
-  // over foreign canonical IDs.
+  // A scope built from one subject's topics/skills/requirements is meaningless for another
+  // subject, so switching Subject resets to the safe, always-valid "whole course" state rather
+  // than carrying over foreign canonical IDs.
   function handleCourseChange(nextCourseSlug: string) {
     setAssessmentCourseSlug(nextCourseSlug);
     setScopeKind("whole_course");
     setTopicIds([]);
     setSkillPathIds([]);
+    setSpecPointIds([]);
   }
 
   function toggleGroup(current: string[], groupIds: string[], setValue: (next: string[]) => void) {
@@ -233,8 +242,10 @@ function AssessmentForm({ defaultCourseSlug, initial, onSave, onCancel }: {
     if (!title.trim() || !date) return;
     if (scopeKind === "topics" && topicIds.length === 0) return;
     if (scopeKind === "skills" && skillPathIds.length === 0) return;
+    if (scopeKind === "requirements" && specPointIds.length === 0) return;
     const scope: Assessment["scope"] = scopeKind === "whole_course" ? { kind: "whole_course" }
       : scopeKind === "topics" ? { kind: "topics", topicIds }
+      : scopeKind === "requirements" ? { kind: "requirements", specPointIds }
       : { kind: "skills", skillPathIds };
     onSave({
       id: initial?.id ?? createAssessmentId(),
@@ -289,9 +300,15 @@ function AssessmentForm({ defaultCourseSlug, initial, onSave, onCancel }: {
               <input type="radio" name="assessment-scope-kind" checked={scopeKind === "topics"} onChange={() => setScopeKind("topics")} /> Areas of the course
             </label>
             <label className="flex min-h-10 items-center gap-2 text-sm font-bold">
+              <input type="radio" name="assessment-scope-kind" checked={scopeKind === "requirements"} onChange={() => setScopeKind("requirements")} /> Specification content
+            </label>
+            <label className="flex min-h-10 items-center gap-2 text-sm font-bold">
               <input type="radio" name="assessment-scope-kind" checked={scopeKind === "skills"} onChange={() => setScopeKind("skills")} /> Specific skills
             </label>
           </div>
+          {scopeKind === "requirements" ? (
+            <p className="mt-2 text-xs leading-relaxed text-muted">Tick exactly what your teacher told you is on the test — Orthic works out which skills to prepare you for.</p>
+          ) : null}
 
           {scopeKind === "topics" ? (
             <div className="mt-3 grid gap-3">
@@ -323,6 +340,75 @@ function AssessmentForm({ defaultCourseSlug, initial, onSave, onCancel }: {
                   </div>
                 );
               })}
+            </div>
+          ) : null}
+
+          {scopeKind === "requirements" ? (
+            <div className="mt-3 grid gap-3">
+              {requirementAreas.length === 0 ? (
+                <p className="rounded-lg bg-paper p-3 text-xs text-muted">The official specification isn&apos;t available for this course yet.</p>
+              ) : requirementAreas.map((area) => {
+                const allPointIdsInArea = area.strands.flatMap((strand) => strand.requirements.map((requirement) => requirement.specPointId));
+                const selectedInArea = allPointIdsInArea.filter((id) => specPointIds.includes(id));
+                return (
+                  <div key={area.courseAreaId} className="border-t border-line pt-3 first:border-t-0 first:pt-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-extrabold">{area.courseAreaName}</p>
+                      <p className="text-xs text-muted">{selectedInArea.length > 0 ? `${selectedInArea.length} selected` : ""}</p>
+                    </div>
+                    <div className="mt-2 grid gap-1.5">
+                      {area.strands.map((strand) => {
+                        const strandPointIds = strand.requirements.map((requirement) => requirement.specPointId);
+                        const selectedInStrand = strandPointIds.filter((id) => specPointIds.includes(id));
+                        const allSelected = strandPointIds.length > 0 && selectedInStrand.length === strandPointIds.length;
+                        return (
+                          <details key={strand.strandId} open={selectedInStrand.length > 0} className="group rounded-lg border border-line px-3 py-2">
+                            <summary className="flex min-h-8 cursor-pointer list-none items-center justify-between gap-2 text-sm font-bold [&::-webkit-details-marker]:hidden">
+                              <span className="flex items-center gap-1.5">
+                                <ChevronRight aria-hidden="true" className="size-3.5 shrink-0 text-muted transition-transform group-open:rotate-90" />
+                                {strand.strandName}
+                              </span>
+                              <span className="text-xs font-normal text-muted">{selectedInStrand.length > 0 ? `${selectedInStrand.length} selected` : ""}</span>
+                            </summary>
+                            <div className="mt-2 grid gap-1 pl-1">
+                              {strand.requirements.map((requirement) => {
+                                const checked = specPointIds.includes(requirement.specPointId);
+                                const partiallyCovered = requirement.totalSkillCount > 0 && requirement.availableSkillCount < requirement.totalSkillCount;
+                                return (
+                                  <label key={requirement.specPointId} className="flex min-h-10 cursor-pointer items-start gap-2 py-1 text-sm">
+                                    <input
+                                      type="checkbox"
+                                      className="mt-1"
+                                      checked={checked}
+                                      onChange={() => setSpecPointIds(checked ? specPointIds.filter((id) => id !== requirement.specPointId) : [...specPointIds, requirement.specPointId])}
+                                    />
+                                    <span>
+                                      <span className="block leading-snug">{requirement.wording}</span>
+                                      {requirement.availableSkillCount === 0 ? <span className="mt-0.5 block text-xs font-normal text-muted">Not yet available in Orthic</span>
+                                        : partiallyCovered ? <span className="mt-0.5 block text-xs font-normal text-muted">Partly available in Orthic so far</span> : null}
+                                    </span>
+                                  </label>
+                                );
+                              })}
+                              {strandPointIds.length > 1 ? (
+                                <button type="button" onClick={() => toggleGroup(specPointIds, strandPointIds, setSpecPointIds)} className="justify-self-start text-xs font-bold text-forge hover:underline">
+                                  {allSelected ? "Clear" : "Select all"}
+                                </button>
+                              ) : null}
+                            </div>
+                          </details>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+              {specPointIds.length > 0 ? (
+                <p className="rounded-lg bg-forge-soft px-3 py-2 text-xs font-bold text-forge" data-testid="requirement-scope-summary">
+                  {specPointIds.length} specification requirement{specPointIds.length === 1 ? "" : "s"} selected — Orthic will prepare you across {resolvedSkillIds.length} skill{resolvedSkillIds.length === 1 ? "" : "s"}
+                  {resolvedAvailableCount < resolvedSkillIds.length ? `, ${resolvedAvailableCount} of which ${resolvedAvailableCount === 1 ? "is" : "are"} available now` : ""}.
+                </p>
+              ) : null}
             </div>
           ) : null}
 

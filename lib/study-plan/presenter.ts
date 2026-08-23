@@ -1,4 +1,4 @@
-import { studyPlanScopeOptions } from "@/lib/study-plan/scope-options";
+import { studyPlanRequirementScopeOptions, studyPlanScopeOptions } from "@/lib/study-plan/scope-options";
 import type { AssessmentScope, StudyPlanAssessmentQualifier, StudyPlanReasonCode, StudyPlanResult } from "@/lib/study-plan/types";
 
 const REASON_LABELS: Record<StudyPlanReasonCode, string> = {
@@ -42,16 +42,25 @@ export function presentStudyPlanAssessmentQualifier(qualifier: StudyPlanAssessme
 /** Short, learner-facing summary of an assessment's scope for a dense list row (e.g. "Differentiation", "3 skills"). */
 export function presentAssessmentScopeSummary(scope: AssessmentScope, courseSlug: string): string {
   if (scope.kind === "whole_course") return "Whole course";
-  const areas = studyPlanScopeOptions(courseSlug);
   if (scope.kind === "topics") {
+    const areas = studyPlanScopeOptions(courseSlug);
     if (scope.topicIds.length === 1) {
       const topic = areas.flatMap((area) => area.topics).find((entry) => entry.topicScopeId === scope.topicIds[0]);
       if (topic) return topic.topicName;
     }
     return `${scope.topicIds.length} area${scope.topicIds.length === 1 ? "" : "s"}`;
   }
+  if (scope.kind === "requirements") {
+    if (scope.specPointIds.length === 1) {
+      const requirement = studyPlanRequirementScopeOptions(courseSlug)
+        .flatMap((area) => area.strands).flatMap((strand) => strand.requirements)
+        .find((entry) => entry.specPointId === scope.specPointIds[0]);
+      if (requirement) return requirement.wording;
+    }
+    return `${scope.specPointIds.length} requirement${scope.specPointIds.length === 1 ? "" : "s"}`;
+  }
   if (scope.skillPathIds.length === 1) {
-    const skill = areas.flatMap((area) => area.topics).flatMap((topic) => topic.skills).find((entry) => entry.skillPathId === scope.skillPathIds[0]);
+    const skill = studyPlanScopeOptions(courseSlug).flatMap((area) => area.topics).flatMap((topic) => topic.skills).find((entry) => entry.skillPathId === scope.skillPathIds[0]);
     if (skill) return skill.skillPathName;
   }
   return `${scope.skillPathIds.length} skill${scope.skillPathIds.length === 1 ? "" : "s"}`;

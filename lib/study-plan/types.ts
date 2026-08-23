@@ -28,16 +28,23 @@ export type AssessmentDate =
   | { precision: "month"; year: number; month: number };
 
 /**
- * Whole-course assessments never enumerate every skill; topic/skill scopes always store canonical
- * IDs, never display labels. A `topics` entry is a qualified `"${courseAreaSlug}:${routeTopicSlug}"`
- * string (see `topicScopeId` in `lib/study-plan/assessments.ts`) — the syllabus sub-section level
- * (e.g. "Differentiation"), not the broader course area (e.g. "Calculus"), since that's the
- * granularity an SQA learner actually scopes a topic test to.
+ * Whole-course assessments never enumerate every skill; topic/skill/requirement scopes always
+ * store canonical IDs, never display labels. A `topics` entry is a qualified
+ * `"${courseAreaSlug}:${routeTopicSlug}"` string (see `topicScopeId` in `lib/study-plan/assessments.ts`)
+ * — the syllabus sub-section level (e.g. "Differentiation"), not the broader course area (e.g.
+ * "Calculus"), since that's the granularity an SQA learner actually scopes a topic test to.
+ *
+ * `requirements` stores the learner's SOURCE selection — official Higher Maths specification
+ * point IDs, exactly as a teacher-given test scope would name them — never a hand-duplicated
+ * translation into skills. The RESOLVED canonical skills a requirement scope actually covers are
+ * always derived on read via `resolveSkillsForRequirements` (`lib/curriculum/requirement-resolution.ts`),
+ * never stored, so they can never go stale relative to the official-skill-mapping source of truth.
  */
 export type AssessmentScope =
   | { kind: "whole_course" }
   | { kind: "topics"; topicIds: string[] }
-  | { kind: "skills"; skillPathIds: string[] };
+  | { kind: "skills"; skillPathIds: string[] }
+  | { kind: "requirements"; specPointIds: string[] };
 
 export type Assessment = {
   id: string;

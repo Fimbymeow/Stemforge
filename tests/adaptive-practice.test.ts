@@ -95,6 +95,15 @@ test("a scoped upcoming test boosts its weak skill while unrelated and whole-cou
   assert.equal(createAdaptiveQuickPracticeSelection({ evidence: evidence(), source, assessments: [final], now: NOW }).recommendation?.primaryPathId, "basic-differentiation");
 });
 
+test("a requirements-scoped assessment biases Quick Practice through the same shared resolver Study Plan uses — no separate spec-point logic inside Practice", () => {
+  const completeBasic = completedPathEvidence(canonicalContent, "basic-differentiation", "2026-06-01T10:00:00.000Z");
+  const scoped = assessment("chain-rule-test", { kind: "requirements", specPointIds: ["hm-calc-diff-chain-rule"] }, "2026-07-17");
+  const selection = createAdaptiveQuickPracticeSelection({ evidence: completeBasic, assessments: [scoped], now: NOW, durationMinutes: 10 });
+  assert.equal(selection.recommendation?.primaryPathId, "chain-rule");
+  assert(selection.recommendation?.reasons.includes("on_your_test"));
+  assert(selection.result.session?.questionReferences.every((item) => item.pathId === "chain-rule"));
+});
+
 test("multiple assessments use the nearest relevant assessment without summing them", () => {
   const source = createTwoPathFixture();
   const later = assessment("later", { kind: "skills", skillPathIds: [fixtureIds.path] }, "2026-07-25");

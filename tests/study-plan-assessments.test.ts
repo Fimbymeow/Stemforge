@@ -75,6 +75,18 @@ test("nearestRelevantAssessment resolves scope kinds and picks the nearest relev
   assert.equal(nearestRelevantAssessment([], basicTopicId, BASIC.skillPath.slug, NOW), null);
 });
 
+test("nearestRelevantAssessment resolves a requirements-scoped assessment through the canonical skill resolver — the same path Study Plan and Adaptive Practice both share", () => {
+  const chainTopicId = topicScopeId(CHAIN.courseArea.slug, CHAIN.routeTopic.slug);
+  const basicTopicId = topicScopeId(BASIC.courseArea.slug, BASIC.routeTopic.slug);
+  // hm-calc-diff-chain-rule resolves only to the chain-rule skill, never to basic-differentiation.
+  const requirementScoped = {
+    ...wholeCourseAssessment("requirement", "2026-07-14"),
+    scope: { kind: "requirements" as const, specPointIds: ["hm-calc-diff-chain-rule"] },
+  };
+  assert.equal(nearestRelevantAssessment([requirementScoped], chainTopicId, CHAIN.skillPath.slug, NOW)?.assessment.id, "requirement");
+  assert.equal(nearestRelevantAssessment([requirementScoped], basicTopicId, BASIC.skillPath.slug, NOW), null);
+});
+
 test("expired assessments never remain relevant or influence current urgency", () => {
   const past = wholeCourseAssessment("past", "2026-07-12");
   const future = wholeCourseAssessment("future", "2026-07-20");
@@ -166,6 +178,23 @@ test("close-assessment suppression does apply to the specific unstarted skill it
   });
   assert.equal(built.candidates.some((item) => item.skillPathId === "basic-differentiation" && item.reasonCode === "next_skill"), false);
   assert.equal(built.diagnostics.some((item) => item.skillPathId === "basic-differentiation" && item.code === "new_start_suppressed_close_exam"), true);
+});
+
+test("close-assessment suppression resolves a requirements-scoped assessment through the shared canonical resolver, same as a skills-scoped one", () => {
+  const requirementScoped = {
+    ...wholeCourseAssessment("scoped", "2026-07-14"),
+    type: "class_test" as const,
+    // hm-alg-factorising-polynomials resolves to factorising-cubics-and-quartics, not basic-differentiation.
+    scope: { kind: "requirements" as const, specPointIds: ["hm-alg-factorising-polynomials"] },
+  };
+  const built = buildStudyPlanCandidates({
+    now: NOW,
+    courseSlug: "higher-maths",
+    evidence: emptyEvidence(),
+    assessments: [requirementScoped],
+  });
+  assert.equal(built.candidates.some((item) => item.skillPathId === "basic-differentiation" && item.reasonCode === "next_skill"), true,
+    "basic-differentiation is not covered by the resolved requirement scope, so it must still surface normally");
 });
 
 test("assessment qualifier text augments the reason rather than replacing it, and stays quiet for a far-off assessment", () => {

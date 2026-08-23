@@ -1,3 +1,4 @@
+import { resolveSkillsForRequirements } from "@/lib/curriculum/requirement-resolution";
 import { classifyExamPhase, classifyMonthPhase } from "@/lib/study-plan/dates";
 import type {
   Assessment,
@@ -54,6 +55,7 @@ export function topicScopeId(courseAreaId: string, topicId: string): string {
 export function assessmentScopeIncludesSkill(scope: AssessmentScope, topicScopeIdValue: string, skillPathId: string): boolean {
   if (scope.kind === "whole_course") return true;
   if (scope.kind === "topics") return scope.topicIds.includes(topicScopeIdValue);
+  if (scope.kind === "requirements") return resolveSkillsForRequirements(scope.specPointIds).includes(skillPathId);
   return scope.skillPathIds.includes(skillPathId);
 }
 
@@ -146,11 +148,14 @@ function assessmentPrecisionOrder(assessment: Assessment) {
 }
 
 function assessmentScopeOrder(scope: AssessmentScope) {
-  return scope.kind === "skills" ? 0 : scope.kind === "topics" ? 1 : 2;
+  return scope.kind === "skills" || scope.kind === "requirements" ? 0 : scope.kind === "topics" ? 1 : 2;
 }
 
 function assessmentScopeSize(scope: AssessmentScope) {
-  return scope.kind === "skills" ? scope.skillPathIds.length : scope.kind === "topics" ? scope.topicIds.length : Number.MAX_SAFE_INTEGER;
+  if (scope.kind === "skills") return scope.skillPathIds.length;
+  if (scope.kind === "requirements") return scope.specPointIds.length;
+  if (scope.kind === "topics") return scope.topicIds.length;
+  return Number.MAX_SAFE_INTEGER;
 }
 
 function daysUntilExact(date: string, now: Date): number | null {
