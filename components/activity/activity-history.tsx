@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { useLearnerNextAction } from "@/components/learning/use-learner-next-action";
 import { deriveActivityHistory, type ActivityDay, type ActivityIntensityLevel, type ActivityWeek } from "@/lib/activity/derivation";
+import { activityIntensityClass, activityIntensityName } from "@/lib/activity/presentation";
 import { getEmptyProgressEvidence, getProgressEvidence } from "@/lib/local-progress";
 import type { ProgressEvidence } from "@/lib/progress/types";
 
@@ -70,8 +71,8 @@ export function ActivityHistorySurface() {
         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2" aria-label="Activity level legend">
           {([0, 1, 2, 3, 4] as const).map((level) => (
             <span key={level} className="inline-flex items-center gap-2 text-xs font-semibold text-muted">
-              <span aria-hidden="true" className={`size-4 rounded border ${activityCellClass(level)}`} />
-              {intensityName(level)}
+              <span aria-hidden="true" className={`size-4 rounded border ${activityIntensityClass(level)}`} />
+              {activityIntensityName(level)}
             </span>
           ))}
         </div>
@@ -141,7 +142,7 @@ function ActivityWeekRow({ week, selectedDayKey, onInspect }: { week: ActivityWe
           onMouseEnter={() => onInspect(day)}
           onClick={() => { setFocusIndex(index); onInspect(day); }}
           onKeyDown={(event) => handleKey(event, index)}
-          className={`aspect-square w-full rounded-md border outline-none transition-colors focus-visible:ring-2 focus-visible:ring-forge focus-visible:ring-offset-2 focus-visible:ring-offset-white ${day.dayKey === selectedDayKey ? "ring-2 ring-ink ring-offset-1 ring-offset-white" : ""} ${activityCellClass(day.intensityLevel)}`}
+          className={`aspect-square w-full rounded-md border outline-none transition-colors focus-visible:ring-2 focus-visible:ring-forge focus-visible:ring-offset-2 focus-visible:ring-offset-white ${day.dayKey === selectedDayKey ? "ring-2 ring-ink ring-offset-1 ring-offset-white" : ""} ${activityIntensityClass(day.intensityLevel)}`}
         />
       ))}
     </div>
@@ -149,15 +150,4 @@ function ActivityWeekRow({ week, selectedDayKey, onInspect }: { week: ActivityWe
 }
 function formatDay(iso: string) {
   return new Intl.DateTimeFormat("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(iso));
-}
-
-function activityCellClass(level: ActivityIntensityLevel) {
-  if (level === 1) return "border-forge/20 bg-forge-soft forced-colors:border-[Highlight]";
-  if (level === 2) return "border-forge/30 bg-activity-moderate forced-colors:border-[Highlight]";
-  if (level === 3) return "border-forge/40 bg-activity-strong forced-colors:border-[Highlight]";
-  if (level === 4) return "border-forge bg-forge forced-colors:border-[Highlight]";
-  return "border-line bg-paper forced-colors:border-[CanvasText]";
-}
-function intensityName(level: ActivityIntensityLevel) {
-  return ["No activity", "Light", "Moderate", "Strong", "Very strong"][level];
 }

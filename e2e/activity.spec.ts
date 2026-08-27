@@ -27,7 +27,9 @@ test("meaningful evidence renders week rows, Dashboard signal and bounded day de
   ], [review(yesterday)]));
   await page.goto("/dashboard");
   await expect(page.getByTestId("dashboard-activity-summary")).toContainText("2 active days in the last 14 days");
+  await expect(page.getByTestId("dashboard-activity-summary")).toContainText("2 questions worked on");
   await expect(page.getByTestId("dashboard-activity-strip").locator("[data-intensity]")).toHaveCount(14);
+  await expect(page.getByTestId("dashboard-activity-strip")).toHaveAttribute("aria-label", /2 active days out of 14/);
   await page.getByRole("link", { name: "View full activity history" }).click();
   await expect(page).toHaveURL(/\/activity$/);
   await expect(page.getByTestId("activity-history")).toBeVisible();
@@ -41,7 +43,7 @@ test("meaningful evidence renders week rows, Dashboard signal and bounded day de
   await expect(page.getByTestId("activity-detail-panel")).toContainText("Completed independently2");
   await page.locator(`[data-day-key="${yesterday.slice(0, 10)}"]`).click();
   await expect(page.getByTestId("activity-detail-panel")).toContainText("Review completed");
-  await expect(page.getByTestId("activity-history")).not.toContainText(/weighted score|current streak|longest streak|keep it going/i);
+  await expect(page.locator("body")).not.toContainText(/weighted score|current streak|longest streak|keep it going/i);
   expect(seriousBrowserErrors).toEqual([]);
 });
 
@@ -97,6 +99,22 @@ test("Activity remains naturally readable without page overflow at 390, 375 and 
     await page.goto("/activity");
     await expect(page.getByTestId("activity-detail-panel")).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), `${width}px overflow`).toBe(0);
+  }
+  expect(seriousBrowserErrors).toEqual([]);
+});
+
+test("Dashboard Activity stays compact, reachable and overflow-free at desktop and mobile widths", async ({ page, seriousBrowserErrors }) => {
+  const { today } = recentTimes();
+  await seedStoredProgress(page, payload([currentAttempt(QUESTION_IDS[0], 1, { attemptedAt: today, isCorrect: true })]));
+  for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }, { width: 375, height: 812 }, { width: 320, height: 760 }]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/dashboard");
+    const activity = page.getByTestId("dashboard-activity-summary");
+    await expect(activity.getByTestId("dashboard-activity-recap")).toContainText("1 question worked on");
+    await expect(activity.getByRole("link", { name: "View full activity history" })).toBeVisible();
+    await expect(activity.getByTestId("dashboard-activity-strip").locator("[data-intensity]")).toHaveCount(14);
+    expect((await activity.boundingBox())?.height, `${viewport.width}px Activity height`).toBeLessThan(180);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), `${viewport.width}px overflow`).toBe(0);
   }
   expect(seriousBrowserErrors).toEqual([]);
 });

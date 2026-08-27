@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { activityIntensity, deriveActivityHistory, deriveWeeklyActivity } from "../lib/activity/derivation";
+import { activityIntensityClass, deriveDashboardActivityRecap } from "../lib/activity/presentation";
 import type { AchievementSnapshot, ProgressEvidence, QuestionAttempt, QuestionSupportEvent } from "../lib/progress/types";
 import type { ReviewEvent, ReviewOutcome } from "../lib/review/types";
 import type { FlashcardReviewEvent } from "../lib/flashcards/types";
@@ -14,6 +15,42 @@ test("empty evidence returns 84 zero days and an empty-state model", () => {
   assert.equal(model.activeDayCount, 0);
   assert.equal(model.hasActivity, false);
   assert.equal(model.days.every((day) => day.rawScore === 0 && day.intensityLevel === 0), true);
+});
+
+test("Dashboard recap is calm and factual for empty, low, Review, flashcard and mixed activity", () => {
+  assert.equal(deriveDashboardActivityRecap(deriveActivityHistory(emptyEvidence(), NOW, { rangeDays: 14 })), "No activity in the last 14 days");
+
+  const oneDay = emptyEvidence();
+  oneDay.attempts.push(attempt({ isCorrect: true }));
+  assert.equal(deriveDashboardActivityRecap(deriveActivityHistory(oneDay, NOW, { rangeDays: 14 })), "1 active day in the last 14 days · 1 question worked on");
+
+  const severalDays = emptyEvidence();
+  severalDays.attempts.push(attempt({ isCorrect: true }), attempt({ eventId: "yesterday", questionId: "q2", sequence: 2, attemptedAt: "2026-09-11T12:00:00.000Z", isCorrect: true }));
+  assert.equal(deriveDashboardActivityRecap(deriveActivityHistory(severalDays, NOW, { rangeDays: 14 })), "2 active days in the last 14 days · 2 questions worked on");
+
+  const reviewOnly = emptyEvidence();
+  reviewOnly.reviewEvents.push(review());
+  assert.equal(deriveDashboardActivityRecap(deriveActivityHistory(reviewOnly, NOW, { rangeDays: 14 })), "1 active day in the last 14 days · Review completed");
+
+  const flashcardOnly = emptyEvidence();
+  flashcardOnly.flashcardReviews.push(flashcard(), flashcard({ eventId: "flashcard_2", cardId: "card-2", sequence: 2 }));
+  assert.equal(deriveDashboardActivityRecap(deriveActivityHistory(flashcardOnly, NOW, { rangeDays: 14 })), "1 active day in the last 14 days · 2 flashcards reviewed");
+
+  const mixed = emptyEvidence();
+  mixed.attempts.push(attempt({ isCorrect: true }));
+  mixed.reviewEvents.push(review());
+  mixed.flashcardReviews.push(flashcard());
+  assert.equal(deriveDashboardActivityRecap(deriveActivityHistory(mixed, NOW, { rangeDays: 14 })), "1 active day in the last 14 days · 1 question worked on · Review completed");
+});
+
+test("one canonical activity colour ramp uses the existing semantic tokens", () => {
+  assert.deepEqual([0, 1, 2, 3, 4].map((level) => activityIntensityClass(level as 0 | 1 | 2 | 3 | 4)), [
+    "border-line bg-paper forced-colors:border-[CanvasText]",
+    "border-forge/20 bg-forge-soft forced-colors:border-[Highlight]",
+    "border-forge/30 bg-activity-moderate forced-colors:border-[Highlight]",
+    "border-forge/40 bg-activity-strong forced-colors:border-[Highlight]",
+    "border-forge bg-forge forced-colors:border-[Highlight]",
+  ]);
 });
 
 test("one genuine incorrect graded attempt is Light activity", () => {
