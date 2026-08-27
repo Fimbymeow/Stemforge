@@ -26,6 +26,11 @@ test("Dashboard Activity is a compact summary below course access", async ({ pag
   const content = await activity.getByTestId("dashboard-activity-content").boundingBox();
   expect(content).not.toBeNull();
   expect(content!.width).toBeLessThan(activityBox!.width);
+  expect(await activity.getByTestId("dashboard-activity-content").evaluate((surface) => getComputedStyle(surface).boxShadow)).toBe("none");
+  expect(await activity.getByTestId("dashboard-activity-content").evaluate((surface) => getComputedStyle(surface).borderTopWidth)).toBe("0px");
+  const courseHeadingSize = await page.getByRole("heading", { name: "Your courses" }).evaluate((heading) => Number.parseFloat(getComputedStyle(heading).fontSize));
+  const activityHeadingSize = await activity.getByRole("heading", { name: "Activity" }).evaluate((heading) => Number.parseFloat(getComputedStyle(heading).fontSize));
+  expect(activityHeadingSize).toBeLessThan(courseHeadingSize);
 });
 
 test("Practice and Review use solid restrained setup surfaces", async ({ page }) => {
@@ -42,7 +47,7 @@ test("Course Tracker has restrained primary and contextual Hub access", async ({
   await page.goto("/subjects/higher-maths");
   await expect(page.getByTestId("practice-destination")).toHaveAttribute("data-emphasis", "true");
   await expect(page.getByTestId("course-tracker-destination")).toHaveAttribute("data-emphasis", "true");
-  await expect(page.getByTestId("course-tracker-context-link")).toHaveAttribute("href", "/subjects/higher-maths/course-tracker");
+  await expect(page.locator('a[href="/subjects/higher-maths/course-tracker"]')).toHaveCount(1);
   await expect(page.getByTestId("higher-maths-destinations").getByRole("link")).toHaveCount(5);
   await expect(page.getByTestId("review-entry-card")).toBeVisible();
 });
