@@ -46,9 +46,11 @@ export function WorkingContextOverview({ pathId }: { pathId: string }) {
       <div className="mx-auto grid max-w-[1040px] gap-5">
         <header data-testid="skill-path-compact-header">
           <Link href={model.higherMathsHref} className="inline-flex min-h-11 items-center gap-2 text-sm font-bold text-forge"><ArrowLeft aria-hidden="true" className="size-4" />Higher Maths</Link>
-          <nav aria-label="Breadcrumb" className="mt-1 flex flex-wrap gap-2 text-xs text-muted">
-            <span>Calculus</span><span aria-hidden="true">/</span><span>Differentiating functions</span>
-          </nav>
+          {context ? (
+            <nav aria-label="Breadcrumb" className="mt-1 flex flex-wrap gap-2 text-xs text-muted">
+              <span>{context.courseArea.name}</span><span aria-hidden="true">/</span><span>{context.specificationStrand.name}</span>
+            </nav>
+          ) : null}
           <h1 className="mt-2 text-[28px] font-extrabold leading-tight">{model.skillName}</h1>
           {skillPath?.description ? <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">{skillPath.description}</p> : null}
           <div className="mt-3 grid gap-2" data-testid="skill-path-hero-progress">

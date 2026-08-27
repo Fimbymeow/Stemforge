@@ -51,7 +51,7 @@ export function LocalRecommendedNextAction({ skillPath, hidePrimaryAction = fals
   }
 
   return (
-    <Card className="border-forge/30 bg-gradient-to-br from-forge/10 to-white p-4">
+    <Card className="border-forge/30 p-4">
       <p className="mb-1 text-xs font-extrabold uppercase text-forge">Recommended next</p>
       <h2 className="m-0 text-xl font-extrabold">{nextAction.title}</h2>
       <p id="path-next-action-reason" className="mt-2 text-sm leading-relaxed text-muted">{nextAction.reason}</p>
@@ -117,11 +117,8 @@ function CompletedPathCard({ skillPath, progress, status, nextAction, hidePrimar
     : { href: secondaryStagesHref ?? getSkillPathHref(skillPath), label: "Review a stage" };
 
   return (
-    <Card data-testid="completed-path-card" className="border-forge/30 bg-gradient-to-br from-forge/10 to-white p-4">
-      <div className="mb-2 flex flex-wrap items-center gap-2">
-        <MasteryBadge status={status} />
-        <ReviewBadge count={reviewCount} />
-      </div>
+    <Card data-testid="completed-path-card" className="animate-fade-rise border-forge/30 p-4">
+      {reviewCount > 0 ? <div className="mb-2 flex flex-wrap items-center gap-2"><ReviewBadge count={reviewCount} /></div> : null}
       <h2 className="m-0 text-xl font-extrabold">{heading}</h2>
       <p id="completed-path-next-action-reason" className="mt-2 text-sm leading-relaxed text-muted">{supporting} {nextAction.reason}</p>
       <p className="mt-3 text-sm font-bold text-muted">

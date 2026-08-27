@@ -79,6 +79,9 @@ test("stage transition is deterministic and stage rows remain directly explorabl
 test("overview uses one honest compact journey instead of repeated stage cards", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(overview);
+  const breadcrumb = page.getByRole("navigation", { name: "Breadcrumb" });
+  await expect(breadcrumb).toContainText("Calculus");
+  await expect(breadcrumb).toContainText("Differentiating functions");
   await expect(page.getByTestId("skill-path-compact-header")).toBeVisible();
   await expect(page.getByText("Skill overview", { exact: true })).toHaveCount(0);
   const journey = page.getByTestId("skill-learning-journey");
@@ -97,6 +100,9 @@ test("overview uses one honest compact journey instead of repeated stage cards",
 test("Chain Rule uses the same truthful journey with its real 34-question progress", async ({ page }) => {
   await page.goto("/subjects/higher-maths/calculus/differentiation/chain-rule");
   await expect(page.getByRole("heading", { name: "Chain rule", level: 1 })).toBeVisible();
+  const breadcrumb = page.getByRole("navigation", { name: "Breadcrumb" });
+  await expect(breadcrumb).toContainText("Calculus");
+  await expect(breadcrumb).toContainText("Differentiating functions");
   await expect(page.getByTestId("skill-path-hero-progress")).toContainText("0 of 34 questions complete");
   const journey = page.getByTestId("skill-learning-journey");
   await expect(journey.getByRole("listitem")).toHaveCount(5);
@@ -121,10 +127,26 @@ test("skill journey stays ordered and overflow-free at 375px and 320px", async (
 test("completed overview stays compact and renders exactly one primary action", async ({ page }) => {
   await seedStoredProgress(page, v3Payload(recentCompletion()));
   await page.goto(overview);
-  await expect(page.getByTestId("completed-path-card")).toBeVisible();
+  const completed = page.getByTestId("completed-path-card");
+  await expect(completed).toBeVisible();
+  const headerMastery = page.getByTestId("skill-path-compact-header").locator("[data-mastery-status]");
+  await expect(headerMastery).toHaveCount(1);
+  await expect(headerMastery).toHaveAttribute("aria-label", /^Mastery: /);
+  await expect(completed.locator("[data-mastery-status]")).toHaveCount(0);
+  await expect(completed).toHaveClass(/animate-fade-rise/);
+  expect(await completed.evaluate((card) => getComputedStyle(card).backgroundImage)).toBe("none");
   await expect(page.getByTestId("skill-path-hero-progress")).toContainText("8 of 8 questions complete");
   await expect(page.getByTestId("completed-path-card").getByRole("link", { name: "Start learning" })).toHaveAttribute("href", "/question/hm-calc-diff-chain-f-001");
   await expect(page.getByTestId("skill-learning-journey").locator('[data-journey-kind="stage"]').filter({ hasText: "Foundations" }).getByRole("link", { name: "Revisit" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
+});
+
+test("completed overview retains distinct Review guidance when supported by real evidence", async ({ page }) => {
+  await seedStoredProgress(page, v3Payload(recentCompletion().map((attempt, index) => index === 0 ? { ...attempt, hintViewedBeforeSubmission: true } : attempt)));
+  await page.goto(overview);
+  const completed = page.getByTestId("completed-path-card");
+  await expect(completed).toBeVisible();
+  await expect(completed.getByText("Needs more practice", { exact: true })).toBeVisible();
+  await expect(completed.getByText("Learned", { exact: true })).toHaveCount(0);
 });
 
 test("completed overview links its secondary action to the compact stage list", async ({ page }) => {
