@@ -34,7 +34,7 @@ test("core redesigned surfaces retain the intended information hierarchy", () =>
   assert.match(dashboard, /skills learned/);
   assert.match(hub, /SubjectRoadmapNavigator/);
   assert.doesNotMatch(hub, /PracticeEntryCard/);
-  assert.doesNotMatch(hub, /View full course/);
+  assert.doesNotMatch(hub, /View full Course Tracker/);
   assert.match(hub, />Courses</);
   assert.match(tracker, /<details className="mt-1/);
   assert.match(tracker, /Open \$\{skill\.name\} skill overview/);
@@ -66,6 +66,7 @@ test("known semantic-colour debt is removed without adding a depth-only palette"
   for (const [file, source] of [["readiness", readiness], ["mistakes", mistakes], ["notes", notes]] as const) {
     assert.doesNotMatch(source, /bg-amber-50|text-amber-900|bg-emerald-50|text-emerald-800|#76629b|#5d477e/, `${file} retains ad-hoc colour debt`);
   }
+  assert.doesNotMatch(readFileSync("components/learning/icon-node-path.tsx", "utf8"), /#17466c/);
   assert.match(notes, /family === "depth"[\s\S]*border-forge\/35 text-forge/);
 });
 

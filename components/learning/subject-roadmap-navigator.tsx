@@ -8,6 +8,8 @@ import type { CourseArea, SkillPath, Subject } from "@/data/types";
 import { getEmptyProgressEvidence, getProgressEvidence, getSkillPathProgress } from "@/lib/local-progress";
 import type { ProgressEvidence, ProgressStatus } from "@/lib/progress/types";
 import { MasteryMark } from "@/components/learning/mastery-badge";
+import { Surface } from "@/components/ui";
+import { deriveRoadmapPreview, deriveStrandAvailability, getStrandSkillPaths } from "@/lib/course-hub-presentation";
 
 function initialStrandIndex(strands: CourseArea[]) {
   const available = strands.findIndex((strand) => strand.specAreas.some((area) => area.skillPaths?.some((path) => path.isAvailable)));
@@ -38,9 +40,10 @@ export function SubjectRoadmapNavigator({ subject }: { subject: Subject }) {
   }, []);
 
   const topics = useMemo(
-    () => strand?.specAreas.flatMap((area) => area.skillPaths ?? []) ?? [],
+    () => strand ? getStrandSkillPaths(strand) : [],
     [strand],
   );
+  const roadmap = useMemo(() => deriveRoadmapPreview(topics), [topics]);
 
   if (!strand) return null;
 
@@ -51,45 +54,60 @@ export function SubjectRoadmapNavigator({ subject }: { subject: Subject }) {
           items={strands.map((item) => ({
             id: item.slug,
             label: item.name,
-            available: item.specAreas.some((area) => area.skillPaths?.some((path) => path.isAvailable)),
+            available: deriveStrandAvailability(item).availableSkillCount > 0,
+            detail: deriveStrandAvailability(item).label,
           }))}
           selectedIndex={strandIndex}
           onSelect={setStrandIndex}
         />
       </nav>
 
-      <section className="mt-4 overflow-hidden rounded-xl border border-line bg-white" aria-labelledby="selected-strand-title">
+      <Surface key={strand.slug} level="secondary" className="mt-4 overflow-hidden" aria-labelledby="selected-strand-title" data-testid={`roadmap-strand-${strand.slug}`}>
         <div className="border-b border-line px-4 py-3 sm:px-5">
           <h3 id="selected-strand-title" className="text-base font-extrabold">{strand.name}</h3>
           <p className="mt-1 text-sm text-muted">Choose a skill to continue learning.</p>
         </div>
         {topics.length ? (
-          <ul className="divide-y divide-line" aria-label={`${strand.name} skills`}>
-            {topics.map((path) => {
-              const status = topicStatus(path, evidence);
-              return (
-                <li key={path.slug}>
-                  {path.isAvailable ? (
-                    <Link href={path.href} className="flex min-h-14 items-center justify-between gap-4 px-4 py-3 transition hover:bg-forge-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-forge sm:px-5">
-                      <span className="min-w-0 font-extrabold">{path.name}</span>
-                      <span className="flex shrink-0 items-center gap-3 text-sm font-bold text-muted">
-                        {status ? <MasteryMark status={status} density="labelled" /> : null}<ArrowRight aria-hidden="true" className="size-4 text-forge" />
-                      </span>
-                    </Link>
-                  ) : (
-                    <div className="flex min-h-14 items-center justify-between gap-4 px-4 py-3 sm:px-5">
-                      <span className="min-w-0 font-bold text-muted">{path.name}</span>
-                      <span className="shrink-0 text-sm font-bold text-muted">Coming soon</span>
-                    </div>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
+          <>
+            <ul className="divide-y divide-line" aria-label={`${strand.name} skill preview`}>
+              {roadmap.preview.map((path) => <RoadmapSkillRow key={path.slug} path={path} evidence={evidence} />)}
+            </ul>
+            {roadmap.remainingUnavailable.length > 0 ? (
+              <details className="disclosure-motion border-t border-line" data-testid={`roadmap-more-${strand.slug}`}>
+                <summary className="flex min-h-11 cursor-pointer items-center px-4 py-2.5 text-sm font-extrabold text-forge focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-forge sm:px-5">
+                  +{roadmap.remainingUnavailable.length} more coming soon
+                </summary>
+                <ul className="divide-y divide-line border-t border-line" aria-label={`${strand.name} remaining planned skills`}>
+                  {roadmap.remainingUnavailable.map((path) => <RoadmapSkillRow key={path.slug} path={path} evidence={evidence} />)}
+                </ul>
+              </details>
+            ) : null}
+          </>
         ) : (
           <p className="px-4 py-5 text-sm text-muted sm:px-5">Skills for this strand are coming soon.</p>
         )}
-      </section>
+      </Surface>
     </div>
+  );
+}
+
+function RoadmapSkillRow({ path, evidence }: { path: SkillPath; evidence: ProgressEvidence }) {
+  const status = topicStatus(path, evidence);
+  return (
+    <li data-testid={`roadmap-skill-${path.slug}`} data-availability={path.isAvailable ? "available" : "coming-soon"}>
+      {path.isAvailable ? (
+        <Link href={path.href} className="flex min-h-14 items-center justify-between gap-4 px-4 py-3 transition hover:bg-forge-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-forge sm:px-5">
+          <span className="min-w-0 font-extrabold">{path.name}</span>
+          <span className="flex shrink-0 items-center gap-3 text-sm font-bold text-muted">
+            {status ? <MasteryMark status={status} density="labelled" /> : null}<ArrowRight aria-hidden="true" className="size-4 text-forge" />
+          </span>
+        </Link>
+      ) : (
+        <div className="flex min-h-14 items-center justify-between gap-4 px-4 py-3 sm:px-5">
+          <span className="min-w-0 font-bold text-muted">{path.name}</span>
+          <span className="shrink-0 text-sm font-bold text-muted">Coming soon</span>
+        </div>
+      )}
+    </li>
   );
 }

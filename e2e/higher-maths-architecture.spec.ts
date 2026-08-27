@@ -8,8 +8,8 @@ test("Higher Maths hub prioritises the live path and links to the full course st
   await expect(trackerLink).toHaveAttribute("href", "/subjects/higher-maths/course-tracker");
   await expect(trackerLink).toHaveAttribute("data-emphasis", "true");
   await expect(page.getByTestId("practice-destination")).toHaveAttribute("data-emphasis", "true");
-  await expect(page.getByTestId("course-tracker-context-link")).toHaveAttribute("href", "/subjects/higher-maths/course-tracker");
-  await expect(page.getByRole("navigation", { name: "Course strands" }).getByRole("button", { name: "Calculus" })).toHaveAttribute("aria-current", "true");
+  await expect(page.locator('a[href="/subjects/higher-maths/course-tracker"]')).toHaveCount(1);
+  await expect(page.getByRole("navigation", { name: "Course strands" }).getByRole("button", { name: /Calculus.*2 available/ })).toHaveAttribute("aria-current", "true");
   await expect(page.getByRole("link", { name: "Start", exact: true })).toHaveAttribute("href", "/subjects/higher-maths/revision-notes?path=basic-differentiation");
   await expect(page.getByText(/1 of 51|1 \/ 51|1 of 50|1 \/ 50/i)).toHaveCount(0);
   await expect(page.getByTestId("higher-maths-coverage")).toHaveText("2 of 49 skills available");

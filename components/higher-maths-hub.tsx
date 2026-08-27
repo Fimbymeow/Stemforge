@@ -51,12 +51,11 @@ export function HigherMathsHub() {
         </section>
 
         <section aria-labelledby="unit-navigation-title" className="min-w-0">
-          <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
+          <div className="mb-3">
             <div>
               <h2 id="unit-navigation-title" className="text-lg font-extrabold">Course units</h2>
               <p className="mt-1 text-sm text-muted">Select a unit to see its skills.</p>
             </div>
-            <Link href="/subjects/higher-maths/course-tracker" data-testid="course-tracker-context-link" className="inline-flex min-h-9 items-center gap-1 text-sm font-extrabold text-forge">View full Course Tracker <ArrowRight aria-hidden="true" className="size-4" /></Link>
           </div>
           <SubjectRoadmapNavigator subject={subject} />
         </section>
