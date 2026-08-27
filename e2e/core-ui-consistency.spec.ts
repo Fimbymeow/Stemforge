@@ -45,8 +45,8 @@ test("Practice and Review use solid restrained setup surfaces", async ({ page })
 
 test("Course Tracker has restrained primary and contextual Hub access", async ({ page }) => {
   await page.goto("/subjects/higher-maths");
-  await expect(page.getByTestId("practice-destination")).toHaveAttribute("data-emphasis", "true");
-  await expect(page.getByTestId("course-tracker-destination")).toHaveAttribute("data-emphasis", "true");
+  await expect(page.getByTestId("practice-destination")).not.toHaveAttribute("data-emphasis");
+  await expect(page.getByTestId("course-tracker-destination")).not.toHaveAttribute("data-emphasis");
   await expect(page.locator('a[href="/subjects/higher-maths/course-tracker"]')).toHaveCount(1);
   await expect(page.getByTestId("higher-maths-destinations").getByRole("link")).toHaveCount(5);
   await expect(page.getByTestId("review-entry-card")).toBeVisible();

@@ -9,60 +9,88 @@ test("Subjects remains a restrained catalogue with one usable Higher Maths cours
   await expect(catalogue.getByRole("heading", { name: "Higher", level: 2 })).toBeVisible();
   await expect(page.getByRole("link", { name: "Open Higher Maths" })).toBeVisible();
   await expect(page.getByTestId("subject-card-higher-physics")).toHaveCount(0);
-  await expect(page.getByText(/% complete|skills complete/i)).toHaveCount(0);
+  await expect(page.getByText(/% complete|skills complete|skills available|coming soon/i)).toHaveCount(0);
   expect(seriousBrowserErrors).toEqual([]);
 });
 
-test("Course Hub exposes strand availability before selection and only one Course Tracker link", async ({ page }) => {
+test("Course Hub presents four curriculum strands without exposing implementation coverage", async ({ page }) => {
   await page.goto(hub);
   const strands = page.getByRole("navigation", { name: "Course strands" });
-  await expect(strands.getByRole("button", { name: /Algebra and Trigonometry.*Coming soon/ })).toBeVisible();
-  await expect(strands.getByRole("button", { name: /Vectors.*Coming soon/ })).toBeVisible();
-  await expect(strands.getByRole("button", { name: /Calculus.*2 available/ })).toHaveAttribute("aria-current", "true");
-  await expect(strands.getByRole("button", { name: /Lines, Circles and Sequences.*Coming soon/ })).toBeVisible();
+  await expect(strands.getByRole("button", { name: "Algebra and Trigonometry", exact: true })).toBeVisible();
+  await expect(strands.getByRole("button", { name: "Vectors", exact: true })).toBeVisible();
+  await expect(strands.getByRole("button", { name: "Calculus", exact: true })).toHaveAttribute("aria-current", "true");
+  await expect(strands.getByRole("button", { name: "Lines, Circles and Sequences", exact: true })).toBeVisible();
+  await expect(page.getByText(/skills available|\d+ available|coming soon/i)).toHaveCount(0);
   await expect(page.locator('a[href="/subjects/higher-maths/course-tracker"]')).toHaveCount(1);
   await expect(page.getByText(/0%|complete.*strand|strand.*complete/i)).toHaveCount(0);
 });
 
-test("roadmap caps the unavailable tail, preserves order and reveals the remainder natively", async ({ page }) => {
+test("Course units expose actionable skills and use a restrained empty state for other strands", async ({ page }) => {
   await page.goto(hub);
   const calculus = page.getByTestId("roadmap-strand-calculus");
-  const preview = calculus.getByRole("list", { name: "Calculus skill preview" });
-  await expect(preview.getByRole("listitem")).toHaveCount(5);
-  await expect(preview.getByRole("listitem").nth(0)).toContainText("Basic differentiation");
-  await expect(preview.getByRole("listitem").nth(1)).toContainText("Chain rule");
-  await expect(preview.getByRole("listitem").nth(2)).toContainText("Trigonometric differentiation");
-  await expect(preview.locator('[data-availability="available"]')).toHaveCount(2);
-  await expect(preview.locator('[data-availability="coming-soon"]')).toHaveCount(3);
-  await expect(preview.locator('[data-availability="coming-soon"] a')).toHaveCount(0);
+  const activities = calculus.getByRole("list", { name: "Calculus learning activities" });
+  await expect(activities.getByRole("listitem")).toHaveCount(2);
+  await expect(activities.getByRole("link", { name: /Basic differentiation/ })).toBeVisible();
+  await expect(activities.getByRole("link", { name: /Chain rule/ })).toBeVisible();
+  await expect(calculus.getByText("Trigonometric differentiation", { exact: true })).toHaveCount(0);
 
-  const disclosure = page.getByTestId("roadmap-more-calculus");
-  const summary = disclosure.locator("summary");
-  await expect(summary).toHaveText("+12 more coming soon");
-  await summary.focus();
-  await summary.press("Enter");
-  await expect(disclosure).toHaveAttribute("open", "");
-  await expect(disclosure.getByRole("list", { name: "Calculus remaining planned skills" }).getByRole("listitem")).toHaveCount(12);
-
-  await page.getByRole("navigation", { name: "Course strands" }).getByRole("button", { name: /Algebra and Trigonometry/ }).click();
+  await page.getByRole("navigation", { name: "Course strands" }).getByRole("button", { name: "Algebra and Trigonometry", exact: true }).click();
   const algebra = page.getByTestId("roadmap-strand-algebra-and-trigonometry");
-  await expect(algebra.getByRole("list", { name: "Algebra and Trigonometry skill preview" }).getByRole("listitem")).toHaveCount(3);
-  await expect(page.getByTestId("roadmap-more-algebra-and-trigonometry").locator("summary")).toHaveText("+14 more coming soon");
+  await expect(algebra.getByRole("status")).toHaveText("This area has no learning activities to show right now.");
+  await expect(algebra.getByRole("list")).toHaveCount(0);
+  await expect(algebra.getByText("Factorising cubics and quartics", { exact: true })).toHaveCount(0);
 });
 
-test("Review uses a calm distinct state only when review is genuinely due", async ({ page }) => {
+test("Course Actions are one neutral navigation family while Review state remains semantic", async ({ page }) => {
   await page.goto(hub);
+  const destinations = page.getByTestId("higher-maths-destinations");
+  const neutralCards = [
+    page.getByTestId("practice-destination"),
+    page.getByTestId("question-bank-destination"),
+    page.getByTestId("review-entry-card"),
+    page.getByTestId("course-tracker-destination"),
+    page.getByTestId("past-papers-destination"),
+  ];
+  await expect(destinations.getByRole("link")).toHaveCount(5);
+  const neutralBackgrounds = await Promise.all(neutralCards.map((card) => card.evaluate((element) => getComputedStyle(element).backgroundColor)));
+  expect(new Set(neutralBackgrounds).size).toBe(1);
+  await expect(page.getByTestId("practice-destination")).not.toHaveAttribute("data-emphasis");
+  await expect(page.getByTestId("course-tracker-destination")).not.toHaveAttribute("data-emphasis");
+  const defaultTextColours = await Promise.all([
+    page.getByTestId("practice-destination"),
+    page.getByTestId("question-bank-destination"),
+    page.getByTestId("course-tracker-destination"),
+    page.getByTestId("past-papers-destination"),
+  ].map((card) => card.evaluate((element) => getComputedStyle(element).color)));
+  expect(new Set(defaultTextColours).size).toBe(1);
+
   const upToDate = page.getByTestId("review-entry-card");
   await expect(upToDate).toHaveAttribute("data-review-state", "up-to-date");
   await expect(upToDate).toHaveAccessibleName("Review, up to date");
   const upToDateBackground = await upToDate.evaluate((element) => getComputedStyle(element).backgroundColor);
+  const upToDateDetailColour = await upToDate.getByText("Up to date").evaluate((element) => getComputedStyle(element).color);
 
   await seedStoredProgress(page, v3Payload(QUESTION_IDS.map((id, index) => currentAttempt(id, index + 1))));
   await page.goto(hub);
   const due = page.getByTestId("review-entry-card");
   await expect(due).toHaveAttribute("data-review-state", "due");
   await expect(due).toHaveAccessibleName("Review, 1 skill due");
-  await expect(due).not.toHaveCSS("background-color", upToDateBackground);
+  await expect(due).toHaveCSS("background-color", upToDateBackground);
+  const dueDetailColour = await due.getByText("1 skill due").evaluate((element) => getComputedStyle(element).color);
+  expect(dueDetailColour).not.toBe(upToDateDetailColour);
+});
+
+test("Continue Learning remains structurally primary above Course Actions and exploration", async ({ page }) => {
+  await page.goto(hub);
+  const learning = await page.getByTestId("working-context-hub").boundingBox();
+  const actions = await page.getByTestId("higher-maths-destinations").boundingBox();
+  const units = await page.getByRole("heading", { name: "Course units" }).boundingBox();
+  expect(learning).not.toBeNull();
+  expect(actions).not.toBeNull();
+  expect(units).not.toBeNull();
+  expect(learning!.y).toBeLessThan(actions!.y);
+  expect(actions!.y).toBeLessThan(units!.y);
+  await expect(page.getByTestId("working-context-hub").getByRole("link", { name: "Start", exact: true })).toBeVisible();
 });
 
 for (const viewport of [
@@ -79,7 +107,6 @@ for (const viewport of [
       expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
     }
     const roadmap = page.getByTestId("roadmap-strand-calculus");
-    await expect(roadmap.getByRole("list", { name: "Calculus skill preview" }).getByRole("listitem")).toHaveCount(5);
-    await expect(page.getByTestId("roadmap-more-calculus").locator("summary")).toBeVisible();
+    await expect(roadmap.getByRole("list", { name: "Calculus learning activities" }).getByRole("listitem")).toHaveCount(2);
   });
 }
