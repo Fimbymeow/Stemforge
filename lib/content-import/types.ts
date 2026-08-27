@@ -1,4 +1,4 @@
-import type { Question } from "@/data/types";
+import type { GraphQuestionConfig, Question } from "@/data/types";
 import type { QuestionCurriculumMetadata } from "@/lib/curriculum/question-curriculum-metadata";
 import type { MarkerOutcomeKind, MarkingStrategy } from "@/lib/marking/types";
 
@@ -51,6 +51,7 @@ export type ImportQuestionIR = {
   answerDeclarationShape: AnswerDeclarationShape;
   explicitFieldAssessment: boolean;
   curriculum?: QuestionCurriculumMetadata;
+  graphConfig?: GraphQuestionConfig;
   diagnostics: ImportDiagnostic[];
 };
 

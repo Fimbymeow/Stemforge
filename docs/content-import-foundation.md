@@ -76,6 +76,59 @@ The implemented flow is:
 
 Markdown and LaTeX remain opaque source strings. The parser does not render or execute them.
 
+### Graph configuration
+
+A prompt graph is declared in a fenced `Graph configuration` YAML section. The importer compiles each bounded expression string to the repository's safe mathematical-expression AST, validates the complete declaration, and stores only that AST on the canonical question. Expressions are never evaluated as JavaScript and the original expression string does not enter runtime question data.
+
+````markdown
+Graph configuration:
+
+```yaml
+version: 1
+title: Area under a quadratic curve
+description: >
+  The region between y = x² − 2x + 3 and the x-axis from x = 2 to x = 4 is shaded.
+viewport:
+  xMin: -1
+  xMax: 5
+  yMin: 0
+  yMax: 12
+axes:
+  xLabel: x
+  yLabel: y
+  xTicks:
+    - 2
+    - 4
+  grid: none
+functions:
+  - id: f
+    expression: x^2 - 2*x + 3
+    label: y = x² − 2x + 3
+    labelAtX: 3.5
+    labelPlacement: above
+    styleRole: primary
+boundaries:
+  - id: lower-bound
+    axis: x
+    value: 2
+    label: x = 2
+    labelPlacement: right
+    style: dashed
+regions:
+  - id: shaded-area
+    type: curve-to-constant
+    curveId: f
+    fromX: 2
+    toX: 4
+    baseline: 0
+    description: Shaded area under the curve from x = 2 to x = 4.
+```
+````
+
+The supported expression grammar is deliberately bounded: numeric constants, `x`, parentheses, `+`, `-`, explicit `*`, `/`, numeric powers with `^`, and `sin(...)`, `cos(...)`, `tan(...)`, `exp(...)`, or `log(...)`. Implicit multiplication such as `2x` is not accepted; write `2*x`. YAML keys are strict, indentation uses two-space steps, and aliases, anchors, tags, merge keys, or unknown fields fail closed.
+
+Version 1 supports `viewport`, `axes`, `functions`, `boundaries`, `regions`, and optional `keyPoints`. Region types are `curve-to-constant` and `between-curves`. Labels use `above`, `below`, `left`, or `right`; function roles use `primary`, `secondary`, `derivative`, `construction`, or `answer`. Graph answers remain a separate capability: this block supplies a prompt visual and does not make drawing or sketch responses importable.
+
 ## Intermediate representation and parser security
 
 The IR records compiler version, source path and hash, bank identity/version, source line ranges,

@@ -1,6 +1,7 @@
 export * from "@/lib/content-import/types";
 export * from "@/lib/content-import/canonical";
 export * from "@/lib/content-import/parser";
+export * from "@/lib/content-import/graph-authoring";
 export * from "@/lib/content-import/configuration";
 export * from "@/lib/content-import/classification";
 export * from "@/lib/content-import/preview";

@@ -309,6 +309,7 @@ function toCanonicalQuestion(
     answerType,
     marking,
     ...(source.curriculum ? { curriculum: source.curriculum } : {}),
+    ...(source.graphConfig ? { graphConfig: source.graphConfig } : {}),
     correctAnswer,
     acceptedAnswers: marking.strategy === "multiple_choice"
       ? [marking.correctOptionId]
@@ -351,6 +352,7 @@ function compareSourceQuestion(existing: Question, source: ImportQuestionIR): Co
     correctAnswer: first?.correctAnswer,
     acceptedAnswers: first?.acceptedAnswers,
     curriculum: source.curriculum,
+    graphConfig: source.graphConfig,
     workedSolution: source.workedSolution,
     hint: source.hint,
     commonMistake: source.commonMistake,
@@ -469,7 +471,7 @@ function detectCapability(question: ImportQuestionIR, candidate: ImportAnswerCan
   const type = candidate.type.toLowerCase();
   const combined = candidate.correctAnswer;
   if (/graph|sketch/i.test(type) || /draw|sketch.*graph/i.test(question.questionText)) return "graph_response";
-  if (/diagram/i.test(question.questionText) && /diagram|shown|above|below/i.test(question.questionText)) return "prompt_diagram";
+  if (!question.graphConfig && /diagram/i.test(question.questionText) && /diagram|shown|above|below/i.test(question.questionText)) return "prompt_diagram";
   if (/coordinate/.test(type) || /^\s*[\\($]\s*\(?\s*-?[\dx]/i.test(combined) && /,\s*-?[\dx]/i.test(combined)) return "structured_coordinate_pair";
   if (/interval|exact_list/.test(type) || /(?:≤|≥|<|>)|\\le|\\ge/.test(combined)) return "interval_set";
   if (/\+\s*[Cc]\b/.test(combined)) return "arbitrary_integration_constant";

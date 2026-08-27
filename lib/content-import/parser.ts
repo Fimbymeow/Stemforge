@@ -12,6 +12,7 @@ import {
   type SourceLineRange,
 } from "@/lib/content-import/types";
 import { hashCanonicalTextSource } from "@/lib/content-import/canonical";
+import { parseGraphConfigYaml } from "@/lib/content-import/graph-authoring";
 
 const QUESTION_HEADING = /^#{2,3}\s+((?:F|A|PPQ)\d{3})\s+[—-]\s+([a-z0-9]+(?:-[a-z0-9]+)*)\s*$/i;
 const SUMMARY_HEADING = /^#{1,3}\s+.*(?:all questions together for skim|QA check|Import readiness checklist)/i;
@@ -20,7 +21,7 @@ const PROTOTYPE_KEYS = new Set(["__proto__", "prototype", "constructor"]);
 const QUESTION_LABELS = [
   "Stage", "Subskill", "Type", "Marks", "Calculator/non-calculator", "Command word",
   "Curriculum metadata", "Question", "Correct answer", "Accepted answers", "Answer fields", "Hint", "Worked solution",
-  "Common mistake", "QA note",
+  "Common mistake", "QA note", "Graph configuration",
 ];
 
 export function parseMarkdownBank(input: { sourcePath: string; bytes: Uint8Array }): ContentBankIR {
@@ -114,7 +115,12 @@ function parseQuestion(block: string[], id: string, sourceLineRange: SourceLineR
   const curriculumResult = curriculumYaml
     ? parseCurriculumYaml(curriculumYaml.text, curriculumYaml.lineOffset + sourceLineRange.start)
     : undefined;
+  const graphYaml = extractFencedYaml(block, "Graph configuration");
+  const graphResult = graphYaml
+    ? parseGraphConfigYaml(graphYaml.text, graphYaml.lineOffset + sourceLineRange.start)
+    : undefined;
   if (curriculumResult) diagnostics.push(...curriculumResult.diagnostics.map((item) => ({ ...item, questionId: id })));
+  if (graphResult) diagnostics.push(...graphResult.diagnostics.map((item) => ({ ...item, questionId: id })));
   const yaml = extractAnswerYaml(block);
   let answerCandidates: ImportAnswerCandidate[] = [];
   let answerDeclarationShape: ImportQuestionIR["answerDeclarationShape"] = "bare_correct_answer";
@@ -198,6 +204,7 @@ function parseQuestion(block: string[], id: string, sourceLineRange: SourceLineR
     answerDeclarationShape,
     explicitFieldAssessment,
     ...(curriculumResult?.curriculum ? { curriculum: curriculumResult.curriculum } : {}),
+    ...(graphResult?.graphConfig ? { graphConfig: graphResult.graphConfig } : {}),
     diagnostics,
   };
 }

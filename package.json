@@ -64,7 +64,7 @@
         "test:review": "tsx --test tests/review-core.test.ts tests/review-integration.test.ts tests/review-persistence.test.ts",
         "test:mistakes": "tsx --test tests/mistake-derivation.test.ts",
         "test:attention": "tsx --test tests/attention-derivation.test.ts tests/mistake-resolution-feedback.test.ts",
-        "test:content-import": "tsx --test tests/content-import-parser.test.ts tests/content-import-classification.test.ts tests/content-import-workflow.test.ts",
+        "test:content-import": "tsx --test tests/content-import-parser.test.ts tests/content-import-classification.test.ts tests/content-import-workflow.test.ts tests/content-import-graph.test.ts",
     "test:graphs": "tsx --test tests/maths-expression.test.ts tests/maths-derivative.test.ts tests/graph-sampling.test.ts tests/graph-primitives.test.ts tests/graph-transformations.test.ts tests/function-analysis.test.ts tests/graph-answer-validation.test.ts",
         "test:practice": "tsx --test tests/practice-selection.test.ts tests/practice-storage-summary.test.ts tests/practice-migration-repair.test.ts tests/practice-programme.test.ts tests/study-context.test.ts tests/adaptive-practice.test.ts",
         "test:readiness": "tsx --test tests/assessment-readiness.test.ts tests/study-plan-assessments.test.ts tests/study-plan-scope-options.test.ts",
