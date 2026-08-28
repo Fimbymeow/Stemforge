@@ -43,7 +43,7 @@ test("fresh tracker derives the full curriculum and only actionable skills recei
   assert.ok(allSkills(model).every((skill) => skill.officialPoints.length > 0));
 });
 
-test("skill disclosures preserve the canonical many-to-many official mapping and all 58 active requirements", () => {
+test("skill mappings preserve the canonical many-to-many official mapping and all 58 active requirements", () => {
   const model = deriveHigherMathsCourseTracker(higherMaths, empty());
   for (const mapping of higherMathematicsOfficialSkillMappings) {
     const skill = findSkill(model, mapping.skillPathId); assert.ok(skill);
@@ -57,7 +57,7 @@ test("skill disclosures preserve the canonical many-to-many official mapping and
   assert.equal(representedPointIds.size, higherMathematicsSpecificationRegister.points.filter((point) => point.status === "active").length);
 });
 
-test("partial weak evidence retains its derivation but presents one specific progress line", () => {
+test("partial weak evidence retains its detailed progress derivation for the Skill Page", () => {
   const progress = empty();
   progress.attempts = [{ ...attemptsFor("basic-differentiation", "2026-08-07T10:00:00Z", 1)[0], isCorrect: false }];
   progress.supportEvents = [{
@@ -71,7 +71,7 @@ test("partial weak evidence retains its derivation but presents one specific pro
   assert.equal(skill.progressLabel, "Foundations · 1/3 complete");
 });
 
-test("healthy partial evidence uses the active stage rather than generic In progress", () => {
+test("healthy partial evidence retains the active stage derivation for detailed surfaces", () => {
   const progress = empty(); progress.attempts = attemptsFor("chain-rule", "2026-08-07T10:00:00Z", 1);
   const skill = findSkill(deriveHigherMathsCourseTracker(higherMaths, progress), "chain-rule"); assert.ok(skill);
   assert.equal(skill.structuralStatus, "In progress");
@@ -135,7 +135,8 @@ test("Course Tracker source guards the calmer product boundary", () => {
   const component = readFileSync("components/learning/course-tracker.tsx", "utf8");
   const page = readFileSync("app/subjects/higher-maths/course-tracker/page.tsx", "utf8");
   assert.doesNotMatch(component + page, /skills available|coming soon|Set confidence/i);
-  assert.doesNotMatch(component, /ConfidenceControl|ReviewStatus|bg-gradient|bg-forge-soft\/35/);
+  assert.doesNotMatch(component, /ConfidenceControl|ReviewStatus|MasteryMark|tracker-progress|skill\.progressLabel|bg-gradient|bg-forge-soft\/35/);
+  assert.doesNotMatch(component, /Official requirements/);
   assert.match(component, /Further skills in this strand/);
   assert.match(component, /Reasoning across the course/);
   assert.match(component, /Confirmed current by Qualifications Scotland/);

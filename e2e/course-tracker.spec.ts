@@ -32,9 +32,11 @@ test("tracker keeps curriculum navigation while removing implementation coverage
   await expect(page.getByText(/skills available|coming soon/i)).toHaveCount(0);
 
   const basic = page.getByTestId("tracker-skill-basic-differentiation");
-  await expect(basic.getByTestId("tracker-progress-basic-differentiation")).toHaveText("Not started");
+  await expect(basic.getByText(/Not started|Foundations|Applications|Past Paper-style Questions/)).toHaveCount(0);
+  await expect(basic.getByText(/Confident|Developing|Needs work/, { exact: true })).toHaveCount(0);
   await expect(basic.getByRole("link", { name: "Open Basic differentiation skill overview" })).toHaveAttribute("href", "/subjects/higher-maths/calculus/differentiation/basic-differentiation");
   await expect(basic.locator("[data-review-state]")).toHaveCount(0);
+  await expect(basic.locator("details, summary, [data-mastery-status]")).toHaveCount(0);
 
   await navigation.getByRole("button", { name: "Algebra and Trigonometry" }).click();
   const reference = page.getByTestId("tracker-skill-factorising-cubics-and-quartics");
@@ -45,26 +47,28 @@ test("tracker keeps curriculum navigation while removing implementation coverage
   await expect(page.getByTestId("course-wide-requirements")).not.toHaveAttribute("open", "");
 });
 
-test("official requirements stay collapsed, keyboard accessible and exact for actionable skills", async ({ page }) => {
+test("official requirements live collapsed, keyboard accessible and exact on Skill Page only", async ({ page }) => {
   await page.goto(route);
   const point = higherMathematicsSpecificationRegister.points.find((candidate) => candidate.specPointId === "hm-calc-diff-power-rule")!;
-  const disclosure = page.getByTestId("tracker-requirements-basic-differentiation");
+  await expect(page.getByTestId("tracker-requirements-basic-differentiation")).toHaveCount(0);
+  await page.getByRole("link", { name: "Open Basic differentiation skill overview" }).click();
+  const disclosure = page.getByTestId("skill-official-requirements");
   await expect(disclosure).not.toHaveAttribute("open", "");
   const summary = disclosure.locator("summary");
-  await expect(summary).toHaveAccessibleName("View official requirements for Basic differentiation");
+  await expect(summary).toHaveAccessibleName("Official requirements (1)");
   await summary.focus();
   await summary.press("Enter");
   await expect(disclosure).toHaveAttribute("open", "");
   await expect(disclosure).toContainText(point.officialStatement!);
 });
 
-test("mastery stays compact and Review appears only as quiet due text", async ({ page }) => {
+test("Review appears only as quiet due text without stage progress or mastery", async ({ page }) => {
   const attempts = higherMathsDifferentiationQuestions.map((question, index) => attempt({ questionId: question.id, stageId: question.stageId, versionEvidence: { kind: "known", questionVersion: question.questionVersion }, attemptedAt: "2026-06-01T10:00:00.000Z", sequence: index + 1, eventId: `tracker-complete-${index}` }));
   await seedStoredProgress(page, payload(attempts));
   await page.goto(route);
   const basic = page.getByTestId("tracker-skill-basic-differentiation");
-  await expect(basic.getByTestId("tracker-progress-basic-differentiation")).toHaveText("Mastered");
-  await expect(basic.locator('[data-mastery-status="mastered"]')).toHaveAccessibleName("Mastery: Mastered");
+  await expect(basic.getByText(/Mastered|Learned|Foundations|Applications|Past Paper-style Questions/)).toHaveCount(0);
+  await expect(basic.locator("[data-mastery-status]")).toHaveCount(0);
   await expect(basic.locator('[data-review-state="due"]')).toHaveText("Review due");
   await expect(basic.getByText(/Available|Recommended/, { exact: true })).toHaveCount(0);
 });
@@ -78,26 +82,28 @@ test("recent completion hides non-due Review states", async ({ page }) => {
   await expect(basic.getByText(/Review|Available|Recommended/, { exact: true })).toHaveCount(0);
 });
 
-test("one stage-specific progress line replaces In progress, Needs practice and row tint", async ({ page }) => {
+test("detailed progress remains off the compact Tracker row", async ({ page }) => {
   const weak = attempt({ isCorrect: false });
   const support: QuestionSupportEvent = { questionId: weak.questionId, skillPathId: weak.skillPathId, stageId: weak.stageId, type: "solution_viewed", occurredAt: "2026-08-26T10:01:00.000Z", sequence: 2, afterGenuineAttempt: true, versionEvidence: weak.versionEvidence, eventId: "tracker-needs-practice-support" };
   await seedStoredProgress(page, payload([weak], [support]));
   await page.goto(route);
   const basic = page.getByTestId("tracker-skill-basic-differentiation");
-  await expect(basic.getByTestId("tracker-progress-basic-differentiation")).toHaveText("Foundations · 1/3 complete");
+  await expect(basic.getByText(/1\/3 complete|Foundations|Applications|Past Paper-style Questions/)).toHaveCount(0);
   await expect(basic.getByText("In progress", { exact: true })).toHaveCount(0);
   await expect(basic.getByText("Needs practice", { exact: true })).toHaveCount(0);
   await expect(basic.getByText("Set confidence", { exact: true })).toHaveCount(0);
   expect(await basic.evaluate((element) => getComputedStyle(element).backgroundColor)).toBe("rgba(0, 0, 0, 0)");
 });
 
-test("confidence disagreement is rare, text-only and not editable on Course Tracker", async ({ page }) => {
+test("saved confidence is read-only and disagreement stays in the same compact signal", async ({ page }) => {
   await seedStoredProgress(page, payload([attempt()]));
   await seedConfidence(page, "confident");
   await page.goto(route);
   const basic = page.getByTestId("tracker-skill-basic-differentiation");
-  await expect(basic.getByTestId("tracker-confidence-disagreement-basic-differentiation")).toHaveText("Your confidence and recent evidence differ");
-  await expect(basic.getByText(/Confident|Orthic suggests|Set confidence/, { exact: true })).toHaveCount(0);
+  await expect(basic.getByTestId("tracker-confidence-basic-differentiation")).toContainText("Confident");
+  await expect(basic.getByTestId("tracker-confidence-disagreement-basic-differentiation")).toHaveAccessibleName("Your confidence and recent evidence differ");
+  await expect(basic.getByText("Your confidence and recent evidence differ", { exact: true })).toHaveCount(0);
+  await expect(basic.getByText(/Orthic suggests|Set confidence/, { exact: true })).toHaveCount(0);
   await expect(basic.locator("button, details[class*='confidence']")).toHaveCount(0);
 });
 
@@ -107,7 +113,8 @@ test("compact curriculum references materially reduce row height without becomin
   const reference = page.getByTestId("tracker-skill-trigonometric-differentiation");
   const fullHeight = await fullRow.evaluate((element) => element.getBoundingClientRect().height);
   const referenceHeight = await reference.evaluate((element) => element.getBoundingClientRect().height);
-  expect(referenceHeight).toBeLessThan(fullHeight / 2);
+  expect(fullHeight).toBeLessThanOrEqual(70);
+  expect(referenceHeight).toBeLessThanOrEqual(40);
   await expect(reference.locator("a, button, details, summary")).toHaveCount(0);
 });
 

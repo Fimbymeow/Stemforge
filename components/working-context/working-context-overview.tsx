@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, BookOpen, Check, Circle, Clock3 } from "lucide-react";
+import { ArrowLeft, BookOpen, Check, ChevronDown, Circle, Clock3 } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { ConfidenceControl } from "@/components/confidence/confidence-control";
 import { useLearnerConfidence } from "@/components/confidence/use-learner-confidence";
@@ -12,7 +12,7 @@ import { getReviewPresentationState } from "@/components/learning/review-status"
 import { ProgressBar } from "@/components/ui";
 import { useWorkingContextModel } from "@/components/working-context/use-working-context-model";
 import { contentResolver } from "@/lib/content-resolver";
-import { deriveSkillConfidenceSuggestion } from "@/lib/course-tracker";
+import { deriveSkillConfidenceSuggestion, getHigherMathsSkillOfficialPoints } from "@/lib/course-tracker";
 import { getEmptyProgressEvidence, getProgressEvidence } from "@/lib/local-progress";
 import type { ProgressEvidence } from "@/lib/progress/types";
 
@@ -39,6 +39,7 @@ export function WorkingContextOverview({ pathId }: { pathId: string }) {
     () => subjectSlug ? deriveSkillConfidenceSuggestion(pathId, subjectSlug, evidence) : null,
     [pathId, subjectSlug, evidence],
   );
+  const officialPoints = useMemo(() => getHigherMathsSkillOfficialPoints(pathId), [pathId]);
   if (!model) return null;
 
   return (
@@ -77,6 +78,22 @@ export function WorkingContextOverview({ pathId }: { pathId: string }) {
         </header>
 
         <SkillLearningJourney model={model} />
+
+        {officialPoints.length > 0 ? (
+          <details className="group/requirements disclosure-motion border-t border-line text-sm text-muted" data-testid="skill-official-requirements">
+            <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 py-2 font-bold text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forge">
+              <span>Official requirements ({officialPoints.length})</span>
+              <ChevronDown aria-hidden="true" className="size-4 transition-transform group-open/requirements:rotate-180" />
+            </summary>
+            <ul className="grid gap-2 border-l-2 border-line pb-3 pl-3 leading-relaxed">
+              {officialPoints.map((point) => (
+                <li key={point.id} data-testid="skill-official-requirement" data-official-point-id={point.id}>
+                  <span className="font-bold text-ink">{point.reference}:</span> {point.text}
+                </li>
+              ))}
+            </ul>
+          </details>
+        ) : null}
 
         {model.isComplete && skillPath ? <LocalRecommendedNextAction skillPath={skillPath} hidePrimaryAction={Boolean(model.reviewHref)} secondaryStagesHref="#stages" /> : null}
 

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { contentResolver } from "../lib/content-resolver";
+import { getHigherMathsSkillOfficialPoints } from "../lib/course-tracker";
 
 test("both live Skill Page breadcrumbs resolve from canonical curriculum context", () => {
   for (const pathId of ["basic-differentiation", "chain-rule"]) {
@@ -35,4 +36,14 @@ test("completed card keeps Review information without duplicating the header mas
   assert.ok(completedCard);
   assert.doesNotMatch(completedCard, /<MasteryBadge/);
   assert.match(completedCard, /<ReviewBadge/);
+});
+
+test("Skill Page owns the exact official requirements in one collapsed native disclosure", () => {
+  const source = readFileSync("components/working-context/working-context-overview.tsx", "utf8");
+  const points = getHigherMathsSkillOfficialPoints("basic-differentiation");
+  assert.equal(points.length, 1);
+  assert.match(points[0].text, /differentiating an algebraic function/);
+  assert.match(source, /<details[^>]+data-testid="skill-official-requirements"/);
+  assert.match(source, /data-testid="skill-official-requirement"/);
+  assert.doesNotMatch(source, /<details[^>]+open=/);
 });

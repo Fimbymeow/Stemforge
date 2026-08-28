@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, ChevronDown } from "lucide-react";
+import { ArrowRight, CircleAlert, ChevronDown } from "lucide-react";
 import type { Subject } from "@/data/types";
 import { deriveHigherMathsCourseTracker } from "@/lib/course-tracker";
 import type { CourseTrackerRequirement, CourseTrackerSkill } from "@/lib/course-tracker";
@@ -10,7 +10,13 @@ import { groupCourseTrackerSkills, hasCourseTrackerConfidenceDisagreement } from
 import { getEmptyProgressEvidence, getProgressEvidence } from "@/lib/local-progress";
 import type { ProgressEvidence } from "@/lib/progress/types";
 import { useLearnerConfidence } from "@/components/confidence/use-learner-confidence";
-import { isCompletedTierStatus, MasteryMark } from "@/components/learning/mastery-badge";
+import type { ConfidenceLevel } from "@/lib/confidence/types";
+
+const CONFIDENCE_LABEL: Record<ConfidenceLevel, string> = {
+  needs_work: "Needs work",
+  developing: "Developing",
+  confident: "Confident",
+};
 
 export function CourseTracker({ subject }: { subject: Subject }) {
   const [evidence, setEvidence] = useState<ProgressEvidence>(() => getEmptyProgressEvidence());
@@ -45,7 +51,7 @@ export function CourseTracker({ subject }: { subject: Subject }) {
     <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-5" data-testid="course-tracker">
       <div className="border-b border-line pb-3">
         <h2 className="text-lg font-extrabold">Skills by course area</h2>
-        <p className="mt-1 text-sm text-muted">Select an area, scan its skills and expand official detail only when needed.</p>
+        <p className="mt-1 text-sm text-muted">Select an area and scan its skills.</p>
       </div>
 
       <nav aria-label="Course areas" className="min-w-0" data-testid="course-tracker-unit-navigation">
@@ -111,33 +117,35 @@ function TrackerRequirement({ requirement }: { requirement: CourseTrackerRequire
 }
 
 function TrackerSkillRow({ skill }: { skill: CourseTrackerSkill }) {
-  if (!skill.action || !skill.progressLabel) return null;
-  const showMasteryMark = Boolean(skill.masteryStatus && isCompletedTierStatus(skill.masteryStatus));
+  if (!skill.action) return null;
+  const learnerConfidence = skill.confidence?.learnerLevel ?? null;
   const confidenceDisagrees = hasCourseTrackerConfidenceDisagreement(skill.confidence);
   return (
     <li className="min-w-0 py-1" data-testid={`tracker-skill-${skill.skillPathId}`} data-course-tracker-skill="" data-tracker-row-kind="actionable">
-      <Link href={skill.action.href} aria-label={`Open ${skill.name} skill overview`} className="grid min-h-14 min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-sm px-2 py-3 transition-colors hover:bg-paper focus-visible:outline focus-visible:outline-2 focus-visible:outline-forge">
-        <span className="min-w-0">
-          <span className="block break-words text-sm font-extrabold text-ink">{skill.name}</span>
-          <span className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted">
-            <span data-testid={`tracker-progress-${skill.skillPathId}`}>{skill.progressLabel}</span>
-            {showMasteryMark && skill.masteryStatus ? <MasteryMark status={skill.masteryStatus} density="compact" /> : null}
-          </span>
-          {confidenceDisagrees ? <span className="mt-1 block text-xs text-muted" data-testid={`tracker-confidence-disagreement-${skill.skillPathId}`}>Your confidence and recent evidence differ</span> : null}
-        </span>
-        <span className="flex shrink-0 items-center gap-3">
-          {skill.reviewDue ? <span className="text-xs font-bold text-warning" data-review-state="due">Review due</span> : null}
+      <Link href={skill.action.href} aria-label={`Open ${skill.name} skill overview`} className="grid min-h-14 min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-sm px-2 py-2 transition-colors hover:bg-paper focus-visible:outline focus-visible:outline-2 focus-visible:outline-forge">
+        <span className="min-w-0 break-words text-sm font-extrabold text-ink">{skill.name}</span>
+        <span className="flex shrink-0 items-center gap-2 text-xs text-muted">
+          {learnerConfidence ? (
+            <span className="inline-flex items-center gap-1" data-testid={`tracker-confidence-${skill.skillPathId}`}>
+              {CONFIDENCE_LABEL[learnerConfidence]}
+              {confidenceDisagrees ? (
+                <span
+                  role="img"
+                  aria-label="Your confidence and recent evidence differ"
+                  title="Your confidence and recent evidence differ"
+                  className="inline-flex text-warning"
+                  data-testid={`tracker-confidence-disagreement-${skill.skillPathId}`}
+                >
+                  <CircleAlert aria-hidden="true" className="size-3.5" />
+                </span>
+              ) : null}
+            </span>
+          ) : null}
+          {learnerConfidence && skill.reviewDue ? <span aria-hidden="true">·</span> : null}
+          {skill.reviewDue ? <span className="font-bold text-warning" data-review-state="due">Review due</span> : null}
           <ArrowRight aria-hidden="true" className="size-4 text-forge" />
         </span>
       </Link>
-      <details className="group/requirements disclosure-motion text-sm text-muted" data-testid={`tracker-requirements-${skill.skillPathId}`}>
-        <summary aria-label={`View official requirements for ${skill.name}`} className="flex min-h-11 w-fit cursor-pointer list-none items-center gap-1.5 px-2 py-2 text-xs font-semibold underline-offset-4 hover:text-ink hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-forge">
-          Official requirements ({skill.officialPoints.length}) <ChevronDown aria-hidden="true" className="size-3.5 transition-transform group-open/requirements:rotate-180" />
-        </summary>
-        <ul className="grid gap-2 border-l-2 border-line pb-2 pl-3 leading-relaxed">
-          {skill.officialPoints.map((point) => <li key={point.id} data-testid="course-tracker-official-point" data-official-point-id={point.id}><span className="font-bold text-ink">{point.reference}:</span> {point.text}</li>)}
-        </ul>
-      </details>
     </li>
   );
 }

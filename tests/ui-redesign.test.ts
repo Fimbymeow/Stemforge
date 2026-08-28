@@ -36,7 +36,8 @@ test("core redesigned surfaces retain the intended information hierarchy", () =>
   assert.doesNotMatch(hub, /PracticeEntryCard/);
   assert.doesNotMatch(hub, /View full Course Tracker/);
   assert.match(hub, />Courses</);
-  assert.match(tracker, /<details className="group\/requirements disclosure-motion/);
+  assert.match(skill, /<details className="group\/requirements disclosure-motion/);
+  assert.doesNotMatch(tracker, /group\/requirements/);
   assert.match(tracker, /Open \$\{skill\.name\} skill overview/);
 });
 

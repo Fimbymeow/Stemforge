@@ -9,6 +9,17 @@ import { deriveMistakeLog } from "@/lib/mistakes/derivation";
 import type { ProgressEvidence, ProgressStatus } from "@/lib/progress/types";
 import { createReviewDerivationCache, deriveSkillReviewState } from "@/lib/review/derivation";
 
+const higherMathsOfficialMappingBySkill = new Map(
+  higherMathematicsOfficialSkillMappings.map((mapping) => [mapping.skillPathId, mapping]),
+);
+const higherMathsOfficialPointOrder = new Map(
+  higherMathematicsSpecificationRegister.points.map((point, index) => [point.specPointId, index]),
+);
+const higherMathsActiveOfficialPoints = higherMathematicsSpecificationRegister.points.filter((point) => point.status === "active");
+const higherMathsActiveOfficialPointById = new Map(
+  higherMathsActiveOfficialPoints.map((point) => [point.specPointId, point]),
+);
+
 export type TrackerStructuralStatus = "Not started" | "In progress" | "Completed";
 export type TrackerKnowledgeStatus = "Needs practice" | "Healthy";
 export type CourseTrackerOfficialPoint = { id: string; reference: string; text: string };
@@ -62,6 +73,19 @@ export type CourseTrackerModel = {
   courseWideRequirements: Array<{ areaId: string; title: string; officialPoints: CourseTrackerRequirement["officialPoints"]; mappedSkillNames: string[] }>;
 };
 
+export function getHigherMathsSkillOfficialPoints(
+  skillPathId: string,
+  wordingMode: "official" | "learner-friendly" = "official",
+): CourseTrackerOfficialPoint[] {
+  const mapping = higherMathsOfficialMappingBySkill.get(skillPathId);
+  if (!mapping) return [];
+  return mapping.officialSpecificationPointIds
+    .map((pointId) => higherMathsActiveOfficialPointById.get(pointId))
+    .filter((point): point is NonNullable<typeof point> => Boolean(point))
+    .sort((left, right) => (higherMathsOfficialPointOrder.get(left.specPointId) ?? 0) - (higherMathsOfficialPointOrder.get(right.specPointId) ?? 0))
+    .map((point) => pointView(point, wordingMode));
+}
+
 export function deriveHigherMathsCourseTracker(
   subject: Subject,
   evidence: ProgressEvidence,
@@ -71,7 +95,6 @@ export function deriveHigherMathsCourseTracker(
 ): CourseTrackerModel {
   const contexts = contentResolver.getAllPathContexts().filter((context) => context.subject.subjectSlug === subject.subjectSlug);
   const contextById = new Map(contexts.map((context) => [context.skillPath.slug, context]));
-  const mappingBySkill = new Map(higherMathematicsOfficialSkillMappings.map((mapping) => [mapping.skillPathId, mapping]));
   const mappedSkillIdsByPoint = new Map<string, string[]>();
   for (const mapping of higherMathematicsOfficialSkillMappings) {
     for (const pointId of mapping.officialSpecificationPointIds) {
@@ -80,9 +103,6 @@ export function deriveHigherMathsCourseTracker(
       mappedSkillIdsByPoint.set(pointId, ids);
     }
   }
-  const pointOrder = new Map(higherMathematicsSpecificationRegister.points.map((point, index) => [point.specPointId, index]));
-  const activePoints = higherMathematicsSpecificationRegister.points.filter((point) => point.status === "active");
-  const activePointById = new Map(activePoints.map((point) => [point.specPointId, point]));
   const reviewCache = createReviewDerivationCache();
   // Computed once, course-wide, rather than per-row (Part Q) — same amortized-single-pass pattern as `reviewCache`.
   const openMistakeCountBySkill = new Map(
@@ -99,9 +119,9 @@ export function deriveHigherMathsCourseTracker(
           .filter((context) => context.courseArea.slug === courseArea.slug && context.specificationStrand.id === strand.id)
           .sort((left, right) => (left.skillPath.displayOrder ?? Number.MAX_SAFE_INTEGER) - (right.skillPath.displayOrder ?? Number.MAX_SAFE_INTEGER) || left.skillPath.slug.localeCompare(right.skillPath.slug))
           .map((context) => deriveTrackerSkill(context.skillPath.slug, evidence, now, reviewCache));
-        const officialPoints = activePoints
+        const officialPoints = higherMathsActiveOfficialPoints
           .filter((point) => point.areaId === strand.id)
-          .sort((left, right) => (pointOrder.get(left.specPointId) ?? 0) - (pointOrder.get(right.specPointId) ?? 0))
+          .sort((left, right) => (higherMathsOfficialPointOrder.get(left.specPointId) ?? 0) - (higherMathsOfficialPointOrder.get(right.specPointId) ?? 0))
           .map((point) => pointView(point, wordingMode));
         return { areaId: strand.id, title: strand.name, officialPoints, skills };
       }),
@@ -112,7 +132,7 @@ export function deriveHigherMathsCourseTracker(
     .filter((area) => reasoningAreaIds.has(area.areaId))
     .sort((left, right) => left.order - right.order)
     .map((area) => {
-      const points = activePoints.filter((point) => point.areaId === area.areaId);
+      const points = higherMathsActiveOfficialPoints.filter((point) => point.areaId === area.areaId);
       const mappedSkillNames = [...new Set(points.flatMap((point) => mappedSkillIdsByPoint.get(point.specPointId) ?? []))]
         .map((skillId) => contextById.get(skillId)?.skillPath.name)
         .filter((name): name is string => Boolean(name));
@@ -127,14 +147,10 @@ export function deriveHigherMathsCourseTracker(
 
   function deriveTrackerSkill(skillPathId: string, progressEvidence: ProgressEvidence, at: Date, cache: ReturnType<typeof createReviewDerivationCache>): CourseTrackerSkill {
     const context = contextById.get(skillPathId);
-    const mapping = mappingBySkill.get(skillPathId);
+    const mapping = higherMathsOfficialMappingBySkill.get(skillPathId);
     if (!context || !mapping) throw new Error(`Course tracker cannot resolve mapped skill ${skillPathId}.`);
     const path = context.skillPath;
-    const officialPoints = mapping.officialSpecificationPointIds
-      .map((pointId) => activePointById.get(pointId))
-      .filter((point): point is NonNullable<typeof point> => Boolean(point))
-      .sort((left, right) => (pointOrder.get(left.specPointId) ?? 0) - (pointOrder.get(right.specPointId) ?? 0))
-      .map((point) => pointView(point, wordingMode));
+    const officialPoints = getHigherMathsSkillOfficialPoints(skillPathId, wordingMode);
     if (!path.isAvailable) {
       return { skillPathId, name: path.name, availability: "curriculum_reference", structuralStatus: null, knowledgeStatus: null, knowledgeReason: null, reviewDue: false, reviewDueSoon: false, reviewEligible: false, masteryStatus: null, progressLabel: null, reviewReason: null, action: null, officialPoints, confidence: null };
     }
