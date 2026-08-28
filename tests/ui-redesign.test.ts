@@ -36,7 +36,7 @@ test("core redesigned surfaces retain the intended information hierarchy", () =>
   assert.doesNotMatch(hub, /PracticeEntryCard/);
   assert.doesNotMatch(hub, /View full Course Tracker/);
   assert.match(hub, />Courses</);
-  assert.match(tracker, /<details className="mt-1/);
+  assert.match(tracker, /<details className="group\/requirements disclosure-motion/);
   assert.match(tracker, /Open \$\{skill\.name\} skill overview/);
 });
 
@@ -86,4 +86,15 @@ test("dialog and native disclosure foundations are adopted on representative sur
   ]) {
     assert.match(readFileSync(file, "utf8"), /disclosure-motion/, `${file} has no representative native disclosure motion`);
   }
+});
+
+test("Question Workspace and Practice Session use the shared visual foundations without a nested question card", () => {
+  const workspace = readFileSync("components/questions/question-workspace.tsx", "utf8");
+  const practiceSession = readFileSync("components/practice/practice-session.tsx", "utf8");
+  const interactionClasses = workspace.match(/className="([^"]+)" data-testid="question-interaction"/)?.[1] ?? "";
+
+  assert.doesNotMatch(interactionClasses, /(?:^|\s)(?:rounded\S*|border\S*|bg-white|shadow\S*)(?:\s|$)/);
+  assert.equal((workspace.match(/disclosure-motion/g) ?? []).length, 2);
+  assert.equal((practiceSession.match(/<DialogShell/g) ?? []).length, 2);
+  assert.doesNotMatch(practiceSession, /role="dialog"|aria-modal="true"/);
 });

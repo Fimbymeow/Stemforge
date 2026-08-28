@@ -450,7 +450,7 @@ export function QuestionWorkspace({
             <Link href={fallbackPathHref}>{skillPath?.name ?? question.skillPath ?? "Question"}</Link>
             <span aria-hidden="true">/</span>
             <span className="font-bold text-forge">{stage?.name ?? question.stage}</span>
-            <details className="ml-auto max-sm:ml-0 max-sm:w-full">
+            <details className="disclosure-motion ml-auto max-sm:ml-0 max-sm:w-full">
               <summary className="inline-flex min-h-10 cursor-pointer items-center text-xs font-bold text-forge">More context</summary>
               <span className="mt-2 flex flex-wrap gap-2 rounded-lg bg-paper p-2 text-xs">
                 <Link href={context?.courseArea.href ?? "/subjects"}>{context?.courseArea.name ?? question.courseArea}</Link>
@@ -470,7 +470,7 @@ export function QuestionWorkspace({
                   {stagePosition?.label ?? `${question.stage} · Question ${currentQuestion}`}
                 </p>
               </div>
-              <details className="text-sm text-muted">
+              <details className="disclosure-motion text-sm text-muted">
                 <summary className="inline-flex min-h-10 cursor-pointer items-center font-bold text-forge">Question details</summary>
                 <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 rounded-lg bg-paper p-3">
                   <dt>Marks</dt><dd className="font-bold text-ink">{question.marks}</dd>
@@ -486,7 +486,7 @@ export function QuestionWorkspace({
             {questionProgress.reviewRecommended && !submitted ? (
               <p className="mt-2 text-sm text-muted" data-testid="review-reason">{describeReviewReason(questionProgress)}</p>
             ) : null}
-            <div className="mt-3 rounded-xl border border-line bg-white p-5 shadow-card max-sm:p-4" data-testid="question-interaction">
+            <div className="mt-3 p-5 max-sm:p-4" data-testid="question-interaction">
               <div className="text-lg leading-relaxed"><MathContent>{question.questionText}</MathContent></div>
               <QuestionGraphVisual question={question} />
               <div className="mt-5 border-t border-line pt-4">

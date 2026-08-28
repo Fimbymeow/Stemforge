@@ -13,6 +13,7 @@ import {
   Timer,
   X,
 } from "lucide-react";
+import { DialogCloseButton, DialogShell } from "@/components/dialog-shell";
 import { AppShell } from "@/components/layout/app-shell";
 import { getPathCompletionSupportingSentence } from "@/components/learning/path-completion-panel";
 import { isCompletedTierStatus, MasteryBadge, ReviewBadge, type CompletedTierStatus } from "@/components/learning/mastery-badge";
@@ -38,6 +39,7 @@ import { derivePracticeSessionSummary } from "@/lib/practice/practice-summary";
 import type { PracticeSession as PracticeSessionModel } from "@/lib/practice/practice-types";
 import type { ProgressEvidence } from "@/lib/progress/types";
 import { recordResolvedReviewTargets } from "@/lib/review/emission";
+import { useModalFocusTrap } from "@/lib/use-modal-focus-trap";
 
 export function PracticeSession({ sessionId }: { sessionId: string }) {
   const [session, setSession] = useState<PracticeSessionModel | null>(null);
@@ -307,42 +309,20 @@ function QuestionListDialog({
   onClose: () => void;
   onMove: (index: number) => void;
 }) {
-  const dialogRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
-  useEffect(() => {
-    closeRef.current?.focus();
-    const keydown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        onClose();
-        returnFocusRef.current?.focus();
-        return;
-      }
-      if (event.key !== "Tab") return;
-      const controls = dialogRef.current?.querySelectorAll<HTMLElement>("button:not(:disabled)");
-      if (!controls?.length) return;
-      const first = controls[0];
-      const last = controls[controls.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-    window.addEventListener("keydown", keydown);
-    return () => window.removeEventListener("keydown", keydown);
-  }, [onClose, returnFocusRef]);
-  function close() {
-    onClose();
-    window.requestAnimationFrame(() => returnFocusRef.current?.focus());
-  }
+  useModalFocusTrap({ open: true, containerRef: dialogRef, initialFocusRef: closeRef, triggerRef: returnFocusRef, onClose });
   return (
-    <div className="fixed inset-0 z-[65] grid place-items-center bg-ink/35 p-3 max-sm:items-end max-sm:p-0" onMouseDown={(event) => { if (event.target === event.currentTarget) close(); }}>
-      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="practice-question-list-title" className="w-full max-w-xl rounded-xl bg-white p-3 shadow-card max-sm:max-h-[80dvh] max-sm:rounded-b-none max-sm:pb-[max(12px,env(safe-area-inset-bottom))]">
+    <DialogShell
+      ref={dialogRef}
+      labelledBy="practice-question-list-title"
+      backdropClassName="z-[65] max-sm:items-end max-sm:p-0"
+      className="max-sm:max-h-[80dvh] max-sm:rounded-b-none max-sm:pb-[max(12px,env(safe-area-inset-bottom))]"
+      onBackdropMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}
+    >
         <div className="mb-2 flex items-center justify-between">
           <h2 id="practice-question-list-title" className="text-lg font-extrabold">Session questions</h2>
-          <button ref={closeRef} type="button" onClick={close} aria-label="Close question list" className="grid size-11 place-items-center rounded-lg"><X className="size-4" /></button>
+          <DialogCloseButton ref={closeRef} onClick={onClose} label="Close question list" />
         </div>
         <ol className="grid max-h-[min(60dvh,420px)] gap-1 overflow-y-auto overscroll-contain">
           {statuses.map((status, index) => (
@@ -361,8 +341,7 @@ function QuestionListDialog({
             </li>
           ))}
         </ol>
-      </div>
-    </div>
+    </DialogShell>
   );
 }
 
@@ -391,40 +370,15 @@ function FinishSessionDialog({
   const skipped = statuses.filter((item) => item.skipped).length;
   const unavailable = statuses.filter((item) => item.unavailable).length;
   const awaitingSelfCheck = statuses.filter((item) => item.awaitingSelfCheck).length;
-  const dialogRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLElement>(null);
   const cancelRef = useRef<HTMLButtonElement>(null);
-  const close = useCallback(() => {
-    onCancel();
-    window.requestAnimationFrame(() => {
-      const finish = [...document.querySelectorAll<HTMLButtonElement>('[data-testid="practice-session-panel"] button')]
-        .find((button) => button.textContent?.includes("Finish session"));
-      finish?.focus();
-    });
-  }, [onCancel]);
-  useEffect(() => {
-    cancelRef.current?.focus();
-    const escape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") close();
-      if (event.key !== "Tab") return;
-      const controls = dialogRef.current?.querySelectorAll<HTMLElement>("button:not(:disabled)");
-      if (!controls?.length) return;
-      const first = controls[0];
-      const last = controls[controls.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-    window.addEventListener("keydown", escape);
-    return () => window.removeEventListener("keydown", escape);
-  }, [close]);
+  useModalFocusTrap({ open: true, containerRef: dialogRef, initialFocusRef: cancelRef, onClose: onCancel });
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-ink/45 p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) close(); }}>
-      <Card role="dialog" aria-modal="true" aria-labelledby="finish-session-title" className="w-full max-w-lg p-6">
-        <div ref={dialogRef}>
+    <DialogShell
+      ref={dialogRef}
+      labelledBy="finish-session-title"
+      onBackdropMouseDown={(event) => { if (event.target === event.currentTarget) onCancel(); }}
+    >
         <h2 id="finish-session-title" className="text-2xl font-extrabold">Finish this session?</h2>
         <p className="mt-2 text-muted">Your recorded answers and self-checks will remain in your learning progress.</p>
         <dl className="mt-4 grid grid-cols-2 gap-2 text-sm">
@@ -434,13 +388,11 @@ function FinishSessionDialog({
           {awaitingSelfCheck ? <FinishCount label="Awaiting self-check" value={awaitingSelfCheck} /> : null}
         </dl>
         <div className="mt-5 flex flex-wrap justify-end gap-2">
-          <button ref={cancelRef} type="button" onClick={close} disabled={busy} className="min-h-11 rounded-lg border border-line bg-white px-4 font-bold">Return to practice</button>
+          <button ref={cancelRef} type="button" onClick={onCancel} disabled={busy} className="min-h-11 rounded-lg border border-line bg-white px-4 font-bold">Return to practice</button>
           <button type="button" onClick={onReview} disabled={busy} className="min-h-11 rounded-lg border border-forge bg-white px-4 font-bold text-forge">Review unresolved</button>
           <button type="button" onClick={onConfirm} disabled={busy} className="min-h-11 rounded-lg bg-forge px-4 font-extrabold text-white">Finish session</button>
         </div>
-        </div>
-      </Card>
-    </div>
+    </DialogShell>
   );
 }
 

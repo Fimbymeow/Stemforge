@@ -1,4 +1,4 @@
-import { forwardRef, type ReactNode } from "react";
+import { forwardRef, type MouseEventHandler, type ReactNode } from "react";
 import { X } from "lucide-react";
 
 const WIDTH_CLASSES = {
@@ -13,9 +13,11 @@ export const DialogShell = forwardRef<HTMLElement, {
   size?: keyof typeof WIDTH_CLASSES;
   role?: "dialog" | "alertdialog";
   className?: string;
-}>(function DialogShell({ children, labelledBy, describedBy, size = "md", role = "dialog", className = "" }, ref) {
+  backdropClassName?: string;
+  onBackdropMouseDown?: MouseEventHandler<HTMLDivElement>;
+}>(function DialogShell({ children, labelledBy, describedBy, size = "md", role = "dialog", className = "", backdropClassName = "", onBackdropMouseDown }, ref) {
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-ink/35 p-4" role="presentation" data-dialog-backdrop>
+    <div className={`fixed inset-0 z-50 grid place-items-center bg-ink/35 p-4 ${backdropClassName}`} role="presentation" data-dialog-backdrop onMouseDown={onBackdropMouseDown}>
       <section
         ref={ref}
         role={role}
