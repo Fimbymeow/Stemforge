@@ -1,10 +1,13 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import { higherMaths } from "../data/higher-maths";
 import { higherMathematicsOfficialSkillMappings } from "../data/curriculum/higher-mathematics/official-skill-mappings";
 import { higherMathematicsSpecificationRegister } from "../data/curriculum/higher-mathematics/specification-register";
 import { contentResolver } from "../lib/content-resolver";
 import { deriveHigherMathsCourseTracker } from "../lib/course-tracker";
+import { groupCourseTrackerSkills, hasCourseTrackerConfidenceDisagreement } from "../lib/course-tracker-presentation";
+import type { CourseTrackerSkill } from "../lib/course-tracker";
 import type { ProgressEvidence, QuestionAttempt } from "../lib/progress/types";
 
 const empty = (): ProgressEvidence => ({ attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [], flashcardReviews: [] });
@@ -21,17 +24,21 @@ function attemptsFor(pathId: string, date: string, only = Number.POSITIVE_INFINI
   }));
 }
 
-test("fresh tracker derives honest availability, progress and coverage from the registry", () => {
+test("fresh tracker derives the full curriculum and only actionable skills receive learner rows", () => {
   const model = deriveHigherMathsCourseTracker(higherMaths, empty(), new Date("2026-08-07T12:00:00Z"));
   assert.equal(model.totalSkillCount, 49);
-  assert.equal(model.availableSkillCount, 2);
   for (const id of ["basic-differentiation", "chain-rule"]) {
     const skill = findSkill(model, id); assert.ok(skill);
-    assert.equal(skill.structuralStatus, "Not started"); assert.equal(skill.knowledgeStatus, null);
+    assert.equal(skill.availability, "actionable");
+    assert.equal(skill.structuralStatus, "Not started");
+    assert.equal(skill.progressLabel, "Not started");
     assert.deepEqual(skill.action, { label: "Open skill", href: contentResolver.getPathContext(id)!.skillPath.href });
   }
-  const unavailable = findSkill(model, "trigonometric-differentiation"); assert.ok(unavailable);
-  assert.equal(unavailable.availability, "Coming soon"); assert.equal(unavailable.action, null); assert.equal(unavailable.knowledgeStatus, null);
+  const reference = findSkill(model, "trigonometric-differentiation"); assert.ok(reference);
+  assert.equal(reference.availability, "curriculum_reference");
+  assert.equal(reference.action, null);
+  assert.equal(reference.progressLabel, null);
+  assert.equal(reference.knowledgeStatus, null);
   assert.equal(allSkills(model).length, 49);
   assert.ok(allSkills(model).every((skill) => skill.officialPoints.length > 0));
 });
@@ -50,7 +57,7 @@ test("skill disclosures preserve the canonical many-to-many official mapping and
   assert.equal(representedPointIds.size, higherMathematicsSpecificationRegister.points.filter((point) => point.status === "active").length);
 });
 
-test("partial weak evidence is in progress and explains needs-practice from real evidence", () => {
+test("partial weak evidence retains its derivation but presents one specific progress line", () => {
   const progress = empty();
   progress.attempts = [{ ...attemptsFor("basic-differentiation", "2026-08-07T10:00:00Z", 1)[0], isCorrect: false }];
   progress.supportEvents = [{
@@ -59,72 +66,77 @@ test("partial weak evidence is in progress and explains needs-practice from real
     versionEvidence: progress.attempts[0].versionEvidence, eventId: "basic-solution-1",
   }];
   const skill = findSkill(deriveHigherMathsCourseTracker(higherMaths, progress), "basic-differentiation"); assert.ok(skill);
-  assert.equal(skill.structuralStatus, "In progress"); assert.equal(skill.knowledgeStatus, "Needs practice");
-  assert.match(skill.knowledgeReason ?? "", /Foundations: 1\/3 complete/);
+  assert.equal(skill.structuralStatus, "In progress");
+  assert.equal(skill.knowledgeStatus, "Needs practice");
+  assert.equal(skill.progressLabel, "Foundations · 1/3 complete");
 });
 
-test("healthy partial evidence stays distinct from structural completion", () => {
+test("healthy partial evidence uses the active stage rather than generic In progress", () => {
   const progress = empty(); progress.attempts = attemptsFor("chain-rule", "2026-08-07T10:00:00Z", 1);
   const skill = findSkill(deriveHigherMathsCourseTracker(higherMaths, progress), "chain-rule"); assert.ok(skill);
-  assert.equal(skill.structuralStatus, "In progress"); assert.equal(skill.knowledgeStatus, "Healthy");
-  assert.deepEqual(skill.action, { label: "Open skill", href: contentResolver.getPathContext("chain-rule")!.skillPath.href });
+  assert.equal(skill.structuralStatus, "In progress");
+  assert.equal(skill.knowledgeStatus, "Healthy");
+  assert.match(skill.progressLabel ?? "", /^Foundations · 1\/\d+ complete$/);
 });
 
-test("completed and healthy may coexist with an independent Review due state", () => {
+test("completed mastery wording and independent Review due state remain derived", () => {
   const progress = empty(); progress.attempts = attemptsFor("basic-differentiation", "2026-06-01T10:00:00Z");
   const skill = findSkill(deriveHigherMathsCourseTracker(higherMaths, progress, new Date("2026-08-07T12:00:00Z")), "basic-differentiation"); assert.ok(skill);
-  assert.equal(skill.structuralStatus, "Completed"); assert.equal(skill.knowledgeStatus, "Healthy"); assert.equal(skill.reviewDue, true);
+  assert.equal(skill.structuralStatus, "Completed");
+  assert.equal(skill.knowledgeStatus, "Healthy");
+  assert.equal(skill.progressLabel, "Mastered");
+  assert.equal(skill.reviewDue, true);
 });
 
-test("tracker grouping follows course order, official heading order and live skill display order", () => {
+test("grouping preserves course, strand and skill order exactly", () => {
   const model = deriveHigherMathsCourseTracker(higherMaths, empty());
   assert.deepEqual(model.areas.map((area) => area.courseAreaId), higherMaths.courseAreas.map((area) => area.slug));
   const differentiation = model.areas.flatMap((area) => area.requirements).find((requirement) => requirement.areaId === "differentiating-functions");
   assert.ok(differentiation);
-  assert.deepEqual(differentiation.skills.slice(0, 3).map((skill) => skill.skillPathId), ["basic-differentiation", "chain-rule", "trigonometric-differentiation"]);
+  const groupedOrder = groupCourseTrackerSkills(differentiation.skills).flatMap((group) => group.kind === "actionable" ? [group.skill.skillPathId] : group.skills.map((skill) => skill.skillPathId));
+  assert.deepEqual(groupedOrder, differentiation.skills.map((skill) => skill.skillPathId));
+  assert.deepEqual(groupedOrder.slice(0, 3), ["basic-differentiation", "chain-rule", "trigonometric-differentiation"]);
 });
 
-test("a never-attempted skill carries a confidence object with no suggestion and no learner rating", () => {
-  const skill = findSkill(deriveHigherMathsCourseTracker(higherMaths, empty()), "basic-differentiation");
-  assert.ok(skill);
-  assert.ok(skill.confidence);
-  assert.equal(skill.confidence.suggestion, null);
-  assert.equal(skill.confidence.learnerLevel, null);
+test("confidence remains derived but disagreement appears only for a supplied mismatching rating", () => {
+  const progress = empty(); progress.attempts = attemptsFor("chain-rule", "2026-08-07T10:00:00Z", 1);
+  const noRating = findSkill(deriveHigherMathsCourseTracker(higherMaths, progress), "chain-rule"); assert.ok(noRating?.confidence);
+  assert.equal(hasCourseTrackerConfidenceDisagreement(noRating.confidence), false);
+  const matching = findSkill(deriveHigherMathsCourseTracker(higherMaths, progress, undefined, undefined, new Map([["chain-rule", "developing" as const]])), "chain-rule"); assert.ok(matching?.confidence);
+  assert.equal(hasCourseTrackerConfidenceDisagreement(matching.confidence), false);
+  const differing = findSkill(deriveHigherMathsCourseTracker(higherMaths, progress, undefined, undefined, new Map([["chain-rule", "confident" as const]])), "chain-rule"); assert.ok(differing?.confidence);
+  assert.equal(hasCourseTrackerConfidenceDisagreement(differing.confidence), true);
 });
 
-test("a Coming soon skill has no confidence surface at all", () => {
-  const skill = findSkill(deriveHigherMathsCourseTracker(higherMaths, empty()), "trigonometric-differentiation");
-  assert.ok(skill);
-  assert.equal(skill.confidence, null);
+test("untouched actionable skills retain no suggestion and curriculum references have no confidence surface", () => {
+  const model = deriveHigherMathsCourseTracker(higherMaths, empty());
+  const untouched = findSkill(model, "basic-differentiation"); assert.ok(untouched?.confidence);
+  assert.equal(untouched.confidence.suggestion, null);
+  assert.equal(untouched.confidence.learnerLevel, null);
+  const reference = findSkill(model, "trigonometric-differentiation"); assert.ok(reference);
+  assert.equal(reference.confidence, null);
 });
 
-test("real attempted evidence produces a non-null Orthic suggestion, independent of the learner's own rating", () => {
-  const progress = empty();
-  progress.attempts = attemptsFor("chain-rule", "2026-08-07T10:00:00Z", 1);
-  const skill = findSkill(deriveHigherMathsCourseTracker(higherMaths, progress), "chain-rule");
-  assert.ok(skill);
-  assert.ok(skill.confidence);
-  assert.notEqual(skill.confidence.suggestion, null);
+test("a deterministic mature 49-skill model stays compact with 25 actionable rows", () => {
+  const source = allSkills(deriveHigherMathsCourseTracker(higherMaths, empty()));
+  const mature = source.map((skill, index): CourseTrackerSkill => index < 25
+    ? { ...skill, availability: "actionable", action: { label: "Open skill", href: `/skills/${skill.skillPathId}` }, structuralStatus: "Not started", masteryStatus: "not_started", progressLabel: "Not started", confidence: { learnerLevel: null, suggestion: null, evidenceFingerprint: "fixture" } }
+    : { ...skill, availability: "curriculum_reference", action: null, structuralStatus: null, masteryStatus: null, progressLabel: null, confidence: null });
+  const groups = groupCourseTrackerSkills(mature);
+  const flattened = groups.flatMap((group) => group.kind === "actionable" ? [group.skill] : group.skills);
+  assert.equal(flattened.length, 49);
+  assert.deepEqual(flattened.map((skill) => skill.skillPathId), source.map((skill) => skill.skillPathId));
+  assert.equal(groups.filter((group) => group.kind === "actionable").length, 25);
+  assert.equal(groups.filter((group) => group.kind === "curriculum_references").flatMap((group) => group.skills).length, 24);
+  assert.ok(groups.length < mature.length);
 });
 
-test("a supplied learnerConfidence map surfaces the learner's own rating unchanged, never overwritten by the suggestion", () => {
-  const learnerConfidence = new Map([["basic-differentiation", "confident" as const]]);
-  const skill = findSkill(
-    deriveHigherMathsCourseTracker(higherMaths, empty(), undefined, undefined, learnerConfidence),
-    "basic-differentiation",
-  );
-  assert.ok(skill);
-  assert.ok(skill.confidence);
-  assert.equal(skill.confidence.learnerLevel, "confident");
-});
-
-test("a skill absent from the learnerConfidence map stays Not rated (learnerLevel null)", () => {
-  const learnerConfidence = new Map([["chain-rule", "needs_work" as const]]);
-  const skill = findSkill(
-    deriveHigherMathsCourseTracker(higherMaths, empty(), undefined, undefined, learnerConfidence),
-    "basic-differentiation",
-  );
-  assert.ok(skill);
-  assert.ok(skill.confidence);
-  assert.equal(skill.confidence.learnerLevel, null);
+test("Course Tracker source guards the calmer product boundary", () => {
+  const component = readFileSync("components/learning/course-tracker.tsx", "utf8");
+  const page = readFileSync("app/subjects/higher-maths/course-tracker/page.tsx", "utf8");
+  assert.doesNotMatch(component + page, /skills available|coming soon|Set confidence/i);
+  assert.doesNotMatch(component, /ConfidenceControl|ReviewStatus|bg-gradient|bg-forge-soft\/35/);
+  assert.match(component, /Further skills in this strand/);
+  assert.match(component, /Reasoning across the course/);
+  assert.match(component, /Confirmed current by Qualifications Scotland/);
 });

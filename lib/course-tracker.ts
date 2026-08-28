@@ -28,7 +28,7 @@ export type CourseTrackerSkillConfidence = {
 export type CourseTrackerSkill = {
   skillPathId: string;
   name: string;
-  availability: "Available" | "Coming soon";
+  availability: "actionable" | "curriculum_reference";
   structuralStatus: TrackerStructuralStatus | null;
   knowledgeStatus: TrackerKnowledgeStatus | null;
   knowledgeReason: string | null;
@@ -36,6 +36,7 @@ export type CourseTrackerSkill = {
   reviewDueSoon: boolean;
   reviewEligible: boolean;
   masteryStatus: ProgressStatus | null;
+  progressLabel: string | null;
   reviewReason: string | null;
   action: { label: string; href: string } | null;
   officialPoints: CourseTrackerOfficialPoint[];
@@ -56,7 +57,6 @@ export type CourseTrackerArea = {
 };
 
 export type CourseTrackerModel = {
-  availableSkillCount: number;
   totalSkillCount: number;
   areas: CourseTrackerArea[];
   courseWideRequirements: Array<{ areaId: string; title: string; officialPoints: CourseTrackerRequirement["officialPoints"]; mappedSkillNames: string[] }>;
@@ -120,7 +120,6 @@ export function deriveHigherMathsCourseTracker(
     });
 
   return {
-    availableSkillCount: contexts.filter((context) => context.skillPath.isAvailable).length,
     totalSkillCount: contexts.length,
     areas,
     courseWideRequirements,
@@ -137,7 +136,7 @@ export function deriveHigherMathsCourseTracker(
       .sort((left, right) => (pointOrder.get(left.specPointId) ?? 0) - (pointOrder.get(right.specPointId) ?? 0))
       .map((point) => pointView(point, wordingMode));
     if (!path.isAvailable) {
-      return { skillPathId, name: path.name, availability: "Coming soon", structuralStatus: null, knowledgeStatus: null, knowledgeReason: null, reviewDue: false, reviewDueSoon: false, reviewEligible: false, masteryStatus: null, reviewReason: null, action: null, officialPoints, confidence: null };
+      return { skillPathId, name: path.name, availability: "curriculum_reference", structuralStatus: null, knowledgeStatus: null, knowledgeReason: null, reviewDue: false, reviewDueSoon: false, reviewEligible: false, masteryStatus: null, progressLabel: null, reviewReason: null, action: null, officialPoints, confidence: null };
     }
     const progress = getSkillPathProgress(path, progressEvidence);
     const structuralStatus: TrackerStructuralStatus = progress.status === "not_started" ? "Not started"
@@ -156,7 +155,7 @@ export function deriveHigherMathsCourseTracker(
     return {
       skillPathId,
       name: path.name,
-      availability: "Available",
+      availability: "actionable",
       structuralStatus,
       knowledgeStatus,
       knowledgeReason: knowledgeStatus === "Needs practice" ? needsPracticeReason(path, progress) : null,
@@ -164,6 +163,7 @@ export function deriveHigherMathsCourseTracker(
       reviewDueSoon: review.dueSoon,
       reviewEligible: review.eligible,
       masteryStatus: progress.status,
+      progressLabel: trackerProgressLabel(path, progress),
       reviewReason: review.due ? review.reason : null,
       action: { label: "Open skill", href: path.href },
       officialPoints,
@@ -232,4 +232,27 @@ function needsPracticeReason(path: NonNullable<ReturnType<typeof contentResolver
     }
   }
   return `${progress.reviewQuestionIds.length} question${progress.reviewQuestionIds.length === 1 ? "" : "s"} need more practice`;
+}
+
+function trackerProgressLabel(
+  path: NonNullable<ReturnType<typeof contentResolver.getPathContext>>["skillPath"],
+  progress: ReturnType<typeof getSkillPathProgress>,
+) {
+  if (progress.status === "not_started") return "Not started";
+  if (progress.status === "completed") return "Learned";
+  if (progress.status === "secure") return "Secure";
+  if (progress.status === "mastered") return "Mastered";
+
+  const stages = path.learningStages ?? [];
+  const attemptedIncomplete = stages.find((stage) => {
+    const item = progress.stageProgress[stage.id];
+    return item && item.attemptedCount > 0 && item.completionPercentage < 100;
+  });
+  const currentStage = attemptedIncomplete ?? stages.find((stage) => {
+    const item = progress.stageProgress[stage.id];
+    return item && item.completionPercentage < 100;
+  });
+  if (!currentStage) return "In progress";
+  const stageProgress = progress.stageProgress[currentStage.id];
+  return `${currentStage.name} · ${stageProgress.completedQuestionIds.length}/${stageProgress.totalQuestions} complete`;
 }

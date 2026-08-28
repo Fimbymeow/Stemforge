@@ -20,7 +20,7 @@ export default function HigherMathsCourseTrackerPage() {
             <div>
               <p className="text-xs font-extrabold uppercase tracking-wide text-forge">Higher Maths</p>
               <h1 className="mt-1 text-[32px] font-extrabold leading-tight max-sm:text-[28px]">Course Tracker</h1>
-              <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted">Explore the full course, official requirements and your progress through the skills available now.</p>
+              <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted">Explore the full course, official requirements and your progress through each skill.</p>
             </div>
           </div>
         </header>
