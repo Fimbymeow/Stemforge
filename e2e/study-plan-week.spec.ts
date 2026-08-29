@@ -72,8 +72,15 @@ test.describe("feature-flagged Study Plan This Week", () => {
     const week = page.getByTestId("study-plan-week");
     await week.getByRole("button", { name: "Refresh" }).click();
     await expect(week.getByRole("status")).toContainText(/already up to date|Plan adjusted/);
-    await week.getByRole("button", { name: "Plan settings" }).click();
-    await expect(page.getByRole("dialog", { name: "Plan settings" }).getByRole("button", { name: "Save plan" })).toBeVisible();
+    const settingsTrigger = week.getByRole("button", { name: "Plan settings" });
+    await settingsTrigger.click();
+    const dialog = page.getByRole("dialog", { name: "Plan settings" });
+    await expect(dialog).toHaveAttribute("data-dialog-shell", "true");
+    await expect(dialog.getByRole("button", { name: "Save plan" })).toBeVisible();
+    await expect(dialog.getByRole("button", { name: "Close plan settings" })).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(dialog).toHaveCount(0);
+    await expect(settingsTrigger).toBeFocused();
   });
 
   for (const width of [390, 320]) test(`weekly groups and action menus remain overflow-free at ${width}px`, async ({ page }) => {
@@ -81,6 +88,11 @@ test.describe("feature-flagged Study Plan This Week", () => {
     await page.getByRole("link", { name: /View this week/ }).click();
     await expect(page.getByTestId("study-plan-week")).toBeVisible();
     await page.getByTestId("study-plan-week").getByLabel(/Actions for/).click();
+    await expectNoHorizontalOverflow(page);
+    await page.getByTestId("study-plan-week").getByRole("button", { name: "Plan settings" }).click();
+    const dialog = page.locator("[data-dialog-shell]");
+    await expect(dialog).toBeVisible();
+    expect(await dialog.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
     await expectNoHorizontalOverflow(page);
   });
 });

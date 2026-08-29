@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { ChevronRight, Pencil, Plus, Trash2, X } from "lucide-react";
+import { ChevronRight, Pencil, Plus, Trash2 } from "lucide-react";
+import { DialogCloseButton, DialogShell } from "@/components/dialog-shell";
 import { formatAssessmentListDate } from "@/components/study-plan/study-plan-item-row";
 import { StudyRhythmFields } from "@/components/study-plan/study-rhythm-fields";
 import { resolveSkillsForRequirements } from "@/lib/curriculum/requirement-resolution";
@@ -81,8 +82,7 @@ export function StudyPlanSettingsDialog({ open, onClose, courseSlug, courseName,
   }
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-ink/35 p-4" role="presentation">
-      <section ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={descriptionId} className="max-h-[92vh] w-full max-w-xl overflow-auto rounded-2xl border border-line bg-white p-5 shadow-2xl">
+    <DialogShell ref={dialogRef} labelledBy={titleId} describedBy={descriptionId}>
         {view === "assessment_form" ? (
           <AssessmentForm
             defaultCourseSlug={courseSlug}
@@ -98,9 +98,7 @@ export function StudyPlanSettingsDialog({ open, onClose, courseSlug, courseName,
                 <h2 id={titleId} className="mt-1 text-2xl font-extrabold">{initial ? "Plan settings" : "Plan your study week"}</h2>
                 <p id={descriptionId} className="mt-2 text-sm leading-relaxed text-muted">Set a realistic rhythm for {courseName}. You can change it at any time.</p>
               </div>
-              <button ref={closeRef} type="button" onClick={onClose} aria-label="Close plan settings" className="grid min-h-10 min-w-10 shrink-0 place-items-center rounded-full border border-line text-muted hover:text-ink">
-                <X className="size-4" />
-              </button>
+              <DialogCloseButton ref={closeRef} label="Close plan settings" onClick={onClose} />
             </div>
 
             <form onSubmit={submitSettings} className="mt-5 grid gap-5">
@@ -157,8 +155,7 @@ export function StudyPlanSettingsDialog({ open, onClose, courseSlug, courseName,
             </form>
           </>
         )}
-      </section>
-    </div>
+    </DialogShell>
   );
 }
 
@@ -233,9 +230,7 @@ function AssessmentForm({ defaultCourseSlug, initial, onSave, onCancel }: {
           <p className="font-mono text-xs font-extrabold uppercase text-forge">Study Plan</p>
           <h2 className="mt-1 text-xl font-extrabold">{initial ? "Edit assessment" : "Add assessment"}</h2>
         </div>
-        <button ref={closeRef} type="button" onClick={onCancel} aria-label="Back to plan settings" className="grid min-h-10 min-w-10 shrink-0 place-items-center rounded-full border border-line text-muted hover:text-ink">
-          <X className="size-4" />
-        </button>
+        <DialogCloseButton ref={closeRef} label="Back to plan settings" onClick={onCancel} />
       </div>
       <form onSubmit={submit} className="mt-5 grid gap-4">
         <label className="grid max-w-xs gap-1 text-sm font-bold">

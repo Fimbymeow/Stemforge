@@ -77,7 +77,7 @@ export function StudyPlanToday({ evidence, courseSlug, courseName, onDashboardSt
         ) : studyPlan.todayItems.length === 0 ? (
           <p className="mt-4 rounded-lg bg-paper p-3 text-sm text-muted">{plan.caughtUp ? "You’re caught up for now." : "Nothing is planned for today."}</p>
         ) : (
-          <ol className="mt-4 divide-y divide-line border-y border-line">
+          <ol className="animate-fade-rise mt-4 divide-y divide-line">
             {studyPlan.todayItems.map((item) => <li key={item.itemKey}><StudyPlanItemRow item={item} availableDates={studyPlan.availableDates} moving={movingItemKey === item.itemKey} onToggleMove={() => setMovingItemKey(movingItemKey === item.itemKey ? null : item.itemKey)} onDone={() => studyPlan.markItem(item.itemKey, "completed")} onSkip={() => studyPlan.markItem(item.itemKey, "skipped")} onMove={(date) => { studyPlan.moveItem(item.itemKey, date); setMovingItemKey(null); }} onSwap={() => studyPlan.swapItem(item)} /></li>)}
           </ol>
         )}

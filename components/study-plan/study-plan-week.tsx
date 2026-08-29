@@ -84,15 +84,17 @@ export function StudyPlanWeek() {
       /> : null}
       {!plan || plan.status !== "ok" ? <p className="mt-5 rounded-lg bg-paper p-4 text-sm text-muted">A useful weekly plan is not available for this course yet.</p>
         : remaining === 0 && !plan.items.length ? <div className="mt-5 rounded-lg bg-paper p-5"><h2 className="text-lg font-extrabold">You’re caught up for this week.</h2><p className="mt-1 text-sm text-muted">Orthic will update the plan when Review becomes due or your progress changes.</p></div>
-        : groups.map((group) => (
-          <section key={group.key} aria-labelledby={`study-plan-day-${group.key}`} data-testid="study-plan-day-group" className="mt-6">
-            <div className="flex items-baseline justify-between gap-3 border-b border-line pb-2">
-              <h2 id={`study-plan-day-${group.key}`} className="text-lg font-extrabold">{group.key === "later" ? "Later this week" : formatStudyPlanDate(group.key)}</h2>
-              <span className="text-xs font-bold text-muted">{group.items.reduce((sum, item) => sum + item.suggestedMinutes, 0)} min</span>
-            </div>
-            <ol className="divide-y divide-line">{group.items.map((item) => <li key={item.itemKey}><StudyPlanItemRow item={item} availableDates={studyPlan.availableDates} moving={movingItemKey === item.itemKey} onToggleMove={() => setMovingItemKey(movingItemKey === item.itemKey ? null : item.itemKey)} onDone={() => studyPlan.markItem(item.itemKey, "completed")} onSkip={() => studyPlan.markItem(item.itemKey, "skipped")} onMove={(date) => { studyPlan.moveItem(item.itemKey, date); setMovingItemKey(null); }} onSwap={() => studyPlan.swapItem(item)} /></li>)}</ol>
-          </section>
-        ))}
+        : <div className="animate-fade-rise">
+          {groups.map((group) => (
+            <section key={group.key} aria-labelledby={`study-plan-day-${group.key}`} data-testid="study-plan-day-group" className="mt-6">
+              <div className="flex items-baseline justify-between gap-3 border-b border-line pb-2">
+                <h2 id={`study-plan-day-${group.key}`} className="text-lg font-extrabold">{group.key === "later" ? "Later this week" : formatStudyPlanDate(group.key)}</h2>
+                <span className="text-xs font-bold text-muted">{group.items.reduce((sum, item) => sum + item.suggestedMinutes, 0)} min</span>
+              </div>
+              <ol className="divide-y divide-line">{group.items.map((item) => <li key={item.itemKey}><StudyPlanItemRow item={item} availableDates={studyPlan.availableDates} moving={movingItemKey === item.itemKey} onToggleMove={() => setMovingItemKey(movingItemKey === item.itemKey ? null : item.itemKey)} onDone={() => studyPlan.markItem(item.itemKey, "completed")} onSkip={() => studyPlan.markItem(item.itemKey, "skipped")} onMove={(date) => { studyPlan.moveItem(item.itemKey, date); setMovingItemKey(null); }} onSwap={() => studyPlan.swapItem(item)} /></li>)}</ol>
+            </section>
+          ))}
+        </div>}
       {plan && remaining === 0 && plan.items.length > 0 ? <p className="mt-6 rounded-lg bg-paper p-4 text-sm text-muted">You’re caught up for this week. Nothing else is currently worth adding.</p> : null}
     </section>
     {dialog}

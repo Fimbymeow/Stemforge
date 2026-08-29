@@ -47,7 +47,7 @@ export function AssessmentReadinessSection({
   if (!model || !now || model.assessments.length === 0) return null;
   const currentNow = now;
   return (
-    <section aria-labelledby="assessment-readiness-title" data-testid="assessment-readiness" className="mt-6">
+    <section aria-labelledby="assessment-readiness-title" data-testid="assessment-readiness" className="animate-fade-rise mt-6">
       <div className="mb-3">
         <h2 id="assessment-readiness-title" className="text-lg font-extrabold">Upcoming assessments</h2>
         <p className="mt-1 text-sm text-muted">A focused view of the course evidence Orthic can currently see.</p>

@@ -74,9 +74,12 @@ test("known semantic-colour debt is removed without adding a depth-only palette"
 test("dialog and native disclosure foundations are adopted on representative surfaces", () => {
   const confidenceDialog = readFileSync("components/confidence/confidence-disagreement-dialog.tsx", "utf8");
   const reportDialog = readFileSync("components/beta-reports/report-dialog.tsx", "utf8");
+  const studyPlanDialog = readFileSync("components/study-plan/study-plan-settings-dialog.tsx", "utf8");
   const globalCss = readFileSync("app/globals.css", "utf8");
   assert.match(confidenceDialog, /<DialogShell/);
   assert.match(reportDialog, /<DialogShell/);
+  assert.match(studyPlanDialog, /<DialogShell/);
+  assert.doesNotMatch(studyPlanDialog, /role="dialog"|aria-modal="true"|shadow-2xl/);
   assert.match(globalCss, /\.disclosure-motion::details-content/);
   assert.match(globalCss, /prefers-reduced-motion: reduce/);
   for (const file of [
@@ -87,6 +90,19 @@ test("dialog and native disclosure foundations are adopted on representative sur
   ]) {
     assert.match(readFileSync(file, "utf8"), /disclosure-motion/, `${file} has no representative native disclosure motion`);
   }
+});
+
+test("Study Plan uses restrained shared list and section-motion treatments", () => {
+  const today = readFileSync("components/study-plan/study-plan-today.tsx", "utf8");
+  const week = readFileSync("components/study-plan/study-plan-week.tsx", "utf8");
+  const readiness = readFileSync("components/study-plan/assessment-readiness-section.tsx", "utf8");
+
+  assert.match(today, /<ol className="[^"]*divide-y divide-line[^"]*"/);
+  assert.match(week, /<ol className="[^"]*divide-y divide-line[^"]*"/);
+  assert.doesNotMatch(today, /<ol className="[^"]*border-y[^"]*"/);
+  assert.match(today, /<ol className="[^"]*animate-fade-rise[^"]*"/);
+  assert.match(week, /<div className="animate-fade-rise">[\s\S]*groups\.map/);
+  assert.match(readiness, /data-testid="assessment-readiness" className="[^"]*animate-fade-rise[^"]*"/);
 });
 
 test("Question Workspace and Practice Session use the shared visual foundations without a nested question card", () => {
