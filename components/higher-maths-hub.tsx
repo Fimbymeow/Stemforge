@@ -9,6 +9,7 @@ import { useLearnerNextAction } from "@/components/learning/use-learner-next-act
 import { ReviewEntryCard } from "@/components/review/review-entry-card";
 import { WorkingContextHubCard } from "@/components/working-context/working-context-hub-card";
 import { SubjectRoadmapNavigator } from "@/components/learning/subject-roadmap-navigator";
+import { PageHeaderIconChip } from "@/components/ui";
 
 export function HigherMathsHub() {
   const subject = getActiveSubject();
@@ -23,7 +24,7 @@ export function HigherMathsHub() {
             <Link href="/subjects">Courses</Link><ArrowRight aria-hidden="true" className="size-4" /><span aria-current="page" className="font-bold text-forge">Higher Maths</span>
           </nav>
           <div className="flex items-start gap-3">
-            <span className="mt-0.5 grid size-10 shrink-0 place-items-center rounded-lg border border-forge-soft bg-forge-soft text-forge"><Calculator aria-hidden="true" className="size-5" /></span>
+            <PageHeaderIconChip><Calculator aria-hidden="true" className="size-5" /></PageHeaderIconChip>
             <div>
               <h1 className="text-[28px] font-extrabold leading-tight">Higher Maths</h1>
               <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted">Learn through focused stages, practise deliberately and revisit skills when Review recommends it.</p>

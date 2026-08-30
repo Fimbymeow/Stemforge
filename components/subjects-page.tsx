@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ArrowRight, GraduationCap, Orbit, Sigma } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { AppTopbar } from "@/components/layout/app-topbar";
-import { Card } from "@/components/ui";
+import { Card, PageHeaderIconChip } from "@/components/ui";
 import { subjectCatalog } from "@/data/subjects";
 import { groupCoursesByQualification } from "@/lib/course-catalog-presentation";
 
@@ -26,9 +26,9 @@ export function SubjectsPage({ mode }: { mode: SubjectsMode }) {
       </div>
       <div className="mx-auto grid max-w-[1120px] gap-6">
         <header className="flex items-start gap-3">
-          <span className="mt-0.5 grid size-10 shrink-0 place-items-center rounded-lg border border-forge-soft bg-forge-soft text-forge">
+          <PageHeaderIconChip>
             <GraduationCap aria-hidden="true" className="size-5" />
-          </span>
+          </PageHeaderIconChip>
           <div>
             <h1 className="m-0 text-[28px] font-extrabold leading-tight">Subjects</h1>
             <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted">Choose a course and start with the skill that suits you.</p>

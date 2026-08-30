@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, BookOpen, CheckCircle2, Dumbbell, RotateCcw } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { AppTopbar } from "@/components/layout/app-topbar";
-import { Eyebrow, StatusPill } from "@/components/ui";
+import { Eyebrow, PageHeaderIconChip, StatusPill } from "@/components/ui";
 import { getEmptyProgressEvidence, getProgressEvidence } from "@/lib/local-progress";
 import {
   deriveMistakeLog,
@@ -41,8 +41,8 @@ export function MistakeLogPage() {
           <Link href="/subjects/higher-maths" className="inline-flex min-h-10 w-fit items-center gap-2 rounded-lg text-sm font-extrabold text-forge">
             <ArrowLeft aria-hidden="true" className="size-4" /> Back to Higher Maths
           </Link>
-          <div className="grid grid-cols-[48px_minmax(0,1fr)] items-center gap-3 max-sm:grid-cols-1">
-            <span className="grid size-12 place-items-center rounded-xl border border-forge-soft bg-forge-soft text-forge"><BookOpen aria-hidden="true" className="size-6" /></span>
+          <div className="grid grid-cols-[40px_minmax(0,1fr)] items-center gap-3 max-sm:grid-cols-1">
+            <PageHeaderIconChip><BookOpen aria-hidden="true" className="size-5" /></PageHeaderIconChip>
             <div>
               <Eyebrow className="text-forge">Higher Maths</Eyebrow>
               <h1 className="mt-1 text-[32px] font-extrabold leading-tight">Mistake Log</h1>
@@ -112,7 +112,7 @@ function MistakeGroup({
             <Link
               href={`/subjects/higher-maths/question-bank?path=${encodeURIComponent(group.skillPathId)}&status=previously-incorrect`}
               aria-label={`Practise these ${group.skillName} questions`}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-forge px-4 text-sm font-extrabold text-forge disabled:opacity-45"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-forge px-4 text-sm font-extrabold text-forge"
             >
               <Dumbbell aria-hidden="true" className="size-4" /> Practise these
             </Link>

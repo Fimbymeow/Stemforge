@@ -53,6 +53,12 @@ export function Eyebrow({ as: Component = "p", children, className = "", id }: {
   return <Component id={id} className={`text-xs font-extrabold uppercase tracking-wide ${className}`}>{children}</Component>;
 }
 
+export const PAGE_HEADER_ICON_CHIP_CLASSES = "mt-0.5 grid size-10 shrink-0 place-items-center rounded-lg border border-forge-soft bg-forge-soft text-forge";
+
+export function PageHeaderIconChip({ children, className = "", ...props }: HTMLAttributes<HTMLSpanElement> & { children: ReactNode }) {
+  return <span {...props} className={`${PAGE_HEADER_ICON_CHIP_CLASSES} ${className}`}>{children}</span>;
+}
+
 export type ButtonVariant = "primary" | "secondary" | "quiet" | "destructive";
 export type ButtonSize = "sm" | "md";
 

@@ -4,6 +4,7 @@ import test from "node:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import {
   BUTTON_VARIANT_CLASSES,
+  PAGE_HEADER_ICON_CHIP_CLASSES,
   STATUS_PILL_VARIANT_CLASSES,
   SURFACE_LEVEL_CLASSES,
   StatusPill,
@@ -52,12 +53,28 @@ test("shared visual primitives encode the restrained semantic hierarchy", () => 
   assert.match(STATUS_PILL_VARIANT_CLASSES.warning, /bg-warning-soft.*text-warning/);
   assert.match(STATUS_PILL_VARIANT_CLASSES.danger, /bg-danger-soft.*text-danger/);
   assert.match(BUTTON_VARIANT_CLASSES.destructive, /bg-danger.*text-white/);
+  assert.match(PAGE_HEADER_ICON_CHIP_CLASSES, /size-10/);
+  assert.match(PAGE_HEADER_ICON_CHIP_CLASSES, /rounded-lg/);
+  assert.doesNotMatch(PAGE_HEADER_ICON_CHIP_CLASSES, /size-12|rounded-xl/);
 
   const warning = renderToStaticMarkup(
     StatusPill({ variant: "warning", dot: true, children: "Needs attention" }),
   );
   assert.match(warning, />Needs attention</);
   assert.match(warning, /aria-hidden="true"/);
+});
+
+test("canonical learning-page headers share the restrained icon-chip primitive", () => {
+  for (const file of [
+    "components/mistakes/mistake-log-page.tsx",
+    "components/past-papers/past-papers-library.tsx",
+    "components/higher-maths-hub.tsx",
+    "components/subjects-page.tsx",
+  ]) {
+    const source = readFileSync(file, "utf8");
+    assert.match(source, /<PageHeaderIconChip>/, `${file} does not use the shared page-header icon chip`);
+  }
+  assert.doesNotMatch(readFileSync("components/mistakes/mistake-log-page.tsx", "utf8"), /Practise these[\s\S]{0,500}disabled:opacity-45/);
 });
 
 test("known semantic-colour debt is removed without adding a depth-only palette", () => {

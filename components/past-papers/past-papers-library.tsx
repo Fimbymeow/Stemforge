@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowLeft, ExternalLink, FileCheck2, Files } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { AppTopbar } from "@/components/layout/app-topbar";
-import { Card } from "@/components/ui";
+import { Card, PageHeaderIconChip } from "@/components/ui";
 import type { PastPaperRecord, PastPaperResource } from "@/lib/past-papers/types";
 
 function OfficialResourceLink({ resource, label, accessibleLabel }: { resource: PastPaperResource; label: string; accessibleLabel: string }) {
@@ -40,8 +40,8 @@ export function PastPapersLibrary({ records }: { records: readonly PastPaperReco
           <Link href="/subjects/higher-maths" className="inline-flex min-h-10 w-fit items-center gap-2 rounded-lg text-sm font-extrabold text-forge">
             <ArrowLeft aria-hidden="true" className="size-4" /> Back to Higher Maths
           </Link>
-          <div className="grid grid-cols-[48px_minmax(0,1fr)] items-center gap-3 max-sm:grid-cols-1">
-            <span className="grid size-12 place-items-center rounded-xl border border-forge-soft bg-forge-soft text-forge"><Files aria-hidden="true" className="size-6" /></span>
+          <div className="grid grid-cols-[40px_minmax(0,1fr)] items-center gap-3 max-sm:grid-cols-1">
+            <PageHeaderIconChip><Files aria-hidden="true" className="size-5" /></PageHeaderIconChip>
             <div>
               <p className="text-xs font-extrabold uppercase tracking-wide text-forge">Higher Maths</p>
               <h1 className="mt-1 text-[32px] font-extrabold leading-tight">Past Papers</h1>
