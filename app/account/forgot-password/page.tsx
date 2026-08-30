@@ -8,13 +8,13 @@ export default async function ForgotPasswordPage({ searchParams }: { searchParam
   if (getAuthFeatureConfiguration().status !== "enabled") return <AccountUnavailable />;
   const { result } = await searchParams;
   return (
-    <AccountShell title="Recover access" introduction="Request a secure link to choose a new password." result={result}>
+    <AccountShell variant="auth" title="Recover access" introduction="Request a secure link to choose a new password." result={result}>
       <form action={requestPasswordRecovery} className="mt-6">
         <label className="block font-bold" htmlFor="email">Email address</label>
         <input className={inputClass} id="email" name="email" type="email" autoComplete="email" required />
         <SubmitButton idle="Send recovery link" pending="Requesting…" />
       </form>
-      <p className="mb-0 mt-5 text-sm"><Link href="/account/sign-in" className="font-semibold text-forge underline">Return to sign in</Link></p>
+      <p className="mb-0 mt-5 text-center text-sm"><Link href="/account/sign-in" className="font-semibold text-forge underline">Return to sign in</Link></p>
     </AccountShell>
   );
 }

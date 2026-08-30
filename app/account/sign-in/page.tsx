@@ -2,7 +2,6 @@ import Link from "next/link";
 import { signIn } from "@/app/account/actions";
 import { AccountShell, AccountUnavailable, inputClass } from "@/components/account/account-shell";
 import { SubmitButton } from "@/components/account/submit-button";
-import { AccountLearningReturn } from "@/components/account/account-learning-return";
 import { getAuthFeatureConfiguration } from "@/lib/auth/config";
 import { safeLearningReturnDestination } from "@/lib/auth/redirects";
 import { GoogleSignInOption } from "@/components/account/google-sign-in-option";
@@ -14,9 +13,9 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
   const next = safeLearningReturnDestination(requestedNext) ?? "/account";
   const nextQuery = next === "/account" ? "" : `?next=${encodeURIComponent(next)}`;
   return (
-    <AccountShell title="Sign in" introduction="Sign in without changing the progress already stored on this browser." result={result}>
+    <AccountShell variant="auth" title="Sign in" introduction="Continue with your Orthic account." result={result}>
       {config.googleEnabled ? <GoogleSignInOption next={next} /> : null}
-      <form action={signIn} className="mt-6">
+      <form action={signIn} className={config.googleEnabled ? "mt-0" : "mt-6"}>
         <input type="hidden" name="next" value={next} />
         <label className="block font-bold" htmlFor="email">Email address</label>
         <input className={inputClass} id="email" name="email" type="email" autoComplete="email" required aria-describedby={result ? "account-result" : undefined} />
@@ -24,11 +23,10 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
         <input className={inputClass} id="password" name="password" type="password" autoComplete="current-password" required minLength={8} aria-describedby={result ? "account-result" : undefined} />
         <SubmitButton idle="Sign in" pending="Signing in…" />
       </form>
-      <div className="mt-5 flex flex-wrap justify-between gap-3 text-sm font-semibold">
+      <div className="mt-5 grid justify-items-center gap-3 text-sm font-semibold">
         <Link href="/account/forgot-password" className="text-forge underline">Forgot password?</Link>
-        <Link href={`/account/sign-up${nextQuery}`} className="text-forge underline">Create an account</Link>
+        <p className="m-0 font-normal">New to Orthic? <Link href={`/account/sign-up${nextQuery}`} className="font-semibold text-forge underline">Create an account</Link>.</p>
       </div>
-      <AccountLearningReturn requestedDestination={next} />
     </AccountShell>
   );
 }

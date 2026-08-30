@@ -48,19 +48,17 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   if (ownerState === "unauthenticated") {
     return (
       <AccountShell title="Your account" introduction="Sign in to protect progress across devices, or keep learning as a guest." result={result}>
-        <div className="mt-5 rounded-xl border border-line bg-paper p-4">
+        <div className="mt-5 grid gap-3 sm:grid-cols-2" data-testid="signed-out-account-actions">
+          <Link href={authHref("/account/sign-in", next)} className="inline-flex min-h-12 items-center justify-center rounded-lg bg-forge px-5 text-sm font-extrabold text-white">Sign in</Link>
+          <Link href={authHref("/account/sign-up", next)} className="inline-flex min-h-12 items-center justify-center rounded-lg border border-ink px-5 text-sm font-extrabold">Create account</Link>
+        </div>
+        <div className="mt-5 rounded-xl border border-line bg-paper p-4" data-testid="signed-out-guest-context">
           <h2 className="m-0 text-lg font-extrabold">Your browser progress stays yours</h2>
           <p className="mb-0 mt-2 text-sm leading-relaxed text-muted">
             Guest progress stays on this browser. After signing in, you can choose to add it to your account and separately choose whether to sync across devices.
           </p>
           <p className="mb-0 mt-2 text-sm font-semibold">You can keep learning without an account.</p>
         </div>
-        <div className="mt-6 grid gap-3 sm:grid-cols-2">
-          <Link href={authHref("/account/sign-in", next)} className="inline-flex min-h-12 items-center justify-center rounded-lg bg-forge px-5 text-sm font-extrabold text-white">Sign in</Link>
-          <Link href={authHref("/account/sign-up", next)} className="inline-flex min-h-12 items-center justify-center rounded-lg border border-ink px-5 text-sm font-extrabold">Create account</Link>
-        </div>
-        <AccountLearningReturn requestedDestination={next} />
-        <PremiumPreviewToggle />
         <CurrentBrowserExportButton />
       </AccountShell>
     );

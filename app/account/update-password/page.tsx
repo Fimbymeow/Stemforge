@@ -14,7 +14,7 @@ export default async function UpdatePasswordPage({ searchParams }: { searchParam
   if (!data.user) redirect("/account/sign-in?result=callback_invalid");
   const { result } = await searchParams;
   return (
-    <AccountShell title="Choose a new password" introduction="This recovery session is verified. Choose a new password to continue." result={result}>
+    <AccountShell variant="auth" title="Choose a new password" introduction="This recovery session is verified. Choose a new password to continue." result={result}>
       <form action={updatePassword} className="mt-6">
         <label className="block font-bold" htmlFor="password">New password</label>
         <input className={inputClass} id="password" name="password" type="password" autoComplete="new-password" required minLength={8} aria-describedby="password-help" />
