@@ -34,15 +34,25 @@ test("public navigation keeps course actions focused and routes real CTAs", asyn
   const primary = page.getByRole("navigation", { name: "Primary" });
   await expect(primary.getByRole("link", { name: "How it works" })).toHaveAttribute("href", "#how-it-works");
   await expect(primary.getByRole("link", { name: "Courses" })).toHaveAttribute("href", "#courses");
+  await expect(primary.getByRole("link", { name: "Tuition" })).toHaveAttribute("href", "/tuition");
   await expect(primary.getByRole("link", { name: "Account" })).toHaveAttribute("href", "/account");
-  await expect(primary.getByRole("link", { name: "Tuition" })).toHaveCount(0);
   await expect(page.getByRole("navigation", { name: "Footer" }).getByRole("link", { name: "Orthic Tuition" })).toHaveAttribute("href", "/tuition");
   await expect(page.getByRole("link", { name: "Start Learning" }).first()).toHaveAttribute("href", "/dashboard");
   await expect(page.getByRole("link", { name: "Explore Higher Maths" })).toHaveAttribute("href", "/subjects/higher-maths");
+
+  await page.goto("/tuition");
+  await expect(page.getByRole("link", { name: "Back to Orthic" })).toHaveAttribute("href", "/");
 });
 
 test("mobile navigation and product proof remain compact, accessible and overflow-free", async ({ page }) => {
-  for (const viewport of [{ width: 390, height: 844 }, { width: 320, height: 568 }, { width: 768, height: 900 }]) {
+  for (const viewport of [
+    { width: 1440, height: 900 },
+    { width: 1024, height: 900 },
+    { width: 768, height: 1024 },
+    { width: 390, height: 844 },
+    { width: 375, height: 812 },
+    { width: 320, height: 760 },
+  ]) {
     await page.setViewportSize(viewport);
     await page.goto("/");
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), `${viewport.width}px overflow`).toBe(0);
@@ -50,13 +60,21 @@ test("mobile navigation and product proof remain compact, accessible and overflo
     const mobileHeading = page.getByRole("heading", { level: 1, name: "Learn with Precision." });
     const mobileProof = page.getByTestId("homepage-product-visual");
     await expect(mobileProof).toBeVisible();
-    expect((await mobileProof.boundingBox())!.y).toBeGreaterThan((await mobileHeading.boundingBox())!.y);
+    if (viewport.width < 900) {
+      expect((await mobileProof.boundingBox())!.y).toBeGreaterThan((await mobileHeading.boundingBox())!.y);
+    }
     if (viewport.width < 768) {
       const trigger = page.getByRole("button", { name: "Open navigation" });
       await trigger.click();
-      await expect(page.getByRole("link", { name: "How it works" })).toBeVisible();
+      const mobileMenu = page.locator("#mobile-primary-menu");
+      await expect(mobileMenu.getByRole("link", { name: "How it works" })).toBeFocused();
+      await expect(mobileMenu.getByRole("link", { name: "Tuition" })).toHaveAttribute("href", "/tuition");
       await page.keyboard.press("Escape");
       await expect(page.getByRole("button", { name: "Open navigation" })).toBeFocused();
+    } else {
+      const primary = page.getByRole("navigation", { name: "Primary" });
+      await expect(primary.getByRole("link", { name: "Tuition" })).toBeVisible();
+      await expect(primary.getByRole("link", { name: "Start Learning" })).toBeVisible();
     }
   }
 });

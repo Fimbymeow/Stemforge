@@ -149,7 +149,7 @@ export function PracticeSetup({
 
   if (invalidWorkingContextPath) {
     return (
-      <AppShell demo active="Practice" className="py-8 max-xl:pt-5">
+      <AppShell demo active="Practice" className="py-8 max-lg:pt-5">
         <Card className="mx-auto max-w-[760px] p-6">
           <h1 className="text-2xl font-extrabold">Practice path unavailable</h1>
           <p className="mt-2 text-muted">That topic isn&apos;t available for practice yet. Choose from the topics available now instead.</p>
@@ -163,7 +163,7 @@ export function PracticeSetup({
     const dueCount = reviewPreview.dueStates.filter((state) => state.due).length;
     const reason = reviewPreview.dueStates.find((state) => state.due)?.reason;
     return (
-      <AppShell demo active="Practice" className="py-8 max-xl:pt-5" workingContextPathId={workingContextPathId}>
+      <AppShell demo active="Practice" className="py-8 max-lg:pt-5" workingContextPathId={workingContextPathId}>
         <div className="mx-auto grid max-w-[760px] gap-5">
           <nav aria-label="Review navigation" className="flex min-h-10 flex-wrap items-center gap-x-5 gap-y-1 text-sm font-bold">
             <Link href="/subjects/higher-maths" className="inline-flex min-h-10 items-center gap-2 text-forge"><ArrowLeft aria-hidden="true" className="size-4" />Back to Higher Maths</Link>
@@ -205,7 +205,7 @@ export function PracticeSetup({
   }
 
   return (
-    <AppShell demo active="Practice" className="py-8 max-xl:pt-5" workingContextPathId={workingContextPathId}>
+    <AppShell demo active="Practice" className="py-8 max-lg:pt-5" workingContextPathId={workingContextPathId}>
       <div className="mx-auto grid max-w-[920px] gap-5">
         <header className="flex items-start justify-between gap-4 max-md:grid">
           <div>

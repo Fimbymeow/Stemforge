@@ -12,8 +12,37 @@ test("the quiet shell preserves global navigation and removes duplicated promoti
   await expect(nav.getByRole("link", { name: "Subjects", exact: true })).toHaveAttribute("href", "/subjects");
   await expect(nav.getByRole("link", { name: "Current Path", exact: true })).toHaveAttribute("href", overview);
   await expect(nav.getByRole("link", { name: "Dashboard", exact: true })).toHaveAttribute("aria-current", "page");
+  await expect(nav.getByRole("link", { name: "Tuition" })).toHaveCount(0);
   await expect(page.getByText("2 Higher Maths skills", { exact: true })).toHaveCount(0);
   await expect(page.getByText(/Higher Physics is coming soon/)).toHaveCount(0);
+});
+
+test("the full sidebar remains usable at common laptop widths and collapses below lg", async ({ page }) => {
+  for (const width of [1280, 1152, 1024]) {
+    await page.setViewportSize({ width, height: width === 1024 ? 768 : 864 });
+    await page.goto(hub);
+    const sidebar = page.locator("[data-app-sidebar]");
+    await expect(sidebar).toBeVisible();
+    expect(await sidebar.evaluate((element) => getComputedStyle(element).position)).toBe("fixed");
+    expect(Math.round((await sidebar.boundingBox())!.width)).toBe(240);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
+  }
+
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await page.goto("/subjects/higher-maths/course-tracker");
+  expect((await page.getByTestId("course-tracker").boundingBox())!.width).toBeGreaterThan(680);
+  await page.goto(`/question/${QUESTION_IDS[0]}`);
+  expect((await page.getByTestId("question-interaction").boundingBox())!.width).toBeGreaterThan(400);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
+  await page.getByTestId("working-context-trigger").click();
+  await expect(page.getByTestId("working-context-desktop-panel")).toBeVisible();
+  await expect(page.getByTestId("working-context-sheet")).toHaveCount(0);
+
+  await page.setViewportSize({ width: 1023, height: 768 });
+  await page.goto(hub);
+  const condensed = page.locator("[data-app-sidebar]");
+  expect(await condensed.evaluate((element) => getComputedStyle(element).position)).toBe("sticky");
+  expect(Math.round((await condensed.boundingBox())!.width)).toBeGreaterThan(1000);
 });
 
 test("active shell state follows the actual surface and contextual Path remains truthful", async ({ page }) => {
@@ -54,7 +83,8 @@ test("responsive shell keeps navigation and learning surfaces overflow-free", as
       const nav = page.getByRole("navigation", { name: "Main" });
       await expect(nav.getByRole("link", { name: "Dashboard", exact: true })).toBeVisible();
       await expect(nav.getByRole("link", { name: "Subjects", exact: true })).toBeVisible();
-      await expect(page.getByTestId("working-context-trigger").or(nav.getByRole("link", { name: "Path", exact: true }))).toBeVisible();
+      const pathLabel = width >= 1024 ? "Current Path" : "Path";
+      await expect(page.getByTestId("working-context-trigger").or(nav.getByRole("link", { name: pathLabel, exact: true }))).toBeVisible();
       expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
     }
   }

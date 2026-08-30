@@ -548,7 +548,7 @@ export function QuestionBank({ subjectSlug }: { subjectSlug: string }) {
 
         {selected.size ? <section
           ref={trayRef}
-          className="fixed left-4 right-4 z-40 mx-auto flex max-w-[1120px] flex-wrap items-center justify-between gap-3 rounded-xl border border-forge/30 bg-white p-3 shadow-card md:left-[clamp(20px,3vw,42px)] md:right-[clamp(20px,3vw,42px)] xl:left-[calc(268px+clamp(20px,3vw,42px))]"
+          className="fixed left-4 right-4 z-40 mx-auto flex max-w-[1120px] flex-wrap items-center justify-between gap-3 rounded-xl border border-forge/30 bg-white p-3 shadow-card md:left-[clamp(20px,3vw,42px)] md:right-[clamp(20px,3vw,42px)] lg:left-[calc(268px+clamp(20px,3vw,42px))]"
           style={{ bottom: "calc(var(--global-bottom-inset) + var(--feedback-dock-height) + var(--fixed-ui-gap))" }}
           aria-label="Question selection summary"
         >

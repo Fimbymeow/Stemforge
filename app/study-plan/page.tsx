@@ -9,7 +9,7 @@ export const metadata: Metadata = { title: "This week" };
 export default function StudyPlanPage() {
   if (!getStudyPlanConfiguration().enabled) notFound();
   return (
-    <AppShell demo={false} active="Dashboard" className="py-8 max-xl:pt-5">
+    <AppShell demo={false} active="Dashboard" className="py-8 max-lg:pt-5">
       <div className="mx-auto min-w-0 max-w-[860px]">
         <StudyPlanWeek />
       </div>

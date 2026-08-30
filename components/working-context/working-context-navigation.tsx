@@ -34,21 +34,21 @@ export function WorkingContextNavigation({
       <Link
         href="/subjects"
         aria-current={active ? "page" : undefined}
-        className={`flex min-h-12 flex-1 items-center rounded-lg border-l-2 px-3 text-sm font-bold transition-colors max-xl:min-h-11 max-xl:justify-center max-xl:border-l-0 max-xl:px-1 max-xl:text-xs sm:max-xl:text-sm ${
+        className={`flex min-h-12 flex-1 items-center rounded-lg border-l-2 px-3 text-sm font-bold transition-colors max-lg:min-h-11 max-lg:justify-center max-lg:border-l-0 max-lg:px-1 max-lg:text-xs sm:max-lg:text-sm ${
           active
-            ? "border-forge bg-forge-soft text-forge max-xl:border-b-2 max-xl:border-b-forge"
-            : "border-transparent text-ink hover:bg-white hover:text-forge max-xl:border-b-0"
+            ? "border-forge bg-forge-soft text-forge max-lg:border-b-2 max-lg:border-b-forge"
+            : "border-transparent text-ink hover:bg-white hover:text-forge max-lg:border-b-0"
         }`}
       >
-        <Compass aria-hidden="true" className="mr-3 size-5 max-xl:hidden" strokeWidth={2} />
-        <span className="max-xl:hidden">Current Path</span>
-        <span className="hidden max-xl:inline">Path</span>
+        <Compass aria-hidden="true" className="mr-3 size-5 max-lg:hidden" strokeWidth={2} />
+        <span className="max-lg:hidden">Current Path</span>
+        <span className="hidden max-lg:inline">Path</span>
       </Link>
     );
   }
 
   function openForViewport() {
-    if (window.matchMedia("(max-width: 1279px)").matches) setSheetOpen(true);
+    if (window.matchMedia("(max-width: 1023px)").matches) setSheetOpen(true);
     else setExpanded((current) => !current);
   }
 
@@ -64,26 +64,26 @@ export function WorkingContextNavigation({
         aria-current={active ? "page" : undefined}
         onClick={openForViewport}
         data-testid="working-context-trigger"
-        className={`flex min-h-12 w-full items-center rounded-lg border-l-2 px-3 text-left text-sm font-bold transition-colors max-xl:min-h-11 max-xl:justify-center max-xl:rounded-b-none max-xl:border-l-0 max-xl:px-1 max-xl:text-xs sm:max-xl:text-sm ${
+        className={`flex min-h-12 w-full items-center rounded-lg border-l-2 px-3 text-left text-sm font-bold transition-colors max-lg:min-h-11 max-lg:justify-center max-lg:rounded-b-none max-lg:border-l-0 max-lg:px-1 max-lg:text-xs sm:max-lg:text-sm ${
           active
-            ? "border-forge bg-forge-soft text-forge max-xl:border-b-2 max-xl:border-b-forge"
-            : "border-transparent text-ink hover:bg-white hover:text-forge max-xl:border-b-0"
+            ? "border-forge bg-forge-soft text-forge max-lg:border-b-2 max-lg:border-b-forge"
+            : "border-transparent text-ink hover:bg-white hover:text-forge max-lg:border-b-0"
         }`}
       >
-        <Compass aria-hidden="true" className="mr-3 size-5 shrink-0 max-xl:mr-0" strokeWidth={2} />
-        <span className="min-w-0 flex-1 max-xl:hidden">
+        <Compass aria-hidden="true" className="mr-3 size-5 shrink-0 max-lg:mr-0" strokeWidth={2} />
+        <span className="min-w-0 flex-1 max-lg:hidden">
           <span className="block break-words text-[13px] font-extrabold leading-tight">{model.skillName}</span>
           {!deepFocus ? <span className="mt-0.5 block break-words text-[11px] font-semibold leading-tight text-muted">{model.collapsedSummary}</span> : null}
         </span>
-        <span className="hidden max-xl:inline">Path</span>
-        <ChevronDown aria-hidden="true" className={`size-3.5 shrink-0 transition max-xl:hidden ${expanded ? "rotate-180" : ""}`} />
+        <span className="hidden max-lg:inline">Path</span>
+        <ChevronDown aria-hidden="true" className={`size-3.5 shrink-0 transition max-lg:hidden ${expanded ? "rotate-180" : ""}`} />
       </button>
 
       {expanded ? (
         <section
           id={panelId}
           aria-label={`${model.skillName} working context`}
-          className="mt-2 grid gap-3 rounded-lg border border-line bg-white p-3 max-xl:hidden"
+          className="mt-2 grid gap-3 rounded-lg border border-line bg-white p-3 max-lg:hidden"
           data-testid="working-context-desktop-panel"
         >
           <WorkingContextActions model={model} />
@@ -231,7 +231,7 @@ function WorkingContextSheet({
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-end bg-ink/35 xl:hidden" role="presentation" data-testid="working-context-sheet-overlay">
+    <div className="fixed inset-0 z-[70] flex items-end bg-ink/35 lg:hidden" role="presentation" data-testid="working-context-sheet-overlay">
       <section
         ref={dialogRef}
         id={id}

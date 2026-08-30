@@ -35,17 +35,17 @@ export function AppSidebar({
     ? [...navItems, ["Account", UserRound, "account", "Account"] as const]
     : navItems;
   return (
-    <aside data-app-sidebar className="fixed inset-y-0 left-0 z-10 flex w-[240px] flex-col border-r border-line/70 bg-paper px-4 py-6 max-xl:sticky max-xl:top-0 max-xl:h-auto max-xl:w-full max-xl:border-b max-xl:border-r-0 max-xl:px-4 max-xl:py-3">
-      <Link href="/" className="mb-8 block w-[178px] max-xl:mb-3 max-xl:w-[146px]">
+    <aside data-app-sidebar className="fixed inset-y-0 left-0 z-10 flex w-[240px] flex-col border-r border-line/70 bg-paper px-4 py-6 max-lg:sticky max-lg:top-0 max-lg:h-auto max-lg:w-full max-lg:border-b max-lg:border-r-0 max-lg:px-4 max-lg:py-3">
+      <Link href="/" className="mb-8 block w-[178px] max-lg:mb-3 max-lg:w-[146px]">
         <Image src="/assets/orthic-wordmark.svg" alt="Orthic" width={260} height={64} />
       </Link>
       <Link
         href="/"
-        className="mb-5 inline-flex min-h-10 items-center gap-2 px-3 text-sm font-bold text-muted hover:text-ink max-xl:hidden"
+        className="mb-5 inline-flex min-h-10 items-center gap-2 px-3 text-sm font-bold text-muted hover:text-ink max-lg:hidden"
       >
         <ArrowLeft aria-hidden="true" className="size-4" />Back to website
       </Link>
-      <nav aria-label="Main" className="grid gap-1 max-xl:flex max-xl:gap-1">
+      <nav aria-label="Main" className="grid gap-1 max-lg:flex max-lg:gap-1">
         {visibleNavItems.map(([label, Icon, key, shortLabel]) => {
           const isActive = label === active;
           if (key === "current-path" && workingContextPathId) {
@@ -55,20 +55,20 @@ export function AppSidebar({
             <Link
               href={key === "account" ? accountHrefFor(currentDestination) : getAppNavHref(key, demo)}
               aria-current={isActive ? "page" : undefined}
-              className={`flex min-h-12 w-full items-center rounded-lg border-l-2 px-3 text-sm font-bold transition-colors max-xl:min-h-11 max-xl:justify-center max-xl:border-l-0 max-xl:px-1 max-xl:text-xs sm:max-xl:text-sm ${
+              className={`flex min-h-12 w-full items-center rounded-lg border-l-2 px-3 text-sm font-bold transition-colors max-lg:min-h-11 max-lg:justify-center max-lg:border-l-0 max-lg:px-1 max-lg:text-xs sm:max-lg:text-sm ${
                 isActive
-                  ? "border-forge bg-forge-soft text-forge max-xl:border-b-2 max-xl:border-b-forge"
-                  : "border-transparent text-ink hover:bg-white hover:text-forge max-xl:border-b-0"
+                  ? "border-forge bg-forge-soft text-forge max-lg:border-b-2 max-lg:border-b-forge"
+                  : "border-transparent text-ink hover:bg-white hover:text-forge max-lg:border-b-0"
               }`}
             >
-              <Icon aria-hidden="true" className="mr-3 size-5 max-xl:hidden" strokeWidth={2} />
-              <span className="max-xl:hidden">{label}</span>
-              <span className="hidden max-xl:inline">{shortLabel}</span>
+              <Icon aria-hidden="true" className="mr-3 size-5 max-lg:hidden" strokeWidth={2} />
+              <span className="max-lg:hidden">{label}</span>
+              <span className="hidden max-lg:inline">{shortLabel}</span>
             </Link>
           );
           return key === "account" ? (
-            <div key={label} className="mt-4 border-t border-line/70 pt-4 max-xl:mt-0 max-xl:flex-1 max-xl:border-0 max-xl:pt-0">{link}</div>
-          ) : <div key={label} className="max-xl:flex-1">{link}</div>;
+            <div key={label} className="mt-4 border-t border-line/70 pt-4 max-lg:mt-0 max-lg:flex-1 max-lg:border-0 max-lg:pt-0">{link}</div>
+          ) : <div key={label} className="max-lg:flex-1">{link}</div>;
         })}
       </nav>
     </aside>

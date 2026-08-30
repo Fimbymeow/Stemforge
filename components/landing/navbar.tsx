@@ -8,6 +8,7 @@ import { OrthicWordmark } from "@/components/brand/orthic-mark";
 const navItems = [
   { href: "#how-it-works", label: "How it works" },
   { href: "#courses", label: "Courses" },
+  { href: "/tuition", label: "Tuition" },
   { href: "/account", label: "Account" },
 ] as const;
 

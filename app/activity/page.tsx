@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Activity" };
 
 export default function ActivityPage() {
   return (
-    <AppShell demo={false} active="Activity" className="py-8 max-xl:pt-5">
+    <AppShell demo={false} active="Activity" className="py-8 max-lg:pt-5">
       <div className="mx-auto grid max-w-[1120px] gap-5">
         <header className="flex items-start justify-between gap-4 max-md:grid">
           <div>
