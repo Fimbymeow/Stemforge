@@ -1,4 +1,5 @@
 import type { Question } from "@/data/types";
+import { applyReviewedHigherMathsCurriculum } from "@/data/curriculum/higher-mathematics/live-question-curriculum";
 
 export const chainRuleStageQuestionIds = {
   "foundations": [
@@ -43,7 +44,7 @@ export const chainRuleStageQuestionIds = {
   ]
 } as const;
 
-export const higherMathsChainRuleQuestions: Question[] = [
+export const higherMathsChainRuleQuestions: Question[] = applyReviewedHigherMathsCurriculum([
   {
     "id": "hm-calc-diff-chain-f-001",
     "questionVersion": 2,
@@ -2399,4 +2400,4 @@ export const higherMathsChainRuleQuestions: Question[] = [
     "status": "ready",
     "displayOrder": 2021
   }
-];
+]);

@@ -110,6 +110,13 @@ test("optional question-level curriculum dependencies validate canonical referen
   assert.ok(contaminationReport.errors.some((issue) => issue.code === "required-skill-outside-prerequisite-closure"));
 });
 
+test("active Higher Maths questions require explicit reviewed curriculum metadata", () => {
+  const questions = cloneQuestions();
+  delete questions[0].curriculum;
+  const report = validateContent({ subjects: [cloneSubject()], questions });
+  assert.ok(report.errors.some((issue) => issue.code === "missing-question-curriculum-metadata"));
+});
+
 test("question graph metadata rejects stale linked-derivative references", () => {
   const questions = cloneQuestions();
   questions[0].graphConfig = {

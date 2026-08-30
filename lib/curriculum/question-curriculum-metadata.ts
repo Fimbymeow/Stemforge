@@ -1,4 +1,5 @@
 import type { PrerequisiteRelationship } from "@/lib/curriculum/prerequisite-graph";
+import type { Question } from "@/data/types";
 import {
   CurriculumValidationReport,
   createIssueCollector,
@@ -22,6 +23,38 @@ export type QuestionCurriculumMetadata = {
   patternIds?: string[];
   misconceptionIds?: string[];
 };
+
+export function validateCurriculumQaMetadataCompleteness(
+  manifest: { skillPathId: string; qaEvidence: { curriculumQaComplete: boolean } },
+  questions: readonly Question[],
+): CurriculumValidationReport {
+  const { issue, issues } = createIssueCollector();
+  if (!manifest.qaEvidence.curriculumQaComplete) return finalizeReport(issues);
+
+  for (const question of questions) {
+    if (question.contentStatus !== "active" || question.skillPathId !== manifest.skillPathId) continue;
+    if (!question.curriculum) {
+      issue(
+        "error",
+        "curriculum-qa-metadata-incomplete",
+        `Package "${manifest.skillPathId}" declares curriculum QA complete, but active question "${question.id}" has no explicit curriculum metadata.`,
+        `content/questions/higher-maths/${manifest.skillPathId}.ts#${question.id}`,
+      );
+      continue;
+    }
+    const metadata = validateQuestionCurriculumMetadata(question.curriculum);
+    const duplicateRequirements = new Set(question.curriculum.requiredSkillIds).size !== question.curriculum.requiredSkillIds.length;
+    if (!metadata.valid || duplicateRequirements || question.curriculum.primarySkillId !== manifest.skillPathId) {
+      issue(
+        "error",
+        "curriculum-qa-metadata-invalid",
+        `Package "${manifest.skillPathId}" declares curriculum QA complete, but active question "${question.id}" has invalid or mismatched curriculum metadata.`,
+        `content/questions/higher-maths/${manifest.skillPathId}.ts#${question.id}`,
+      );
+    }
+  }
+  return finalizeReport(issues);
+}
 
 export function validateQuestionCurriculumMetadata(metadata: QuestionCurriculumMetadata): CurriculumValidationReport {
   const { issue, issues } = createIssueCollector();

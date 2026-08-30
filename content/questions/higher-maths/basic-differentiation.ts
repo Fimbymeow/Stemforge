@@ -1,6 +1,7 @@
 import type { Question } from "@/data/types";
 
 import { ACTIVE_CONTENT_STATUS, INITIAL_CONTENT_REVISION, INITIAL_QUESTION_VERSION } from "@/data/content-metadata";
+import { applyReviewedHigherMathsCurriculum } from "@/data/curriculum/higher-mathematics/live-question-curriculum";
 import type { MarkingFixtures, NumericMarkingContract, PolynomialMarkingContract } from "@/lib/marking/types";
 
 const MARKING_CONTENT_REVISION = INITIAL_CONTENT_REVISION + 1;
@@ -31,7 +32,7 @@ function polynomialMarking(target: string, correct: string[]): PolynomialMarking
   return { strategy: "polynomial_form", strategyVersion: 1, target, variable: "x", fixtures };
 }
 
-export const higherMathsDifferentiationQuestions: Question[] = [
+export const higherMathsDifferentiationQuestions: Question[] = applyReviewedHigherMathsCurriculum([
   {
     id: "hm-calc-diff-basic-f-001",
     questionVersion: INITIAL_QUESTION_VERSION,
@@ -264,7 +265,7 @@ export const higherMathsDifferentiationQuestions: Question[] = [
     status: "ready",
     displayOrder: 8,
   },
-];
+]);
 
 
 

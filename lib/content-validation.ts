@@ -22,7 +22,7 @@ import { buildVocabulary } from "@/lib/marking/closed-vocabulary-text";
 import { validateGraphDefinition } from "@/lib/maths/graph-validation";
 import { higherMathematicsCalculusPrerequisites } from "@/data/curriculum/higher-mathematics/calculus-prerequisites";
 import { higherMathematicsSkillPackageById } from "@/data/curriculum/higher-mathematics/skill-packages";
-import { validateQuestionCurriculumMetadataReferences, validateRequiredSkillsWithinPrerequisiteClosure } from "@/lib/curriculum/question-curriculum-metadata";
+import { validateCurriculumQaMetadataCompleteness, validateQuestionCurriculumMetadataReferences, validateRequiredSkillsWithinPrerequisiteClosure } from "@/lib/curriculum/question-curriculum-metadata";
 import { getSubjectFamily, getStudentResourceCapabilities } from "@/lib/resource-capabilities";
 import { validateLessonDocument } from "@/lib/lessons/lesson-document";
 import { pastPapers } from "@/data/past-papers";
@@ -349,6 +349,11 @@ export function validateContent(input: ContentValidationInput): ContentValidatio
     validateQuestion(question, location, issue, new Set(skillPaths.keys()));
   }
 
+  for (const manifest of higherMathematicsSkillPackageById.values()) {
+    const report = validateCurriculumQaMetadataCompleteness(manifest, input.questions);
+    for (const metadataIssue of report.issues) issue(metadataIssue.severity, metadataIssue.code, metadataIssue.message, ...metadataIssue.locations);
+  }
+
   const prompts = new Map<string, string>();
   for (const { question, location } of activeQuestions.values()) {
     const normalized = normalizeQuestionPrompt(question.questionText);
@@ -442,6 +447,9 @@ function validateQuestion(question: Question, location: string, issue: IssueWrit
   validateRequiredText(question.correctAnswer, "Correct answer", location, issue);
   validateRequiredText(question.source, "Source metadata", location, issue);
   const completenessSeverity = question.subject === "Higher Maths" && question.contentStatus === "active" ? "error" : "warning";
+  if (completenessSeverity === "error" && !question.curriculum) {
+    issue("error", "missing-question-curriculum-metadata", `Active Higher Maths question "${question.id}" must declare explicit curriculum metadata.`, location);
+  }
   validateRequiredText(question.hint, "Hint", location, issue, completenessSeverity);
   validateRequiredText(question.workedSolution, "Worked solution", location, issue, completenessSeverity);
   validateRequiredText(question.finalAnswer, "Final answer", location, issue, completenessSeverity);
