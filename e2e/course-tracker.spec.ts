@@ -74,12 +74,14 @@ test("Review appears only as quiet due text without stage progress or mastery", 
 });
 
 test("recent completion hides non-due Review states", async ({ page }) => {
+  await page.clock.setFixedTime(new Date("2026-08-28T12:00:00.000Z"));
   const attempts = higherMathsDifferentiationQuestions.map((question, index) => attempt({ questionId: question.id, stageId: question.stageId, versionEvidence: { kind: "known", questionVersion: question.questionVersion }, attemptedAt: "2026-08-28T10:00:00.000Z", sequence: index + 1, eventId: `tracker-recent-${index}` }));
   await seedStoredProgress(page, payload(attempts));
   await page.goto(route);
   const basic = page.getByTestId("tracker-skill-basic-differentiation");
   await expect(basic.locator("[data-review-state]")).toHaveCount(0);
   await expect(basic.getByText(/Review|Available|Recommended/, { exact: true })).toHaveCount(0);
+  await expect(basic.getByRole("link", { name: "Open Basic differentiation skill overview" })).toBeVisible();
 });
 
 test("detailed progress remains off the compact Tracker row", async ({ page }) => {

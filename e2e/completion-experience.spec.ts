@@ -171,8 +171,8 @@ test("mastered completion stays consistent while the hub advances to the next li
   await page.getByTestId("course-tracker-destination").click();
   await expect(page).toHaveURL("/subjects/higher-maths/course-tracker");
   const completedSkill = page.getByRole("listitem").filter({ hasText: "Basic differentiation" });
-  await expect(completedSkill.locator('[data-mastery-status="mastered"]')).toHaveAccessibleName("Mastery: Mastered");
-  await expect(completedSkill.getByRole("link")).toBeVisible();
+  await expect(completedSkill.locator("[data-mastery-status]")).toHaveCount(0);
+  await expect(completedSkill.getByRole("link", { name: "Open Basic differentiation skill overview" })).toBeVisible();
   await page.goto(PATH_ROUTE);
   await expect(page.locator('[data-mastery-status="mastered"]')).toHaveAccessibleName("Mastery: Mastered");
   await expect(page.getByTestId("completed-path-card")).toContainText("8 / 8 questions");
