@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { markQuestionAnswer } from "@/lib/answer-engine";
+import { getQuestionEvidenceOwnerSkillId } from "@/lib/curriculum/question-scope-eligibility";
 import { auditBankAssessment, classifyBank, compareQuestion } from "@/lib/content-import/classification";
 import { createImportRegistry, parseAndValidateBankConfiguration } from "@/lib/content-import/configuration";
 import type { BankImportConfiguration, ImportAnswerCandidate, RequiredCapability } from "@/lib/content-import/types";
@@ -10,7 +11,7 @@ import {
   BANK_DIRECTORY,
   basicConfigurationText,
   canonicalContent,
-  loadBank,
+  loadBankForImport as loadBank,
   questionIR,
   syntheticBank,
 } from "@/tests/content-import-fixtures";
@@ -89,16 +90,36 @@ test("classification carries canonical curriculum metadata into generated questi
   const curriculum = { primarySkillId: "basic-differentiation", requiredSkillIds: ["chain-rule"] };
   const classification = classifyBank(syntheticBank(questionIR({ curriculum })), configuration, registry).classifications[0];
   assert.deepEqual(classification.canonicalQuestion?.curriculum, curriculum);
+  assert.equal(getQuestionEvidenceOwnerSkillId(classification.canonicalQuestion!), "basic-differentiation");
+  assert.notEqual(getQuestionEvidenceOwnerSkillId(classification.canonicalQuestion!), "chain-rule");
 });
 
-test("classification rejects curriculum ownership mismatches and unknown required skills", () => {
+test("classification rejects unknown owners, ownership mismatches, unknown requirements and duplicate requirements", () => {
   const configuration = JSON.parse(basicConfigurationText()) as BankImportConfiguration;
   const classification = classifyBank(syntheticBank(questionIR({
-    curriculum: { primarySkillId: "tangents-and-normals", requiredSkillIds: ["not-a-skill"] },
+    curriculum: { primarySkillId: "not-an-owner", requiredSkillIds: ["not-a-skill", "not-a-skill"] },
   })), configuration, registry).classifications[0];
   assert.equal(classification.status, "blocked");
+  assert.ok(classification.blockers.some((item) => item.code === "unknown_curriculum_primary_skill"));
   assert.ok(classification.blockers.some((item) => item.code === "curriculum_primary_skill_mismatch"));
   assert.ok(classification.blockers.some((item) => item.code === "unknown_curriculum_required_skill"));
+  assert.ok(classification.blockers.some((item) => item.code === "duplicate_curriculum_required_skill"));
+});
+
+test("new authored questions fail closed without curriculum metadata", () => {
+  const configuration = JSON.parse(basicConfigurationText()) as BankImportConfiguration;
+  const classification = classifyBank(syntheticBank(questionIR({ curriculum: undefined })), configuration, registry).classifications[0];
+  assert.equal(classification.status, "blocked");
+  assert.equal(classification.canonicalQuestion, undefined);
+  assert.ok(classification.blockers.some((item) => item.code === "missing_curriculum_metadata"));
+});
+
+test("an exact published ID may retain only its reviewed runtime curriculum metadata for compatibility", () => {
+  const configuration = JSON.parse(basicConfigurationText()) as BankImportConfiguration;
+  const existing = canonicalContent.questions[0];
+  const classification = classifyBank(syntheticBank(questionIR({ id: existing.id, curriculum: undefined })), configuration, registry).classifications[0];
+  assert.deepEqual(classification.canonicalQuestion?.curriculum, existing.curriculum);
+  assert.ok(classification.diagnostics.some((item) => item.code === "reviewed_runtime_curriculum_compatibility"));
 });
 
 test("all eight real Basic Differentiation exact-ID collisions are surfaced without resolution", () => {
@@ -348,6 +369,10 @@ test("field-level collision diffs distinguish hint, solution, answers, marks, ca
     assert.deepEqual(diff.fields.map((item) => item.field), [field]);
   }
   assert.equal(compareQuestion(existing, structuredClone(existing)).identical, true);
+
+  const withoutCurriculum = structuredClone(existing);
+  delete (withoutCurriculum as unknown as Record<string, unknown>).curriculum;
+  assert.deepEqual(compareQuestion(existing, withoutCurriculum).fields.map((item) => item.field), ["curriculum"]);
 });
 
 test("collision impacts derive only executable and semantically sufficient version decisions", () => {

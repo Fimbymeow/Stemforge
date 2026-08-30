@@ -61,6 +61,17 @@ test("canonical curriculum YAML parses exact owner and conditional requirement f
   });
 });
 
+test("canonical curriculum YAML preserves an explicit empty dependency review", () => {
+  const parsed = parseCurriculumYaml(`curriculum:
+  primarySkillId: basic-differentiation
+  requiredSkillIds:`);
+  assert.deepEqual(parsed.diagnostics, []);
+  assert.deepEqual(parsed.curriculum, {
+    primarySkillId: "basic-differentiation",
+    requiredSkillIds: [],
+  });
+});
+
 test("curriculum YAML fails closed on missing canonical fields, invalid IDs and duplicates", () => {
   const parsed = parseCurriculumYaml(`curriculum:
   primarySkillId: Tangents

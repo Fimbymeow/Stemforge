@@ -36,6 +36,7 @@ export function classifyBank(
   const classifications = bank.questions.map((question) => {
     const placement = resolveConfiguredPlacement(configuration, question.id, question.declaredStage);
     const diagnostics = [...question.diagnostics];
+    const existing = registry.questions.get(question.id);
     if (bank.advisorySkillPathId && bank.advisorySkillPathId !== configuration.bankId) {
       diagnostics.push({
         code: "advisory_skill_path_mismatch",
@@ -47,11 +48,29 @@ export function classifyBank(
     }
     const assessed = selectAssessedCandidate(question);
     const blockers = [...assessed.blockers];
-    if (question.curriculum) {
-      if (question.curriculum.primarySkillId !== placement.targetSkillPathSlug) {
-        blockers.push({ code: "curriculum_primary_skill_mismatch", message: `Question curriculum owner "${question.curriculum.primarySkillId}" does not match configured target "${placement.targetSkillPathSlug}".` });
+    const curriculum = question.curriculum ?? existing?.curriculum;
+    if (!question.curriculum && existing?.curriculum) {
+      diagnostics.push({
+        code: "reviewed_runtime_curriculum_compatibility",
+        severity: "warning",
+        message: "Authored curriculum metadata is absent; this exact published question keeps its reviewed runtime curriculum metadata for backward compatibility.",
+        questionId: question.id,
+        lineRange: question.sourceLineRange,
+      });
+    }
+    if (!curriculum) {
+      blockers.push({ code: "missing_curriculum_metadata", message: "New authored questions must explicitly declare curriculum.primarySkillId and curriculum.requiredSkillIds, including an empty requiredSkillIds list when no extra dependency is required." });
+    } else {
+      if (!registry.paths.has(curriculum.primarySkillId)) {
+        blockers.push({ code: "unknown_curriculum_primary_skill", message: `Question curriculum names unknown canonical owner "${curriculum.primarySkillId}".` });
       }
-      for (const requiredSkillId of question.curriculum.requiredSkillIds) {
+      if (curriculum.primarySkillId !== placement.targetSkillPathSlug) {
+        blockers.push({ code: "curriculum_primary_skill_mismatch", message: `Question curriculum owner "${curriculum.primarySkillId}" does not match configured target "${placement.targetSkillPathSlug}".` });
+      }
+      if (new Set(curriculum.requiredSkillIds).size !== curriculum.requiredSkillIds.length) {
+        blockers.push({ code: "duplicate_curriculum_required_skill", message: "Question curriculum repeats a required canonical skill ID." });
+      }
+      for (const requiredSkillId of curriculum.requiredSkillIds) {
         if (!registry.paths.has(requiredSkillId)) blockers.push({ code: "unknown_curriculum_required_skill", message: `Question curriculum requires unknown canonical skill "${requiredSkillId}".` });
       }
     }
@@ -77,10 +96,9 @@ export function classifyBank(
       blockers.push(...marker.blockers);
       if (marker.lexicallyNormalised) conversions.push("marker_proven_lexical_normalisation");
       if (marker.contract && !blockers.length && placement.targetStageId) {
-        canonicalQuestion = toCanonicalQuestion(question, assessed.candidate, marker.contract, marker.correctAnswer, placement.targetSkillPathSlug, placement.targetStageId, registry);
+        canonicalQuestion = toCanonicalQuestion(question, assessed.candidate, marker.contract, marker.correctAnswer, curriculum!, placement.targetSkillPathSlug, placement.targetStageId, registry);
       }
     }
-    const existing = registry.questions.get(question.id);
     let status: ImportClassification["status"] = blockers.length ? "blocked" : conversions.length ? "convertible" : "ready";
     if (existing) {
       const diff = canonicalQuestion ? compareQuestion(existing, canonicalQuestion) : compareSourceQuestion(existing, question);
@@ -279,6 +297,7 @@ function toCanonicalQuestion(
   candidate: ImportAnswerCandidate,
   marking: QuestionMarkingContract,
   correctAnswer: string,
+  curriculum: NonNullable<Question["curriculum"]>,
   pathSlug: string,
   stageId: string,
   registry: ImportRegistry,
@@ -308,7 +327,7 @@ function toCanonicalQuestion(
     marks: source.marks,
     answerType,
     marking,
-    ...(source.curriculum ? { curriculum: source.curriculum } : {}),
+    curriculum,
     ...(source.graphConfig ? { graphConfig: source.graphConfig } : {}),
     correctAnswer,
     acceptedAnswers: marking.strategy === "multiple_choice"
@@ -332,11 +351,15 @@ export function compareQuestion(existing: Question, proposed: Question): Collisi
   const fields: CollisionFieldDiff[] = [];
   const keys = [...new Set([...Object.keys(existing), ...Object.keys(proposed)])].sort() as Array<keyof Question>;
   for (const key of keys) {
-    if (canonicalSerialize(existing[key]) === canonicalSerialize(proposed[key])) continue;
+    const existingValue = existing[key];
+    const proposedValue = proposed[key];
+    if (existingValue === undefined && proposedValue === undefined) continue;
+    if (existingValue !== undefined && proposedValue !== undefined &&
+        canonicalSerialize(existingValue) === canonicalSerialize(proposedValue)) continue;
     fields.push({
       field: key,
-      existingValue: diffValue(existing[key]),
-      proposedValue: diffValue(proposed[key]),
+      existingValue: diffValue(existingValue),
+      proposedValue: diffValue(proposedValue),
       likelyImpact: impactForField(key),
     });
   }

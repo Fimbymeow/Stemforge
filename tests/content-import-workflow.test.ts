@@ -25,6 +25,7 @@ import {
 import {
   basicConfigurationText,
   canonicalContent,
+  withTestCurriculumMetadata,
 } from "@/tests/content-import-fixtures";
 
 function realPreview() {
@@ -32,7 +33,7 @@ function realPreview() {
   const configurationPath = "content-drafts/higher-maths/calculus/basic-differentiation-v1.import.json";
   const reconstructed = reconstructPreviewDecisionPayload({
     sourcePath,
-    sourceBytes: readFileSync(sourcePath),
+    sourceBytes: Buffer.from(withTestCurriculumMetadata(readFileSync(sourcePath, "utf8"), "basic-differentiation")),
     configurationPath,
     configurationBytes: Buffer.from(basicConfigurationText()),
     subjects: canonicalContent.subjects,
@@ -73,6 +74,12 @@ ${overrides.heading ?? "## F001 - demo-bank-f-001"}
 Stage: Foundations
 Type: numeric
 Marks: 1
+Curriculum metadata:
+\`\`\`yaml
+curriculum:
+  primarySkillId: basic-differentiation
+  requiredSkillIds:
+\`\`\`
 Question: What is one?
 Correct answer: ${overrides.answer ?? "1"}
 ${overrides.hint === "" ? "" : `Hint: ${overrides.hint ?? "Think."}`}
@@ -88,6 +95,12 @@ test("preview payload and canonical serialization are deterministic and fully ac
   assert.equal(previewHash(first), previewHash(second));
   assert.equal(first.sourceQuestionIds.length, first.eligibleCandidateIds.length + first.blockedIds.length + first.unchangedIds.length);
   assert.equal(new Set([...first.eligibleCandidateIds, ...first.blockedIds, ...first.unchangedIds]).size, first.sourceQuestionIds.length);
+});
+
+test("canonical serialization stays deterministic and rejects unsupported undefined values", () => {
+  assert.equal(canonicalSerialize({ z: [2, 1], a: { b: true } }), '{"a":{"b":true},"z":[2,1]}');
+  assert.throws(() => canonicalSerialize(undefined), /canonical_serialize_unsupported_value/);
+  assert.throws(() => canonicalSerialize({ optional: undefined }), /canonical_serialize_unsupported_value/);
 });
 
 test("every independent preview decision input changes the preview hash", () => {
@@ -198,6 +211,12 @@ test("multiple-choice preview and canonical output share one verified option aut
 Stage: Foundations
 Type: multiple_choice
 Marks: 1
+Curriculum metadata:
+\`\`\`yaml
+curriculum:
+  primarySkillId: basic-differentiation
+  requiredSkillIds:
+\`\`\`
 Question:
 Choose one.
 A. First expression

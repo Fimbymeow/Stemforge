@@ -18,6 +18,49 @@ export function loadBank(name: string) {
   return parseMarkdownBank({ sourcePath: path, bytes: readFileSync(path) });
 }
 
+/**
+ * Mechanism tests use explicit synthetic curriculum review rather than treating legacy source
+ * omissions as trusted. Authoritative bank bytes remain untouched and are still covered by
+ * loadBank/hash tests.
+ */
+export function withTestCurriculumMetadata(source: string, primarySkillId: string, requiredSkillIds: string[] = []) {
+  const lines = source.replace(/\r\n/g, "\n").split("\n");
+  const output: string[] = [];
+  let inQuestion = false;
+  let hasCurriculum = false;
+  for (const line of lines) {
+    if (/^#{2,3}\s+(?:F|A|PPQ)\d{3}\s+[—-]\s+[a-z0-9]+(?:-[a-z0-9]+)*\s*$/i.test(line)) {
+      inQuestion = true;
+      hasCurriculum = false;
+    } else if (inQuestion && /^Curriculum metadata:\s*$/i.test(line)) {
+      hasCurriculum = true;
+    }
+    if (inQuestion && !hasCurriculum && /^Question:\s*/i.test(line)) {
+      output.push(
+        "Curriculum metadata:",
+        "```yaml",
+        "curriculum:",
+        `  primarySkillId: ${primarySkillId}`,
+        "  requiredSkillIds:",
+        ...requiredSkillIds.map((skillId) => `    - ${skillId}`),
+        "```",
+        "",
+      );
+      hasCurriculum = true;
+    }
+    output.push(line);
+  }
+  return output.join("\n");
+}
+
+export function loadBankForImport(name: string) {
+  const path = `${BANK_DIRECTORY}/${name}`;
+  const primarySkillId = name === "chain-rule-v6.md" ? "chain-rule" : "basic-differentiation";
+  const requiredSkillIds = primarySkillId === "chain-rule" ? ["basic-differentiation"] : [];
+  const source = readFileSync(path, "utf8");
+  return parseMarkdownBank({ sourcePath: path, bytes: Buffer.from(withTestCurriculumMetadata(source, primarySkillId, requiredSkillIds)) });
+}
+
 export function basicConfigurationText() {
   return readFileSync(`${BANK_DIRECTORY}/basic-differentiation-v1.import.json`, "utf8");
 }
@@ -42,6 +85,7 @@ export function questionIR(overrides: Partial<ImportQuestionIR> & { answerCandid
     }],
     answerDeclarationShape: "yaml_answer_fields",
     explicitFieldAssessment: false,
+    curriculum: { primarySkillId: "basic-differentiation", requiredSkillIds: [] },
     diagnostics: [],
     ...overrides,
   };

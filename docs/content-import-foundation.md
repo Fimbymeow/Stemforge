@@ -151,6 +151,23 @@ the generated question carries this metadata unchanged. Main content validation 
 owning package's `questionLevelRequirements` and prerequisite policy. The importer does not infer
 requirements from prompt text or maintain a second dependency map.
 
+Every new authored question must include the block. An explicit empty list records that the question
+was reviewed and needs no additional canonical skill:
+
+````markdown
+Curriculum metadata:
+```yaml
+curriculum:
+  primarySkillId: basic-differentiation
+  requiredSkillIds:
+```
+````
+
+Omitting the block is not equivalent to an empty list and blocks a new question. For backward
+compatibility only, an exact published question ID may retain curriculum metadata already present in
+the reviewed runtime registry; preview emits a warning and preserves that metadata. This exception
+does not assign ownership to a new ID and does not migrate legacy source-bank ownership decisions.
+
 It supports the real level-two and level-three question headings and ignores skim/QA summary
 copies. It bounds source size, question count, fields, aliases, and text, while rejecting malformed
 or out-of-order headings, duplicate sections, malformed YAML, duplicate IDs and YAML keys,
