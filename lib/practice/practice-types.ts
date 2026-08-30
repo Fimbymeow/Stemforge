@@ -11,6 +11,7 @@ export const MAX_TIME_LIMIT_SECONDS = 3 * 60 * 60;
 export type PracticeMode = "targeted" | "mixed" | "needs_work" | "retry_incorrect" | "review";
 export type PracticeSessionStatus = "active" | "completed" | "abandoned";
 export type PracticeSessionOrigin =
+  | "build_a_test"
   | "question_bank_custom"
   | "subject_review"
   | "quick_practice"

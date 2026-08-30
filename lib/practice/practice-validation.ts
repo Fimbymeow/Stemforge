@@ -13,6 +13,7 @@ import { isReviewTargetAssignment } from "@/lib/review/validation";
 const PRACTICE_MODES = ["targeted", "mixed", "needs_work", "retry_incorrect", "review"] as const;
 const PRACTICE_STATUSES = ["active", "completed", "abandoned"] as const;
 const PRACTICE_ORIGINS = [
+  "build_a_test",
   "question_bank_custom",
   "subject_review",
   "quick_practice",

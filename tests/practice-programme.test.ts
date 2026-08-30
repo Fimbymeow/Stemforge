@@ -179,13 +179,17 @@ test("canonical statuses prefer exact session IDs, use legacy time only when abs
 
 test("all origins remain distinct and destinations are subject generic", () => {
   const origins: PracticeSessionOrigin[] = [
-    "question_bank_custom", "subject_review", "quick_practice", "configured_practice",
+    "build_a_test", "question_bank_custom", "subject_review", "quick_practice", "configured_practice",
     "working_context_practice", "retry_incorrect", "retry_skipped", "scheduled_review",
   ];
   assert.deepEqual(origins.map(practiceOriginLabel), [
-    "Custom practice", "Review practice", "Quick Practice", "Configured practice",
+    "Built test", "Custom practice", "Review practice", "Quick Practice", "Configured practice",
     "Current Path practice", "Retry incorrect", "Retry skipped", "Review",
   ]);
+  assert.deepEqual(practiceReturnDestination({ origin: "build_a_test", subjectId: "higher-maths" }), {
+    href: "/practice/test",
+    label: "Build a Test",
+  });
   assert.deepEqual(practiceReturnDestination({ origin: "subject_review", subjectId: "another-subject" }), {
     href: "/subjects/another-subject/question-bank",
     label: "Question Bank",

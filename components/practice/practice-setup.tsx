@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, ChevronDown, Clock, SlidersHorizontal, Target } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChevronDown, ClipboardCheck, Clock, SlidersHorizontal, Target } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { AppTopbar } from "@/components/layout/app-topbar";
 import { QuickPracticeAction } from "@/components/practice/quick-practice-action";
@@ -271,6 +271,17 @@ export function PracticeSetup({
             />
           </div>
         </Card>
+
+        <div className="grid grid-cols-[1fr_auto] items-center gap-4 rounded-xl border border-line bg-white p-5 max-md:grid-cols-1" data-testid="build-a-test-entry">
+          <div className="flex min-w-0 items-start gap-3">
+            <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-paper text-forge"><ClipboardCheck aria-hidden="true" className="size-5" /></span>
+            <div>
+              <h2 className="text-lg font-extrabold">Build a Test</h2>
+              <p className="mt-1 text-sm text-muted">Choose what your assessment covers and Orthic will build a test.</p>
+            </div>
+          </div>
+          <Link href="/practice/test" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-line bg-white px-4 text-sm font-extrabold hover:border-forge/45 max-md:w-full">Choose test content <ArrowRight aria-hidden="true" className="size-4" /></Link>
+        </div>
 
         <details className="group disclosure-motion rounded-xl border border-line bg-white">
           <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-5 py-3 font-extrabold">

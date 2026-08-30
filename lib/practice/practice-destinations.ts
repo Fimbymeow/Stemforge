@@ -1,6 +1,7 @@
 import type { PracticeSession, PracticeSessionOrigin } from "@/lib/practice/practice-types";
 
 const ORIGIN_LABELS: Record<PracticeSessionOrigin, string> = {
+  build_a_test: "Built test",
   question_bank_custom: "Custom practice",
   subject_review: "Review practice",
   quick_practice: "Quick Practice",
@@ -30,6 +31,7 @@ export function practiceReturnDestination(
       label: session.subjectId === "higher-maths" ? "Back to Higher Maths" : "Back to course",
     };
   }
+  if (session.origin === "build_a_test") return { href: "/practice/test", label: "Build a Test" };
   return { href: "/practice", label: "Practice" };
 }
 
