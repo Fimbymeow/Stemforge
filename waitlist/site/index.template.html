@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="{{ROBOTS}}">
+    <title>Orthic — Scottish STEM Learning</title>
+    <meta name="description" content="Orthic helps students master Scottish STEM qualifications through clear learning paths, deliberate practice and exam-focused revision.">
+    <meta property="og:title" content="Orthic — Scottish STEM Learning">
+    <meta property="og:description" content="Orthic helps students master Scottish STEM qualifications through clear learning paths, deliberate practice and exam-focused revision.">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Orthic">
+    {{OG_URL}}
+    {{CANONICAL}}
+    <link rel="icon" href="/assets/orthic-mark.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/waitlist.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="brand-link" href="/" aria-label="Orthic home">
+          <img src="/assets/orthic-wordmark.svg" alt="Orthic" width="150" height="40">
+        </a>
+      </div>
+    </header>
+
+    <main id="main-content" tabindex="-1">
+      <section class="hero">
+        <div class="hero-inner">
+          <p class="eyebrow">Built for Scottish STEM</p>
+          <h1>Master Scottish STEM, one skill at a time.</h1>
+          <p class="hero-copy">Orthic turns Scottish qualifications into clear learning paths, deliberate practice and exam-focused revision.</p>
+          <div class="hero-form"><div data-waitlist-form></div></div>
+          <p class="launch-scope">Launching soon. Starting with Higher Maths.</p>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="approach-title">
+        <div class="section-inner">
+          <div class="section-heading">
+            <p class="eyebrow">The Orthic approach</p>
+            <h2 id="approach-title">A clearer way to make progress.</h2>
+          </div>
+          <ol class="principles">
+            <li><span>01</span><h3>Clear learning paths</h3><p>See how each skill fits together, then move forward with purpose.</p></li>
+            <li><span>02</span><h3>Deliberate practice</h3><p>Work on the right questions with explanations that make the next attempt better.</p></li>
+            <li><span>03</span><h3>Exam-focused revision</h3><p>Build lasting understanding while staying close to the demands of Scottish qualifications.</p></li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="subjects-title">
+        <div class="section-inner subjects-layout">
+          <div class="subjects-copy">
+            <p class="eyebrow">Built for Scottish STEM</p>
+            <h2 id="subjects-title">Higher Maths first. More subjects to follow.</h2>
+            <p>Orthic is beginning with a focused Higher Maths experience, with a wider home for Scottish STEM as the long-term direction.</p>
+          </div>
+          <ul class="subjects-list">
+            <li class="current"><strong>Maths</strong><span>Starting with Higher Maths</span></li>
+            <li><strong>Physics</strong><span>Future direction</span></li>
+            <li><strong>Chemistry</strong><span>Future direction</span></li>
+            <li><strong>Biology</strong><span>Future direction</span></li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="final-cta" aria-labelledby="final-title">
+        <div class="final-inner">
+          <div class="final-copy">
+            <p class="eyebrow">Launching soon</p>
+            <h2 id="final-title">Be there from the first skill.</h2>
+            <p>Join the list for a quiet note when Orthic is ready.</p>
+          </div>
+          <div class="final-form"><div data-waitlist-form></div></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <p>© {{YEAR}} Orthic</p>
+        <a href="/privacy/">Privacy</a>
+      </div>
+    </footer>
+
+    <template id="waitlist-form-template">
+      <form class="waitlist-form" novalidate>
+        <label class="sr-only" data-email-label>Email address</label>
+        <div class="form-row">
+          <input data-email-input name="email" type="email" inputmode="email" autocomplete="email" maxlength="254" required placeholder="Email address">
+          <div class="honeypot" aria-hidden="true">
+            <label>Leave this field empty<input name="website" type="text" tabindex="-1" autocomplete="off"></label>
+          </div>
+          <button type="submit"><span data-button-label>Join the waitlist</span><span aria-hidden="true">→</span></button>
+        </div>
+        <p class="form-help" data-help>We’ll email you about Orthic’s launch. Unsubscribe anytime.</p>
+        <p class="form-message" data-message aria-live="polite"></p>
+      </form>
+    </template>
+  </body>
+</html>
+

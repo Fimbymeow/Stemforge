@@ -13,11 +13,14 @@ test-results
 test-results-auth-enabled
 test-results-production-smoke
 test-results-hardening
+test-results-waitlist
 playwright-import-real-report
 test-results-import-real
 blob-report
 content-import/previews/
 content-import/.apply-state/
+waitlist/dist/
+waitlist/.wrangler/
 
 .vercel
 .env*
