@@ -183,11 +183,11 @@ export function GuestProgressImport({
 
 function Panel({ title, body, detail, action }: { title: string; body?: string; detail?: string; action?: React.ReactNode }) {
   return (
-    <section data-testid="guest-progress-import" className="mt-5 rounded-xl border border-line bg-paper p-4" aria-live="polite">
-      <h2 className="m-0 text-lg font-extrabold">{title}</h2>
+    <section data-testid="guest-progress-import" className="p-4 sm:p-5" aria-live="polite">
+      <h3 className="m-0 text-sm font-extrabold">{title}</h3>
       {body ? <p className="mb-0 mt-2 text-sm leading-relaxed text-muted">{body}</p> : null}
       {detail ? <p className="mb-0 mt-2 text-xs leading-relaxed text-muted">{detail}</p> : null}
-      {action ? <div className="mt-4">{action}</div> : null}
+      {action ? <div className="mt-4 max-w-sm">{action}</div> : null}
     </section>
   );
 }

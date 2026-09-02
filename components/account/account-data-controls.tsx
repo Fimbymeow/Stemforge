@@ -1,6 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { DialogShell } from "@/components/dialog-shell";
+import { Button } from "@/components/ui";
 import { useProgressSync } from "@/components/progress-sync-provider";
 import { useModalFocusTrap } from "@/lib/use-modal-focus-trap";
 import { clearGuestLearnerPreferences } from "@/lib/learner-preferences";
@@ -10,21 +12,16 @@ import { clearOnboardingState } from "@/lib/onboarding";
 
 type Confirmation = "association" | "account_progress" | "all_progress" | null;
 
-export function AccountDataControls() {
+export function AccountDataControls({ mode }: { mode: "management" | "danger" }) {
   const sync = useProgressSync();
   const [confirmation, setConfirmation] = useState<Confirmation>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const cancelRef = useRef<HTMLButtonElement>(null);
-  const dialogRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLElement>(null);
   const data = sync.diagnostics.browserData;
 
-  useModalFocusTrap({
-    open: confirmation !== null,
-    containerRef: dialogRef,
-    initialFocusRef: cancelRef,
-    onClose: () => setConfirmation(null),
-  });
+  useModalFocusTrap({ open: confirmation !== null, containerRef: dialogRef, initialFocusRef: cancelRef, onClose: () => setConfirmation(null) });
 
   async function perform(action: Exclude<Confirmation, null>) {
     setBusy(true);
@@ -55,45 +52,46 @@ export function AccountDataControls() {
   }
 
   return (
-    <section data-testid="account-data-controls" className="mt-5 rounded-xl border border-line bg-white p-4">
-      <h2 className="m-0 text-lg font-extrabold">This browser</h2>
-      <p className="mb-0 mt-2 text-sm leading-relaxed text-muted">Anyone using this browser may be able to see progress stored here.</p>
-
-      <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
-        <Metric label="Guest learning" value={data.anonymous} />
-        <Metric label="This account" value={data.currentAccount} />
-        <Metric label="Another account" value={data.otherAccounts} />
-        <Metric label="Older browser learning" value={data.legacyUnknown} />
-      </dl>
-      {sync.diagnostics.provenanceStatus === "unsupported_future" ? (
-        <p className="mb-0 mt-3 rounded-lg border border-warning/30 bg-warning-soft p-3 text-sm">This browser&apos;s data is in a newer format than this version supports. Removal buttons are turned off to avoid losing progress.</p>
-      ) : null}
-
-      <div className="mt-4 grid gap-2">
-        <button type="button" className={secondaryButton} onClick={() => setConfirmation("association")}>{"Remove this account's sync information from this browser"}</button>
-        <button type="button" className={dangerButton} onClick={() => setConfirmation("account_progress")}>{"Remove this account's progress from this browser"}</button>
-        <button type="button" className={dangerButton} onClick={() => setConfirmation("all_progress")}>Clear all Orthic progress from this browser</button>
-      </div>
-
-      {confirmation ? (
-        <div ref={dialogRef} role="alertdialog" aria-modal="true" aria-labelledby="browser-data-confirmation-title" className="mt-4 rounded-lg border border-danger/30 bg-danger-soft p-4">
-          <h3 id="browser-data-confirmation-title" className="m-0 text-base font-extrabold">Confirm browser-only removal</h3>
-          <p className="mb-0 mt-2 text-sm leading-relaxed text-ink">{confirmationCopy(confirmation)}</p>
-          <div className="mt-4 grid gap-2 sm:grid-cols-2">
-            <button type="button" className={dangerSolidButton} disabled={busy} onClick={() => void perform(confirmation)}>Confirm removal</button>
-            <button ref={cancelRef} type="button" className={secondaryButton} disabled={busy} onClick={() => setConfirmation(null)}>Cancel</button>
+    <section data-testid={mode === "management" ? "account-data-controls" : "account-data-danger-controls"} className="p-4 sm:p-5">
+      {mode === "management" ? <>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-8">
+          <div className="min-w-0 flex-1">
+            <h3 className="m-0 text-sm font-extrabold">This browser</h3>
+            <p className="mb-0 mt-1 text-sm leading-relaxed text-muted">Anyone using this browser may be able to see progress stored here.</p>
           </div>
+          <Button variant="secondary" className="shrink-0" onClick={() => setConfirmation("association")}>Remove sync information</Button>
         </div>
-      ) : null}
-      {message ? <p role="status" className="mb-0 mt-4 rounded-lg border border-line bg-paper p-3 text-sm leading-relaxed">{message}</p> : null}
+        <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-4">
+          <Metric label="Guest learning" value={data.anonymous} />
+          <Metric label="This account" value={data.currentAccount} />
+          <Metric label="Another account" value={data.otherAccounts} />
+          <Metric label="Older learning" value={data.legacyUnknown} />
+        </dl>
+        {sync.diagnostics.provenanceStatus === "unsupported_future" ? <p className="mb-0 mt-3 rounded-lg border border-warning/30 bg-warning-soft p-3 text-sm">This browser&apos;s data is in a newer format than this version supports. Removal buttons are turned off to avoid losing progress.</p> : null}
+      </> : <>
+        <h3 className="m-0 text-sm font-extrabold text-danger">Browser learning data</h3>
+        <p className="mb-0 mt-1 text-sm leading-relaxed text-muted">Remove this account&apos;s local copies, or clear every Orthic record from this browser. Account data stored by Orthic is not deleted.</p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Button variant="secondary" className="border-danger/40 text-danger" onClick={() => setConfirmation("account_progress")}>Remove this account&apos;s progress</Button>
+          <Button variant="destructive" onClick={() => setConfirmation("all_progress")}>Clear all Orthic progress from this browser</Button>
+        </div>
+      </>}
 
-      <p className="mb-0 mt-4 text-xs leading-relaxed text-muted">Removing browser data does not remove account data stored by Orthic or progress on other devices.</p>
+      {message ? <p role="status" className="mb-0 mt-4 rounded-lg bg-paper p-3 text-sm leading-relaxed">{message}</p> : null}
+      {confirmation ? <DialogShell ref={dialogRef} role="alertdialog" labelledBy="browser-data-confirmation-title" describedBy="browser-data-confirmation-description" size="sm">
+        <h2 id="browser-data-confirmation-title" className="m-0 text-xl font-extrabold">Confirm browser-only removal</h2>
+        <p id="browser-data-confirmation-description" className="mb-0 mt-3 text-sm leading-relaxed text-muted">{confirmationCopy(confirmation)}</p>
+        <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <Button ref={cancelRef} variant="secondary" disabled={busy} onClick={() => setConfirmation(null)}>Cancel</Button>
+          <Button variant="destructive" disabled={busy} onClick={() => void perform(confirmation)}>Confirm removal</Button>
+        </div>
+      </DialogShell> : null}
     </section>
   );
 }
 
 function Metric({ label, value }: { label: string; value: number }) {
-  return <div className="rounded-lg border border-line bg-paper p-3"><dt className="text-xs font-bold text-muted">{label}</dt><dd className="m-0 mt-1 text-lg font-extrabold">{value}</dd></div>;
+  return <div className="min-w-0"><dt className="text-xs font-bold text-muted">{label}</dt><dd className="m-0 mt-1 text-base font-extrabold">{value}</dd></div>;
 }
 
 function confirmationCopy(action: Exclude<Confirmation, null>) {
@@ -101,7 +99,3 @@ function confirmationCopy(action: Exclude<Confirmation, null>) {
   if (action === "account_progress") return "This removes progress on this browser that belongs to this account. Progress that might belong to someone else, or whose origin isn't known, is left alone. It does not delete progress stored in your account or on other devices.";
   return "This clears all Orthic progress and account information from this browser, including anything already added to or kept in sync with your account. Your account's own progress is not deleted.";
 }
-
-const secondaryButton = "min-h-11 w-full rounded-lg border border-ink bg-white px-4 text-sm font-extrabold text-ink";
-const dangerButton = "min-h-11 w-full rounded-lg border border-danger/40 bg-white px-4 text-sm font-extrabold text-danger";
-const dangerSolidButton = "min-h-11 w-full rounded-lg bg-danger px-4 text-sm font-extrabold text-white disabled:opacity-60";

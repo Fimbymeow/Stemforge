@@ -16,7 +16,7 @@ import { createSupabaseServerClient } from "@/lib/auth/supabase.server";
 import { safeLearningReturnDestination } from "@/lib/auth/redirects";
 import { AccountLearnerPreferences } from "@/components/learner-preferences/account-learner-preferences";
 import { GuestAccountStateImport } from "@/components/account/guest-account-state-import";
-import { PremiumPreviewToggle } from "@/components/account/premium-preview-toggle";
+import { AccountSettingsRow, AccountSettingsSection } from "@/components/account/account-settings";
 
 export const dynamic = "force-dynamic";
 
@@ -66,29 +66,43 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
 
   return (
     <AccountShell
-      title="Your account"
-      introduction={ownerState === "authenticated"
-        ? `Signed in${accountEmail ? ` as ${accountEmail}` : ""}.`
-        : "You're signed in, but we can't load your account details right now."}
+      title="Account"
+      introduction="Manage your Orthic account and learning data."
       result={result}
+      variant="settings"
     >
-      {accountFingerprint ? <GuestProgressImport accountFingerprint={accountFingerprint} returnDestination={next} /> : null}
-      {accountFingerprint ? <GuestAccountStateImport accountFingerprint={accountFingerprint} /> : null}
       <AccountLearningReturn requestedDestination={next} />
-      <PremiumPreviewToggle />
-      {accountFingerprint ? <AccountLearnerPreferences /> : null}
-      {accountFingerprint ? <ProgressSyncPanel accountFingerprint={accountFingerprint} /> : null}
-      {accountFingerprint ? (
-        <details className="mt-5 rounded-xl border border-line bg-white p-4">
-          <summary className="min-h-11 cursor-pointer content-center font-extrabold">More account and data controls</summary>
-          <p className="mt-2 text-sm leading-relaxed text-muted">Export data, manage this browser, view feedback history, or delete account learning progress.</p>
-          <AccountDataControls />
-          <AccountLearningData />
-          <BetaReportReceipts />
-          {applicationOwnerId ? <AuthenticatedBetaReportStatus ownerId={applicationOwnerId} /> : null}
-        </details>
-      ) : null}
-      <SafeSignOut action={signOut} />
+      <div className="mt-8 grid gap-8">
+        <AccountSettingsSection id="account-profile" title="Profile">
+          <AccountSettingsRow title="Email" description="The address used to sign in to Orthic." value={accountEmail ?? "Unavailable"} />
+          <AccountSettingsRow title="Account status" value={ownerState === "authenticated" ? "Signed in" : "Details unavailable"} />
+        </AccountSettingsSection>
+
+        {accountFingerprint ? <AccountSettingsSection id="account-learning-data" title="Learning data" description="Control what this browser keeps and what Orthic protects across devices.">
+          <GuestProgressImport accountFingerprint={accountFingerprint} returnDestination={next} />
+          <GuestAccountStateImport accountFingerprint={accountFingerprint} />
+          <ProgressSyncPanel accountFingerprint={accountFingerprint} />
+          <AccountDataControls mode="management" />
+          <AccountLearningData mode="exports" />
+          <details className="p-4 sm:p-5">
+            <summary className="min-h-11 cursor-pointer content-center text-sm font-extrabold">Feedback history</summary>
+            <div className="mt-3"><BetaReportReceipts />{applicationOwnerId ? <AuthenticatedBetaReportStatus ownerId={applicationOwnerId} /> : null}</div>
+          </details>
+        </AccountSettingsSection> : null}
+
+        {accountFingerprint ? <AccountSettingsSection id="account-preferences" title="Preferences">
+          <AccountLearnerPreferences />
+        </AccountSettingsSection> : null}
+
+        <AccountSettingsSection id="account-session" title="Session">
+          <SafeSignOut action={signOut} />
+        </AccountSettingsSection>
+
+        {accountFingerprint ? <AccountSettingsSection id="account-danger-zone" title="Danger zone" description="Actions here permanently affect data stored in this browser or account." danger>
+          <AccountDataControls mode="danger" />
+          <AccountLearningData mode="danger" />
+        </AccountSettingsSection> : null}
+      </div>
     </AccountShell>
   );
 }

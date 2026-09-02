@@ -11,10 +11,10 @@ export function ProgressSyncPanel({ accountFingerprint }: { accountFingerprint: 
   const details = sync.diagnostics;
 
   return (
-    <section data-testid="progress-sync-panel" className="mt-5 rounded-xl border border-line bg-paper p-4" aria-live="polite">
+    <section data-testid="progress-sync-panel" className="p-4 sm:p-5" aria-live="polite">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="m-0 text-lg font-extrabold">Keep progress updated across devices</h2>
+          <h3 className="m-0 text-sm font-extrabold">Cross-device sync</h3>
           <p className="mb-0 mt-2 text-sm leading-relaxed text-muted">
             {!ready ? "Checking sync status…" : copyForStatus(sync.status, sync.pendingCount)}
           </p>
@@ -47,7 +47,7 @@ export function ProgressSyncPanel({ accountFingerprint }: { accountFingerprint: 
       ) : null}
 
       {ready ? (
-        <div className="mt-4 grid gap-2 sm:grid-cols-2">
+        <div className="mt-4 flex flex-wrap gap-2">
           {associationRequired ? (
             <button className={primaryButton} onClick={() => void sync.confirmAssociation()}>Turn on cross-device sync</button>
           ) : paused ? (
@@ -79,5 +79,5 @@ function formatTimestamp(value: string | null) {
   return value ? new Date(value).toLocaleString() : "Not yet";
 }
 
-const primaryButton = "min-h-11 w-full rounded-lg bg-forge px-5 text-sm font-extrabold text-white disabled:opacity-60";
-const secondaryButton = "min-h-11 w-full rounded-lg border border-ink bg-white px-5 text-sm font-extrabold text-ink";
+const primaryButton = "min-h-11 rounded-lg bg-forge px-5 text-sm font-extrabold text-white disabled:opacity-60";
+const secondaryButton = "min-h-11 rounded-lg border border-ink bg-white px-5 text-sm font-extrabold text-ink";

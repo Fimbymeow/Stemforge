@@ -154,14 +154,15 @@ test("confirmed remote learning-data erasure exports, deletes and reconciles sta
     expect(exported.records.some((record: { eventId: string }) => record.eventId === remoteAttempt.eventId)).toBe(true);
 
     await pageA.getByRole("button", { name: "Start deletion" }).click();
-    await expect(pageA.getByText("Confirm your identity again before continuing.")).toBeVisible();
-    await pageA.getByLabel("Current password").fill("");
-    await pageA.getByLabel("Current password").fill(password);
+    const deletionDialog = pageA.getByRole("alertdialog", { name: "Delete account learning data?" });
+    await expect(deletionDialog).toBeVisible();
+    await deletionDialog.getByLabel("Current password").fill("");
+    await deletionDialog.getByLabel("Current password").fill(password);
     await expect(pageA.getByRole("button", { name: "Confirm password" })).toBeEnabled();
     await pageA.getByRole("button", { name: "Confirm password" }).click();
     await pageA.getByLabel("Type DELETE MY LEARNING DATA to confirm.").fill("DELETE MY LEARNING DATA");
     await pageA.getByRole("button", { name: "Schedule deletion" }).click();
-    await expect(pageA.getByRole("status")).toContainText("Deletion will begin in 10 minutes");
+    await expect(pageA.getByTestId("account-learning-data").getByRole("status")).toContainText("Deletion will begin in 10 minutes");
     await fastForwardScheduledErasure();
     await expect.poll(async () => {
       const response = await pageA.request.get("/api/account-data/erasure");
@@ -170,7 +171,7 @@ test("confirmed remote learning-data erasure exports, deletes and reconciles sta
     }, { timeout: 20_000 }).toBe("completed");
     await pageA.reload();
     await openMoreControls(pageA);
-    await expect(pageA.getByTestId("account-learning-data")).toContainText("Remote learning progress was deleted");
+    await expect(pageA.getByTestId("account-learning-data")).toContainText("Remote learning progress and preferences were deleted");
 
     const emptyExport = await pageA.request.post("/api/account-data/export", { headers: { Origin: new URL(pageA.url()).origin }, data: { password } });
     expect(emptyExport.ok()).toBe(true);
@@ -209,8 +210,7 @@ async function signIn(page: import("@playwright/test").Page) {
 }
 
 async function openMoreControls(page: import("@playwright/test").Page) {
-  const details = page.getByText("More account and data controls", { exact: true });
-  if ((await details.getAttribute("aria-expanded")) !== "true") await details.click();
+  await expect(page.getByTestId("account-data-controls")).toBeVisible();
 }
 
 async function ids(page: import("@playwright/test").Page) {

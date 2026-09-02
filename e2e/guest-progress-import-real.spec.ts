@@ -8,6 +8,7 @@ import {
 } from "./fixtures/progress";
 import { PROGRESS_IMPORT_METADATA_KEY } from "../lib/progress/import-metadata";
 import { LEARNER_PREFERENCES_STORAGE_KEY } from "../lib/learner-preferences";
+import { migrateProgressPayload } from "../lib/progress/payload";
 
 const initialEvidence = {
   version: 4 as const,
@@ -17,6 +18,7 @@ const initialEvidence = {
     achievementSnapshots: [],
   },
 };
+const canonicalInitialEvidence = migrateProgressPayload(initialEvidence).payload;
 
 test("confirmed real-auth import is durable, idempotent, local-preserving and retry-safe", async ({ page, seriousBrowserErrors }) => {
   await seedStoredProgress(page, initialEvidence);
@@ -42,12 +44,15 @@ test("confirmed real-auth import is durable, idempotent, local-preserving and re
 
   await page.reload();
   await expect(page.getByTestId("guest-progress-import")).toContainText("already been confirmed");
+  const context = await page.request.get("/api/progress/sync/context");
+  expect(context.ok()).toBe(true);
+  const contextBody = await context.json();
   const duplicate = await page.request.post("/api/progress/import", {
     headers: { Origin: "http://127.0.0.1:3081", "Content-Type": "application/json" },
-    data: { protocolVersion: 1, evidence: initialEvidence },
+    data: { protocolVersion: 1, expectedGeneration: contextBody.accountGeneration, evidence: canonicalInitialEvidence },
   });
-  expect(duplicate.ok()).toBe(true);
   const duplicateBody = await duplicate.json();
+  expect(duplicate.ok(), JSON.stringify(duplicateBody)).toBe(true);
   expect(duplicateBody.accepted).toHaveLength(0);
   expect(duplicateBody.alreadyPresent).toHaveLength(1);
   expect(duplicateBody.alreadyPresent[0].receiveCursor).toMatch(/^\d+$/);
@@ -97,6 +102,44 @@ test("authenticated account with no local evidence shows a quiet empty state", a
   }, { progressKey: STORAGE_KEY, metadataKey: PROGRESS_IMPORT_METADATA_KEY });
   await signIn(page);
   await expect(page.getByTestId("guest-progress-import")).toContainText("no learning progress saved on this browser yet");
+  expect(seriousBrowserErrors).toEqual([]);
+});
+
+test("signed-in Account uses grouped settings and modal safety at every target width", async ({ page, seriousBrowserErrors }) => {
+  await signIn(page);
+
+  for (const heading of ["Profile", "Learning data", "Preferences", "Session", "Danger zone"]) {
+    await expect(page.getByRole("heading", { name: heading, exact: true })).toBeVisible();
+  }
+  await expect(page.getByTestId("premium-preview-toggle")).toHaveCount(0);
+  await expect(page.getByText("More account and data controls", { exact: true })).toHaveCount(0);
+  const positions = await Promise.all(["Profile", "Learning data", "Preferences", "Session", "Danger zone"].map(async (heading) =>
+    (await page.getByRole("heading", { name: heading, exact: true }).boundingBox())!.y));
+  expect(positions).toEqual([...positions].sort((a, b) => a - b));
+
+  for (const viewport of [
+    { width: 1440, height: 900 },
+    { width: 1024, height: 768 },
+    { width: 390, height: 844 },
+    { width: 375, height: 812 },
+    { width: 320, height: 760 },
+  ]) {
+    await page.setViewportSize(viewport);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
+  }
+
+  const clearTrigger = page.getByRole("button", { name: "Clear all Orthic progress from this browser" });
+  await clearTrigger.click();
+  await expect(page.locator("[data-dialog-shell]")).toHaveAttribute("role", "alertdialog");
+  await expect(page.getByRole("button", { name: "Cancel" }).last()).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(page.locator("[data-dialog-shell]")).toHaveCount(0);
+  await expect(clearTrigger).toBeFocused();
+
+  await page.getByRole("button", { name: "Remove this account's data from this browser, then sign out" }).click();
+  await expect(page.getByRole("heading", { name: "Remove account data and sign out?" })).toBeVisible();
+  await page.getByRole("button", { name: "Cancel" }).click();
+  await expect(page.getByRole("heading", { name: "Remove account data and sign out?" })).toHaveCount(0);
   expect(seriousBrowserErrors).toEqual([]);
 });
 

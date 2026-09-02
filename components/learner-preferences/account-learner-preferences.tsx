@@ -27,10 +27,10 @@ export function AccountLearnerPreferences() {
   }
 
   if (!loaded) return null;
-  if (source === "unavailable") return <section className="mt-5 rounded-xl border border-line bg-white p-4"><h2 className="m-0 text-lg font-extrabold">Learner preferences</h2><p role="status" className="mb-0 mt-2 text-sm text-muted">Learner preferences are temporarily unavailable. Nothing was changed.</p></section>;
+  if (source === "unavailable") return <div className="p-4 sm:p-5"><h3 className="m-0 text-sm font-extrabold">Learner preferences</h3><p role="status" className="mb-0 mt-2 text-sm text-muted">Learner preferences are temporarily unavailable. Nothing was changed.</p></div>;
   return (
-    <section data-testid="account-learner-preferences" className="mt-5 rounded-xl border border-line bg-white p-4">
-      <h2 className="m-0 text-lg font-extrabold">Learner preferences</h2>
+    <section data-testid="account-learner-preferences" className="p-4 sm:p-5">
+      <h3 className="m-0 text-sm font-extrabold">Learner preferences</h3>
       <p className="mb-0 mt-2 text-sm leading-relaxed text-muted">Personalise how Orthic greets you and which available courses appear first.</p>
       <form className="mt-4 grid gap-4" onSubmit={submit}>
         <label className="text-sm font-bold">First name

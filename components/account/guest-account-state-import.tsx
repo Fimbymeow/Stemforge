@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { hasMeaningfulGuestPreferences, readGuestLearnerPreferences } from "@/lib/learner-preferences";
+import { clearGuestLearnerPreferences, hasMeaningfulGuestPreferences, LEARNER_PREFERENCES_UPDATED_EVENT, readGuestLearnerPreferences } from "@/lib/learner-preferences";
 import {
   ACCOUNT_STATE_IMPORT_COMPLETED_EVENT, ACCOUNT_STATE_SYNCED_EVENT, hasMeaningfulAccountState,
   readAccountStateSyncMetadata, writeAccountStateSyncMetadata,
@@ -47,16 +47,18 @@ export function GuestAccountStateImport({ accountFingerprint }: { accountFingerp
       }
       metadata.guestCandidate = null;
       writeAccountStateSyncMetadata(window.localStorage, metadata);
+      clearGuestLearnerPreferences(window.localStorage);
       setNeeded(false);
       setState("success");
       window.dispatchEvent(new Event(ACCOUNT_STATE_IMPORT_COMPLETED_EVENT));
+      window.dispatchEvent(new Event(LEARNER_PREFERENCES_UPDATED_EVENT));
     } catch { setState("failure"); }
   }
 
   if (state === "checking" || state === "success" || (state === "ready" && !needed)) return null;
   return (
-    <section data-testid="guest-account-state-import" className="mt-5 rounded-xl border border-line bg-paper p-4" aria-live="polite">
-      <h2 className="m-0 text-lg font-extrabold">Add this browser&apos;s learning setup</h2>
+    <section data-testid="guest-account-state-import" className="p-4 sm:p-5" aria-live="polite">
+      <h3 className="m-0 text-sm font-extrabold">Add this browser&apos;s learning setup</h3>
       <p className="mb-0 mt-2 text-sm leading-relaxed text-muted">Bring in this browser&apos;s preferences, Study Plan, assessments and confidence. Existing account choices take priority where they conflict.</p>
       {state === "failure" ? <p className="mb-0 mt-2 text-sm text-danger">This browser&apos;s setup could not be added just now. Nothing was removed.</p> : null}
       <button type="button" disabled={state === "importing"} onClick={() => void importState()}
