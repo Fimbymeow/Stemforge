@@ -21,7 +21,7 @@ test("due scheduled Review launches the existing Practice Session without consol
   await reviewEntry.click();
   await expect(page).toHaveURL(/\/practice\?review=1$/);
   const card = page.getByTestId("review-launch-card");
-  await expect(card).toContainText("1 skill due");
+  await expect(card).toContainText("Basic differentiation is ready to review");
   await expect(card).toContainText("6 questions ready");
   const reviewNavigation = page.getByRole("navigation", { name: "Review navigation" });
   await expect(reviewNavigation.getByRole("link", { name: "Back to Higher Maths" })).toHaveAttribute("href", "/subjects/higher-maths");

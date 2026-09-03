@@ -162,6 +162,9 @@ export function PracticeSetup({
   if (reviewMode) {
     const dueCount = reviewPreview.dueStates.filter((state) => state.due).length;
     const reason = reviewPreview.dueStates.find((state) => state.due)?.reason;
+    const singleDueSkill = dueCount === 1
+      ? contentResolver.getPathContext(reviewPreview.dueStates.find((state) => state.due)!.target.targetId)?.skillPath.name
+      : null;
     return (
       <AppShell demo active="Practice" className="py-8 max-lg:pt-5" workingContextPathId={workingContextPathId}>
         <div className="mx-auto grid max-w-[760px] gap-5">
@@ -178,7 +181,7 @@ export function PracticeSetup({
           <Card className="border-forge/30 bg-white p-5" data-testid="review-launch-card">
             {reviewPreview.session ? (
               <>
-                <p className="text-sm font-extrabold text-forge">{dueCount} skill{dueCount === 1 ? "" : "s"} due</p>
+                <p className="text-sm font-extrabold text-forge">{singleDueSkill ? `${singleDueSkill} is ready to review` : `${dueCount} skill${dueCount === 1 ? "" : "s"} due`}</p>
                 <h2 className="mt-1 text-xl font-extrabold">
                   {reviewPreview.session.questionReferences.length} question{reviewPreview.session.questionReferences.length === 1 ? "" : "s"} ready
                 </h2>

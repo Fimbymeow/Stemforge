@@ -76,7 +76,7 @@ function ReviewCard({ dueCount, detail, href, headingLevel, compact }: { dueCoun
           <Heading className="mt-1 text-xl font-extrabold">Keep learning secure</Heading>
         </div>
         <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-forge-soft text-forge">
-          <RefreshCcw aria-hidden="true" className="size-5" />
+          <RefreshCcw aria-hidden="true" className={`size-5 ${href ? "text-warning" : ""}`} />
         </span>
       </div>
       <p className="mt-2 flex-1 text-sm leading-relaxed text-muted">
