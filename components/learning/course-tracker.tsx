@@ -18,6 +18,12 @@ const CONFIDENCE_LABEL: Record<ConfidenceLevel, string> = {
   confident: "Confident",
 };
 
+const CONFIDENCE_COLOR: Record<ConfidenceLevel, string> = {
+  needs_work: "text-danger",
+  developing: "text-warning",
+  confident: "text-success",
+};
+
 export function CourseTracker({ subject }: { subject: Subject }) {
   const [evidence, setEvidence] = useState<ProgressEvidence>(() => getEmptyProgressEvidence());
   const [selectedArea, setSelectedArea] = useState(() => {
@@ -121,12 +127,12 @@ function TrackerSkillRow({ skill }: { skill: CourseTrackerSkill }) {
   const learnerConfidence = skill.confidence?.learnerLevel ?? null;
   const confidenceDisagrees = hasCourseTrackerConfidenceDisagreement(skill.confidence);
   return (
-    <li className="min-w-0 py-1" data-testid={`tracker-skill-${skill.skillPathId}`} data-course-tracker-skill="" data-tracker-row-kind="actionable">
+    <li className="min-w-0" data-testid={`tracker-skill-${skill.skillPathId}`} data-course-tracker-skill="" data-tracker-row-kind="actionable">
       <Link href={skill.action.href} aria-label={`Open ${skill.name} skill overview`} className="grid min-h-14 min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-sm px-2 py-2 transition-colors hover:bg-paper focus-visible:outline focus-visible:outline-2 focus-visible:outline-forge">
         <span className="min-w-0 break-words text-sm font-extrabold text-ink">{skill.name}</span>
         <span className="flex shrink-0 items-center gap-2 text-xs text-muted">
           {learnerConfidence ? (
-            <span className="inline-flex items-center gap-1" data-testid={`tracker-confidence-${skill.skillPathId}`}>
+            <span className={`inline-flex items-center gap-1 ${CONFIDENCE_COLOR[learnerConfidence]}`} data-testid={`tracker-confidence-${skill.skillPathId}`}>
               {CONFIDENCE_LABEL[learnerConfidence]}
               {confidenceDisagrees ? (
                 <span

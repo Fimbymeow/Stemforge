@@ -109,13 +109,28 @@ test("saved confidence is read-only and disagreement stays in the same compact s
   await expect(basic.locator("button, details[class*='confidence']")).toHaveCount(0);
 });
 
+test("saved confidence uses restrained semantic text colour without changing its wording", async ({ page }) => {
+  for (const [level, label, colour] of [
+    ["confident", "Confident", "text-success"],
+    ["developing", "Developing", "text-warning"],
+    ["needs_work", "Needs work", "text-danger"],
+  ] as const) {
+    await seedConfidence(page, level);
+    await page.goto(route);
+    const confidence = page.getByTestId("tracker-confidence-basic-differentiation");
+    await expect(confidence).toHaveText(label);
+    await expect(confidence).toHaveClass(new RegExp(`\\b${colour}\\b`));
+  }
+});
+
 test("compact curriculum references materially reduce row height without becoming interactive", async ({ page }) => {
   await page.goto(route);
   const fullRow = page.getByTestId("tracker-skill-basic-differentiation");
   const reference = page.getByTestId("tracker-skill-trigonometric-differentiation");
   const fullHeight = await fullRow.evaluate((element) => element.getBoundingClientRect().height);
   const referenceHeight = await reference.evaluate((element) => element.getBoundingClientRect().height);
-  expect(fullHeight).toBeLessThanOrEqual(70);
+  expect(fullHeight).toBeGreaterThanOrEqual(48);
+  expect(fullHeight).toBeLessThanOrEqual(56);
   expect(referenceHeight).toBeLessThanOrEqual(40);
   await expect(reference.locator("a, button, details, summary")).toHaveCount(0);
 });
