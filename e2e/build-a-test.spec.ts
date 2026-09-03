@@ -21,6 +21,27 @@ test("Practice exposes Build a Test without adding a new global destination", as
   await expect(page.getByRole("button", { name: /Build test/i })).toBeDisabled();
 });
 
+test("requirement tree keeps official scope visible while making live coverage easy to scan", async ({ page }) => {
+  await page.goto("/practice/test");
+
+  await expect(page.getByTestId("area-availability-calculus")).toHaveText("2 of 19 available");
+  await openArea(page, "Calculus");
+  await expect(page.getByTestId("strand-availability-differentiating-functions")).toHaveText("2 of 3 available");
+
+  const calculus = page.getByTestId("requirement-area-calculus");
+  const requirements = calculus.locator('label[data-availability]');
+  await expect(requirements).toHaveCount(19);
+  await expect(calculus.locator('label[data-availability="available"]')).toHaveCount(2);
+  await expect(calculus.locator('label[data-availability="unavailable"]')).toHaveCount(17);
+
+  const tangent = requirementCheckbox(page, tangentRequirement);
+  await expect(tangent).toBeEnabled();
+  await tangent.check();
+  await expect(tangent).toBeChecked();
+  await expect(page.getByTestId("area-availability-calculus")).toContainText("1 selected");
+  await expect(calculus.locator('label[data-availability="unavailable"]').filter({ has: tangent })).toContainText("No questions available yet");
+});
+
 test("Chain Rule builds an exact normal Practice Session without widening evidence ownership", async ({ page }) => {
   await page.goto("/practice/test");
   await openArea(page, "Calculus");
@@ -72,8 +93,14 @@ test("Build a Test reports insufficient and partially available selections hones
   await expect(page.getByRole("button", { name: /Build test/i })).toBeEnabled();
 });
 
-test("the builder remains keyboard-operable and overflow-free at 320px", async ({ page }) => {
-  await page.setViewportSize({ width: 320, height: 760 });
+for (const viewport of [
+  { width: 1440, height: 900 },
+  { width: 1024, height: 900 },
+  { width: 390, height: 844 },
+  { width: 375, height: 812 },
+  { width: 320, height: 760 },
+]) test(`the builder remains keyboard-operable and overflow-free at ${viewport.width}px`, async ({ page }) => {
+  await page.setViewportSize(viewport);
   await page.goto("/practice/test");
   await openArea(page, "Calculus");
 

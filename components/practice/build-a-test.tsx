@@ -86,34 +86,47 @@ export function BuildATest() {
             {requirementAreas.map((area) => {
               const areaIds = area.strands.flatMap((strand) => strand.requirements.map((requirement) => requirement.specPointId));
               const selectedInArea = areaIds.filter((id) => selectedRequirementIds.includes(id));
+              const availableInArea = areaIds.filter((id) => (requirementQuestionCounts.get(id) ?? 0) > 0).length;
               return (
-                <details key={area.courseAreaId} open={selectedInArea.length > 0} className="group rounded-xl border border-line bg-white">
-                  <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 font-extrabold [&::-webkit-details-marker]:hidden">
+                <details key={area.courseAreaId} open={selectedInArea.length > 0} className="group disclosure-motion rounded-xl border border-line bg-white" data-testid={`requirement-area-${area.courseAreaId}`}>
+                  <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 font-extrabold max-[340px]:flex-col max-[340px]:items-stretch max-[340px]:gap-1 [&::-webkit-details-marker]:hidden">
                     <span className="flex min-w-0 items-center gap-2"><ChevronRight aria-hidden="true" className="size-4 shrink-0 text-muted transition-transform group-open:rotate-90" /><span>{area.courseAreaName}</span></span>
-                    <span className="shrink-0 text-xs font-bold text-muted">{selectedInArea.length ? `${selectedInArea.length} selected` : `${areaIds.length} requirements`}</span>
+                    <span className="shrink-0 text-right text-xs font-bold leading-snug text-muted max-[340px]:pl-6 max-[340px]:text-left" data-testid={`area-availability-${area.courseAreaId}`}>
+                      <span className="block">{availableInArea} of {areaIds.length} available</span>
+                      {selectedInArea.length ? <span className="block font-normal">{selectedInArea.length} selected</span> : null}
+                    </span>
                   </summary>
                   <div className="grid gap-3 border-t border-line p-3 sm:p-4">
                     {area.strands.map((strand) => {
                       const strandIds = strand.requirements.map((requirement) => requirement.specPointId);
                       const selectedInStrand = strandIds.filter((id) => selectedRequirementIds.includes(id));
                       const allSelected = strandIds.length > 0 && selectedInStrand.length === strandIds.length;
+                      const availableInStrand = strandIds.filter((id) => (requirementQuestionCounts.get(id) ?? 0) > 0).length;
                       return (
                         <fieldset key={strand.strandId} className="min-w-0 rounded-lg bg-paper p-3">
                           <legend className="sr-only">{strand.strandName}</legend>
                           <div className="flex flex-wrap items-center justify-between gap-2">
-                            <h3 className="text-sm font-extrabold">{strand.strandName}</h3>
+                            <div className="min-w-0">
+                              <h3 className="text-sm font-extrabold">{strand.strandName}</h3>
+                              <p className="mt-0.5 text-xs text-muted" data-testid={`strand-availability-${strand.strandId}`}>{availableInStrand} of {strandIds.length} available</p>
+                            </div>
                             <button type="button" onClick={() => toggleGroup(strandIds)} className="min-h-10 px-1 text-xs font-extrabold text-forge">{allSelected ? "Clear group" : "Select group"}</button>
                           </div>
                           <div className="mt-1 grid gap-1">
                             {strand.requirements.map((requirement) => {
                               const checked = selectedRequirementIds.includes(requirement.specPointId);
                               const availableCount = requirementQuestionCounts.get(requirement.specPointId) ?? 0;
+                              const hasAvailableQuestions = availableCount > 0;
                               return (
-                                <label key={requirement.specPointId} className="flex min-h-11 cursor-pointer items-start gap-3 rounded-md px-2 py-2 text-sm hover:bg-white">
+                                <label
+                                  key={requirement.specPointId}
+                                  data-availability={hasAvailableQuestions ? "available" : "unavailable"}
+                                  className={`flex min-h-11 cursor-pointer items-start gap-3 rounded-md px-2 py-2 text-sm ${hasAvailableQuestions ? "text-ink hover:bg-white" : "bg-white/35 text-muted"}`}
+                                >
                                   <input type="checkbox" checked={checked} onChange={() => toggleRequirement(requirement.specPointId)} className="mt-0.5 size-4 shrink-0" />
                                   <span className="min-w-0">
-                                    <span className="block break-words leading-snug">{requirement.wording}</span>
-                                    <span className="mt-0.5 block text-xs text-muted">{availableCount > 0 ? `${availableCount} matching question${availableCount === 1 ? "" : "s"}` : "No questions available yet"}</span>
+                                    <span className={`block break-words leading-snug ${hasAvailableQuestions ? "font-medium" : "font-normal"}`}>{requirement.wording}</span>
+                                    <span className="mt-0.5 block text-xs text-muted">{hasAvailableQuestions ? `${availableCount} matching question${availableCount === 1 ? "" : "s"}` : "No questions available yet"}</span>
                                   </span>
                                 </label>
                               );
