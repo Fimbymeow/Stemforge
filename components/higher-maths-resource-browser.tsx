@@ -90,7 +90,7 @@ export function HigherMathsResourceBrowser({
   }
 
   return (
-    <AppShell demo active="Subjects" workingContextPathId={skillPath.slug}>
+    <AppShell demo active="Subjects" workingContextPathId={skillPath.slug} feedbackPlacement="inline-mobile">
       <div className="mx-auto mb-3 flex max-w-[1180px] justify-end"><AppTopbar demo /></div>
       <div className="mx-auto grid max-w-[1180px] gap-5">
         <nav className="flex flex-wrap items-center gap-2 text-sm text-muted" aria-label="Breadcrumb">

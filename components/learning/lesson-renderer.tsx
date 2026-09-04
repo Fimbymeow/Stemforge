@@ -140,7 +140,7 @@ function LessonBlockView({ block, document }: { block: LessonBlock; document: Le
   if (block.type === "callout") return <Callout block={block} annotationProps={annotationProps} />;
   if (block.type === "worked_example") {
     return (
-      <section {...annotationProps} className="scroll-mt-24 rounded-xl border-l-4 border-forge/55 bg-forge-soft/45 p-5 sm:p-6" data-testid="lesson-worked-example">
+      <section {...annotationProps} className="scroll-mt-24 max-w-[70ch] rounded-xl border-l-4 border-forge/55 bg-forge-soft/45 p-5 sm:p-6" data-testid="lesson-worked-example">
         <Eyebrow className="text-forge">Worked example</Eyebrow>
         <h3 className="mt-1 text-xl font-extrabold">{block.title}</h3>
         <div className="mt-3 font-bold"><MathContent>{block.prompt}</MathContent></div>
@@ -158,7 +158,7 @@ function LessonBlockView({ block, document }: { block: LessonBlock; document: Le
           <MathContent>{block.finalAnswer}</MathContent>
         </div>
         {block.explanation ? <div className="mt-4 max-w-[70ch] text-sm leading-relaxed text-muted"><MathContent>{block.explanation}</MathContent></div> : null}
-        {block.commonMistake ? <p className="mt-3 border-l-2 border-warning pl-3 text-sm font-bold text-muted">{block.commonMistake}</p> : null}
+        {block.commonMistake ? <div className="mt-3 border-l-2 border-warning pl-3 text-sm font-bold text-muted [&_.math-content]:text-muted" data-testid="lesson-common-mistake"><MathContent>{block.commonMistake}</MathContent></div> : null}
       </section>
     );
   }

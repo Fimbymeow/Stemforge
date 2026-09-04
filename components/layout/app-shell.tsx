@@ -11,12 +11,14 @@ export function AppShell({
   active,
   className = "",
   workingContextPathId,
+  feedbackPlacement = "floating",
 }: {
   children: ReactNode;
   demo: boolean;
   active: string;
   className?: string;
   workingContextPathId?: string | null;
+  feedbackPlacement?: "floating" | "inline-mobile";
 }) {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const dockRef = useRef<HTMLDivElement | null>(null);
@@ -47,7 +49,7 @@ export function AppShell({
       <div
         ref={dockRef}
         data-global-report-dock
-        className="pointer-events-none fixed inset-x-4 z-30 mx-auto flex max-w-2xl justify-end md:inset-x-auto md:right-4 md:max-w-md"
+        className={`pointer-events-none fixed inset-x-4 z-30 mx-auto flex max-w-2xl justify-end md:inset-x-auto md:right-4 md:max-w-md ${feedbackPlacement === "inline-mobile" ? "max-sm:static max-sm:px-4 max-sm:pb-4" : ""}`}
         style={{ bottom: "var(--global-bottom-inset)" }}
       >
         <div className="pointer-events-auto">

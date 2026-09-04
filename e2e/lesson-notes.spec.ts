@@ -4,6 +4,48 @@ import { expectNoHorizontalOverflow } from "./fixtures/student-actions";
 
 const NOTES_ROUTE = "/subjects/higher-maths/revision-notes";
 
+for (const path of ["basic-differentiation", "chain-rule"]) {
+  for (const width of [1440, 1024, 390, 375, 320]) {
+    test(`${path} keeps worked examples in the reading column and feedback clear at ${width}px`, async ({ page }) => {
+      await page.setViewportSize({ width, height: width === 320 ? 700 : width < 1024 ? 812 : 900 });
+      await page.goto(`${NOTES_ROUTE}?path=${path}`);
+      const example = page.getByTestId("lesson-worked-example").first();
+      const prose = page.locator(path === "chain-rule" ? "#chain-rule-composite-prose" : "#basic-diff-gradient-function");
+      const exampleBox = (await example.boundingBox())!;
+      const proseBox = (await prose.boundingBox())!;
+      expect(Math.abs(exampleBox.x - proseBox.x)).toBeLessThan(1);
+      // Prose uses 1.02rem; both measures are 70ch, so allow that small font-size difference.
+      expect(Math.abs(exampleBox.width - proseBox.width)).toBeLessThanOrEqual(proseBox.width * 0.03);
+      await expectNoHorizontalOverflow(page);
+      const dock = page.locator("[data-global-report-dock]");
+      await expect(dock).toHaveCSS("position", width < 640 ? "static" : "fixed");
+      if (width < 640) {
+        await page.getByTestId("lesson-closure").scrollIntoViewIfNeeded();
+        const lessonBox = (await page.getByTestId("lesson-document").boundingBox())!;
+        const dockBox = (await dock.boundingBox())!;
+        expect(dockBox.y).toBeGreaterThanOrEqual(lessonBox.y + lessonBox.height);
+        const feedback = page.getByRole("button", { name: "Send feedback", exact: true });
+        await feedback.focus();
+        await feedback.press("Enter");
+        await expect(page.getByRole("dialog")).toBeVisible();
+        await page.keyboard.press("Escape");
+        await expect(feedback).toBeFocused();
+      }
+    });
+  }
+}
+
+test("Chain rule common mistakes render inline mathematics instead of raw delimiters", async ({ page }) => {
+  await page.goto(`${NOTES_ROUTE}?path=chain-rule`);
+  const mistakes = page.getByTestId("lesson-common-mistake");
+  await expect(mistakes).toHaveCount(2);
+  for (const mistake of await mistakes.all()) {
+    await expect(mistake.locator(".katex")).toHaveCount(2);
+    await expect(mistake).not.toContainText("$");
+    await expect(mistake.locator(".katex-error")).toHaveCount(0);
+  }
+});
+
 test("Basic Differentiation renders as one continuous native lesson with meaningful sections", async ({ page, seriousBrowserErrors }) => {
   await page.goto(NOTES_ROUTE);
   const lesson = page.getByTestId("lesson-document");
