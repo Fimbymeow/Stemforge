@@ -28,3 +28,27 @@ test("subjects without an approved catalogue do not receive an empty Past Papers
   await page.goto("/subjects/higher-physics/past-papers");
   await expect(page.getByRole("heading", { name: "This page could not be found." })).toBeVisible();
 });
+
+test("Past Papers keeps official actions clear of inline feedback on mobile and floating feedback on desktop", async ({ page }) => {
+  for (const viewport of [
+    { width: 1440, height: 900 },
+    { width: 1024, height: 900 },
+    { width: 390, height: 812 },
+    { width: 375, height: 812 },
+    { width: 320, height: 700 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/subjects/higher-maths/past-papers");
+    const dock = page.locator("[data-global-report-dock]");
+    await expect(dock).toHaveCSS("position", viewport.width < 640 ? "static" : "fixed");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), `${viewport.width}px overflow`).toBe(0);
+    const lastPaper = page.getByTestId("past-paper-2022-2");
+    await expect(lastPaper.getByRole("link", { name: /question paper on Qualifications Scotland/ })).toBeVisible();
+    await expect(lastPaper.getByRole("link", { name: /marking instructions on Qualifications Scotland/ })).toBeVisible();
+    if (viewport.width < 640) {
+      const libraryBox = (await page.getByTestId("past-papers-library").boundingBox())!;
+      const dockBox = (await dock.boundingBox())!;
+      expect(dockBox.y).toBeGreaterThanOrEqual(libraryBox.y + libraryBox.height);
+    }
+  }
+});

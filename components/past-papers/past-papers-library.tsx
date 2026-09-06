@@ -33,7 +33,7 @@ export function PastPapersLibrary({ records }: { records: readonly PastPaperReco
   const years = [...new Set(records.map((record) => record.year))];
 
   return (
-    <AppShell demo active="Subjects">
+    <AppShell demo active="Subjects" feedbackPlacement="inline-mobile">
       <div className="mx-auto mb-3 flex max-w-[1240px] justify-end"><AppTopbar demo /></div>
       <main className="mx-auto grid max-w-[1240px] gap-7" data-testid="past-papers-library">
         <header className="grid gap-4">

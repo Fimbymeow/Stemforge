@@ -9,7 +9,7 @@ import { getResourceHref, getSubjectForSkillPath } from "@/lib/learning-paths";
 import type { SkillPath } from "@/data/types";
 
 function stageDisplayName(name: string) {
-  return name === "Past Paper-style Questions" ? "Exam practice (PPQ)" : name;
+  return name === "Past Paper-style Questions" ? "Exam practice" : name;
 }
 
 export function TopicRoadmap({ skillPaths, showHeading = true }: { skillPaths: SkillPath[]; showHeading?: boolean }) {

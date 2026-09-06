@@ -6,7 +6,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, ArrowRight, ChevronDown, Filter, Lock, Search, X } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { AppTopbar } from "@/components/layout/app-topbar";
-import { MathContent } from "@/components/questions/math-content";
+import { InlineMathContent, MathContent } from "@/components/questions/math-content";
 import { QuestionGraphVisual } from "@/components/questions/question-graph-visual";
 import { Card } from "@/components/ui";
 import type { AnswerType } from "@/data/types";
@@ -416,7 +416,7 @@ export function QuestionBank({ subjectSlug }: { subjectSlug: string }) {
   );
 
   return (
-    <AppShell demo active="Subjects" workingContextPathId={normalizedFilters.skillPathIds.length === 1 ? normalizedFilters.skillPathIds[0] : null}>
+    <AppShell demo active="Subjects" workingContextPathId={normalizedFilters.skillPathIds.length === 1 ? normalizedFilters.skillPathIds[0] : null} feedbackPlacement="inline-mobile">
       <div className="mx-auto mb-3 flex max-w-[1120px] justify-end max-md:mb-1"><AppTopbar demo /></div>
       <div
         className="mx-auto grid min-w-0 max-w-[1120px] gap-4 max-md:gap-2"
@@ -548,8 +548,7 @@ export function QuestionBank({ subjectSlug }: { subjectSlug: string }) {
 
         {selected.size ? <section
           ref={trayRef}
-          className="fixed left-4 right-4 z-40 mx-auto flex max-w-[1120px] flex-wrap items-center justify-between gap-3 rounded-xl border border-forge/30 bg-white p-3 shadow-card md:left-[clamp(20px,3vw,42px)] md:right-[clamp(20px,3vw,42px)] lg:left-[calc(268px+clamp(20px,3vw,42px))]"
-          style={{ bottom: "calc(var(--global-bottom-inset) + var(--feedback-dock-height) + var(--fixed-ui-gap))" }}
+          className="fixed bottom-[calc(var(--global-bottom-inset)+var(--feedback-dock-height)+var(--fixed-ui-gap))] left-4 right-4 z-40 mx-auto flex max-w-[1120px] flex-wrap items-center justify-between gap-3 rounded-xl border border-forge/30 bg-white p-3 shadow-card max-sm:bottom-[var(--global-bottom-inset)] md:left-[clamp(20px,3vw,42px)] md:right-[clamp(20px,3vw,42px)] lg:left-[calc(268px+clamp(20px,3vw,42px))]"
           aria-label="Question selection summary"
         >
           <p className="font-extrabold">{selected.size} selected <span className="font-normal text-muted">· {selectedMarks} total marks</span></p>
@@ -634,7 +633,7 @@ function QuestionRow({ entry, selected, expanded, onSelected, onToggleExpand }: 
           {entry.question.calculatorAllowed ? <span>Calculator allowed</span> : null}
           {!eligibility.eligible ? <span className="font-extrabold text-muted">Not yet available for practice</span> : null}
         </div>
-        <h4 className="mt-1 font-extrabold">{entry.question.title}</h4>
+        <h4 className="mt-1 font-extrabold"><InlineMathContent>{entry.question.title}</InlineMathContent></h4>
         <p className="mt-1 line-clamp-2 overflow-hidden text-sm text-muted">{excerpt}</p>
       </div>
       <div className="flex flex-col items-end gap-1 max-sm:col-span-2 max-sm:ml-8 max-sm:flex-row">
@@ -710,7 +709,7 @@ function ReviewSelection({ entries, onClose, onRemove, onClear, onStart, closeRe
   return <div className="fixed inset-0 z-50 grid place-items-center bg-ink/45 p-3" role="presentation" onMouseDown={(event) => { if (event.currentTarget === event.target) onClose(); }}>
     <section role="dialog" aria-modal="true" aria-labelledby="review-selection-title" className="max-h-[85vh] w-full max-w-2xl overflow-auto rounded-xl bg-white p-5 shadow-card">
       <div className="flex items-start justify-between gap-3"><div><p className="text-xs font-extrabold uppercase text-forge">Custom practice</p><h2 id="review-selection-title" className="text-2xl font-extrabold">Review selection</h2><p className="mt-1 text-sm text-muted">{entries.length} questions · {entries.reduce((total, entry) => total + entry.question.marks, 0)} marks</p></div><button ref={closeRef} type="button" onClick={onClose} aria-label="Close selection review" className="grid size-11 place-items-center rounded-lg border border-line"><X className="size-5" /></button></div>
-      <ul className="mt-4 divide-y divide-line">{entries.map((entry) => <li key={entry.question.id} className="flex items-center justify-between gap-3 py-3"><div><p className="text-xs font-bold text-muted">{entry.context.skillPath.name} · {entry.context.stage.name}</p><p className="font-bold">{entry.question.title}</p></div><button type="button" onClick={() => onRemove(entry.question.id)} aria-label={`Remove ${entry.question.title}`} className="min-h-10 px-2 font-bold text-muted">Remove</button></li>)}</ul>
+      <ul className="mt-4 divide-y divide-line">{entries.map((entry) => <li key={entry.question.id} className="flex items-center justify-between gap-3 py-3"><div><p className="text-xs font-bold text-muted">{entry.context.skillPath.name} · {entry.context.stage.name}</p><p className="font-bold"><InlineMathContent>{entry.question.title}</InlineMathContent></p></div><button type="button" onClick={() => onRemove(entry.question.id)} aria-label={`Remove ${entry.question.title}`} className="min-h-10 px-2 font-bold text-muted">Remove</button></li>)}</ul>
       <div className="mt-4 flex flex-wrap justify-between gap-2"><button type="button" onClick={onClear} className="min-h-11 px-3 font-bold text-muted">Clear all</button><div className="flex gap-2"><button type="button" onClick={onClose} className="min-h-11 rounded-lg border border-line px-3 font-bold">Return to filters</button><button type="button" onClick={onStart} disabled={!entries.length} className="min-h-11 rounded-lg bg-forge px-4 font-extrabold text-white disabled:opacity-40">Start selected practice</button></div></div>
     </section>
   </div>;

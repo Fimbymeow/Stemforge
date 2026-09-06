@@ -155,18 +155,61 @@ test("an active session is never overwritten without explicit confirmation", asy
 
 test("collapsed rows never mount full MathContent, and only the expanded row previews", async ({ page }) => {
   await page.goto(bank);
-  await expect(page.locator(".math-content")).toHaveCount(0);
+  const previewMath = page.locator('[id^="question-bank-preview-"] .math-content');
+  await expect(previewMath).toHaveCount(0);
   const firstRow = page.locator("li").filter({ hasText: "Differentiate a power" });
   const secondRow = page.locator("li").filter({ hasText: "Differentiate a sum of powers" });
   await firstRow.getByRole("button", { name: "Preview" }).click();
-  await expect(page.locator(".math-content")).toHaveCount(1);
+  await expect(previewMath).toHaveCount(1);
   await expect(firstRow.getByRole("button", { name: "Hide preview" })).toBeVisible();
   await secondRow.getByRole("button", { name: "Preview" }).click();
-  await expect(page.locator(".math-content")).toHaveCount(1);
+  await expect(previewMath).toHaveCount(1);
   await expect(firstRow.getByRole("button", { name: "Preview" })).toBeVisible();
   await expect(secondRow.getByRole("button", { name: "Hide preview" })).toBeVisible();
   await secondRow.getByRole("button", { name: "Hide preview" }).click();
-  await expect(page.locator(".math-content")).toHaveCount(0);
+  await expect(previewMath).toHaveCount(0);
+});
+
+test("real mathematical titles render in rows and the selection review", async ({ page }) => {
+  await page.goto(bank);
+  const rowTitle = page.getByRole("heading", { level: 4, name: /Basic chain rule with/ }).first();
+  await expect(rowTitle).toBeVisible();
+  await expect(rowTitle).not.toContainText("$");
+  await expect(rowTitle.locator(".katex")).toHaveCount(1);
+
+  await page.getByLabel("Select Chain rule, Foundations, Question 3").check();
+  await page.getByRole("button", { name: "Review selection" }).click();
+  const dialog = page.getByRole("dialog", { name: "Review selection" });
+  const reviewTitle = dialog.getByText(/Basic chain rule with/).first();
+  await expect(reviewTitle).not.toContainText("$");
+  await expect(reviewTitle.locator(".katex")).toHaveCount(1);
+});
+
+test("mobile inline feedback and the selection tray coexist without stale dock spacing", async ({ page }) => {
+  for (const viewport of [{ width: 390, height: 812 }, { width: 375, height: 812 }, { width: 320, height: 700 }]) {
+    await page.setViewportSize(viewport);
+    await page.goto(bank);
+    const main = page.locator("#main-content");
+    const dock = page.locator("[data-global-report-dock]");
+    await expect(dock).toHaveCSS("position", "static");
+    expect(parseFloat(await main.evaluate((element) => getComputedStyle(element).paddingBottom))).toBeLessThanOrEqual(12.1);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), `${viewport.width}px unselected overflow`).toBe(0);
+
+    await page.getByLabel("Select Basic differentiation, Foundations, Question 1").check();
+    const tray = page.getByLabel("Question selection summary");
+    await expect(tray).toHaveCSS("position", "fixed");
+    await page.getByRole("button", { name: "Send feedback", exact: true }).scrollIntoViewIfNeeded();
+    const trayBox = (await tray.boundingBox())!;
+    const feedbackBox = (await page.getByRole("button", { name: "Send feedback", exact: true }).boundingBox())!;
+    expect(feedbackBox.y + feedbackBox.height).toBeLessThanOrEqual(trayBox.y + 1);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), `${viewport.width}px selected overflow`).toBe(0);
+  }
+});
+
+test("the learner roadmap calls Orthic-authored PPQ content Exam practice", async ({ page }) => {
+  await page.goto("/subjects/higher-maths/calculus/differentiation");
+  await expect(page.getByText("Exam practice", { exact: true })).toBeVisible();
+  await expect(page.getByText("Exam practice (PPQ)", { exact: true })).toHaveCount(0);
 });
 
 test("Question Bank and selection controls have no document overflow at required widths", async ({ page }) => {
