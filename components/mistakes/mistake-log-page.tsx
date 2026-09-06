@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, BookOpen, CheckCircle2, Dumbbell, RotateCcw } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { AppTopbar } from "@/components/layout/app-topbar";
+import { InlineMathContent } from "@/components/questions/math-content";
 import { Eyebrow, PageHeaderIconChip, StatusPill } from "@/components/ui";
 import { getEmptyProgressEvidence, getProgressEvidence } from "@/lib/local-progress";
 import {
@@ -34,7 +35,7 @@ export function MistakeLogPage() {
   const historyCount = model.historyGroups.reduce((total, group) => total + group.items.length, 0);
 
   return (
-    <AppShell demo active="Subjects">
+    <AppShell demo active="Subjects" feedbackPlacement="inline-mobile">
       <div className="mx-auto mb-3 flex max-w-[1040px] justify-end"><AppTopbar demo /></div>
       <main className="mx-auto grid max-w-[1040px] gap-7" data-testid="mistake-log">
         <header className="grid gap-4">
@@ -141,7 +142,7 @@ function MistakeRow({ item }: { item: MistakeItem }) {
     <li className="grid gap-4 px-1 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-3" data-testid="mistake-item" data-mistake-state={item.state} data-question-id={item.questionId} data-question-version={item.questionVersion}>
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <h4 className="font-extrabold">Question {item.questionNumber}: {item.questionTitle}</h4>
+          <h4 className="font-extrabold">Question {item.questionNumber}: <InlineMathContent>{item.questionTitle}</InlineMathContent></h4>
           <StatusPill variant={item.state === "open" ? "warning" : "neutral"}>{stateLabel}</StatusPill>
         </div>
         <p className="mt-2 text-sm font-semibold text-muted">

@@ -16,13 +16,12 @@ import type {
   AchievementSnapshot,
   ProgressEvidence,
   ProgressStatus,
-  QuestionAttempt,
   SkillPathProgress,
 } from "@/lib/progress/types";
 import { deriveLearnerNextAction, type LearnerNextAction } from "@/lib/learning/next-action";
 import { deriveMistakeLog } from "@/lib/mistakes/derivation";
 import { deriveSkillAttention } from "@/lib/attention/derivation";
-import { deriveWeeklyActivity, utcDayKey } from "@/lib/activity/derivation";
+import { deriveWeeklyActivity } from "@/lib/activity/derivation";
 
 export type DashboardSyncInput = {
   status:
@@ -102,15 +101,6 @@ export type DashboardCourseSummary = {
   paths: DashboardPathSummary[];
 };
 
-export type DashboardActivityItem = {
-  id: string;
-  type: "attempts" | "achievement" | "support";
-  occurredAt: string;
-  title: string;
-  detail: string;
-  href: string;
-};
-
 export type DashboardFocusItem = {
   pathId: string;
   title: string;
@@ -147,7 +137,6 @@ export type LearnerDashboardModel = {
   course: DashboardCourseSummary;
   nextAction: LearnerNextAction;
   paths: DashboardPathSummary[];
-  recentActivity: DashboardActivityItem[];
   needsWork: DashboardFocusItem[];
   mistakes: { openCount: number; href: string };
   secureAndMastered: DashboardAchievementItem[];
@@ -256,7 +245,6 @@ export function deriveLearnerDashboardModel(input: {
     course,
     nextAction: deriveLearnerNextAction({ evidence: input.evidence }),
     paths,
-    recentActivity: deriveRecentActivity(input.evidence, 6),
     needsWork: deriveNeedsWork(paths, input.evidence, now),
     mistakes: { openCount: mistakes.openCount, href: mistakes.href },
     secureAndMastered: deriveSecureAndMastered(paths, input.evidence),
@@ -268,49 +256,6 @@ export function deriveLearnerDashboardModel(input: {
       { title: "Revision notes", href: getResourceHref("revision-notes", subject.subjectSlug), detail: "Review the ideas behind your progress." },
     ],
   };
-}
-
-function deriveRecentActivity(evidence: ProgressEvidence, limit: number): DashboardActivityItem[] {
-  const attemptGroups = new Map<string, QuestionAttempt[]>();
-  for (const attempt of evidence.attempts.filter((item) => item.isGenuine)) {
-    const key = `${attempt.skillPathId}:${utcDayKey(attempt.attemptedAt)}`;
-    attemptGroups.set(key, [...(attemptGroups.get(key) ?? []), attempt]);
-  }
-  const attemptItems: DashboardActivityItem[] = [...attemptGroups.entries()].map(([key, attempts]) => {
-    const latest = attempts.reduce((winner, attempt) => Date.parse(attempt.attemptedAt) > Date.parse(winner.attemptedAt) ? attempt : winner);
-    const pathName = getPathName(latest.skillPathId);
-    const correctCount = attempts.filter((attempt) => attempt.isCorrect).length;
-    return {
-      id: `attempts:${key}`,
-      type: "attempts",
-      occurredAt: latest.attemptedAt,
-      title: `${attempts.length} question${attempts.length === 1 ? "" : "s"} attempted`,
-      detail: `${pathName} · ${correctCount} correct`,
-      href: getQuestionHref(latest.questionId),
-    };
-  });
-  const firstPathCompletionId = earliestPathCompletionSnapshotId(evidence.achievementSnapshots);
-  const achievementItems: DashboardActivityItem[] = evidence.achievementSnapshots.map((snapshot) => ({
-    id: `achievement:${snapshot.snapshotId}`,
-    type: "achievement",
-    occurredAt: snapshot.achievedAt,
-    title: achievementTitle(snapshot, snapshot.snapshotId === firstPathCompletionId),
-    detail: getPathName(snapshot.pathId),
-    href: contentResolver.getPathContext(snapshot.pathId)?.skillPath.href ?? getQuestionBankHref(snapshot.subjectId),
-  }));
-  const supportItems: DashboardActivityItem[] = evidence.supportEvents
-    .filter((event) => event.afterGenuineAttempt)
-    .map((event) => ({
-      id: `support:${event.eventId}`,
-      type: "support",
-      occurredAt: event.occurredAt,
-      title: event.type === "hint_viewed" ? "Hint reviewed" : "Worked solution reviewed",
-      detail: getPathName(event.skillPathId),
-      href: getQuestionHref(event.questionId),
-    }));
-  return [...attemptItems, ...achievementItems, ...supportItems]
-    .sort(compareActivity)
-    .slice(0, limit);
 }
 
 function deriveNeedsWork(paths: DashboardPathSummary[], evidence: ProgressEvidence, now: Date): DashboardFocusItem[] {
@@ -438,14 +383,6 @@ function getStageName(pathId: string, stageId: string | undefined) {
   return contentResolver.getPathContext(pathId)?.skillPath.learningStages?.find((stage) => stage.id === stageId)?.name ?? null;
 }
 
-function earliestPathCompletionSnapshotId(snapshots: readonly AchievementSnapshot[]) {
-  const pathCompletions = snapshots.filter((snapshot) => snapshot.kind === "path_completed");
-  if (!pathCompletions.length) return null;
-  return pathCompletions.reduce((earliest, snapshot) =>
-    Date.parse(snapshot.achievedAt) < Date.parse(earliest.achievedAt) ? snapshot : earliest,
-  ).snapshotId;
-}
-
 /**
  * Specific accomplishment language for an achievement snapshot, replacing generic
  * "Stage Completed"/"Path Secure" title-casing with the actual stage/path name — e.g.
@@ -465,18 +402,6 @@ function achievementTitle(snapshot: AchievementSnapshot, isFirstPathCompletion: 
     case "path_mastered": return `${pathName} is now Mastered`;
     default: return `${pathName} progress`;
   }
-}
-
-function compareActivity(left: DashboardActivityItem, right: DashboardActivityItem) {
-  return Date.parse(right.occurredAt) - Date.parse(left.occurredAt)
-    || activityPriority(left.type) - activityPriority(right.type)
-    || left.id.localeCompare(right.id);
-}
-
-function activityPriority(type: DashboardActivityItem["type"]) {
-  if (type === "achievement") return 0;
-  if (type === "attempts") return 1;
-  return 2;
 }
 
 function compareNullableDates(left: string | null, right: string | null) {

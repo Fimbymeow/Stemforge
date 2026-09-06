@@ -11,3 +11,17 @@ export function MathContent({ children }: { children: string }) {
     </div>
   );
 }
+
+export function InlineMathContent({ children }: { children: string }) {
+  return (
+    <span className="math-content inline text-inherit">
+      <ReactMarkdown
+        remarkPlugins={[remarkMath]}
+        rehypePlugins={[rehypeKatex]}
+        components={{ p: ({ children: content }) => <>{content}</> }}
+      >
+        {children}
+      </ReactMarkdown>
+    </span>
+  );
+}

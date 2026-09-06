@@ -19,6 +19,7 @@ import {
 const MISTAKES_HREF = "/subjects/higher-maths/mistakes";
 const BASIC_SKILL_HREF = "/subjects/higher-maths/calculus/differentiation/basic-differentiation";
 const CHAIN_IDS = contentResolver.getPathQuestions("chain-rule").slice(0, 2).map((question) => question.id);
+const MATH_TITLE_QUESTION = contentResolver.getPathQuestions("chain-rule").find((question) => question.title.includes("$(ax+b)^n$"))!;
 
 test("fresh learner sees a calm empty Mistake Log", async ({ page }) => {
   await page.goto(MISTAKES_HREF);
@@ -217,6 +218,49 @@ test("malformed evidence cannot substitute an unavailable or different skill", a
   await page.goto(MISTAKES_HREF);
   await expect(page.getByTestId("mistake-log-empty-state")).toBeVisible();
   await expect(page.getByTestId("mistake-item")).toHaveCount(0);
+});
+
+test("math-capable question titles render notation without exposing delimiters", async ({ page }) => {
+  await seedStoredProgress(page, payload([canonicalAttempt(MATH_TITLE_QUESTION.id, 1, false)]));
+  await page.goto(MISTAKES_HREF);
+  const title = page.getByTestId("mistake-item").getByRole("heading", { level: 4 });
+  await expect(title).toContainText("Basic chain rule with");
+  await expect(title).not.toContainText("$");
+  await expect(title.locator(".katex")).toHaveCount(1);
+});
+
+test("Mistake Log keeps feedback after content and remains overflow-free on narrow screens", async ({ page }) => {
+  await seedStoredProgress(page, payload([canonicalAttempt(MATH_TITLE_QUESTION.id, 1, false)]));
+  for (const width of [390, 375, 320]) {
+    await page.setViewportSize({ width, height: width === 320 ? 700 : 812 });
+    await page.goto(MISTAKES_HREF);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), `${width}px overflow`).toBe(0);
+    const contentBox = (await page.getByTestId("mistake-log").boundingBox())!;
+    const dock = page.locator("[data-global-report-dock]");
+    const dockBox = (await dock.boundingBox())!;
+    await expect(dock).toHaveCSS("position", "static");
+    expect(dockBox.y).toBeGreaterThanOrEqual(contentBox.y + contentBox.height);
+  }
+  const feedback = page.getByRole("button", { name: "Send feedback", exact: true });
+  await feedback.focus();
+  await feedback.press("Enter");
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(feedback).toBeFocused();
+});
+
+test("a full available-bank mistake state remains scannable without changing actions", async ({ page }) => {
+  const questions = [
+    ...contentResolver.getPathQuestions("basic-differentiation"),
+    ...contentResolver.getPathQuestions("chain-rule"),
+  ];
+  await seedStoredProgress(page, payload(questions.map((question, index) => canonicalAttempt(question.id, index + 1, false))));
+  await page.setViewportSize({ width: 320, height: 700 });
+  await page.goto(MISTAKES_HREF);
+  await expect(page.getByTestId("mistake-item")).toHaveCount(questions.length);
+  await expect(page.getByRole("link", { name: /Practise these .* questions/ })).toHaveCount(2);
+  await expect(page.getByRole("link", { name: "More practice" })).toHaveCount(questions.length);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
 });
 
 function payload(attempts: QuestionAttempt[]): ProgressPayload {

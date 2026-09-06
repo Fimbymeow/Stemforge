@@ -99,8 +99,23 @@ test("Activity remains naturally readable without page overflow at 390, 375 and 
     await page.goto("/activity");
     await expect(page.getByTestId("activity-detail-panel")).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), `${width}px overflow`).toBe(0);
+    const contentBox = (await page.locator("#main-content").boundingBox())!;
+    const dock = page.locator("[data-global-report-dock]");
+    const dockBox = (await dock.boundingBox())!;
+    await expect(dock).toHaveCSS("position", "static");
+    expect(dockBox.y).toBeGreaterThanOrEqual(contentBox.y + contentBox.height);
+    if (width === 320) {
+      const scroller = page.getByTestId("activity-history-scroll");
+      expect(await scroller.evaluate((element) => element.scrollWidth)).toBeGreaterThan(await scroller.evaluate((element) => element.clientWidth));
+    }
   }
   expect(seriousBrowserErrors).toEqual([]);
+});
+
+test("Activity keeps desktop feedback floating", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/activity");
+  await expect(page.locator("[data-global-report-dock]")).toHaveCSS("position", "fixed");
 });
 
 test("Dashboard Activity stays compact, reachable and overflow-free at desktop and mobile widths", async ({ page, seriousBrowserErrors }) => {
