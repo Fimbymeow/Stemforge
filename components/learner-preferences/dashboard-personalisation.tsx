@@ -39,8 +39,7 @@ export function DashboardPersonalisation() {
     <>
       <header className="flex items-start justify-between gap-4 max-md:grid">
         <div>
-          <p className="text-sm font-bold text-muted">Home</p>
-          <h1 className="mt-1 text-[28px] font-extrabold leading-tight">
+          <h1 className="text-[28px] font-semibold leading-tight text-navy">
             {preferences.firstName ? `Welcome back, ${preferences.firstName}` : "Welcome back"}
           </h1>
           <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted">Your plan, courses and recent learning.</p>
@@ -48,7 +47,7 @@ export function DashboardPersonalisation() {
         <AppTopbar demo={false} />
       </header>
       {showPrompt ? (
-        <section data-testid="learner-name-prompt" aria-labelledby="learner-name-prompt-title" className="rounded-xl border border-forge/25 bg-forge-soft/40 p-4">
+        <section data-testid="learner-name-prompt" aria-labelledby="learner-name-prompt-title" className="border-t border-rule pt-4">
           <h2 id="learner-name-prompt-title" className="m-0 text-lg font-extrabold">Make Orthic yours</h2>
           <div className="mt-3 grid items-end gap-3 sm:grid-cols-[minmax(0,320px)_auto]">
             <label className="text-sm font-bold">What should we call you?

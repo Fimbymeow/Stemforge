@@ -5,7 +5,7 @@ import { CalendarDays, Check, ChevronDown } from "lucide-react";
 import { presentStudyPlanAssessmentQualifier, presentStudyPlanReason } from "@/lib/study-plan/presenter";
 import type { StudyPlanWeeklyItem } from "@/lib/study-plan/types";
 
-export function StudyPlanItemRow({ item, availableDates, moving, onToggleMove, onDone, onSkip, onMove, onSwap }: {
+export function StudyPlanItemRow({ item, availableDates, moving, onToggleMove, onDone, onSkip, onMove, onSwap, primaryAction = false }: {
   item: StudyPlanWeeklyItem;
   availableDates: readonly string[];
   moving: boolean;
@@ -14,6 +14,7 @@ export function StudyPlanItemRow({ item, availableDates, moving, onToggleMove, o
   onSkip: () => void;
   onMove: (date: string | null) => void;
   onSwap: () => void;
+  primaryAction?: boolean;
 }) {
   const assessmentText = presentStudyPlanAssessmentQualifier(item.assessmentQualifier);
   return (
@@ -25,7 +26,7 @@ export function StudyPlanItemRow({ item, availableDates, moving, onToggleMove, o
           <span className="block text-xs text-muted">{presentStudyPlanReason(item.reasonCode)}{assessmentText ? ` · ${assessmentText}` : ""} · {item.suggestedMinutes} min</span>
           {item.manualOverride === "moved" || item.manualOverride === "pulled_forward" ? <span className="block text-xs font-bold text-forge">Moved by you</span> : null}
         </span>
-        <Link href={item.href} className="inline-flex min-h-10 items-center font-extrabold text-forge">{item.state === "completed" ? "Open" : "Start"}</Link>
+        <Link href={item.href} className={primaryAction && item.state !== "completed" ? "inline-flex min-h-11 items-center justify-center rounded-md bg-navy px-4 text-sm font-semibold text-white" : "inline-flex min-h-10 items-center font-extrabold text-forge"}>{item.state === "completed" ? "Open" : "Start"}</Link>
         <details className="relative max-sm:col-span-3 max-sm:w-full">
           <summary aria-label={`Actions for ${item.skillName}`} className="flex min-h-10 cursor-pointer list-none items-center gap-1 rounded-lg px-2 text-sm font-bold text-muted">Actions<ChevronDown aria-hidden="true" className="size-4" /></summary>
           <div className="mt-2 grid min-w-40 grid-cols-2 gap-1 rounded-lg border border-line bg-white p-2 sm:absolute sm:right-0 sm:z-10 sm:grid-cols-1 sm:shadow-card">

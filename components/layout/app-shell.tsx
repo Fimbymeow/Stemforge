@@ -39,7 +39,7 @@ export function AppShell({
   }, []);
 
   return (
-    <div ref={rootRef} className="min-h-screen bg-paper text-ink" data-feedback-placement={feedbackPlacement}>
+    <div ref={rootRef} className="min-h-screen bg-canvas text-navy" data-feedback-placement={feedbackPlacement}>
       <AppSidebar
         demo={demo}
         active={active}

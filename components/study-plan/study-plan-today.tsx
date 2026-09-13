@@ -11,9 +11,11 @@ import type { ProgressEvidence } from "@/lib/progress/types";
 import type { StudyPlanDashboardState } from "@/lib/study-plan/dashboard-dedup";
 import { usePremiumPreview } from "@/components/premium-preview-provider";
 
-type Props = { evidence: ProgressEvidence; courseSlug: string; courseName: string; onDashboardStateChange?: (state: StudyPlanDashboardState) => void };
+type Props = { evidence: ProgressEvidence; courseSlug: string; courseName: string; presentation?: "default" | "dashboard"; onDashboardStateChange?: (state: StudyPlanDashboardState) => void };
 
-export function StudyPlanToday({ evidence, courseSlug, courseName, onDashboardStateChange }: Props) {
+export function StudyPlanToday({ evidence, courseSlug, courseName, presentation = "default", onDashboardStateChange }: Props) {
+  const sectionClass = presentation === "dashboard" ? "border-t border-rule pt-5" : "rounded-2xl border border-forge/25 bg-white p-4 shadow-card md:p-5";
+  const setupButtonClass = presentation === "dashboard" ? "mt-4 min-h-11 rounded-md border border-rule bg-white px-5 text-sm font-semibold text-navy hover:border-navy" : "mt-4 min-h-11 rounded-lg bg-forge px-5 text-sm font-extrabold text-white";
   const premiumPreview = usePremiumPreview();
   const studyPlan = useStudyPlan({ evidence, courseSlug, assessmentAware: premiumPreview.enabled });
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -43,11 +45,11 @@ export function StudyPlanToday({ evidence, courseSlug, courseName, onDashboardSt
   if (!studyPlan.state.setup) {
     return (
       <>
-        <section aria-labelledby="study-plan-setup-title" data-testid="study-plan-setup" className="rounded-2xl border border-forge/25 bg-white p-4 shadow-card md:p-5">
+        <section aria-labelledby="study-plan-setup-title" data-testid="study-plan-setup" className={sectionClass}>
           <p className="text-xs font-extrabold uppercase tracking-wide text-forge">Study Plan</p>
           <h2 id="study-plan-setup-title" className="mt-1 text-xl font-extrabold">Plan your study week</h2>
           <p className="mt-1 max-w-2xl text-sm text-muted">Set a realistic rhythm for {courseName} and Orthic will suggest a short plan for each day.</p>
-          <button type="button" onClick={() => setSettingsOpen(true)} className="mt-4 min-h-11 rounded-lg bg-forge px-5 text-sm font-extrabold text-white">Set up my plan</button>
+          <button type="button" onClick={() => setSettingsOpen(true)} className={setupButtonClass}>Set up my plan</button>
         </section>
         {dialog}
       </>
@@ -56,9 +58,13 @@ export function StudyPlanToday({ evidence, courseSlug, courseName, onDashboardSt
 
   const plan = studyPlan.plan;
   const oneMore = plan ? canPullForward(plan, studyPlan.today) : false;
+  // A configured plan owns the Dashboard next action; do not create a competing Continue panel.
+  const todaySectionClass = presentation === "dashboard" && studyPlan.todayItems.length > 0 && !plan?.caughtUp
+    ? "rounded-lg border border-rule bg-white p-5 md:p-7"
+    : sectionClass;
   return (
     <>
-      <section aria-labelledby="study-plan-today-title" data-testid="study-plan-today" className="rounded-2xl border border-forge/25 bg-white p-4 shadow-card md:p-5">
+      <section aria-labelledby="study-plan-today-title" data-testid="study-plan-today" className={todaySectionClass}>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="text-xs font-extrabold uppercase tracking-wide text-forge">Study Plan</p>
@@ -78,7 +84,7 @@ export function StudyPlanToday({ evidence, courseSlug, courseName, onDashboardSt
           <p className="mt-4 rounded-lg bg-paper p-3 text-sm text-muted">{plan.caughtUp ? "You’re caught up for now." : "Nothing is planned for today."}</p>
         ) : (
           <ol className="animate-fade-rise mt-4 divide-y divide-line">
-            {studyPlan.todayItems.map((item) => <li key={item.itemKey}><StudyPlanItemRow item={item} availableDates={studyPlan.availableDates} moving={movingItemKey === item.itemKey} onToggleMove={() => setMovingItemKey(movingItemKey === item.itemKey ? null : item.itemKey)} onDone={() => studyPlan.markItem(item.itemKey, "completed")} onSkip={() => studyPlan.markItem(item.itemKey, "skipped")} onMove={(date) => { studyPlan.moveItem(item.itemKey, date); setMovingItemKey(null); }} onSwap={() => studyPlan.swapItem(item)} /></li>)}
+            {studyPlan.todayItems.map((item) => <li key={item.itemKey}><StudyPlanItemRow primaryAction={presentation === "dashboard"} item={item} availableDates={studyPlan.availableDates} moving={movingItemKey === item.itemKey} onToggleMove={() => setMovingItemKey(movingItemKey === item.itemKey ? null : item.itemKey)} onDone={() => studyPlan.markItem(item.itemKey, "completed")} onSkip={() => studyPlan.markItem(item.itemKey, "skipped")} onMove={(date) => { studyPlan.moveItem(item.itemKey, date); setMovingItemKey(null); }} onSwap={() => studyPlan.swapItem(item)} /></li>)}
           </ol>
         )}
         {oneMore ? <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-paper p-3"><p className="text-sm font-bold">Finished for today. Want one more?</p><button type="button" onClick={studyPlan.pullForward} className="min-h-10 rounded-lg border border-forge px-3 text-sm font-extrabold text-forge">Add one more</button></div> : null}

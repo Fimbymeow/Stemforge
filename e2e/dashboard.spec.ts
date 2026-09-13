@@ -65,3 +65,29 @@ test("dashboard keeps weekly activity out of the primary recommendation", async 
   await expect(page.getByTestId("dashboard-progress-summary")).not.toContainText("active day");
   await expect(page.getByRole("heading", { name: "Weekly activity" })).toHaveCount(0);
 });
+
+test("Design V2 keeps continuation first and course access usable at each target viewport", async ({ page, seriousBrowserErrors }) => {
+  for (const viewport of [
+    { width: 1440, height: 900 }, { width: 1024, height: 900 },
+    { width: 390, height: 812 }, { width: 375, height: 812 }, { width: 320, height: 700 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/dashboard");
+    const continuation = page.getByTestId("dashboard-progress-summary");
+    const courses = page.getByTestId("dashboard-courses-section");
+    const activity = page.getByTestId("dashboard-activity-summary");
+    await expect(continuation.getByRole("link", { name: "Start learning" })).toBeVisible();
+    await expect(courses.getByRole("link", { name: "Open Higher Maths" })).toHaveAttribute("href", "/subjects/higher-maths");
+    await expect(courses.getByRole("progressbar")).toHaveCount(0);
+    const boxes = await Promise.all([continuation, courses, activity].map((element) => element.boundingBox()));
+    expect(boxes[0]!.y + boxes[0]!.height).toBeLessThanOrEqual(boxes[1]!.y);
+    expect(boxes[1]!.y + boxes[1]!.height).toBeLessThanOrEqual(boxes[2]!.y);
+    if (viewport.width < 640) {
+      const feedback = page.getByRole("button", { name: "Send feedback", exact: true });
+      await expect(feedback).toBeVisible();
+      expect((await feedback.boundingBox())!.y).toBeGreaterThanOrEqual(boxes[2]!.y + boxes[2]!.height);
+    }
+    await expectNoHorizontalOverflow(page);
+  }
+  expect(seriousBrowserErrors).toEqual([]);
+});

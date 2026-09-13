@@ -34,10 +34,10 @@ export function WorkingContextNavigation({
       <Link
         href="/subjects"
         aria-current={active ? "page" : undefined}
-        className={`flex min-h-12 flex-1 items-center rounded-lg border-l-2 px-3 text-sm font-bold transition-colors max-lg:min-h-11 max-lg:justify-center max-lg:border-l-0 max-lg:px-1 max-lg:text-xs sm:max-lg:text-sm ${
+        className={`flex min-h-12 flex-1 items-center rounded border-l-2 px-3 text-sm font-medium transition-colors max-lg:min-h-11 max-lg:justify-center max-lg:border-l-0 max-lg:px-1 max-lg:text-xs sm:max-lg:text-sm ${
           active
-            ? "border-forge bg-forge-soft text-forge max-lg:border-b-2 max-lg:border-b-forge"
-            : "border-transparent text-ink hover:bg-white hover:text-forge max-lg:border-b-0"
+            ? "border-navy bg-academic-blue text-navy max-lg:border-b-2 max-lg:border-b-navy"
+            : "border-transparent text-secondary hover:bg-white hover:text-navy max-lg:border-b-0"
         }`}
       >
         <Compass aria-hidden="true" className="mr-3 size-5 max-lg:hidden" strokeWidth={2} />
@@ -64,10 +64,10 @@ export function WorkingContextNavigation({
         aria-current={active ? "page" : undefined}
         onClick={openForViewport}
         data-testid="working-context-trigger"
-        className={`flex min-h-12 w-full items-center rounded-lg border-l-2 px-3 text-left text-sm font-bold transition-colors max-lg:min-h-11 max-lg:justify-center max-lg:rounded-b-none max-lg:border-l-0 max-lg:px-1 max-lg:text-xs sm:max-lg:text-sm ${
+        className={`flex min-h-12 w-full items-center rounded border-l-2 px-3 text-left text-sm font-medium transition-colors max-lg:min-h-11 max-lg:justify-center max-lg:rounded-b-none max-lg:border-l-0 max-lg:px-1 max-lg:text-xs sm:max-lg:text-sm ${
           active
-            ? "border-forge bg-forge-soft text-forge max-lg:border-b-2 max-lg:border-b-forge"
-            : "border-transparent text-ink hover:bg-white hover:text-forge max-lg:border-b-0"
+            ? "border-navy bg-academic-blue text-navy max-lg:border-b-2 max-lg:border-b-navy"
+            : "border-transparent text-secondary hover:bg-white hover:text-navy max-lg:border-b-0"
         }`}
       >
         <Compass aria-hidden="true" className="mr-3 size-5 shrink-0 max-lg:mr-0" strokeWidth={2} />

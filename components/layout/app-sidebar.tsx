@@ -35,8 +35,8 @@ export function AppSidebar({
     ? [...navItems, ["Account", UserRound, "account", "Account"] as const]
     : navItems;
   return (
-    <aside data-app-sidebar className="fixed inset-y-0 left-0 z-10 flex w-[240px] flex-col border-r border-line/70 bg-paper px-4 py-6 max-lg:sticky max-lg:top-0 max-lg:h-auto max-lg:w-full max-lg:border-b max-lg:border-r-0 max-lg:px-4 max-lg:py-3">
-      <Link href="/" className="mb-8 block w-[178px] max-lg:mb-3 max-lg:w-[146px]">
+    <aside data-app-sidebar className="fixed inset-y-0 left-0 z-10 flex w-[240px] flex-col border-r border-rule bg-canvas px-4 py-6 max-lg:sticky max-lg:top-0 max-lg:h-auto max-lg:w-full max-lg:border-b max-lg:border-r-0 max-lg:px-4 max-lg:py-3">
+      <Link href="/" className="mb-8 block w-[154px] max-lg:mb-3 max-lg:w-[132px]">
         <Image src="/assets/orthic-wordmark.svg" alt="Orthic" width={260} height={64} />
       </Link>
       <Link
@@ -55,10 +55,10 @@ export function AppSidebar({
             <Link
               href={key === "account" ? accountHrefFor(currentDestination) : getAppNavHref(key, demo)}
               aria-current={isActive ? "page" : undefined}
-              className={`flex min-h-12 w-full items-center rounded-lg border-l-2 px-3 text-sm font-bold transition-colors max-lg:min-h-11 max-lg:justify-center max-lg:border-l-0 max-lg:px-1 max-lg:text-xs sm:max-lg:text-sm ${
+              className={`flex min-h-12 w-full items-center rounded border-l-2 px-3 text-sm font-medium transition-colors max-lg:min-h-11 max-lg:justify-center max-lg:border-l-0 max-lg:px-1 max-lg:text-xs sm:max-lg:text-sm ${
                 isActive
-                  ? "border-forge bg-forge-soft text-forge max-lg:border-b-2 max-lg:border-b-forge"
-                  : "border-transparent text-ink hover:bg-white hover:text-forge max-lg:border-b-0"
+                  ? "border-navy bg-academic-blue text-navy max-lg:border-b-2 max-lg:border-b-navy"
+                  : "border-transparent text-secondary hover:bg-white hover:text-navy max-lg:border-b-0"
               }`}
             >
               <Icon aria-hidden="true" className="mr-3 size-5 max-lg:hidden" strokeWidth={2} />

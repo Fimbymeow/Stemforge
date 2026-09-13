@@ -8,6 +8,11 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        canvas: "#f8f9fd",
+        navy: "#0f172a",
+        rule: "#e2e8f0",
+        secondary: "#596579",
+        "academic-blue": "#eff6ff",
         paper: "#f5f4f0",
         ink: "#16191c",
         muted: "#6e6a62",

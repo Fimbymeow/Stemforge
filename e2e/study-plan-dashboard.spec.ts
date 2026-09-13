@@ -20,14 +20,14 @@ test.describe("feature-flagged Study Plan Today", () => {
     await page.reload();
   });
 
-  test("a learner who skipped Study Rhythm gets setup, continuation, courses and Activity in that order", async ({ page }) => {
+  test("a learner who skipped Study Rhythm gets continuation, setup, courses and Activity in that order", async ({ page }) => {
     await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
     await expect(page.getByTestId("study-plan-setup")).toBeVisible();
     await expect(page.getByTestId("dashboard-progress-summary")).toBeVisible();
     await expect(page.getByTestId("dashboard-courses-section")).toBeVisible();
     await expect(page.getByTestId("dashboard-activity-summary")).toContainText("No activity in the last 14 days");
     await expect(page.getByTestId("learner-name-prompt")).toHaveCount(0);
-    await expectVerticalOrder(page, ["study-plan-setup", "dashboard-progress-summary", "dashboard-courses-section", "dashboard-activity-summary"]);
+    await expectVerticalOrder(page, ["dashboard-progress-summary", "study-plan-setup", "dashboard-courses-section", "dashboard-activity-summary"]);
   });
 
   test("setup makes Today the sole equivalent next-action surface and preserves evidence when marked Done", async ({ page, seriousBrowserErrors }) => {

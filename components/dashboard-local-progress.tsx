@@ -2,8 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, BookOpen } from "lucide-react";
-import { Card, Eyebrow, ProgressBar } from "@/components/ui";
+import { ArrowRight } from "lucide-react";
 import { useProgressSync } from "@/components/progress-sync-provider";
 import { deriveLearnerDashboardModel } from "@/lib/dashboard-derivations";
 import { getEmptyProgressEvidence, getProgressEvidence } from "@/lib/local-progress";
@@ -49,9 +48,6 @@ export function DashboardLocalProgressSection({ studyPlanEnabled = false }: { st
   const meaningfulEvidenceCount = evidence.attempts.length + evidence.achievementSnapshots.length;
   const recommendedPath = model.paths.find((path) => path.skillPathId === recommendation.pathId) ?? null;
   const recommendedStage = recommendation.stageId ? recommendedPath?.stageSummaries.find((stage) => stage.stageId === recommendation.stageId) ?? null : null;
-  const learnedSkillPercentage = model.course.availablePathCount > 0
-    ? Math.round((model.course.completedPathCount / model.course.availablePathCount) * 100)
-    : 0;
   const reviewSummary = review.dueSkillCount
     ? `${review.dueSkillCount} review${review.dueSkillCount === 1 ? "" : "s"} due`
     : "Up to date";
@@ -59,23 +55,22 @@ export function DashboardLocalProgressSection({ studyPlanEnabled = false }: { st
   const continueMode = resolveDashboardContinueMode({ studyPlanEnabled, plan: studyPlanState, recommendation });
 
   return (
-    <section className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-5" aria-label="Your learning dashboard">
-      {studyPlanEnabled ? <StudyPlanToday evidence={evidence} courseSlug={effectiveCourses[0]?.slug ?? model.course.subjectSlug} courseName={effectiveCourses[0]?.name ?? "Higher Maths"} onDashboardStateChange={updateStudyPlanState} /> : null}
-      {continueMode === "full" ? <Card data-testid="dashboard-progress-summary" aria-label="Continue learning" className="border-forge/25 p-4 md:p-5">
+    <section className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-7 text-navy" aria-label="Your learning dashboard">
+      {continueMode === "full" ? <section data-testid="dashboard-progress-summary" aria-label="Continue learning" className="rounded-lg border border-rule bg-white p-5 md:p-7">
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 max-md:grid-cols-1">
           <div className="min-w-0">
-            <p className="text-xs font-extrabold uppercase tracking-wide text-forge">Continue learning · Higher Maths</p>
-            <h2 className="mt-1 text-xl font-extrabold">{recommendedPath?.name ?? "Higher Maths"}</h2>
+            <p className="text-xs font-medium tracking-wide text-secondary">Continue learning · Higher Maths</p>
+            <h2 className="mt-2 text-2xl font-semibold leading-tight">{recommendedPath?.name ?? "Higher Maths"}</h2>
             {recommendedStage ? <p className="mt-1 text-sm font-bold text-muted" data-testid="dashboard-current-stage">{recommendedStage.name} · {recommendedStage.completedQuestions}/{recommendedStage.totalQuestions} complete</p> : null}
             <p className="mt-1 max-w-2xl text-sm text-muted">{recommendation.reason}</p>
           </div>
           <div className="flex min-w-[190px] flex-col gap-0.5 max-md:min-w-0">
-            {recommendation.href ? <Link href={recommendation.href} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-forge px-5 text-sm font-extrabold text-white">{recommendation.label}<ArrowRight aria-hidden="true" className="size-4" /></Link> : null}
+            {recommendation.href ? <Link href={recommendation.href} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-navy px-5 text-sm font-semibold text-white">{recommendation.label}<ArrowRight aria-hidden="true" className="size-4" /></Link> : null}
             <Link href="/practice" className="inline-flex min-h-10 items-center justify-center text-sm font-bold text-forge">Practise your way</Link>
           </div>
         </div>
-      </Card> : continueMode === "compact" && recommendation.href ? (
-        <section aria-labelledby="dashboard-resume-course-title" data-testid="dashboard-resume-course" className="rounded-lg bg-paper px-4 py-3">
+      </section> : continueMode === "compact" && recommendation.href ? (
+        <section aria-labelledby="dashboard-resume-course-title" data-testid="dashboard-resume-course" className="rounded-lg border border-rule bg-white px-5 py-4">
           <div className="flex items-center justify-between gap-4 max-sm:items-start">
             <div className="min-w-0">
               <p className="text-xs font-extrabold uppercase tracking-wide text-muted">Continue learning</p>
@@ -86,23 +81,22 @@ export function DashboardLocalProgressSection({ studyPlanEnabled = false }: { st
           </div>
         </section>
       ) : null}
+      {studyPlanEnabled ? <StudyPlanToday presentation="dashboard" evidence={evidence} courseSlug={effectiveCourses[0]?.slug ?? model.course.subjectSlug} courseName={effectiveCourses[0]?.name ?? "Higher Maths"} onDashboardStateChange={updateStudyPlanState} /> : null}
 
       <section aria-labelledby="your-courses-title" data-testid="dashboard-courses-section" className="pt-1">
-        <div className="mb-3 flex items-end justify-between gap-3">
+        <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <Eyebrow className="text-muted">Course overview</Eyebrow>
-            <h2 id="your-courses-title" className="mt-1 text-lg font-extrabold">Your courses</h2>
+            <h2 id="your-courses-title" className="text-lg font-semibold">Your courses</h2>
           </div>
           <span className="text-xs font-bold text-muted">{model.sync.label}</span>
         </div>
-        <div className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-white" data-testid="dashboard-courses">
+        <div className="divide-y divide-rule border-y border-rule" data-testid="dashboard-courses">
           {effectiveCourses.map((course) => (
-            <Link key={course.slug} href={course.href} aria-label={`Open ${course.name}`} className="flex min-h-16 items-center gap-3 px-4 py-3 transition-colors hover:bg-paper focus-visible:bg-paper">
-              <BookOpen aria-hidden="true" className="size-5 shrink-0 text-muted" />
+            <Link key={course.slug} href={course.href} aria-label={`Open ${course.name}`} className="flex min-h-16 items-center gap-3 py-4 transition-colors hover:bg-white focus-visible:bg-white">
               <span className="min-w-0 flex-1">
-                <span className="block font-extrabold">{course.name}</span>
+                <span className="block font-semibold">{course.name}</span>
                 {course.slug === model.course.subjectSlug ? (
-                  <><span className="block text-xs text-muted">{model.course.completedPathCount} of {model.course.availablePathCount} skills learned · {reviewSummary}</span><ProgressBar value={learnedSkillPercentage} label={`${course.name}: ${model.course.completedPathCount} of ${model.course.availablePathCount} available skills learned`} className="mt-2 max-w-sm" /></>
+                  <span className="mt-1 block text-sm text-secondary">{model.course.completedPathCount} of {model.course.availablePathCount} skills learned · {reviewSummary}</span>
                 ) : null}
               </span>
               <ArrowRight aria-hidden="true" className="size-4 shrink-0 text-muted" />
