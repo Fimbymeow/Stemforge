@@ -59,9 +59,7 @@ export function StudyPlanToday({ evidence, courseSlug, courseName, presentation 
   const plan = studyPlan.plan;
   const oneMore = plan ? canPullForward(plan, studyPlan.today) : false;
   // A configured plan owns the Dashboard next action; do not create a competing Continue panel.
-  const todaySectionClass = presentation === "dashboard" && studyPlan.todayItems.length > 0 && !plan?.caughtUp
-    ? "rounded-lg border border-rule bg-white p-5 md:p-7"
-    : sectionClass;
+  const todaySectionClass = sectionClass;
   return (
     <>
       <section aria-labelledby="study-plan-today-title" data-testid="study-plan-today" className={todaySectionClass}>
@@ -81,7 +79,10 @@ export function StudyPlanToday({ evidence, courseSlug, courseName, presentation 
         {plan?.status !== "ok" ? (
           <p className="mt-4 rounded-lg bg-paper p-3 text-sm text-muted">A useful plan is not available for this course yet.</p>
         ) : studyPlan.todayItems.length === 0 ? (
-          <p className="mt-4 rounded-lg bg-paper p-3 text-sm text-muted">{plan.caughtUp ? "You’re caught up for now." : "Nothing is planned for today."}</p>
+          <div className={presentation === "dashboard" ? "mt-5 border border-rule bg-white p-5" : "mt-4 rounded-lg bg-paper p-3"}>
+            <p className="text-base font-medium">{plan.caughtUp ? "You’re caught up for now." : "Nothing is planned for today."}</p>
+            {presentation === "dashboard" ? <p className="mt-2 text-sm leading-relaxed text-secondary">{plan.caughtUp ? "Your course is still available whenever you want to practise or revisit a skill." : "Your study rhythm continues across the week. View this week to see your plan or adjust your study days in Plan settings."}</p> : null}
+          </div>
         ) : (
           <ol className="animate-fade-rise mt-4 divide-y divide-line">
             {studyPlan.todayItems.map((item) => <li key={item.itemKey}><StudyPlanItemRow primaryAction={presentation === "dashboard"} item={item} availableDates={studyPlan.availableDates} moving={movingItemKey === item.itemKey} onToggleMove={() => setMovingItemKey(movingItemKey === item.itemKey ? null : item.itemKey)} onDone={() => studyPlan.markItem(item.itemKey, "completed")} onSkip={() => studyPlan.markItem(item.itemKey, "skipped")} onMove={(date) => { studyPlan.moveItem(item.itemKey, date); setMovingItemKey(null); }} onSwap={() => studyPlan.swapItem(item)} /></li>)}

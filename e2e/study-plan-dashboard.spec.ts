@@ -30,6 +30,48 @@ test.describe("feature-flagged Study Plan Today", () => {
     await expectVerticalOrder(page, ["dashboard-progress-summary", "study-plan-setup", "dashboard-courses-section", "dashboard-activity-summary"]);
   });
 
+  for (const width of [1440, 320]) test(`configured empty day retains a real learning focus at ${width}px`, async ({ page, seriousBrowserErrors }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.getByTestId("study-plan-setup").getByRole("button", { name: "Set up my plan" }).click();
+    const setup = page.getByRole("dialog", { name: "Plan your study week" });
+    await setup.getByTitle("Wednesday").click();
+    await setup.getByRole("button", { name: "Create my plan" }).click();
+    await expect(page.getByTestId("study-plan-today")).toContainText("Nothing is planned for today.");
+    await expect(page.getByTestId("study-plan-item")).toHaveCount(0);
+    const focus = page.getByTestId("dashboard-plan-focus");
+    await expect(focus).toBeVisible();
+    await expect(focus.getByRole("link", { name: "View this week" })).toHaveAttribute("href", "/study-plan");
+    await expect(page.getByTestId("dashboard-progress-summary")).toHaveCount(0);
+    await expect(page.getByTestId("dashboard-courses").getByRole("link", { name: "Open Higher Maths" })).toBeVisible();
+    await expectNoHorizontalOverflow(page);
+    expect(seriousBrowserErrors).toEqual([]);
+  });
+
+  for (const width of [1440, 320]) {
+    test(`real Foundations resume retains the focal composition at ${width}px`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await seedStoredProgress(page, v3Payload([currentAttempt("hm-calc-diff-basic-f-001", 1, { isCorrect: false })]));
+      await page.goto("/dashboard");
+      const focus = page.getByTestId("dashboard-progress-summary");
+      await expect(focus.getByRole("link", { name: "Resume question" })).toHaveAttribute("href", "/question/hm-calc-diff-basic-f-001");
+      await expect(focus).toContainText("Foundations");
+      await expectNoHorizontalOverflow(page);
+    });
+    test(`Review due and configured plan keep one learning owner at ${width}px`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await seedStoredProgress(page, v3Payload(completedPathAttempts("basic-differentiation", "2026-08-01T08:00:00.000Z")));
+      await page.goto("/dashboard");
+      await createPlan(page);
+      const focus = page.getByTestId("dashboard-plan-focus");
+      await expect(focus.getByRole("heading", { name: "Basic differentiation" })).toBeVisible();
+      await expect(focus.getByRole("link", { name: "Open today’s plan" })).toHaveAttribute("href", "#study-plan-today-title");
+      await expect(page.getByTestId("study-plan-item")).toContainText(/Review/);
+      await expect(page.getByTestId("dashboard-progress-summary")).toHaveCount(0);
+      await expect(page.getByTestId("dashboard-courses")).toContainText("1 review due");
+      await expectNoHorizontalOverflow(page);
+    });
+  }
+
   test("setup makes Today the sole equivalent next-action surface and preserves evidence when marked Done", async ({ page, seriousBrowserErrors }) => {
     await page.getByTestId("study-plan-setup").getByRole("button", { name: "Set up my plan" }).click();
     const setup = page.getByRole("dialog", { name: "Plan your study week" });
@@ -209,7 +251,10 @@ async function expectVerticalOrder(page: import("@playwright/test").Page, testId
   const boxes = await Promise.all(testIds.map((testId) => page.getByTestId(testId).boundingBox()));
   for (const box of boxes) expect(box).not.toBeNull();
   for (let index = 1; index < boxes.length; index += 1) {
-    expect(boxes[index]!.y).toBeGreaterThanOrEqual(boxes[index - 1]!.y + boxes[index - 1]!.height);
+    if (testIds[index] === "dashboard-activity-summary" && page.viewportSize()!.width >= 1280) {
+      expect(boxes[index]!.x).toBeGreaterThanOrEqual(boxes[index - 1]!.x + boxes[index - 1]!.width);
+      expect(boxes[index]!.y).toBeGreaterThanOrEqual(boxes[0]!.y);
+    } else expect(boxes[index]!.y).toBeGreaterThanOrEqual(boxes[index - 1]!.y + boxes[index - 1]!.height);
   }
 }
 

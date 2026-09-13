@@ -81,7 +81,12 @@ test("Design V2 keeps continuation first and course access usable at each target
     await expect(courses.getByRole("progressbar")).toHaveCount(0);
     const boxes = await Promise.all([continuation, courses, activity].map((element) => element.boundingBox()));
     expect(boxes[0]!.y + boxes[0]!.height).toBeLessThanOrEqual(boxes[1]!.y);
-    expect(boxes[1]!.y + boxes[1]!.height).toBeLessThanOrEqual(boxes[2]!.y);
+    if (viewport.width >= 1280) {
+      expect(boxes[2]!.x).toBeGreaterThanOrEqual(boxes[1]!.x + boxes[1]!.width);
+      expect(boxes[2]!.y).toBeGreaterThanOrEqual(boxes[0]!.y + boxes[0]!.height);
+    } else {
+      expect(boxes[1]!.y + boxes[1]!.height).toBeLessThanOrEqual(boxes[2]!.y);
+    }
     if (viewport.width < 640) {
       const feedback = page.getByRole("button", { name: "Send feedback", exact: true });
       await expect(feedback).toBeVisible();

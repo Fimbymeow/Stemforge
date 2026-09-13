@@ -7,16 +7,17 @@ export function DashboardActivitySummary({ evidence, now = new Date() }: { evide
   const history = deriveActivityHistory(evidence, now, { rangeDays: 14 });
   const recap = deriveDashboardActivityRecap(history);
   return (
-    <section aria-labelledby="dashboard-activity-title" data-testid="dashboard-activity-summary" className="border-t border-line/80 pt-3 text-muted">
-      <div className="inline-grid max-w-full grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-5 gap-y-2 py-2 max-sm:grid-cols-[minmax(0,1fr)_auto]" data-testid="dashboard-activity-content">
+    <section aria-labelledby="dashboard-activity-title" data-testid="dashboard-activity-summary" className="border border-rule bg-white p-5 text-secondary md:p-6">
+      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-5" data-testid="dashboard-activity-content">
         <div className="min-w-0">
-          <h2 id="dashboard-activity-title" className="text-sm font-medium text-secondary">Activity</h2>
-          <p className="mt-1 text-sm font-semibold leading-snug text-ink" data-testid="dashboard-activity-recap">{recap}</p>
+          <h2 id="dashboard-activity-title" className="text-sm font-semibold uppercase tracking-wide">Activity</h2>
         </div>
-        <div className="flex items-center gap-1 max-sm:col-span-2 max-sm:row-start-2" role="img" aria-label={history.summaryText} data-testid="dashboard-activity-strip">
-          {history.days.map((day) => <span key={day.dayKey} aria-hidden="true" data-intensity={day.intensityLevel} className={`size-3.5 rounded-sm border ${activityIntensityClass(day.intensityLevel)}`} />)}
+        <p className="col-span-2 border-t border-rule pt-4 text-sm leading-relaxed" data-testid="dashboard-activity-recap">{recap}</p>
+        <div className="col-span-2 grid grid-cols-7 gap-2" role="img" aria-label={history.summaryText} data-testid="dashboard-activity-strip">
+          {history.days.map((day) => <span key={day.dayKey} aria-hidden="true" data-intensity={day.intensityLevel} className={`h-6 min-w-0 rounded-sm border ${activityIntensityClass(day.intensityLevel)}`} />)}
         </div>
-        <Link href="/activity" aria-label="View full activity history" className="inline-flex min-h-10 items-center whitespace-nowrap text-sm font-bold text-forge max-sm:col-start-2 max-sm:row-start-1">View activity <span aria-hidden="true">→</span></Link>
+        <Link href="/activity" aria-label="View full activity history" className="col-start-2 row-start-1 inline-flex min-h-11 items-center gap-1 text-xs font-medium text-navy">View activity <span aria-hidden="true">→</span></Link>
+        <div className="col-span-2 flex justify-between font-mono text-[10px] uppercase tracking-wide"><span>{history.days.length - 1} days ago</span><span>Today</span></div>
       </div>
     </section>
   );

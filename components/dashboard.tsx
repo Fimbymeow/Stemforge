@@ -11,7 +11,7 @@ export function DashboardPage({ mode }: { mode: DashboardMode }) {
 
   return (
     <AppShell demo={isDemo} active="Dashboard" feedbackPlacement="inline-mobile" className="py-8 max-lg:pt-5">
-      <div className="mx-auto grid min-w-0 max-w-[1120px] grid-cols-[minmax(0,1fr)] gap-7">
+      <div className="mx-auto grid min-w-0 max-w-[1220px] grid-cols-[minmax(0,1fr)] gap-10 max-sm:gap-7">
         <DashboardPersonalisation />
         <DashboardLocalProgressSection studyPlanEnabled={studyPlanEnabled} />
       </div>

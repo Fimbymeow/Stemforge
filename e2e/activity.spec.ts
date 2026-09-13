@@ -118,7 +118,7 @@ test("Activity keeps desktop feedback floating", async ({ page }) => {
   await expect(page.locator("[data-global-report-dock]")).toHaveCSS("position", "fixed");
 });
 
-test("Dashboard Activity stays compact, reachable and overflow-free at desktop and mobile widths", async ({ page, seriousBrowserErrors }) => {
+test("Dashboard Activity uses a quiet history panel, reachable and overflow-free at desktop and mobile widths", async ({ page, seriousBrowserErrors }) => {
   const { today } = recentTimes();
   await seedStoredProgress(page, payload([currentAttempt(QUESTION_IDS[0], 1, { attemptedAt: today, isCorrect: true })]));
   for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }, { width: 375, height: 812 }, { width: 320, height: 760 }]) {
@@ -128,7 +128,10 @@ test("Dashboard Activity stays compact, reachable and overflow-free at desktop a
     await expect(activity.getByTestId("dashboard-activity-recap")).toContainText("1 question worked on");
     await expect(activity.getByRole("link", { name: "View full activity history" })).toBeVisible();
     await expect(activity.getByTestId("dashboard-activity-strip").locator("[data-intensity]")).toHaveCount(14);
-    expect((await activity.boundingBox())?.height, `${viewport.width}px Activity height`).toBeLessThan(180);
+    const courses = (await page.getByTestId("dashboard-courses-section").boundingBox())!;
+    const history = (await activity.boundingBox())!;
+    if (viewport.width >= 1280) expect(history.x).toBeGreaterThanOrEqual(courses.x + courses.width);
+    else expect(history.y).toBeGreaterThanOrEqual(courses.y + courses.height);
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), `${viewport.width}px overflow`).toBe(0);
   }
   expect(seriousBrowserErrors).toEqual([]);

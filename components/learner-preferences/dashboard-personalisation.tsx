@@ -37,14 +37,20 @@ export function DashboardPersonalisation() {
 
   return (
     <>
+      <div className="flex min-h-16 flex-wrap items-center justify-between gap-3 border-b border-rule pb-5 text-secondary">
+        <p className="font-mono text-xs uppercase tracking-[0.12em]">Orthic <span aria-hidden="true" className="mx-2 text-rule">/</span> Dashboard</p>
+        <div className="flex items-center gap-4">
+          {preferences.firstName ? <span className="text-sm">{preferences.firstName}</span> : null}
+          <AppTopbar demo={false} />
+        </div>
+      </div>
       <header className="flex items-start justify-between gap-4 max-md:grid">
         <div>
-          <h1 className="text-[28px] font-semibold leading-tight text-navy">
+          <h1 className="text-[32px] font-semibold leading-tight tracking-tight text-navy max-sm:text-[28px]">
             {preferences.firstName ? `Welcome back, ${preferences.firstName}` : "Welcome back"}
           </h1>
-          <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted">Your plan, courses and recent learning.</p>
+          <p className="mt-3 max-w-3xl text-base leading-relaxed text-secondary">Your plan, courses and recent learning.</p>
         </div>
-        <AppTopbar demo={false} />
       </header>
       {showPrompt ? (
         <section data-testid="learner-name-prompt" aria-labelledby="learner-name-prompt-title" className="border-t border-rule pt-4">
