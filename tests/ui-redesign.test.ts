@@ -40,6 +40,7 @@ test("core redesigned surfaces retain the intended information hierarchy", () =>
   assert.doesNotMatch(hub, /View full Course Tracker/);
   assert.match(hub, />Courses</);
   assert.match(skill, /<details className="group\/requirements disclosure-motion/);
+  assert.match(skill, /motion-reduce:\[&::details-content\]:!transition-none/);
   assert.doesNotMatch(tracker, /group\/requirements/);
   assert.match(tracker, /Open \$\{skill\.name\} skill overview/);
 });

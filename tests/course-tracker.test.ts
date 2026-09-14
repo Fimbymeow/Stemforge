@@ -106,6 +106,8 @@ test("confidence remains derived but disagreement appears only for a supplied mi
   assert.equal(hasCourseTrackerConfidenceDisagreement(matching.confidence), false);
   const differing = findSkill(deriveHigherMathsCourseTracker(higherMaths, progress, undefined, undefined, new Map([["chain-rule", "confident" as const]])), "chain-rule"); assert.ok(differing?.confidence);
   assert.equal(hasCourseTrackerConfidenceDisagreement(differing.confidence), true);
+  const lower = findSkill(deriveHigherMathsCourseTracker(higherMaths, progress, undefined, undefined, new Map([["chain-rule", "needs_work" as const]])), "chain-rule"); assert.ok(lower?.confidence);
+  assert.equal(hasCourseTrackerConfidenceDisagreement(lower.confidence), false);
 });
 
 test("untouched actionable skills retain no suggestion and curriculum references have no confidence surface", () => {

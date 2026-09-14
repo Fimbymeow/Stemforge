@@ -55,7 +55,7 @@ test("official requirements live collapsed, keyboard accessible and exact on Ski
   const disclosure = page.getByTestId("skill-official-requirements");
   await expect(disclosure).not.toHaveAttribute("open", "");
   const summary = disclosure.locator("summary");
-  await expect(summary).toHaveAccessibleName("Official requirements (1)");
+  await expect(summary).toHaveAccessibleName("Qualifications Scotland specification 1 mapped outcome");
   await summary.focus();
   await summary.press("Enter");
   await expect(disclosure).toHaveAttribute("open", "");

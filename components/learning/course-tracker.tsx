@@ -10,19 +10,7 @@ import { groupCourseTrackerSkills, hasCourseTrackerConfidenceDisagreement } from
 import { getEmptyProgressEvidence, getProgressEvidence } from "@/lib/local-progress";
 import type { ProgressEvidence } from "@/lib/progress/types";
 import { useLearnerConfidence } from "@/components/confidence/use-learner-confidence";
-import type { ConfidenceLevel } from "@/lib/confidence/types";
-
-const CONFIDENCE_LABEL: Record<ConfidenceLevel, string> = {
-  needs_work: "Needs work",
-  developing: "Developing",
-  confident: "Confident",
-};
-
-const CONFIDENCE_COLOR: Record<ConfidenceLevel, string> = {
-  needs_work: "text-danger",
-  developing: "text-warning",
-  confident: "text-success",
-};
+import { CONFIDENCE_LABEL, CONFIDENCE_TEXT as CONFIDENCE_COLOR } from "@/components/confidence/confidence-presentation";
 
 export function CourseTracker({ subject }: { subject: Subject }) {
   const [evidence, setEvidence] = useState<ProgressEvidence>(() => getEmptyProgressEvidence());

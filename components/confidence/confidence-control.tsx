@@ -5,21 +5,14 @@ import { Check } from "lucide-react";
 import { ConfidenceDisagreementDialog } from "@/components/confidence/confidence-disagreement-dialog";
 import type { UseLearnerConfidenceResult } from "@/components/confidence/use-learner-confidence";
 import { shouldPromptConfidenceDisagreement } from "@/lib/confidence/disagreement";
-import { CONFIDENCE_LEVELS } from "@/lib/confidence/types";
+import { CONFIDENCE_LEVELS, CONFIDENCE_LEVEL_RANK } from "@/lib/confidence/types";
 import type { ConfidenceLevel, ConfidenceSuggestion } from "@/lib/confidence/types";
+import { CONFIDENCE_LABEL, CONFIDENCE_SELECTED } from "@/components/confidence/confidence-presentation";
 
-export const CONFIDENCE_LABEL: Record<ConfidenceLevel, string> = {
-  needs_work: "Needs work",
-  developing: "Developing",
-  confident: "Confident",
-};
+export { CONFIDENCE_LABEL } from "@/components/confidence/confidence-presentation";
 
 /** success/warning/danger — the same semantic tokens Review and stage-completion status already use for general state, not only answer-grading. */
-const CONFIDENCE_TONE: Record<ConfidenceLevel, string> = {
-  needs_work: "border-danger bg-danger-soft text-danger",
-  developing: "border-warning bg-warning-soft text-warning",
-  confident: "border-success bg-success-soft text-success",
-};
+const CONFIDENCE_TONE = CONFIDENCE_SELECTED;
 
 const CONFIDENCE_DOT: Record<ConfidenceLevel, string> = {
   needs_work: "bg-danger",
@@ -63,32 +56,29 @@ export function ConfidenceControl({ skillPathId, skillName, confidence, suggesti
 
   function keepOwn() {
     if (!pendingLevel) return;
-    confidence.setRating(skillPathId, pendingLevel);
-    if (suggestion && evidenceFingerprint) {
-      confidence.recordOverride({
+    const saved = confidence.setRating(skillPathId, pendingLevel, suggestion && evidenceFingerprint ? {
         skillPathId,
         learnerLevel: pendingLevel,
         suggestedLevel: suggestion.level,
         evidenceFingerprint,
         decidedAt: new Date().toISOString(),
-      });
-    }
-    setPendingLevel(null);
+      } : undefined);
+    if (saved) setPendingLevel(null);
   }
 
-  function useSuggestion() {
-    if (suggestion) confidence.setRating(skillPathId, suggestion.level);
-    setPendingLevel(null);
-  }
-
-  const showSuggestionHint = suggestion !== null && level !== null && level !== suggestion.level;
+  const showSuggestionHint = suggestion !== null && level !== null && CONFIDENCE_LEVEL_RANK[level] > CONFIDENCE_LEVEL_RANK[suggestion.level];
   const summaryLabel = level ? CONFIDENCE_LABEL[level] : variant === "detailed" ? "Not rated" : "Set confidence";
   const summaryTone = level ? CONFIDENCE_TONE[level] : "border-transparent bg-transparent text-muted";
 
   return (
     <div className={className}>
-      {variant === "detailed" ? <p className="text-xs font-bold text-muted">Your confidence</p> : null}
-      <details className="group/confidence relative">
+      {variant === "detailed" ? <fieldset>
+        <legend className="font-mono text-[11px] uppercase tracking-[0.08em] text-secondary">Your confidence</legend>
+        <div className="mt-3 grid grid-cols-3 overflow-hidden rounded-sm border border-rule">
+          {CONFIDENCE_LEVELS.map((option) => <button key={option} type="button" aria-pressed={option === level} onClick={() => choose(option)} className={`orthic-stage min-h-14 min-w-0 border-r border-rule px-1 py-2 text-[11px] font-medium last:border-r-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-navy sm:px-2 sm:text-xs ${option === level ? CONFIDENCE_SELECTED[option] : "bg-white text-secondary"}`}>{CONFIDENCE_LABEL[option]}</button>)}
+        </div>
+        <div className="mt-2 flex min-h-11 flex-wrap items-center justify-between gap-2 text-xs text-secondary"><span>{level ? `Your rating: ${CONFIDENCE_LABEL[level]}` : "Not rated"}</span>{level ? <button type="button" onClick={() => confidence.clearRating(skillPathId)} className="orthic-secondary-link min-h-11 px-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-navy">Clear rating</button> : null}</div>
+      </fieldset> : <details className="group/confidence relative">
         <summary
           aria-label={`Your confidence for ${skillName}: ${level ? CONFIDENCE_LABEL[level] : "not rated"}. Click to change.`}
           className={`flex min-h-10 w-fit cursor-pointer list-none items-center gap-1.5 rounded-full border px-2.5 text-xs font-bold [&::-webkit-details-marker]:hidden ${summaryTone}`}
@@ -121,7 +111,7 @@ export function ConfidenceControl({ skillPathId, skillName, confidence, suggesti
             </button>
           ) : null}
         </div>
-      </details>
+      </details>}
       {showSuggestionHint ? (
         <p className="mt-1 text-xs text-muted">Orthic suggests {CONFIDENCE_LABEL[suggestion.level].toLowerCase()}.</p>
       ) : null}
@@ -131,7 +121,6 @@ export function ConfidenceControl({ skillPathId, skillName, confidence, suggesti
         chosenLevel={pendingLevel ?? "confident"}
         suggestionReason={suggestion?.reason ?? null}
         onKeepOwn={keepOwn}
-        onUseSuggestion={useSuggestion}
         onClose={() => setPendingLevel(null)}
       />
     </div>

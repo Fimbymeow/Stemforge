@@ -36,7 +36,7 @@ function useLocalSkillPathProgress(skillPath: SkillPath) {
   };
 }
 
-export function LocalRecommendedNextAction({ skillPath, hidePrimaryAction = false, secondaryStagesHref }: { skillPath: SkillPath; hidePrimaryAction?: boolean; secondaryStagesHref?: string }) {
+export function LocalRecommendedNextAction({ skillPath, hidePrimaryAction = false, secondaryStagesHref, editorial = false }: { skillPath: SkillPath; hidePrimaryAction?: boolean; secondaryStagesHref?: string; editorial?: boolean }) {
   const { progress } = useLocalSkillPathProgress(skillPath);
   const nextAction = useLearnerNextAction();
   const isComplete = progress.totalQuestions > 0 && progress.completedQuestionIds.length >= progress.totalQuestions;
@@ -44,8 +44,8 @@ export function LocalRecommendedNextAction({ skillPath, hidePrimaryAction = fals
   if (isComplete && isCompletedTierStatus(progress.status)) {
     return (
       <div className="grid gap-3">
-        <MasteryUpgradeBanner skillPathId={skillPath.slug} status={progress.status} />
-        <CompletedPathCard skillPath={skillPath} progress={progress} status={progress.status} nextAction={nextAction} hidePrimaryAction={hidePrimaryAction} secondaryStagesHref={secondaryStagesHref} />
+        <MasteryUpgradeBanner skillPathId={skillPath.slug} status={progress.status} editorial={editorial} />
+        <CompletedPathCard skillPath={skillPath} progress={progress} status={progress.status} nextAction={nextAction} hidePrimaryAction={hidePrimaryAction} secondaryStagesHref={secondaryStagesHref} editorial={editorial} />
       </div>
     );
   }
@@ -67,7 +67,7 @@ export function LocalRecommendedNextAction({ skillPath, hidePrimaryAction = fals
  * Secure -> Mastered). Distinct from the full completion moment in path-completion-panel.tsx, which
  * is reserved for the single "finished the whole path" instant. Never auto-dismisses.
  */
-function MasteryUpgradeBanner({ skillPathId, status }: { skillPathId: string; status: CompletedTierStatus }) {
+function MasteryUpgradeBanner({ skillPathId, status, editorial = false }: { skillPathId: string; status: CompletedTierStatus; editorial?: boolean }) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -82,7 +82,7 @@ function MasteryUpgradeBanner({ skillPathId, status }: { skillPathId: string; st
     <div
       role="status"
       data-testid="mastery-upgrade-banner"
-      className="animate-fade-rise flex items-center justify-between gap-3 rounded-lg border border-forge/25 bg-forge-soft px-4 py-2.5 text-sm font-bold text-forge"
+      className={editorial ? "flex items-center justify-between gap-3 rounded-sm border border-rule bg-white px-4 py-2.5 text-sm font-medium text-navy" : "animate-fade-rise flex items-center justify-between gap-3 rounded-lg border border-forge/25 bg-forge-soft px-4 py-2.5 text-sm font-bold text-forge"}
     >
       <span>This path is now {formatProgressStatusLabel(status)}.</span>
       <button
@@ -106,7 +106,7 @@ function MasteryUpgradeBanner({ skillPathId, status }: { skillPathId: string; st
  * the skill-path overview, where linking to `getSkillPathHref(skillPath)` would just reload the
  * page the learner is already on. Callers elsewhere keep the default (navigate to the overview).
  */
-function CompletedPathCard({ skillPath, progress, status, nextAction, hidePrimaryAction = false, secondaryStagesHref }: { skillPath: SkillPath; progress: SkillPathProgress; status: CompletedTierStatus; nextAction: LearnerNextAction; hidePrimaryAction?: boolean; secondaryStagesHref?: string }) {
+function CompletedPathCard({ skillPath, progress, status, nextAction, hidePrimaryAction = false, secondaryStagesHref, editorial = false }: { skillPath: SkillPath; progress: SkillPathProgress; status: CompletedTierStatus; nextAction: LearnerNextAction; hidePrimaryAction?: boolean; secondaryStagesHref?: string; editorial?: boolean }) {
   const reviewCount = progress.reviewQuestionIds.length;
   const heading = `${skillPath.name} ${status === "completed" ? "complete" : status}`;
   const supporting = getPathCompletionSupportingSentence(status, reviewCount);
@@ -117,7 +117,7 @@ function CompletedPathCard({ skillPath, progress, status, nextAction, hidePrimar
     : { href: secondaryStagesHref ?? getSkillPathHref(skillPath), label: "Review a stage" };
 
   return (
-    <Card data-testid="completed-path-card" className="animate-fade-rise border-forge/30 p-4">
+    <Card data-testid="completed-path-card" className={editorial ? "!rounded-none !border-x-0 !border-rule !bg-transparent !px-0 py-4" : "animate-fade-rise border-forge/30 p-4"}>
       {reviewCount > 0 ? <div className="mb-2 flex flex-wrap items-center gap-2"><ReviewBadge count={reviewCount} /></div> : null}
       <h2 className="m-0 text-xl font-extrabold">{heading}</h2>
       <p id="completed-path-next-action-reason" className="mt-2 text-sm leading-relaxed text-muted">{supporting} {nextAction.reason}</p>
@@ -128,8 +128,8 @@ function CompletedPathCard({ skillPath, progress, status, nextAction, hidePrimar
       <VersionProgressNotice progress={progress} />
       <div className="mt-4 grid gap-2">
         {hidePrimaryAction ? null : nextAction.kind === "practice_again" ? (
-          <QuickPracticeAction preferredPathId={skillPath.slug} label={nextAction.label} className="w-full" />
-        ) : nextAction.href ? <Link href={nextAction.href} aria-describedby="completed-path-next-action-reason" className="inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-forge px-5 text-sm font-extrabold text-white">
+          <QuickPracticeAction preferredPathId={skillPath.slug} label={nextAction.label} className={editorial ? "orthic-secondary-link !min-h-11 !transform-none !rounded-sm !border-rule !bg-white !font-medium !text-navy !duration-150 motion-reduce:!duration-0" : "w-full"} />
+        ) : nextAction.href ? <Link href={nextAction.href} aria-describedby="completed-path-next-action-reason" className={editorial ? "orthic-secondary-link inline-flex min-h-11 items-center text-sm font-medium text-navy" : "inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-forge px-5 text-sm font-extrabold text-white"}>
           {nextAction.label}
         </Link> : null}
         <Link href={secondary.href} className="inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-line bg-white px-5 text-sm font-extrabold text-ink">

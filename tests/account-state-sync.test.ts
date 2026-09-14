@@ -8,9 +8,28 @@ import {
 } from "../lib/account-state/client-state";
 import { normalizeAccountLearnerState, type AccountStateMutation, type SyncedPlanItemState } from "../lib/account-state/types";
 import { STUDY_PLAN_LOCAL_STATE_STORAGE_KEY } from "../lib/study-plan/local-state";
-import { CONFIDENCE_LOCAL_STATE_STORAGE_KEY } from "../lib/confidence/local-state";
+import { CONFIDENCE_LOCAL_STATE_STORAGE_KEY, clearLearnerConfidence, readConfidenceLocalState, recordConfidenceOverride, setLearnerConfidence, writeConfidenceLocalState } from "../lib/confidence/local-state";
 
 const NOW = "2026-08-17T10:00:00.000Z";
+
+test("account confidence round trips use the same persisted learner rating and acknowledgement", () => {
+  const storage = memoryStorage();
+  const remote = normalizeAccountLearnerState({ ratings: [{ skillPathId: "chain-rule", level: "developing", setAt: NOW }] });
+  assert.equal(applyAccountStateToLocalStorage(storage, remote, new Date(NOW)), true);
+  const changedAt = "2026-08-17T10:01:00.000Z";
+  const chosen = setLearnerConfidence(readConfidenceLocalState(storage), "chain-rule", "confident", changedAt);
+  const confirmed = recordConfidenceOverride(chosen, { skillPathId: "chain-rule", learnerLevel: "confident", suggestedLevel: "developing", evidenceFingerprint: "fixture-evidence", decidedAt: changedAt });
+  assert.equal(writeConfidenceLocalState(storage, confirmed), true);
+  const local = readLocalAccountState(storage);
+  const mutations = diffLocalAccountState(local, remote, changedAt);
+  assert.ok(mutations.some((mutation) => mutation.kind === "confidence_upsert" && mutation.level === "confident"));
+  const updated = applyAccountStateMutations(remote, mutations);
+  assert.equal(applyAccountStateToLocalStorage(storage, updated, new Date(changedAt)), true);
+  assert.equal(readConfidenceLocalState(storage).ratings["chain-rule"].level, "confident");
+  assert.equal(readConfidenceLocalState(storage).overrides["chain-rule"].learnerLevel, "confident");
+  assert.equal(writeConfidenceLocalState(storage, clearLearnerConfidence(readConfidenceLocalState(storage), "chain-rule")), true);
+  assert.ok(diffLocalAccountState(readLocalAccountState(storage), updated, changedAt).some((mutation) => mutation.kind === "confidence_delete"));
+});
 
 test("account-state migration is additive, owner scoped, mutable and erasure aware without a generated-plan table", () => {
   const migration = readFileSync(new URL("../migrations/1753698400000_account-learner-state.js", import.meta.url), "utf8");

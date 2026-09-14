@@ -43,17 +43,20 @@ export function useLearnerConfidence() {
     return true;
   }, []);
 
-  const setRating = useCallback((skillPathId: string, level: ConfidenceLevel) => {
-    return persist(setLearnerConfidence(state, skillPathId, level, new Date().toISOString()));
-  }, [persist, state]);
+  const setRating = useCallback((skillPathId: string, level: ConfidenceLevel, override?: ConfidenceOverrideRecord) => {
+    // A confirmation saves the learner's rating and acknowledgement in one write.
+    // Read the shared source at mutation time, not a potentially stale render snapshot.
+    const next = setLearnerConfidence(readConfidenceLocalState(window.localStorage), skillPathId, level, new Date().toISOString());
+    return persist(override ? recordConfidenceOverride(next, override) : next);
+  }, [persist]);
 
   const clearRating = useCallback((skillPathId: string) => {
-    return persist(clearLearnerConfidence(state, skillPathId));
-  }, [persist, state]);
+    return persist(clearLearnerConfidence(readConfidenceLocalState(window.localStorage), skillPathId));
+  }, [persist]);
 
   const recordOverride = useCallback((record: ConfidenceOverrideRecord) => {
-    return persist(recordConfidenceOverride(state, record));
-  }, [persist, state]);
+    return persist(recordConfidenceOverride(readConfidenceLocalState(window.localStorage), record));
+  }, [persist]);
 
   const getRating = useCallback((skillPathId: string): LearnerConfidence | null => state.ratings[skillPathId] ?? null, [state]);
   const getOverride = useCallback((skillPathId: string): ConfidenceOverrideRecord | null => state.overrides[skillPathId] ?? null, [state]);

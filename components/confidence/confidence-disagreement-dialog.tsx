@@ -2,9 +2,8 @@
 
 import { useId, useRef } from "react";
 import { useModalFocusTrap } from "@/lib/use-modal-focus-trap";
-import { CONFIDENCE_LABEL } from "@/components/confidence/confidence-control";
+import { CONFIDENCE_LABEL } from "@/components/confidence/confidence-presentation";
 import { DialogCloseButton, DialogShell } from "@/components/dialog-shell";
-import { Button } from "@/components/ui";
 import type { ConfidenceLevel, ConfidenceSuggestionReason } from "@/lib/confidence/types";
 
 /**
@@ -13,13 +12,12 @@ import type { ConfidenceLevel, ConfidenceSuggestionReason } from "@/lib/confiden
  * disagreement (suppressed via the caller's override-record + evidence-fingerprint check before
  * this is even opened). Reuses the shared modal focus-trap rather than a new dialog system (Part K).
  */
-export function ConfidenceDisagreementDialog({ open, skillName, chosenLevel, suggestionReason, onKeepOwn, onUseSuggestion, onClose }: {
+export function ConfidenceDisagreementDialog({ open, skillName, chosenLevel, suggestionReason, onKeepOwn, onClose }: {
   open: boolean;
   skillName: string;
   chosenLevel: ConfidenceLevel;
   suggestionReason: ConfidenceSuggestionReason | null;
   onKeepOwn: () => void;
-  onUseSuggestion: () => void;
   onClose: () => void;
 }) {
   const titleId = useId();
@@ -35,17 +33,17 @@ export function ConfidenceDisagreementDialog({ open, skillName, chosenLevel, sug
   const chosenLabel = CONFIDENCE_LABEL[chosenLevel];
 
   return (
-    <DialogShell ref={dialogRef} labelledBy={titleId} describedBy={descriptionId} size="sm">
+    <DialogShell ref={dialogRef} labelledBy={titleId} describedBy={descriptionId} size="sm" className="!rounded-lg !border-rule !bg-paper !text-navy !shadow-sm ![animation-duration:180ms] motion-reduce:![animation:none]">
         <div className="flex items-start justify-between gap-4">
-          <h2 id={titleId} className="text-lg font-extrabold">Keep {skillName} as {chosenLabel.toLowerCase()}?</h2>
-          <DialogCloseButton ref={closeRef} onClick={onClose} label="Close" />
+          <h2 id={titleId} className="text-lg font-semibold">Save confidence as {chosenLabel}?</h2>
+          <DialogCloseButton ref={closeRef} onClick={onClose} label="Cancel confidence change" className="!rounded-sm !border-rule !text-secondary" />
         </div>
         <p id={descriptionId} className="mt-2 text-sm leading-relaxed text-muted">
-          Your recent work {hintPhrase(suggestionReason)}. Orthic isn&apos;t completely certain, so you can keep your own rating.
+          You&apos;ve rated {skillName} as {chosenLabel}. <span className="text-warning">Orthic&apos;s recent evidence {hintPhrase(suggestionReason)}.</span> You choose the final rating.
         </p>
-        <div className="mt-5 grid gap-2">
-          <Button ref={keepRef} onClick={onKeepOwn}>Keep as {chosenLabel.toLowerCase()}</Button>
-          <Button variant="secondary" onClick={onUseSuggestion}>Use Orthic&apos;s suggestion</Button>
+        <div className="mt-5 flex flex-wrap justify-end gap-2">
+          <button type="button" onClick={onClose} className="orthic-secondary-link min-h-11 rounded-sm border border-rule px-4 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-navy">Cancel</button>
+          <button type="button" ref={keepRef} onClick={onKeepOwn} className="orthic-primary-action min-h-11 rounded-sm bg-navy px-4 text-sm font-semibold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy">Save as {chosenLabel}</button>
         </div>
     </DialogShell>
   );

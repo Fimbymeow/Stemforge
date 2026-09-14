@@ -23,7 +23,8 @@ test("new learner gets calm course access before the one-click learning entry", 
   await expect(page.getByTestId("working-context-hub").getByRole("link", { name: "Overview" })).toBeVisible();
 
   await page.goto(PATH_ROUTE);
-  await expectPrimaryAction(page, "Start", `/question/${QUESTION_IDS[0]}`);
+  await expect(page.getByTestId("skill-primary-action")).toHaveAttribute("href", "/subjects/higher-maths/revision-notes?path=basic-differentiation");
+  await expect(page.getByTestId("skill-learning-journey").locator('[aria-current="step"]').getByRole("link", { name: "Start", exact: true })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
   await expect(page.locator('[data-recommended="true"]')).toContainText("Foundations");
   await expect(page.getByTestId("skill-learning-journey").locator('[data-journey-kind="stage"]').filter({ hasText: "Applications" }).getByRole("link", { name: "Start" })).toHaveAttribute("href", `/question/${QUESTION_IDS[3]}`);
 

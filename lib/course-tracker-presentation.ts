@@ -1,4 +1,5 @@
 import type { CourseTrackerSkill, CourseTrackerSkillConfidence } from "@/lib/course-tracker";
+import { CONFIDENCE_LEVEL_RANK } from "@/lib/confidence/types";
 
 export type CourseTrackerSkillGroup =
   | { kind: "actionable"; skill: CourseTrackerSkill }
@@ -23,6 +24,6 @@ export function hasCourseTrackerConfidenceDisagreement(confidence: CourseTracker
   return Boolean(
     confidence?.learnerLevel
     && confidence.suggestion
-    && confidence.learnerLevel !== confidence.suggestion.level,
+    && CONFIDENCE_LEVEL_RANK[confidence.learnerLevel] > CONFIDENCE_LEVEL_RANK[confidence.suggestion.level],
   );
 }
