@@ -20,17 +20,12 @@ test("Dashboard Activity remains secondary within the responsive composition", a
   const activityBox = await activity.boundingBox();
   expect(courses).not.toBeNull();
   expect(activityBox).not.toBeNull();
-  if (page.viewportSize()!.width >= 1280) {
-    expect(activityBox!.x).toBeGreaterThanOrEqual(courses!.x + courses!.width);
-    const learning = await page.getByTestId("dashboard-learning-region").boundingBox();
-    expect(learning).not.toBeNull();
-    expect(activityBox!.y).toBeGreaterThanOrEqual(learning!.y + learning!.height);
-  } else expect(activityBox!.y).toBeGreaterThanOrEqual(courses!.y + courses!.height);
+  expect(activityBox!.y).toBeGreaterThanOrEqual(courses!.y + courses!.height);
   await expect(activity.getByRole("link", { name: "View full activity history" })).toHaveAttribute("href", "/activity");
   await expect(activity.getByTestId("dashboard-activity-strip").locator("[data-intensity]")).toHaveCount(14);
   const content = await activity.getByTestId("dashboard-activity-content").boundingBox();
   expect(content).not.toBeNull();
-  expect(content!.width).toBeLessThan(activityBox!.width);
+  expect(content!.width).toBeLessThanOrEqual(activityBox!.width);
   expect(await activity.getByTestId("dashboard-activity-content").evaluate((surface) => getComputedStyle(surface).boxShadow)).toBe("none");
   expect(await activity.getByTestId("dashboard-activity-content").evaluate((surface) => getComputedStyle(surface).borderTopWidth)).toBe("0px");
   const courseHeadingSize = await page.getByRole("heading", { name: "Your courses" }).evaluate((heading) => Number.parseFloat(getComputedStyle(heading).fontSize));

@@ -56,6 +56,11 @@ test.describe("feature-flagged Study Plan Today", () => {
       const focus = page.getByTestId("dashboard-progress-summary");
       await expect(focus.getByRole("link", { name: "Resume question" })).toHaveAttribute("href", "/question/hm-calc-diff-basic-f-001");
       await expect(focus).toContainText("Foundations");
+      await createPlan(page);
+      await expect(focus.getByRole("link", { name: "Resume question" })).toHaveAttribute("href", "/question/hm-calc-diff-basic-f-001");
+      await expect(page.getByTestId("dashboard-plan-focus")).toHaveCount(0);
+      await expect(page.getByTestId("study-plan-today").getByRole("link", { name: "Start" })).toBeVisible();
+      await expectVerticalOrder(page, ["dashboard-progress-summary", "study-plan-today", "dashboard-courses-section", "dashboard-activity-summary"]);
       await expectNoHorizontalOverflow(page);
       await captureDashboard(page, testInfo.outputPath(`resume-${width}.png`));
     });
@@ -102,7 +107,7 @@ test.describe("feature-flagged Study Plan Today", () => {
     expect(seriousBrowserErrors).toEqual([]);
   });
 
-  test("configured Today suppresses a distinct active Practice action instead of creating a competing Dashboard recommendation", async ({ page }) => {
+  test("a genuine active Practice resume owns the hero while configured Today remains planning context", async ({ page }) => {
     await page.goto("/practice");
     await page.getByTestId("quick-practice-action").click();
     await expect(page).toHaveURL(/\/practice\/session\//);
@@ -111,7 +116,7 @@ test.describe("feature-flagged Study Plan Today", () => {
     const setup = page.getByRole("dialog", { name: "Plan your study week" });
     for (const day of ["Tuesday", "Thursday", "Friday", "Sunday"]) await setup.getByTitle(day).click();
     await setup.getByRole("button", { name: "Create my plan" }).click();
-    await expect(page.getByTestId("dashboard-progress-summary")).toHaveCount(0);
+    await expect(page.getByTestId("dashboard-progress-summary").getByRole("link", { name: "Resume practice" })).toHaveAttribute("href", /\/practice\/session\//);
     await expect(page.getByTestId("dashboard-resume-course")).toHaveCount(0);
     await expectVerticalOrder(page, ["study-plan-today", "dashboard-courses-section", "dashboard-activity-summary"]);
     await expect(page.getByTestId("study-plan-today")).toBeVisible();
@@ -244,6 +249,7 @@ function completedPathAttempts(pathId: string, attemptedAt: string) {
 }
 
 async function captureDashboard(page: import("@playwright/test").Page, path: string) {
+  await page.mouse.move(0, 0);
   // Dialog focus restoration can scroll the page; compare the resting composition from its top.
   await page.evaluate(async () => {
     if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
@@ -252,7 +258,14 @@ async function captureDashboard(page: import("@playwright/test").Page, path: str
   });
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
   await page.evaluate(() => { if (document.activeElement instanceof HTMLElement) document.activeElement.blur(); });
-  await page.screenshot({ path, fullPage: true });
+  const feedbackBox = await page.getByRole("button", { name: "Send feedback", exact: true }).boundingBox();
+  if (feedbackBox) {
+    for (const action of await page.getByTestId("dashboard-document-sections").getByRole("link").all()) {
+      const actionBox = await action.boundingBox();
+      if (actionBox) expect(actionBox.x < feedbackBox.x + feedbackBox.width && actionBox.x + actionBox.width > feedbackBox.x && actionBox.y < feedbackBox.y + feedbackBox.height && actionBox.y + actionBox.height > feedbackBox.y, "Dashboard action intersects feedback UI").toBe(false);
+    }
+  }
+  await page.screenshot({ path, fullPage: true, animations: "disabled" });
 }
 
 async function createPlan(page: import("@playwright/test").Page) {
@@ -266,9 +279,11 @@ async function expectVerticalOrder(page: import("@playwright/test").Page, testId
   const boxes = await Promise.all(testIds.map((testId) => page.getByTestId(testId).boundingBox()));
   for (const box of boxes) expect(box).not.toBeNull();
   for (let index = 1; index < boxes.length; index += 1) {
-    if (testIds[index] === "dashboard-activity-summary" && page.viewportSize()!.width >= 1280) {
+    if (testIds[index] === "dashboard-courses-section" && page.viewportSize()!.width >= 1280) {
       expect(boxes[index]!.x).toBeGreaterThanOrEqual(boxes[index - 1]!.x + boxes[index - 1]!.width);
-      expect(boxes[index]!.y).toBeGreaterThanOrEqual(boxes[0]!.y);
+      expect(Math.abs(boxes[index]!.y - boxes[index - 1]!.y)).toBeLessThanOrEqual(4);
+      expect(boxes[index - 1]!.width / (boxes[index - 1]!.width + boxes[index]!.width)).toBeGreaterThan(0.6);
+      expect(boxes[index - 1]!.width / (boxes[index - 1]!.width + boxes[index]!.width)).toBeLessThan(0.65);
     } else expect(boxes[index]!.y).toBeGreaterThanOrEqual(boxes[index - 1]!.y + boxes[index - 1]!.height);
   }
 }

@@ -130,8 +130,7 @@ test("Dashboard Activity uses a quiet history panel, reachable and overflow-free
     await expect(activity.getByTestId("dashboard-activity-strip").locator("[data-intensity]")).toHaveCount(14);
     const courses = (await page.getByTestId("dashboard-courses-section").boundingBox())!;
     const history = (await activity.boundingBox())!;
-    if (viewport.width >= 1280) expect(history.x).toBeGreaterThanOrEqual(courses.x + courses.width);
-    else expect(history.y).toBeGreaterThanOrEqual(courses.y + courses.height);
+    expect(history.y).toBeGreaterThanOrEqual(courses.y + courses.height);
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), `${viewport.width}px overflow`).toBe(0);
   }
   expect(seriousBrowserErrors).toEqual([]);

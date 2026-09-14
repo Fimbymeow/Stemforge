@@ -53,7 +53,9 @@ export function DashboardLocalProgressSection({ studyPlanEnabled = false }: { st
     ? `${review.dueSkillCount} review${review.dueSkillCount === 1 ? "" : "s"} due`
     : "Up to date";
   const effectiveCourses = useMemo(() => resolveEffectiveCourses({ preferences: learnerPreferences.preferences, evidence }), [evidence, learnerPreferences.preferences]);
-  const continueMode = resolveDashboardContinueMode({ studyPlanEnabled, plan: studyPlanState, recommendation });
+  // A real resumable action owns the hero; plan generation and recommendations remain unchanged.
+  const heroOwnsResume = recommendation.intent === "resuming" && recommendation.href !== null;
+  const continueMode = heroOwnsResume ? "full" : resolveDashboardContinueMode({ studyPlanEnabled, plan: studyPlanState, recommendation });
   const planFocus = studyPlanState.todayItems[0];
   const planFocusPath = planFocus ? model.paths.find((path) => path.skillPathId === planFocus.skillPathId) : null;
   const planFocusStage = planFocus?.stageId ? planFocusPath?.stageSummaries.find((stage) => stage.stageId === planFocus.stageId) : null;
@@ -73,8 +75,8 @@ export function DashboardLocalProgressSection({ studyPlanEnabled = false }: { st
             <p className="mt-4 max-w-3xl text-[15px] leading-relaxed text-secondary">{recommendation.reason}</p>
           </div>
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-            {recommendation.href ? <Link href={recommendation.href} className="inline-flex min-h-12 items-center justify-center gap-3 rounded bg-navy px-6 text-base font-medium text-white max-sm:w-full">{recommendation.label}<ArrowRight aria-hidden="true" className="size-4" /></Link> : null}
-            <Link href="/practice" className="inline-flex min-h-11 items-center justify-center text-sm text-secondary">Practise your way</Link>
+            {recommendation.href ? <Link href={recommendation.href} className="orthic-primary-action inline-flex min-h-12 items-center justify-center gap-3 rounded bg-navy px-6 text-base font-medium text-white max-sm:w-full">{recommendation.label}<ArrowRight aria-hidden="true" className="orthic-arrow size-4" /></Link> : null}
+            <Link href="/practice" className="orthic-secondary-link inline-flex min-h-11 items-center justify-center text-sm text-secondary">Practise your way</Link>
           </div>
         </div>
       </section> : continueMode === "compact" && recommendation.href ? (
@@ -86,7 +88,7 @@ export function DashboardLocalProgressSection({ studyPlanEnabled = false }: { st
               <DashboardJourney path={recommendedPath} currentStageId={recommendation.stageId} />
               {recommendedStage ? <p className="mt-0.5 text-xs font-semibold text-muted">{recommendedStage.name} · {recommendedStage.completedQuestions}/{recommendedStage.totalQuestions} complete</p> : null}
             </div>
-            <Link href={recommendation.href} aria-label={`${recommendation.label}: ${recommendedPath?.name ?? recommendation.title}`} className="inline-flex min-h-10 shrink-0 items-center gap-1 text-sm font-extrabold text-forge">Open <ArrowRight aria-hidden="true" className="size-4" /></Link>
+            <Link href={recommendation.href} aria-label={`${recommendation.label}: ${recommendedPath?.name ?? recommendation.title}`} className="orthic-secondary-link inline-flex min-h-11 shrink-0 items-center gap-1 text-sm font-medium text-secondary">Open <ArrowRight aria-hidden="true" className="orthic-arrow size-4" /></Link>
           </div>
         </section>
       ) : (
@@ -97,45 +99,38 @@ export function DashboardLocalProgressSection({ studyPlanEnabled = false }: { st
           {focusStage ? <p className="mt-4 text-xs text-secondary">{focusStage.name} · {focusStage.completedQuestions}/{focusStage.totalQuestions} complete</p> : null}
           {planFocus?.actionType === "review" ? <p className="mt-4 inline-block rounded-sm border border-amber-200 bg-amber-50 px-3 py-1 font-mono text-xs text-amber-800">Due for review · {planFocus.suggestedMinutes} min</p> : null}
           <p className="mt-4 max-w-3xl text-[15px] leading-relaxed text-secondary">{studyPlanState.todayItems.length ? "Your next learning action is in today’s Study Plan." : "See your study week, or open your course to choose what to work on."}</p>
-          <Link href={studyPlanState.todayItems.length ? "#study-plan-today-title" : "/study-plan"} className="mt-6 inline-flex min-h-12 items-center justify-center gap-3 rounded bg-navy px-6 text-base font-medium text-white max-sm:w-full">{studyPlanState.todayItems.length ? "Open today’s plan" : "View this week"}<ArrowRight aria-hidden="true" className="size-4" /></Link>
-          {focusPath ? <Link href={getResourceHref("revision-notes", model.course.subjectSlug, focusPath.skillPathId)} className="ml-5 inline-flex min-h-11 items-center text-sm text-secondary max-sm:ml-0 max-sm:mt-2 max-sm:w-full">Overview skill notes</Link> : null}
+          <Link href={studyPlanState.todayItems.length ? "#study-plan-today-title" : "/study-plan"} className="orthic-primary-action mt-6 inline-flex min-h-12 items-center justify-center gap-3 rounded bg-navy px-6 text-base font-medium text-white max-sm:w-full">{studyPlanState.todayItems.length ? "Open today’s plan" : "View this week"}<ArrowRight aria-hidden="true" className="orthic-arrow size-4" /></Link>
+          {focusPath ? <Link href={getResourceHref("revision-notes", model.course.subjectSlug, focusPath.skillPathId)} className="orthic-secondary-link ml-5 inline-flex min-h-11 items-center text-sm text-secondary max-sm:ml-0 max-sm:mt-2 max-sm:w-full">Overview skill notes</Link> : null}
         </section>
       )}
       </div>
-      <div data-testid="dashboard-document-sections" className="grid min-w-0 gap-8 xl:grid-cols-[minmax(0,2.1fr)_minmax(260px,1fr)] xl:gap-10">
-      <div className="grid min-w-0 content-start gap-10">
-      {studyPlanEnabled ? <StudyPlanToday presentation="dashboard" evidence={evidence} courseSlug={effectiveCourses[0]?.slug ?? model.course.subjectSlug} courseName={effectiveCourses[0]?.name ?? "Higher Maths"} onDashboardStateChange={updateStudyPlanState} /> : null}
-
+      <div data-testid="dashboard-document-sections" className={`grid min-w-0 gap-8 ${studyPlanEnabled ? "xl:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)] xl:gap-10" : ""}`}>
+      {studyPlanEnabled ? <div className="grid min-w-0 content-start gap-10"><StudyPlanToday presentation="dashboard" heroOwnsResume={heroOwnsResume} evidence={evidence} courseSlug={effectiveCourses[0]?.slug ?? model.course.subjectSlug} courseName={effectiveCourses[0]?.name ?? "Higher Maths"} onDashboardStateChange={updateStudyPlanState} /></div> : null}
+      <aside aria-label="Courses, learning history and account context" className="grid min-w-0 content-start gap-7">
       <section aria-labelledby="your-courses-title" data-testid="dashboard-courses-section" className="pt-1">
-        <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
+        <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2 id="your-courses-title" className="text-lg font-semibold uppercase tracking-wide">Your courses</h2>
           </div>
-          <Link href={`/subjects/${model.course.subjectSlug}/course-tracker`} className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-navy">Open course tracker <span aria-hidden="true">↗</span></Link>
+          {effectiveCourses.length > 1 ? <Link href="/subjects" className="orthic-secondary-link inline-flex min-h-11 items-center gap-2 text-sm text-secondary">View all <span aria-hidden="true" className="orthic-arrow">→</span></Link> : null}
         </div>
         <div className="divide-y divide-rule border-y border-rule" data-testid="dashboard-courses">
           {effectiveCourses.map((course) => (
-            <div key={course.slug} className="my-3 flex min-h-24 flex-wrap items-center gap-4 border border-rule bg-white px-5 py-5">
-              <Link href={course.href} aria-label={`Open ${course.name}`} className="min-w-0 flex-1 max-sm:basis-full">
+            <div key={course.slug} className="orthic-course-row flex flex-wrap items-center gap-3 border-b border-rule px-1 py-4">
+              <Link href={course.href} aria-label={`Open ${course.name}`} className="orthic-secondary-link min-w-0 basis-full">
                 <span className="flex flex-wrap items-center gap-2 text-lg font-medium">{course.name}<span className="rounded-sm bg-academic-blue px-2 py-1 font-mono text-[10px] uppercase tracking-wide">{learnerPreferences.preferences.selectedCourseSlugs.includes(course.slug) ? "Selected" : "Available"}</span></span>
                 {course.slug === model.course.subjectSlug ? (
                   <span className="mt-1 block text-sm text-secondary">{model.course.completedPathCount} of {model.course.availablePathCount} skills learned · <span className={review.dueSkillCount ? "text-amber-800" : undefined}>{reviewSummary}</span></span>
                 ) : null}
               </Link>
-              <Link href={course.href} aria-label={`${course.name} course hub`} className="inline-flex min-h-11 items-center rounded-sm border border-rule px-4 text-sm text-navy">Course hub</Link>
-              <Link href={`/subjects/${course.slug}/course-tracker`} aria-label={`${course.name} course tracker`} className="inline-flex min-h-11 items-center gap-2 rounded-sm bg-navy px-4 text-sm text-white">Course Tracker <ArrowRight aria-hidden="true" className="size-4" /></Link>
+              <Link href={course.href} aria-label={`${course.name} course hub`} className="orthic-secondary-link inline-flex min-h-11 items-center px-2 text-sm text-secondary">Course hub</Link>
+              <Link href={`/subjects/${course.slug}/course-tracker`} aria-label={`${course.name} course tracker`} className="orthic-course-action inline-flex min-h-11 items-center gap-2 rounded-sm border border-rule px-3 text-sm text-navy">Course Tracker <ArrowRight aria-hidden="true" className="orthic-arrow size-4" /></Link>
             </div>
           ))}
         </div>
       </section>
-      </div>
-      <aside aria-label="Learning history and account context" className="grid min-w-0 content-start gap-7">
       <DashboardActivitySummary evidence={evidence} />
       <GuestProgressProtection presentation="dashboard" meaningfulEvidenceCount={meaningfulEvidenceCount} signedIn={sync.accountFingerprint !== null} authStateReady={sync.status === "authentication_required"} />
-      <section aria-label="Progress storage" className="border-t border-rule pt-4 text-secondary">
-        <h2 className="text-sm font-medium text-navy">{model.sync.label}</h2>
-        <p className="mt-2 text-xs leading-relaxed">{model.sync.detail}</p>
-      </section>
       </aside>
       </div>
     </section>
@@ -153,7 +148,7 @@ function DashboardJourney({ path, currentStageId }: { path: DashboardPathSummary
       const label = stage.name === "Past Paper-style Questions" ? "Exam practice" : stage.name;
       return <li key={stage.stageId} aria-current={current ? "step" : undefined} aria-label={`${label}: ${complete ? "complete" : current ? "current" : stage.totalQuestions === 0 ? "unavailable" : "not complete"}`} className="inline-flex items-center gap-3">
         <span aria-hidden="true" className="text-rule">→</span>
-        <span className={`inline-flex min-h-8 items-center gap-2 px-2 py-1 ${current ? "rounded-sm border border-rule bg-academic-blue text-navy" : complete ? "text-secondary" : ""}`}>{complete ? <span aria-hidden="true">✓</span> : null}{label}</span>
+        <span className={`orthic-stage inline-flex min-h-8 items-center gap-2 rounded-sm border px-2 py-1 ${current ? "border-rule bg-academic-blue text-navy" : complete ? "border-transparent text-secondary" : "border-transparent"}`}>{complete ? <span aria-hidden="true">✓</span> : null}{label}</span>
       </li>;
     })}
   </ol>;

@@ -117,7 +117,7 @@ test("Study Plan uses restrained shared list and section-motion treatments", () 
   assert.match(today, /<ol className="[^"]*divide-y divide-line[^"]*"/);
   assert.match(week, /<ol className="[^"]*divide-y divide-line[^"]*"/);
   assert.doesNotMatch(today, /<ol className="[^"]*border-y[^"]*"/);
-  assert.match(today, /<ol className="[^"]*animate-fade-rise[^"]*"/);
+  assert.doesNotMatch(today, /<ol className="[^"]*animate-fade-rise[^"]*"/);
   assert.match(week, /<div className="animate-fade-rise">[\s\S]*groups\.map/);
   assert.match(readiness, /data-testid="assessment-readiness" className="[^"]*animate-fade-rise[^"]*"/);
 });

@@ -141,8 +141,10 @@ test("meaningful guest progress gets one dismissible non-blocking protection pro
   const protection = await prompt.boundingBox();
   expect(courses).not.toBeNull();
   expect(protection).not.toBeNull();
-  if (page.viewportSize()!.width >= 1280) expect(protection!.x).toBeGreaterThanOrEqual(courses!.x + courses!.width);
-  else expect(protection!.y).toBeGreaterThanOrEqual(courses!.y + courses!.height);
+  const activity = await page.getByTestId("dashboard-activity-summary").boundingBox();
+  expect(activity).not.toBeNull();
+  expect(protection!.y).toBeGreaterThanOrEqual(activity!.y + activity!.height);
+  expect(protection!.y).toBeGreaterThanOrEqual(courses!.y + courses!.height);
   await prompt.getByRole("button", { name: "Dismiss account protection reminder" }).click();
   await expect(prompt).toHaveCount(0);
   await page.reload();
