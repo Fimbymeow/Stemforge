@@ -9,6 +9,7 @@ import { useLearnerNextAction } from "@/components/learning/use-learner-next-act
 import { ReviewEntryCard } from "@/components/review/review-entry-card";
 import { WorkingContextHubCard } from "@/components/working-context/working-context-hub-card";
 import { SubjectRoadmapNavigator } from "@/components/learning/subject-roadmap-navigator";
+import { CourseHubProgress } from "@/components/learning/course-hub-progress";
 
 export function HigherMathsHub() {
   const subject = getActiveSubject();
@@ -23,9 +24,10 @@ export function HigherMathsHub() {
         <AppTopbar demo />
       </div>
       <div className="mx-auto grid min-w-0 max-w-[1220px] grid-cols-[minmax(0,1fr)] gap-7 pb-8 pt-8 max-sm:pt-6" data-testid="course-hub-page">
-        <header className="min-w-0 border-b border-rule pb-6">
-          <h1 className="text-[32px] font-semibold leading-tight tracking-tight text-navy max-sm:text-[28px]">Higher Maths</h1>
-          <p className="mt-3 max-w-3xl text-base leading-relaxed text-secondary">Learn through focused stages, practise deliberately and revisit skills when Review recommends it.</p>
+        <header className="flex min-w-0 items-start justify-between gap-6 border-b border-rule pb-6 max-sm:flex-col">
+          <div className="min-w-0"><h1 className="text-[32px] font-semibold leading-tight tracking-tight text-navy max-sm:text-[28px]">Higher Maths</h1>
+          <p className="mt-3 max-w-3xl text-base leading-relaxed text-secondary">Learn through focused stages, practise deliberately and revisit skills when Review recommends it.</p></div>
+          <CourseHubProgress subject={subject} />
         </header>
 
         <section aria-labelledby="continue-learning-title" className="min-w-0">

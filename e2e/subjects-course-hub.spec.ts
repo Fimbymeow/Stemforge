@@ -20,15 +20,17 @@ test("Course Hub presents four curriculum strands without exposing implementatio
   await expect(strands.getByRole("button", { name: "Vectors", exact: true })).toBeVisible();
   await expect(strands.getByRole("button", { name: "Calculus", exact: true })).toHaveAttribute("aria-current", "true");
   await expect(strands.getByRole("button", { name: "Lines, Circles and Sequences", exact: true })).toBeVisible();
-  await expect(page.getByText(/skills available|\d+ available|coming soon/i)).toHaveCount(0);
+  await expect(strands.getByText(/skills available|\d+ available|coming soon/i)).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Differentiating functions", level: 4 })).toBeVisible();
   await expect(page.locator('a[href="/subjects/higher-maths/course-tracker"]')).toHaveCount(1);
-  await expect(page.getByText(/0%|complete.*strand|strand.*complete/i)).toHaveCount(0);
+  await expect(strands.getByText(/0%|complete.*strand|strand.*complete/i)).toHaveCount(0);
+  await expect(page.getByTestId("course-hub-progress")).toHaveAccessibleName("Course progress: 0 of 49 skills learned, 0%");
 });
 
 test("Course units expose actionable skills and use a restrained empty state for other strands", async ({ page }) => {
   await page.goto(hub);
   const calculus = page.getByTestId("roadmap-strand-calculus");
-  const activities = calculus.getByRole("list", { name: "Calculus learning activities" });
+  const activities = calculus.getByRole("list", { name: "Differentiating functions learning activities" });
   await expect(activities.getByRole("listitem")).toHaveCount(2);
   await expect(activities.getByRole("link", { name: /Basic differentiation/ })).toBeVisible();
   await expect(activities.getByRole("link", { name: /Chain rule/ })).toBeVisible();
@@ -107,6 +109,6 @@ for (const viewport of [
       expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
     }
     const roadmap = page.getByTestId("roadmap-strand-calculus");
-    await expect(roadmap.getByRole("list", { name: "Calculus learning activities" }).getByRole("listitem")).toHaveCount(2);
+    await expect(roadmap.getByRole("list", { name: "Differentiating functions learning activities" }).getByRole("listitem")).toHaveCount(2);
   });
 }
