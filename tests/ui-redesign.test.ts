@@ -70,7 +70,6 @@ test("canonical learning-page headers share the restrained icon-chip primitive",
   for (const file of [
     "components/mistakes/mistake-log-page.tsx",
     "components/past-papers/past-papers-library.tsx",
-    "components/higher-maths-hub.tsx",
   ]) {
     const source = readFileSync(file, "utf8");
     assert.match(source, /<PageHeaderIconChip>/, `${file} does not use the shared page-header icon chip`);

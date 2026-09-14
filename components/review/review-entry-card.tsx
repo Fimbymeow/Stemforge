@@ -56,15 +56,14 @@ function ReviewCard({ dueCount, detail, href, headingLevel, compact }: { dueCoun
       ? (dueCount === 1 ? "Review, 1 skill due" : `Review, ${dueCount} skills due`)
       : "Review, up to date";
     return (
-      <Link href={href ?? "/practice?review=1"} aria-label={label} data-testid="review-entry-card" data-review-state={href ? "due" : "up-to-date"} className="flex min-h-16 items-center gap-3 px-2 py-2 text-ink transition hover:bg-forge-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-forge">
+      <Link href={href ?? "/practice?review=1"} aria-label={label} data-testid="review-entry-card" data-review-state={href ? "due" : "up-to-date"} className="orthic-course-action flex min-h-20 items-center gap-3 border-b border-r border-rule bg-white px-4 py-4 text-navy focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-navy">
         <RefreshCcw aria-hidden="true" className={`size-4 shrink-0 ${href ? "text-warning" : "text-muted"}`} />
         <div className="flex min-w-0 items-center gap-3">
           <div className="min-w-0">
-            <Heading className="text-sm font-extrabold">Review</Heading>
-            <p className={`truncate text-xs ${href ? "font-bold text-warning" : "text-muted"}`}>{href ? `${dueCount} skill${dueCount === 1 ? "" : "s"} due` : "Up to date"}</p>
+            <Heading className="text-sm font-semibold">Review</Heading>
+            <p className={`mt-1 text-xs leading-relaxed ${href ? "font-medium text-warning" : "text-secondary"}`}>{href ? `${dueCount} skill${dueCount === 1 ? "" : "s"} due` : "Up to date"}</p>
           </div>
         </div>
-        <ArrowRight aria-hidden="true" className="ml-auto size-4 shrink-0" />
       </Link>
     );
   }
