@@ -4,10 +4,10 @@ import { expectNoHorizontalOverflow } from "./fixtures/student-actions";
 test("Courses presents only usable course access without roadmap placeholders", async ({ page, seriousBrowserErrors }) => {
   await page.goto("/subjects");
   const catalogue = page.getByTestId("qualification-course-list");
-  await expect(catalogue.getByRole("heading", { name: "Higher", level: 2 })).toBeVisible();
+  await expect(catalogue.getByRole("heading", { name: "Your courses", level: 2 })).toBeVisible();
   await expect(catalogue.getByText("National 5", { exact: true })).toHaveCount(0);
   await expect(catalogue.getByText("Advanced Higher", { exact: true })).toHaveCount(0);
-  await expect(page.getByRole("link", { name: "Open Higher Maths" })).toContainText("Structured notes, practice and Review");
+  await expect(page.getByRole("link", { name: "Open Higher Maths" })).toHaveAttribute("href", "/subjects/higher-maths");
   await expect(page.getByTestId("subject-card-higher-physics")).toHaveCount(0);
   await expectNoHorizontalOverflow(page);
   expect(seriousBrowserErrors).toEqual([]);

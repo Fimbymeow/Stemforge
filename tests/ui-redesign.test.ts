@@ -31,8 +31,10 @@ test("core redesigned surfaces retain the intended information hierarchy", () =>
   assert.equal((skill.match(/title="Notes"/g) ?? []).length, 1);
   assert.doesNotMatch(skill, /Next:/);
   assert.doesNotMatch(dashboard, /PracticeEntryCard|dashboard-practice|dashboard-review-summary|dashboard-mistakes-link|Needs attention|Secure and mastered|Needs work/);
-  assert.match(dashboard, /Your courses/);
-  assert.match(dashboard, /skills learned/);
+  const dashboardCourses = readFileSync("components/dashboard-courses.tsx", "utf8");
+  assert.match(dashboard, /DashboardCourses/);
+  assert.match(dashboardCourses, /Your courses/);
+  assert.match(dashboardCourses, /skills learned/);
   assert.match(hub, /SubjectRoadmapNavigator/);
   assert.doesNotMatch(hub, /PracticeEntryCard/);
   assert.doesNotMatch(hub, /View full Course Tracker/);
@@ -69,7 +71,6 @@ test("canonical learning-page headers share the restrained icon-chip primitive",
     "components/mistakes/mistake-log-page.tsx",
     "components/past-papers/past-papers-library.tsx",
     "components/higher-maths-hub.tsx",
-    "components/subjects-page.tsx",
   ]) {
     const source = readFileSync(file, "utf8");
     assert.match(source, /<PageHeaderIconChip>/, `${file} does not use the shared page-header icon chip`);

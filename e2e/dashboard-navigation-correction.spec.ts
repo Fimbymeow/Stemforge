@@ -41,20 +41,21 @@ test("revised dashboard and subject access remain distinct, ordered and overflow
   expect(seriousBrowserErrors).toEqual([]);
 });
 
-test("Subjects presents a focused qualification-grouped course list without roadmap placeholders", async ({ page }) => {
+test("Courses presents real enrolled course access without roadmap placeholders", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/subjects");
-  const group = page.getByTestId("qualification-group-higher");
-  await expect(group.getByRole("heading", { name: "Higher", level: 2 })).toBeVisible();
+  const group = page.getByTestId("your-courses");
+  await expect(group.getByRole("heading", { name: "Your courses", level: 2 })).toBeVisible();
   const maths = page.getByTestId("subject-card-higher-maths");
   const mathsBox = await maths.boundingBox();
   expect(mathsBox).not.toBeNull();
-  await expect(maths).toContainText("Structured notes, practice and Review");
+  await expect(maths).toContainText("0 of 2 skills learned");
   await expect(maths).toContainText("Open course");
   await expect(maths.getByRole("heading", { name: "Higher Maths", level: 3 })).toBeVisible();
   await expect(maths.getByText("Maths", { exact: true })).toHaveCount(0);
-  await maths.focus();
-  await expect(maths).toBeFocused();
+  const open = maths.getByRole("link", { name: "Open Higher Maths" });
+  await open.focus();
+  await expect(open).toBeFocused();
   await expect(page.getByTestId("subject-card-higher-physics")).toHaveCount(0);
   await expect(page.getByTestId("qualification-group-national-5")).toHaveCount(0);
   await expect(page.getByTestId("qualification-group-advanced-higher")).toHaveCount(0);

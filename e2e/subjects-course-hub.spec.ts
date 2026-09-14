@@ -6,7 +6,7 @@ const hub = "/subjects/higher-maths";
 test("Subjects remains a restrained catalogue with one usable Higher Maths course", async ({ page, seriousBrowserErrors }) => {
   await page.goto("/subjects");
   const catalogue = page.getByTestId("qualification-course-list");
-  await expect(catalogue.getByRole("heading", { name: "Higher", level: 2 })).toBeVisible();
+  await expect(catalogue.getByRole("heading", { name: "Your courses", level: 2 })).toBeVisible();
   await expect(page.getByRole("link", { name: "Open Higher Maths" })).toBeVisible();
   await expect(page.getByTestId("subject-card-higher-physics")).toHaveCount(0);
   await expect(page.getByText(/% complete|skills complete|skills available|coming soon/i)).toHaveCount(0);
