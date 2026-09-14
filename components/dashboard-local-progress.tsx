@@ -15,6 +15,7 @@ import { resolveEffectiveCourses } from "@/lib/learner-preferences";
 import { useLearnerPreferences } from "@/components/learner-preferences/use-learner-preferences";
 import { StudyPlanToday } from "@/components/study-plan/study-plan-today";
 import { DashboardActivitySummary } from "@/components/activity/dashboard-activity-summary";
+import { DashboardCourses } from "@/components/dashboard-courses";
 import { resolveDashboardContinueMode, type StudyPlanDashboardState } from "@/lib/study-plan/dashboard-dedup";
 
 export function DashboardLocalProgressSection({ studyPlanEnabled = false }: { studyPlanEnabled?: boolean }) {
@@ -53,6 +54,7 @@ export function DashboardLocalProgressSection({ studyPlanEnabled = false }: { st
     ? `${review.dueSkillCount} review${review.dueSkillCount === 1 ? "" : "s"} due`
     : "Up to date";
   const effectiveCourses = useMemo(() => resolveEffectiveCourses({ preferences: learnerPreferences.preferences, evidence }), [evidence, learnerPreferences.preferences]);
+  const attentionCourseSlugs = useMemo(() => effectiveCourses.filter((course) => deriveSubjectReviewSummary(course.slug, evidence).dueSkillCount > 0).map((course) => course.slug), [effectiveCourses, evidence]);
   // A real resumable action owns the hero; plan generation and recommendations remain unchanged.
   const heroOwnsResume = recommendation.intent === "resuming" && recommendation.href !== null;
   const continueMode = heroOwnsResume ? "full" : resolveDashboardContinueMode({ studyPlanEnabled, plan: studyPlanState, recommendation });
@@ -107,28 +109,7 @@ export function DashboardLocalProgressSection({ studyPlanEnabled = false }: { st
       <div data-testid="dashboard-document-sections" className={`grid min-w-0 gap-8 ${studyPlanEnabled ? "xl:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)] xl:gap-10" : ""}`}>
       {studyPlanEnabled ? <div className="grid min-w-0 content-start gap-10"><StudyPlanToday presentation="dashboard" heroOwnsResume={heroOwnsResume} evidence={evidence} courseSlug={effectiveCourses[0]?.slug ?? model.course.subjectSlug} courseName={effectiveCourses[0]?.name ?? "Higher Maths"} onDashboardStateChange={updateStudyPlanState} /></div> : null}
       <aside aria-label="Courses, learning history and account context" className="grid min-w-0 content-start gap-7">
-      <section aria-labelledby="your-courses-title" data-testid="dashboard-courses-section" className="pt-1">
-        <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h2 id="your-courses-title" className="text-lg font-semibold uppercase tracking-wide">Your courses</h2>
-          </div>
-          {effectiveCourses.length > 1 ? <Link href="/subjects" className="orthic-secondary-link inline-flex min-h-11 items-center gap-2 text-sm text-secondary">View all <span aria-hidden="true" className="orthic-arrow">→</span></Link> : null}
-        </div>
-        <div className="divide-y divide-rule border-y border-rule" data-testid="dashboard-courses">
-          {effectiveCourses.map((course) => (
-            <div key={course.slug} className="orthic-course-row flex flex-wrap items-center gap-3 border-b border-rule px-1 py-4">
-              <Link href={course.href} aria-label={`Open ${course.name}`} className="orthic-secondary-link min-w-0 basis-full">
-                <span className="flex flex-wrap items-center gap-2 text-lg font-medium">{course.name}<span className="rounded-sm bg-academic-blue px-2 py-1 font-mono text-[10px] uppercase tracking-wide">{learnerPreferences.preferences.selectedCourseSlugs.includes(course.slug) ? "Selected" : "Available"}</span></span>
-                {course.slug === model.course.subjectSlug ? (
-                  <span className="mt-1 block text-sm text-secondary">{model.course.completedPathCount} of {model.course.availablePathCount} skills learned · <span className={review.dueSkillCount ? "text-amber-800" : undefined}>{reviewSummary}</span></span>
-                ) : null}
-              </Link>
-              <Link href={course.href} aria-label={`${course.name} course hub`} className="orthic-secondary-link inline-flex min-h-11 items-center px-2 text-sm text-secondary">Course hub</Link>
-              <Link href={`/subjects/${course.slug}/course-tracker`} aria-label={`${course.name} course tracker`} className="orthic-course-action inline-flex min-h-11 items-center gap-2 rounded-sm border border-rule px-3 text-sm text-navy">Course Tracker <ArrowRight aria-hidden="true" className="orthic-arrow size-4" /></Link>
-            </div>
-          ))}
-        </div>
-      </section>
+      <DashboardCourses courses={effectiveCourses} focusCourseSlug={continueMode === "hidden" ? effectiveCourses[0]?.slug ?? recommendation.subjectId ?? model.course.subjectSlug : recommendation.subjectId ?? model.course.subjectSlug} attentionCourseSlugs={attentionCourseSlugs} selectedCourseSlugs={learnerPreferences.preferences.selectedCourseSlugs} progressCourseSlug={model.course.subjectSlug} completedPathCount={model.course.completedPathCount} availablePathCount={model.course.availablePathCount} reviewSummary={reviewSummary} reviewDue={review.dueSkillCount > 0} />
       <DashboardActivitySummary evidence={evidence} />
       <GuestProgressProtection presentation="dashboard" meaningfulEvidenceCount={meaningfulEvidenceCount} signedIn={sync.accountFingerprint !== null} authStateReady={sync.status === "authentication_required"} />
       </aside>
