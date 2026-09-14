@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { deriveActivityHistory } from "@/lib/activity/derivation";
-import { activityIntensityClass, deriveDashboardActivityRecap } from "@/lib/activity/presentation";
+import { deriveDashboardActivityRecap } from "@/lib/activity/presentation";
 import type { ProgressEvidence } from "@/lib/progress/types";
 
 export function DashboardActivitySummary({ evidence, now = new Date() }: { evidence: ProgressEvidence; now?: Date }) {
@@ -14,7 +14,7 @@ export function DashboardActivitySummary({ evidence, now = new Date() }: { evide
         </div>
         <p className="col-span-2 border-t border-rule pt-4 text-sm leading-relaxed" data-testid="dashboard-activity-recap">{recap}</p>
         <div className="col-span-2 grid grid-cols-7 gap-2" role="img" aria-label={history.summaryText} data-testid="dashboard-activity-strip">
-          {history.days.map((day) => <span key={day.dayKey} aria-hidden="true" data-intensity={day.intensityLevel} className={`h-6 min-w-0 rounded-sm border ${activityIntensityClass(day.intensityLevel)}`} />)}
+          {history.days.map((day) => <span key={day.dayKey} aria-hidden="true" data-intensity={day.intensityLevel} className={`h-6 min-w-0 rounded-sm border ${day.intensityLevel ? "forced-colors:border-[Highlight]" : "forced-colors:border-[CanvasText]"} ${["border-rule bg-slate-100", "border-blue-200 bg-blue-100", "border-blue-300 bg-blue-200", "border-blue-400 bg-blue-300", "border-blue-500 bg-blue-400"][day.intensityLevel]}`} />)}
         </div>
         <Link href="/activity" aria-label="View full activity history" className="col-start-2 row-start-1 inline-flex min-h-11 items-center gap-1 text-xs font-medium text-navy">View activity <span aria-hidden="true">→</span></Link>
         <div className="col-span-2 flex justify-between font-mono text-[10px] uppercase tracking-wide"><span>{history.days.length - 1} days ago</span><span>Today</span></div>

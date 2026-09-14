@@ -11,6 +11,11 @@ test("guest learner dashboard hydrates without errors and presents calm course a
   await expect(summary.getByRole("link", { name: "Start learning" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
   await expect(summary).toContainText("Basic differentiation");
   await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Foundations \u00b7 0/3 complete");
+  const pathway = summary.getByRole("list", { name: "Learning pathway" });
+  await expect(pathway.getByRole("listitem", { name: "Foundations: current" })).toHaveAttribute("aria-current", "step");
+  await expect(pathway.getByRole("listitem", { name: "Applications: not complete" })).toBeVisible();
+  await expect(pathway.getByRole("listitem").filter({ hasText: /^Notes$/ })).not.toHaveAttribute("aria-current", "step");
+  await expect(pathway).not.toContainText("✓");
   await expect(page.getByTestId("dashboard-course-progress")).toHaveCount(0);
   await expect(page.getByTestId("dashboard-per-skill-progress")).toHaveCount(0);
   await expect(page.getByTestId("dashboard-weekly-activity")).toHaveCount(0);
@@ -25,6 +30,8 @@ test("guest learner dashboard hydrates without errors and presents calm course a
   const course = page.getByTestId("dashboard-courses").getByRole("link", { name: "Open Higher Maths" });
   await expect(course).toContainText("0 of 2 skills learned");
   await expect(course).toContainText("Up to date");
+  await expect(page.getByRole("link", { name: "Higher Maths course hub" })).toHaveAttribute("href", "/subjects/higher-maths");
+  await expect(page.getByRole("link", { name: "Higher Maths course tracker" })).toHaveAttribute("href", "/subjects/higher-maths/course-tracker");
   await expect(page.getByTestId("dashboard-review-summary")).toHaveCount(0);
   await expect(page.getByText("Needs attention", { exact: true })).toHaveCount(0);
   await expect(page.getByRole("navigation", { name: "Main" })).toBeVisible();

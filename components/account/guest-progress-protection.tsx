@@ -13,10 +13,12 @@ export function GuestProgressProtection({
   meaningfulEvidenceCount,
   signedIn,
   authStateReady,
+  presentation = "default",
 }: {
   meaningfulEvidenceCount: number;
   signedIn: boolean;
   authStateReady: boolean;
+  presentation?: "default" | "dashboard";
 }) {
   const accountsAvailable = useAuthFeatureAvailable();
   const [dismissedAt, setDismissedAt] = useState<number | null | undefined>(undefined);
@@ -44,9 +46,9 @@ export function GuestProgressProtection({
   }
 
   return (
-    <aside data-testid="guest-progress-protection" className="relative border-y border-forge/20 bg-forge-soft/35 px-3 py-3 pr-12" aria-labelledby="guest-progress-protection-title">
+    <aside data-testid="guest-progress-protection" className={presentation === "dashboard" ? "relative border border-rule bg-white p-6 pr-12 text-navy" : "relative border-y border-forge/20 bg-forge-soft/35 px-3 py-3 pr-12"} aria-labelledby="guest-progress-protection-title">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <div className="min-w-[220px] flex-1">
+        <div className="min-w-0 flex-1">
           <h2 id="guest-progress-protection-title" className="m-0 text-sm font-extrabold">Protect your browser progress</h2>
           <p className="mb-0 mt-0.5 text-xs leading-relaxed text-muted">Your progress currently lives on this browser. You can keep learning as a guest.</p>
         </div>

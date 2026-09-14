@@ -10,7 +10,7 @@ export function DashboardPage({ mode }: { mode: DashboardMode }) {
   const studyPlanEnabled = getStudyPlanConfiguration().enabled;
 
   return (
-    <AppShell demo={isDemo} active="Dashboard" feedbackPlacement="inline-mobile" className="py-8 max-lg:pt-5">
+    <AppShell demo={isDemo} active="Dashboard" feedbackPlacement="inline-mobile" className="!px-10 py-8 max-md:!px-4 max-lg:pt-5">
       <div className="mx-auto grid min-w-0 max-w-[1220px] grid-cols-[minmax(0,1fr)] gap-10 max-sm:gap-7">
         <DashboardPersonalisation />
         <DashboardLocalProgressSection studyPlanEnabled={studyPlanEnabled} />

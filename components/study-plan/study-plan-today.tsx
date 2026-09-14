@@ -14,7 +14,7 @@ import { usePremiumPreview } from "@/components/premium-preview-provider";
 type Props = { evidence: ProgressEvidence; courseSlug: string; courseName: string; presentation?: "default" | "dashboard"; onDashboardStateChange?: (state: StudyPlanDashboardState) => void };
 
 export function StudyPlanToday({ evidence, courseSlug, courseName, presentation = "default", onDashboardStateChange }: Props) {
-  const sectionClass = presentation === "dashboard" ? "border-t border-rule pt-5" : "rounded-2xl border border-forge/25 bg-white p-4 shadow-card md:p-5";
+  const sectionClass = presentation === "dashboard" ? "min-w-0" : "rounded-2xl border border-forge/25 bg-white p-4 shadow-card md:p-5";
   const setupButtonClass = presentation === "dashboard" ? "mt-4 min-h-11 rounded-md border border-rule bg-white px-5 text-sm font-semibold text-navy hover:border-navy" : "mt-4 min-h-11 rounded-lg bg-forge px-5 text-sm font-extrabold text-white";
   const premiumPreview = usePremiumPreview();
   const studyPlan = useStudyPlan({ evidence, courseSlug, assessmentAware: premiumPreview.enabled });
@@ -46,8 +46,8 @@ export function StudyPlanToday({ evidence, courseSlug, courseName, presentation 
     return (
       <>
         <section aria-labelledby="study-plan-setup-title" data-testid="study-plan-setup" className={sectionClass}>
-          <p className="text-xs font-extrabold uppercase tracking-wide text-forge">Study Plan</p>
-          <h2 id="study-plan-setup-title" className="mt-1 text-xl font-extrabold">Plan your study week</h2>
+          <p className={presentation === "dashboard" ? "border-b border-rule pb-3 text-lg font-semibold uppercase tracking-wide text-navy" : "text-xs font-extrabold uppercase tracking-wide text-forge"}>Study Plan {presentation === "dashboard" ? <span className="ml-2 font-mono text-[10px] font-normal text-secondary">{courseName}</span> : null}</p>
+          <h2 id="study-plan-setup-title" className={presentation === "dashboard" ? "mt-5 text-base font-semibold" : "mt-1 text-xl font-extrabold"}>Plan your study week</h2>
           <p className="mt-1 max-w-2xl text-sm text-muted">Set a realistic rhythm for {courseName} and Orthic will suggest a short plan for each day.</p>
           <button type="button" onClick={() => setSettingsOpen(true)} className={setupButtonClass}>Set up my plan</button>
         </section>
@@ -63,23 +63,23 @@ export function StudyPlanToday({ evidence, courseSlug, courseName, presentation 
   return (
     <>
       <section aria-labelledby="study-plan-today-title" data-testid="study-plan-today" className={todaySectionClass}>
-        <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className={`flex flex-wrap items-start justify-between gap-3 ${presentation === "dashboard" ? "border-b border-rule pb-3" : ""}`}>
           <div>
-            <p className="text-xs font-extrabold uppercase tracking-wide text-forge">Study Plan</p>
-            <h2 id="study-plan-today-title" className="mt-1 text-xl font-extrabold">Today</h2>
-            <p className="mt-1 text-sm text-muted">What Orthic recommends next for {courseName}, based on your learning so far.</p>
+            {presentation !== "dashboard" ? <p className="text-xs font-extrabold uppercase tracking-wide text-forge">Study Plan</p> : null}
+            <h2 id="study-plan-today-title" className={presentation === "dashboard" ? "text-lg font-semibold uppercase tracking-wide text-navy" : "mt-1 text-xl font-extrabold"}>{presentation === "dashboard" ? <>Study Plan <span className="ml-2 font-mono text-[10px] font-normal text-secondary">Today</span></> : "Today"}</h2>
+            {presentation !== "dashboard" ? <p className="mt-1 text-sm text-muted">What Orthic recommends next for {courseName}, based on your learning so far.</p> : null}
           </div>
           <div className="flex flex-wrap items-center gap-1 text-sm">
-            <Link href="/study-plan" className="inline-flex min-h-10 items-center rounded-lg px-3 font-extrabold text-forge">View this week <span aria-hidden="true">→</span></Link>
-            <button type="button" onClick={studyPlan.refresh} className={quietButton}><RefreshCw aria-hidden="true" className="size-4" />Refresh</button>
-            <button type="button" onClick={() => setSettingsOpen(true)} className={quietButton}><Settings2 aria-hidden="true" className="size-4" />Plan settings</button>
+            <Link href="/study-plan" className={presentation === "dashboard" ? "inline-flex min-h-11 items-center gap-1 text-sm font-medium text-navy" : "inline-flex min-h-10 items-center rounded-lg px-3 font-extrabold text-forge"}>View this week <span aria-hidden="true">→</span></Link>
+            <button type="button" aria-label="Refresh" onClick={studyPlan.refresh} className={presentation === "dashboard" ? "grid size-11 place-items-center text-secondary" : quietButton}><RefreshCw aria-hidden="true" className="size-4" /><span className={presentation === "dashboard" ? "sr-only" : undefined}>Refresh</span></button>
+            <button type="button" onClick={() => setSettingsOpen(true)} className={presentation === "dashboard" ? "inline-flex min-h-11 items-center gap-1 text-sm text-secondary" : quietButton}><Settings2 aria-hidden="true" className="size-4" />Plan settings</button>
           </div>
         </div>
 
         {plan?.status !== "ok" ? (
           <p className="mt-4 rounded-lg bg-paper p-3 text-sm text-muted">A useful plan is not available for this course yet.</p>
         ) : studyPlan.todayItems.length === 0 ? (
-          <div className={presentation === "dashboard" ? "mt-5 border border-rule bg-white p-5" : "mt-4 rounded-lg bg-paper p-3"}>
+          <div className={presentation === "dashboard" ? "mt-5 border-l-2 border-rule pl-4" : "mt-4 rounded-lg bg-paper p-3"}>
             <p className="text-base font-medium">{plan.caughtUp ? "You’re caught up for now." : "Nothing is planned for today."}</p>
             {presentation === "dashboard" ? <p className="mt-2 text-sm leading-relaxed text-secondary">{plan.caughtUp ? "Your course is still available whenever you want to practise or revisit a skill." : "Your study rhythm continues across the week. View this week to see your plan or adjust your study days in Plan settings."}</p> : null}
           </div>

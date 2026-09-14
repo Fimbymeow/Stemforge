@@ -30,8 +30,8 @@ test.describe("feature-flagged Study Plan Today", () => {
     await expectVerticalOrder(page, ["dashboard-progress-summary", "study-plan-setup", "dashboard-courses-section", "dashboard-activity-summary"]);
   });
 
-  for (const width of [1440, 320]) test(`configured empty day retains a real learning focus at ${width}px`, async ({ page, seriousBrowserErrors }) => {
-    await page.setViewportSize({ width, height: 900 });
+  for (const width of [1440, 1024, 390, 375, 320]) test(`configured empty day retains a real learning focus at ${width}px`, async ({ page, seriousBrowserErrors }, testInfo) => {
+    await page.setViewportSize({ width, height: width === 320 ? 700 : width < 1024 ? 812 : 900 });
     await page.getByTestId("study-plan-setup").getByRole("button", { name: "Set up my plan" }).click();
     const setup = page.getByRole("dialog", { name: "Plan your study week" });
     await setup.getByTitle("Wednesday").click();
@@ -44,21 +44,23 @@ test.describe("feature-flagged Study Plan Today", () => {
     await expect(page.getByTestId("dashboard-progress-summary")).toHaveCount(0);
     await expect(page.getByTestId("dashboard-courses").getByRole("link", { name: "Open Higher Maths" })).toBeVisible();
     await expectNoHorizontalOverflow(page);
+    await captureDashboard(page, testInfo.outputPath(`empty-${width}.png`));
     expect(seriousBrowserErrors).toEqual([]);
   });
 
-  for (const width of [1440, 320]) {
-    test(`real Foundations resume retains the focal composition at ${width}px`, async ({ page }) => {
-      await page.setViewportSize({ width, height: 900 });
+  for (const width of [1440, 1024, 390, 375, 320]) {
+    test(`real Foundations resume retains the focal composition at ${width}px`, async ({ page }, testInfo) => {
+      await page.setViewportSize({ width, height: width === 320 ? 700 : width < 1024 ? 812 : 900 });
       await seedStoredProgress(page, v3Payload([currentAttempt("hm-calc-diff-basic-f-001", 1, { isCorrect: false })]));
       await page.goto("/dashboard");
       const focus = page.getByTestId("dashboard-progress-summary");
       await expect(focus.getByRole("link", { name: "Resume question" })).toHaveAttribute("href", "/question/hm-calc-diff-basic-f-001");
       await expect(focus).toContainText("Foundations");
       await expectNoHorizontalOverflow(page);
+      await captureDashboard(page, testInfo.outputPath(`resume-${width}.png`));
     });
-    test(`Review due and configured plan keep one learning owner at ${width}px`, async ({ page }) => {
-      await page.setViewportSize({ width, height: 900 });
+    test(`Review due and configured plan keep one learning owner at ${width}px`, async ({ page }, testInfo) => {
+      await page.setViewportSize({ width, height: width === 320 ? 700 : width < 1024 ? 812 : 900 });
       await seedStoredProgress(page, v3Payload(completedPathAttempts("basic-differentiation", "2026-08-01T08:00:00.000Z")));
       await page.goto("/dashboard");
       await createPlan(page);
@@ -69,6 +71,7 @@ test.describe("feature-flagged Study Plan Today", () => {
       await expect(page.getByTestId("dashboard-progress-summary")).toHaveCount(0);
       await expect(page.getByTestId("dashboard-courses")).toContainText("1 review due");
       await expectNoHorizontalOverflow(page);
+      await captureDashboard(page, testInfo.outputPath(`review-${width}.png`));
     });
   }
 
@@ -81,7 +84,7 @@ test.describe("feature-flagged Study Plan Today", () => {
     await setup.getByRole("button", { name: "Create my plan" }).click();
 
     const today = page.getByTestId("study-plan-today");
-    await expect(today.getByRole("heading", { name: "Today" })).toBeVisible();
+    await expect(today.getByRole("heading", { name: "Study Plan Today" })).toBeVisible();
     await expect(today.getByTestId("study-plan-item")).toHaveCount(1);
     await expect(today.getByTestId("study-plan-item").getByRole("link", { name: "Start" })).toHaveAttribute("href", /\/question\/hm-calc-diff-basic-f-001$/);
     await expect(page.getByTestId("dashboard-progress-summary")).toHaveCount(0);
@@ -238,6 +241,18 @@ function completedPathAttempts(pathId: string, attemptedAt: string) {
       versionEvidence: { kind: "known", questionVersion: questionContext.question.questionVersion },
     });
   });
+}
+
+async function captureDashboard(page: import("@playwright/test").Page, path: string) {
+  // Dialog focus restoration can scroll the page; compare the resting composition from its top.
+  await page.evaluate(async () => {
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+  });
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+  await page.evaluate(() => { if (document.activeElement instanceof HTMLElement) document.activeElement.blur(); });
+  await page.screenshot({ path, fullPage: true });
 }
 
 async function createPlan(page: import("@playwright/test").Page) {

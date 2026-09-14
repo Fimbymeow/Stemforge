@@ -18,11 +18,11 @@ export function StudyPlanItemRow({ item, availableDates, moving, onToggleMove, o
 }) {
   const assessmentText = presentStudyPlanAssessmentQualifier(item.assessmentQualifier);
   return (
-    <div data-testid="study-plan-item" data-item-key={item.itemKey} className="py-3">
+    <div data-testid="study-plan-item" data-item-key={item.itemKey} className={primaryAction ? "my-3 border border-rule bg-white px-4 py-3" : "py-3"}>
       <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-x-3 gap-y-2 max-sm:grid-cols-[auto_minmax(0,1fr)_auto]">
-        <span aria-hidden="true" className={`flex size-8 shrink-0 items-center justify-center rounded-full ${item.state === "completed" ? "bg-forge-soft text-forge" : "bg-paper text-muted"}`}>{item.state === "completed" ? <Check className="size-4" /> : <CalendarDays className="size-4" />}</span>
+        <span aria-hidden="true" className={`flex size-8 shrink-0 items-center justify-center ${primaryAction ? "text-secondary" : `rounded-full ${item.state === "completed" ? "bg-forge-soft text-forge" : "bg-paper text-muted"}`}`}>{item.state === "completed" ? <Check className="size-4" /> : <CalendarDays className="size-4" />}</span>
         <span className="min-w-0">
-          <span className={`block text-sm font-extrabold ${item.state === "completed" ? "text-muted line-through" : "text-ink"}`}>{item.skillName}</span>
+          <span className={`block text-sm ${primaryAction ? "font-medium" : "font-extrabold"} ${item.state === "completed" ? "text-muted line-through" : "text-ink"}`}>{item.skillName}</span>
           <span className="block text-xs text-muted">{presentStudyPlanReason(item.reasonCode)}{assessmentText ? ` · ${assessmentText}` : ""} · {item.suggestedMinutes} min</span>
           {item.manualOverride === "moved" || item.manualOverride === "pulled_forward" ? <span className="block text-xs font-bold text-forge">Moved by you</span> : null}
         </span>

@@ -13,14 +13,19 @@ test("Courses presents only usable course access without roadmap placeholders", 
   expect(seriousBrowserErrors).toEqual([]);
 });
 
-test("Dashboard Activity is a compact summary below course access", async ({ page }) => {
+test("Dashboard Activity remains secondary within the responsive composition", async ({ page }) => {
   await page.goto("/dashboard");
   const courses = await page.getByTestId("dashboard-courses").boundingBox();
   const activity = page.getByTestId("dashboard-activity-summary");
   const activityBox = await activity.boundingBox();
   expect(courses).not.toBeNull();
   expect(activityBox).not.toBeNull();
-  expect(activityBox!.y).toBeGreaterThanOrEqual(courses!.y + courses!.height);
+  if (page.viewportSize()!.width >= 1280) {
+    expect(activityBox!.x).toBeGreaterThanOrEqual(courses!.x + courses!.width);
+    const learning = await page.getByTestId("dashboard-learning-region").boundingBox();
+    expect(learning).not.toBeNull();
+    expect(activityBox!.y).toBeGreaterThanOrEqual(learning!.y + learning!.height);
+  } else expect(activityBox!.y).toBeGreaterThanOrEqual(courses!.y + courses!.height);
   await expect(activity.getByRole("link", { name: "View full activity history" })).toHaveAttribute("href", "/activity");
   await expect(activity.getByTestId("dashboard-activity-strip").locator("[data-intensity]")).toHaveCount(14);
   const content = await activity.getByTestId("dashboard-activity-content").boundingBox();

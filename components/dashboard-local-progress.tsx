@@ -4,7 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { useProgressSync } from "@/components/progress-sync-provider";
-import { deriveLearnerDashboardModel } from "@/lib/dashboard-derivations";
+import { deriveLearnerDashboardModel, type DashboardPathSummary } from "@/lib/dashboard-derivations";
+import { getResourceHref } from "@/lib/learning-paths";
 import { getEmptyProgressEvidence, getProgressEvidence } from "@/lib/local-progress";
 import { useLearnerNextAction } from "@/components/learning/use-learner-next-action";
 import type { ProgressEvidence } from "@/lib/progress/types";
@@ -57,17 +58,19 @@ export function DashboardLocalProgressSection({ studyPlanEnabled = false }: { st
   const planFocusPath = planFocus ? model.paths.find((path) => path.skillPathId === planFocus.skillPathId) : null;
   const planFocusStage = planFocus?.stageId ? planFocusPath?.stageSummaries.find((stage) => stage.stageId === planFocus.stageId) : null;
   const focusStage = planFocus ? planFocusStage : recommendedStage;
+  const focusPath = planFocus ? planFocusPath : recommendedPath;
 
   return (
     <section className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-10 text-navy max-sm:gap-7" aria-label="Your learning dashboard">
       <div data-testid="dashboard-learning-region">
-      {continueMode === "full" ? <section data-testid="dashboard-progress-summary" aria-label="Continue learning" className="rounded-lg border border-rule bg-white p-6 md:p-10">
-        <div className="grid min-h-[240px] content-center gap-6 max-sm:min-h-0">
+      {continueMode === "full" ? <section data-testid="dashboard-progress-summary" aria-label="Continue learning" className="rounded border border-rule bg-white p-6 md:p-8 lg:p-9">
+        <div className="grid gap-6">
           <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-widest text-navy">Continue learning · Higher Maths</p>
+            <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-navy"><span aria-hidden="true" className="size-2 rounded-full bg-navy" />Continue learning · Higher Maths</p>
             <h2 className="mt-5 text-[30px] font-semibold leading-tight tracking-tight max-sm:text-2xl">{recommendedPath?.name ?? "Higher Maths"}</h2>
-            {recommendedStage ? <p className="mt-5 inline-block rounded border border-rule bg-academic-blue px-3 py-2 text-sm text-navy" data-testid="dashboard-current-stage">{recommendedStage.name} · {recommendedStage.completedQuestions}/{recommendedStage.totalQuestions} complete</p> : null}
-            <p className="mt-5 max-w-3xl text-base leading-relaxed text-secondary">{recommendation.reason}</p>
+            <DashboardJourney path={recommendedPath} currentStageId={recommendation.stageId} />
+            {recommendedStage ? <p className="mt-4 text-xs text-secondary" data-testid="dashboard-current-stage">{recommendedStage.name} · {recommendedStage.completedQuestions}/{recommendedStage.totalQuestions} complete</p> : null}
+            <p className="mt-4 max-w-3xl text-[15px] leading-relaxed text-secondary">{recommendation.reason}</p>
           </div>
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
             {recommendation.href ? <Link href={recommendation.href} className="inline-flex min-h-12 items-center justify-center gap-3 rounded bg-navy px-6 text-base font-medium text-white max-sm:w-full">{recommendation.label}<ArrowRight aria-hidden="true" className="size-4" /></Link> : null}
@@ -75,23 +78,27 @@ export function DashboardLocalProgressSection({ studyPlanEnabled = false }: { st
           </div>
         </div>
       </section> : continueMode === "compact" && recommendation.href ? (
-        <section aria-labelledby="dashboard-resume-course-title" data-testid="dashboard-resume-course" className="rounded-lg border border-rule bg-white p-6 md:p-10">
+        <section aria-labelledby="dashboard-resume-course-title" data-testid="dashboard-resume-course" className="rounded border border-rule bg-white p-6 md:p-8">
           <div className="flex items-center justify-between gap-4 max-sm:items-start">
             <div className="min-w-0">
               <p className="text-xs font-extrabold uppercase tracking-wide text-muted">Continue learning</p>
               <h2 id="dashboard-resume-course-title" className="mt-4 text-2xl font-semibold">{recommendedPath?.name ?? recommendation.title}</h2>
+              <DashboardJourney path={recommendedPath} currentStageId={recommendation.stageId} />
               {recommendedStage ? <p className="mt-0.5 text-xs font-semibold text-muted">{recommendedStage.name} · {recommendedStage.completedQuestions}/{recommendedStage.totalQuestions} complete</p> : null}
             </div>
             <Link href={recommendation.href} aria-label={`${recommendation.label}: ${recommendedPath?.name ?? recommendation.title}`} className="inline-flex min-h-10 shrink-0 items-center gap-1 text-sm font-extrabold text-forge">Open <ArrowRight aria-hidden="true" className="size-4" /></Link>
           </div>
         </section>
       ) : (
-        <section data-testid="dashboard-plan-focus" aria-labelledby="dashboard-plan-focus-title" className="rounded-lg border border-rule bg-white p-6 md:p-10">
-          <p className="text-xs font-semibold uppercase tracking-widest">Your learning · {effectiveCourses[0]?.name ?? "Higher Maths"}</p>
+        <section data-testid="dashboard-plan-focus" aria-labelledby="dashboard-plan-focus-title" className="rounded border border-rule bg-white p-6 md:p-8 lg:p-9">
+          <p className="font-mono text-[11px] font-medium uppercase tracking-[0.1em]">Your learning · {effectiveCourses[0]?.name ?? "Higher Maths"}</p>
           <h2 id="dashboard-plan-focus-title" className="mt-5 text-[30px] font-semibold leading-tight tracking-tight max-sm:text-2xl">{planFocus?.skillName ?? recommendedPath?.name ?? effectiveCourses[0]?.name ?? "Your study plan"}</h2>
-          {focusStage ? <p className="mt-5 inline-block rounded border border-rule bg-academic-blue px-3 py-2 text-sm">{focusStage.name} · {focusStage.completedQuestions}/{focusStage.totalQuestions} complete</p> : null}
-          <p className="mt-5 max-w-3xl text-base leading-relaxed text-secondary">{studyPlanState.todayItems.length ? "Your next learning action is in today’s Study Plan." : "See your study week, or open your course to choose what to work on."}</p>
+          <DashboardJourney path={focusPath ?? null} currentStageId={planFocus ? planFocus.stageId : recommendation.stageId} />
+          {focusStage ? <p className="mt-4 text-xs text-secondary">{focusStage.name} · {focusStage.completedQuestions}/{focusStage.totalQuestions} complete</p> : null}
+          {planFocus?.actionType === "review" ? <p className="mt-4 inline-block rounded-sm border border-amber-200 bg-amber-50 px-3 py-1 font-mono text-xs text-amber-800">Due for review · {planFocus.suggestedMinutes} min</p> : null}
+          <p className="mt-4 max-w-3xl text-[15px] leading-relaxed text-secondary">{studyPlanState.todayItems.length ? "Your next learning action is in today’s Study Plan." : "See your study week, or open your course to choose what to work on."}</p>
           <Link href={studyPlanState.todayItems.length ? "#study-plan-today-title" : "/study-plan"} className="mt-6 inline-flex min-h-12 items-center justify-center gap-3 rounded bg-navy px-6 text-base font-medium text-white max-sm:w-full">{studyPlanState.todayItems.length ? "Open today’s plan" : "View this week"}<ArrowRight aria-hidden="true" className="size-4" /></Link>
+          {focusPath ? <Link href={getResourceHref("revision-notes", model.course.subjectSlug, focusPath.skillPathId)} className="ml-5 inline-flex min-h-11 items-center text-sm text-secondary max-sm:ml-0 max-sm:mt-2 max-sm:w-full">Overview skill notes</Link> : null}
         </section>
       )}
       </div>
@@ -104,28 +111,50 @@ export function DashboardLocalProgressSection({ studyPlanEnabled = false }: { st
           <div>
             <h2 id="your-courses-title" className="text-lg font-semibold uppercase tracking-wide">Your courses</h2>
           </div>
-          <span className="text-xs font-bold text-muted">{model.sync.label}</span>
+          <Link href={`/subjects/${model.course.subjectSlug}/course-tracker`} className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-navy">Open course tracker <span aria-hidden="true">↗</span></Link>
         </div>
-        <div className="divide-y divide-rule border-y border-rule bg-white" data-testid="dashboard-courses">
+        <div className="divide-y divide-rule border-y border-rule" data-testid="dashboard-courses">
           {effectiveCourses.map((course) => (
-            <Link key={course.slug} href={course.href} aria-label={`Open ${course.name}`} className="flex min-h-24 flex-wrap items-center gap-4 px-5 py-5 transition-colors hover:bg-academic-blue focus-visible:bg-academic-blue">
-              <span className="min-w-0 flex-1">
-                <span className="block text-lg font-medium">{course.name}</span>
+            <div key={course.slug} className="my-3 flex min-h-24 flex-wrap items-center gap-4 border border-rule bg-white px-5 py-5">
+              <Link href={course.href} aria-label={`Open ${course.name}`} className="min-w-0 flex-1 max-sm:basis-full">
+                <span className="flex flex-wrap items-center gap-2 text-lg font-medium">{course.name}<span className="rounded-sm bg-academic-blue px-2 py-1 font-mono text-[10px] uppercase tracking-wide">{learnerPreferences.preferences.selectedCourseSlugs.includes(course.slug) ? "Selected" : "Available"}</span></span>
                 {course.slug === model.course.subjectSlug ? (
                   <span className="mt-1 block text-sm text-secondary">{model.course.completedPathCount} of {model.course.availablePathCount} skills learned · <span className={review.dueSkillCount ? "text-amber-800" : undefined}>{reviewSummary}</span></span>
                 ) : null}
-              </span>
-              <ArrowRight aria-hidden="true" className="size-4 shrink-0 text-muted" />
-            </Link>
+              </Link>
+              <Link href={course.href} aria-label={`${course.name} course hub`} className="inline-flex min-h-11 items-center rounded-sm border border-rule px-4 text-sm text-navy">Course hub</Link>
+              <Link href={`/subjects/${course.slug}/course-tracker`} aria-label={`${course.name} course tracker`} className="inline-flex min-h-11 items-center gap-2 rounded-sm bg-navy px-4 text-sm text-white">Course Tracker <ArrowRight aria-hidden="true" className="size-4" /></Link>
+            </div>
           ))}
         </div>
       </section>
       </div>
       <aside aria-label="Learning history and account context" className="grid min-w-0 content-start gap-7">
       <DashboardActivitySummary evidence={evidence} />
-      <GuestProgressProtection meaningfulEvidenceCount={meaningfulEvidenceCount} signedIn={sync.accountFingerprint !== null} authStateReady={sync.status === "authentication_required"} />
+      <GuestProgressProtection presentation="dashboard" meaningfulEvidenceCount={meaningfulEvidenceCount} signedIn={sync.accountFingerprint !== null} authStateReady={sync.status === "authentication_required"} />
+      <section aria-label="Progress storage" className="border-t border-rule pt-4 text-secondary">
+        <h2 className="text-sm font-medium text-navy">{model.sync.label}</h2>
+        <p className="mt-2 text-xs leading-relaxed">{model.sync.detail}</p>
+      </section>
       </aside>
       </div>
     </section>
   );
+}
+
+/** Curriculum context only: Notes has no completion evidence and Review is not a stage. */
+function DashboardJourney({ path, currentStageId }: { path: DashboardPathSummary | null; currentStageId?: string | null }) {
+  if (!path) return null;
+  return <ol aria-label="Learning pathway" data-testid="dashboard-learning-pathway" className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-2 font-mono text-[11px] text-secondary">
+    <li className="inline-flex min-h-8 items-center">Notes</li>
+    {path.stageSummaries.map((stage) => {
+      const complete = stage.totalQuestions > 0 && stage.completedQuestions === stage.totalQuestions;
+      const current = stage.stageId === currentStageId;
+      const label = stage.name === "Past Paper-style Questions" ? "Exam practice" : stage.name;
+      return <li key={stage.stageId} aria-current={current ? "step" : undefined} aria-label={`${label}: ${complete ? "complete" : current ? "current" : stage.totalQuestions === 0 ? "unavailable" : "not complete"}`} className="inline-flex items-center gap-3">
+        <span aria-hidden="true" className="text-rule">→</span>
+        <span className={`inline-flex min-h-8 items-center gap-2 px-2 py-1 ${current ? "rounded-sm border border-rule bg-academic-blue text-navy" : complete ? "text-secondary" : ""}`}>{complete ? <span aria-hidden="true">✓</span> : null}{label}</span>
+      </li>;
+    })}
+  </ol>;
 }
