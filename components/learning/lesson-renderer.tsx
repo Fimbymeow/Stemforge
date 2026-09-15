@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, ChevronDown } from "lucide-react";
 import { MathGraph } from "@/components/maths/math-graph";
@@ -11,7 +11,7 @@ import {
   getLessonBlockPlainText,
   getMalformedBlockDisposition,
 } from "@/lib/lessons/lesson-document";
-import type { CalloutSemantic, LessonBlock, LessonCalloutBlock, LessonDocument } from "@/lib/lessons/types";
+import type { CalloutSemantic, LessonBlock, LessonCalloutBlock, LessonDocument, LessonSelfCheckBlock } from "@/lib/lessons/types";
 
 export type LessonTypography = "system_sans" | "restrained_serif";
 
@@ -85,10 +85,7 @@ export function LessonRenderer({ document, typography = "system_sans", continuat
           </div>
 
           <footer className="mt-10 max-w-[70ch] border-t border-rule pt-7" data-testid="lesson-closure">
-            <h2 className="text-xl font-semibold text-navy">Recap</h2>
-            <p className="lesson-prose mt-3 leading-7 text-secondary">{document.closure.recap}</p>
-            {document.closure.confidencePrompt ? <p className="mt-3 text-sm font-medium text-navy">{document.closure.confidencePrompt}</p> : null}
-            <Link href={continuation?.href ?? document.closure.foundationsHref} className="orthic-primary-action mt-6 inline-flex min-h-12 items-center justify-center gap-3 rounded-sm bg-navy px-5 text-sm font-semibold text-white max-sm:w-full">
+            <Link href={continuation?.href ?? document.closure.foundationsHref} className="orthic-primary-action inline-flex min-h-12 items-center justify-center gap-3 rounded-sm bg-navy px-5 text-sm font-semibold text-white max-sm:w-full">
               {continuation?.label ?? "Continue to Foundations"} <ArrowRight aria-hidden="true" className="orthic-arrow size-4" />
             </Link>
           </footer>
@@ -133,25 +130,25 @@ function LessonBlockView({ block, document }: { block: LessonBlock; document: Le
   if (block.type === "callout") return <Callout block={block} annotationProps={annotationProps} />;
   if (block.type === "worked_example") {
     return (
-      <section {...annotationProps} className="scroll-mt-24 max-w-[70ch] border-l-2 border-navy bg-white px-5 py-5 sm:px-6" data-testid="lesson-worked-example">
+      <section {...annotationProps} className="scroll-mt-24 max-w-[70ch] rounded-sm border border-rule bg-paper px-5 py-6 sm:px-6" data-testid="lesson-worked-example">
         <Eyebrow className="text-secondary">Worked example</Eyebrow>
         <h3 className="mt-1 text-xl font-semibold text-navy">{block.title}</h3>
         <div className="mt-4 font-medium"><MathContent>{block.prompt}</MathContent></div>
         <ol className="mt-5 grid gap-5" aria-label="Worked solution steps" data-testid="static-worked-solution">
           {block.steps.map((step, index) => (
-            <li key={`${step.title}-${index}`}>
+            <li key={`${step.title}-${index}`} className="border-t border-rule pt-4 first:border-0 first:pt-0">
               <p className="font-mono text-xs uppercase tracking-wide text-secondary">Step {index + 1}</p>
               <h4 className="mt-1 font-semibold text-navy">{step.title}</h4>
               <div className="mt-2 leading-7"><MathContent>{step.body}</MathContent></div>
             </li>
           ))}
         </ol>
-        <div className="mt-5 border-t border-rule pt-4">
+        <div className="mt-5 border-t border-navy/40 pt-4">
           <p className="mb-2 text-sm font-semibold text-navy">Final answer</p>
           <MathContent>{block.finalAnswer}</MathContent>
         </div>
         {block.explanation ? <div className="lesson-prose mt-4 max-w-[70ch] text-sm leading-relaxed text-secondary"><MathContent>{block.explanation}</MathContent></div> : null}
-        {block.commonMistake ? <div className="mt-4 border-l-2 border-warning bg-warning/5 px-3 py-2 text-sm text-secondary" data-testid="lesson-common-mistake"><MathContent>{block.commonMistake}</MathContent></div> : null}
+        {block.commonMistake ? <div className="mt-4 border-l-2 border-warning bg-warning/5 px-3 py-2 text-sm text-secondary" data-testid="lesson-common-mistake"><p className="mb-1 font-semibold text-warning">Common mistake</p><MathContent>{block.commonMistake}</MathContent></div> : null}
       </section>
     );
   }
@@ -162,6 +159,12 @@ function LessonBlockView({ block, document }: { block: LessonBlock; document: Le
       </section>
     );
   }
+  return <SelfCheckBlock block={block} annotationProps={annotationProps} />;
+}
+
+function SelfCheckBlock({ block, annotationProps }: { block: LessonSelfCheckBlock; annotationProps: Record<string, string | number | undefined> }) {
+  const [revealed, setRevealed] = useState(false);
+  const answerId = `${block.blockId}-answer`;
   return (
     <details {...annotationProps} className="group disclosure-motion scroll-mt-24 rounded-sm border border-rule bg-white motion-reduce:[&::details-content]:!duration-0" data-testid="lesson-self-check" data-lesson-collapsible>
       <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-navy">
@@ -170,8 +173,23 @@ function LessonBlockView({ block, document }: { block: LessonBlock; document: Le
       </summary>
       <div className="lesson-collapsible-content border-t border-line px-5 py-4" data-collapsible-content>
         <div className="font-medium"><MathContent>{block.prompt}</MathContent></div>
-        <div className="mt-4 border-l-2 border-navy bg-paper p-4"><p className="mb-2 text-sm font-semibold text-navy">Answer</p><MathContent>{block.answer}</MathContent></div>
-        {block.explanation ? <div className="mt-3 text-sm text-secondary"><MathContent>{block.explanation}</MathContent></div> : null}
+        <button type="button" aria-controls={answerId} aria-expanded={revealed} onClick={() => setRevealed((value) => !value)} className="orthic-secondary-link mt-4 inline-flex min-h-11 items-center rounded-sm text-sm font-semibold text-navy focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy">
+          {revealed ? "Hide answer" : "Reveal answer"}
+        </button>
+        <div id={answerId} data-answer-revealed={revealed} className={`mt-3 rounded-sm border-l-2 border-navy bg-paper p-4 transition-[opacity,filter] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none ${revealed ? "opacity-100 blur-0" : "opacity-60 blur-sm"}`} data-testid="lesson-self-check-answer">
+          {revealed ? (
+            <>
+              <p className="mb-2 text-sm font-semibold text-navy">Answer</p>
+              <MathContent>{block.answer}</MathContent>
+              {block.explanation ? <div className="mt-3 text-sm text-secondary"><MathContent>{block.explanation}</MathContent></div> : null}
+            </>
+          ) : (
+            <div aria-hidden="true" className="grid gap-2 py-1">
+              <div className="h-2 w-4/5 rounded-sm bg-rule" />
+              <div className="h-2 w-2/3 rounded-sm bg-rule" />
+            </div>
+          )}
+        </div>
       </div>
     </details>
   );
@@ -180,12 +198,12 @@ function LessonBlockView({ block, document }: { block: LessonBlock; document: Le
 function Callout({ block, annotationProps }: { block: LessonCalloutBlock; annotationProps: Record<string, string | number | undefined> }) {
   const family = calloutFamily(block.semantic);
   const style = family === "caution"
-    ? "border-warning bg-warning/5 text-warning"
+    ? "border-warning bg-warning/10 text-warning"
     : family === "strategy"
       ? "border-rule bg-white text-navy"
       : family === "depth"
         ? "border-rule bg-white text-navy"
-        : "border-navy bg-white text-navy";
+        : "border-navy bg-transparent text-navy";
   const content = (
     <div className="lesson-collapsible-content border-t border-rule px-5 py-4 text-navy" data-collapsible-content>
       <div className="lesson-prose max-w-[70ch] leading-7"><MathContent>{block.content}</MathContent></div>
@@ -204,7 +222,7 @@ function Callout({ block, annotationProps }: { block: LessonCalloutBlock; annota
     );
   }
   return (
-    <aside {...annotationProps} className={`scroll-mt-24 border-l-2 px-5 py-4 ${style}`} data-callout-family={family}>
+    <aside {...annotationProps} className={`scroll-mt-24 border-l-2 px-5 ${family === "caution" ? "py-3" : "py-4"} ${style}`} data-callout-family={family}>
       <h3 className="font-semibold">{block.title}</h3>
       <div className="mt-2 text-navy"><div className="lesson-prose max-w-[70ch] leading-7"><MathContent>{block.content}</MathContent></div>{block.formula ? <div className="mt-4 min-w-0 overflow-x-auto py-2" data-formula-save-mode="whole-block"><MathContent>{block.formula}</MathContent></div> : null}</div>
     </aside>

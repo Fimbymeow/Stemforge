@@ -14,12 +14,13 @@ test("Design V2 keeps real Notes content primary and resource navigation seconda
   const warning = lesson.locator('[data-callout-family="caution"]').first();
   await expect(definition).toHaveCSS("border-left-width", "2px");
   await expect(warning).toHaveCSS("border-left-width", "2px");
-  await expect(lesson.getByTestId("lesson-worked-example").first()).toHaveCSS("border-left-width", "2px");
+  await expect(lesson.getByTestId("lesson-worked-example").first()).toHaveCSS("border-left-width", "1px");
   const progression = lesson.getByTestId("lesson-closure").getByRole("link", { name: "Continue to Foundations" });
   await expect(progression).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
   const resources = page.getByRole("navigation", { name: "Other learning resources" });
-  await expect(resources.getByRole("link", { name: "Flashcards" })).toHaveAttribute("href", "/subjects/higher-maths/flashcards");
+  await expect(resources.getByRole("link", { name: "Flashcards" })).toHaveCount(0);
   await expect(resources.getByRole("link", { name: "Practice" })).toHaveAttribute("href", "/practice?path=basic-differentiation");
+  await expect(lesson.getByRole("heading", { name: "Recap", exact: true })).toHaveCount(0);
   expect((await resources.boundingBox())!.y).toBeGreaterThan((await lesson.boundingBox())!.y + (await lesson.boundingBox())!.height);
   expect(seriousBrowserErrors).toEqual([]);
 });
@@ -115,7 +116,7 @@ test("worked examples show every step and final answer without reveal controls",
   await expect(page.getByRole("button", { name: /Show (next step|full solution)/ })).toHaveCount(0);
 });
 
-test("self-check is optional and Continue to Foundations is never gated", async ({ page }) => {
+test("self-check answer needs explicit reveal and Continue to Foundations is never gated", async ({ page }) => {
   await page.goto(NOTES_ROUTE);
   const continueLink = page.getByRole("link", { name: "Continue to Foundations" });
   await expect(continueLink).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
@@ -123,9 +124,47 @@ test("self-check is optional and Continue to Foundations is never gated", async 
   await expect(selfCheck).not.toHaveAttribute("open", "");
   await selfCheck.locator("summary").click();
   await expect(selfCheck).toHaveAttribute("open", "");
+  const answer = selfCheck.getByTestId("lesson-self-check-answer");
+  await expect(selfCheck.getByRole("button", { name: "Reveal answer" })).toHaveAttribute("aria-expanded", "false");
+  await expect(answer).not.toContainText("Answer");
+  await expect(answer.locator(".katex")).toHaveCount(0);
+  await expect(selfCheck.getByText("Answer", { exact: true })).toHaveCount(0);
+  const reveal = selfCheck.getByRole("button", { name: "Reveal answer" });
+  await reveal.focus();
+  await expect(reveal).toBeFocused();
+  await reveal.press("Enter");
+  await expect(answer).toHaveAttribute("data-answer-revealed", "true");
+  await expect(selfCheck.getByRole("button", { name: "Hide answer" })).toHaveAttribute("aria-expanded", "true");
   await expect(selfCheck.getByText("Answer", { exact: true })).toBeVisible();
+  await selfCheck.getByRole("button", { name: "Hide answer" }).click();
+  await expect(answer).toHaveAttribute("data-answer-revealed", "false");
+  await expect(answer.locator(".katex")).toHaveCount(0);
   await expect(continueLink).toBeVisible();
 });
+
+for (const width of [1440, 1024, 390, 375, 320]) {
+  test(`Notes cleanup preserves distinct content roles and answer reveal at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: width === 320 ? 700 : width < 1024 ? 812 : 900 });
+    await page.goto(`${NOTES_ROUTE}?path=basic-differentiation`);
+    const lesson = page.getByTestId("lesson-document");
+    const concept = lesson.locator('[data-callout-family="core"]').first();
+    const example = lesson.getByTestId("lesson-worked-example").first();
+    const caution = lesson.locator('[data-callout-family="caution"]').first();
+    await expect(concept).toHaveCSS("border-left-width", "2px");
+    await expect(example).toHaveCSS("border-width", "1px");
+    await expect(caution).toHaveCSS("border-left-width", "2px");
+    await expect(caution.getByRole("heading", { name: "Common mistakes" })).toBeVisible();
+    await expect(example.getByRole("list", { name: "Worked solution steps" }).getByRole("listitem")).toHaveCount(2);
+    const selfCheck = lesson.getByTestId("lesson-self-check");
+    await selfCheck.locator("summary").click();
+    const answer = selfCheck.getByTestId("lesson-self-check-answer");
+    await expect(answer.locator(".katex")).toHaveCount(0);
+    await selfCheck.getByRole("button", { name: "Reveal answer" }).click();
+    await expect(answer.locator(".katex")).not.toHaveCount(0);
+    await expect(lesson.getByTestId("lesson-closure").getByRole("link", { name: "Continue to Foundations" })).toBeVisible();
+    await expectNoHorizontalOverflow(page);
+  });
+}
 
 test("lesson continuation follows completed stages and due Review", async ({ page }) => {
   await seedStoredProgress(page, v3Payload(

@@ -121,7 +121,6 @@ export function HigherMathsResourceBrowser({
           <Card className="p-6"><h1 className="text-2xl font-extrabold">Notes are being prepared</h1><p className="mt-2 text-muted">There is no published lesson for this path yet.</p></Card>
         )}
         <nav aria-label="Other learning resources" className="mt-10 flex flex-wrap gap-x-6 gap-y-2 border-t border-rule pt-4 text-sm text-secondary">
-          <Link href="/subjects/higher-maths/flashcards" className="orthic-secondary-link inline-flex min-h-11 items-center">Flashcards</Link>
           <Link href={`/practice?path=${encodeURIComponent(skillPath.slug)}`} className="orthic-secondary-link inline-flex min-h-11 items-center">Practice</Link>
         </nav>
       </div>
