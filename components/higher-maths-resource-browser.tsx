@@ -7,7 +7,6 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { AppTopbar } from "@/components/layout/app-topbar";
 import { LessonRenderer, type LessonTypography } from "@/components/learning/lesson-renderer";
-import { SubjectResourceLinks } from "@/components/learning/subject-resource-links";
 import { Card } from "@/components/ui";
 import { getActiveSkillPath, getQuestionContext, getSkillPathById } from "@/lib/learning-paths";
 import { resolveLessonDocument } from "@/lib/lessons/resolver";
@@ -90,17 +89,19 @@ export function HigherMathsResourceBrowser({
   }
 
   return (
-    <AppShell demo active="Subjects" workingContextPathId={skillPath.slug} feedbackPlacement="inline-mobile">
-      <div className="mx-auto mb-3 flex max-w-[1180px] justify-end"><AppTopbar demo /></div>
-      <div className="mx-auto grid max-w-[1180px] gap-5">
-        <nav className="flex flex-wrap items-center gap-2 text-sm text-muted" aria-label="Breadcrumb">
-          <Link href="/subjects/higher-maths">Higher Maths</Link>
-          <ArrowRight aria-hidden="true" className="size-4" />
-          <span className="font-bold text-forge">Notes</span>
+    <AppShell demo active="Subjects" workingContextPathId={skillPath.slug} feedbackPlacement="inline-mobile" className="max-md:pt-5">
+      <div className="mx-auto max-w-[1040px]">
+        <div className="mb-3 flex justify-end"><AppTopbar demo /></div>
+        <nav className="mb-7 flex flex-wrap items-center gap-2 text-sm text-secondary" aria-label="Breadcrumb">
+          <Link href="/subjects/higher-maths" className="orthic-secondary-link inline-flex min-h-11 items-center gap-2"><ArrowLeft aria-hidden="true" className="size-4" />Higher Maths</Link>
+          <span aria-hidden="true" className="text-rule">/</span>
+          <span>{skillPath.name}</span>
+          <span aria-hidden="true" className="text-rule">/</span>
+          <span aria-current="page" className="font-medium text-navy">Notes</span>
         </nav>
 
         {returnTo ? (
-          <Link href={returnTo} className="inline-flex min-h-11 w-fit items-center gap-2 rounded-lg border border-line bg-white px-4 font-extrabold text-forge">
+          <Link href={returnTo} className="orthic-secondary-link mb-5 inline-flex min-h-11 w-fit items-center gap-2 text-sm text-secondary">
             <ArrowLeft aria-hidden="true" className="size-4" />Return to active practice
           </Link>
         ) : null}
@@ -108,28 +109,21 @@ export function HigherMathsResourceBrowser({
           <button
             type="button"
             onClick={returnToOriginQuestion}
-            className="inline-flex min-h-11 w-fit items-center gap-2 rounded-lg border border-line bg-white px-4 font-extrabold text-forge"
+            className="orthic-secondary-link mb-5 inline-flex min-h-11 w-fit items-center gap-2 text-sm text-secondary"
           >
             <ArrowLeft aria-hidden="true" className="size-4" />Back to Question {originQuestionNumber}
           </button>
         ) : null}
-
-        <SubjectResourceLinks
-          family="mathematics"
-          current="notes"
-          hrefs={{
-            notes: `/subjects/higher-maths/revision-notes?path=${encodeURIComponent(skillPath.slug)}`,
-            flashcards: "/subjects/higher-maths/flashcards",
-            practice: `/practice?path=${encodeURIComponent(skillPath.slug)}`,
-          }}
-        />
 
         {lesson ? (
           <LessonRenderer document={lesson.document} typography={typography} continuation={continuation ?? undefined} />
         ) : (
           <Card className="p-6"><h1 className="text-2xl font-extrabold">Notes are being prepared</h1><p className="mt-2 text-muted">There is no published lesson for this path yet.</p></Card>
         )}
-
+        <nav aria-label="Other learning resources" className="mt-10 flex flex-wrap gap-x-6 gap-y-2 border-t border-rule pt-4 text-sm text-secondary">
+          <Link href="/subjects/higher-maths/flashcards" className="orthic-secondary-link inline-flex min-h-11 items-center">Flashcards</Link>
+          <Link href={`/practice?path=${encodeURIComponent(skillPath.slug)}`} className="orthic-secondary-link inline-flex min-h-11 items-center">Practice</Link>
+        </nav>
       </div>
     </AppShell>
   );

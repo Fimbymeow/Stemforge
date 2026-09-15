@@ -4,6 +4,43 @@ import { expectNoHorizontalOverflow } from "./fixtures/student-actions";
 
 const NOTES_ROUTE = "/subjects/higher-maths/revision-notes";
 
+test("Design V2 keeps real Notes content primary and resource navigation secondary", async ({ page, seriousBrowserErrors }) => {
+  await page.goto(`${NOTES_ROUTE}?path=basic-differentiation`);
+  const lesson = page.getByTestId("lesson-document");
+  await expect(lesson.getByRole("heading", { level: 1, name: "Basic differentiation" })).toBeVisible();
+  await expect(lesson).not.toContainText(/\d+ min read/);
+  await expect(lesson.locator(".katex-error")).toHaveCount(0);
+  const definition = lesson.locator('[data-callout-family="core"]').first();
+  const warning = lesson.locator('[data-callout-family="caution"]').first();
+  await expect(definition).toHaveCSS("border-left-width", "2px");
+  await expect(warning).toHaveCSS("border-left-width", "2px");
+  await expect(lesson.getByTestId("lesson-worked-example").first()).toHaveCSS("border-left-width", "2px");
+  const progression = lesson.getByTestId("lesson-closure").getByRole("link", { name: "Continue to Foundations" });
+  await expect(progression).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
+  const resources = page.getByRole("navigation", { name: "Other learning resources" });
+  await expect(resources.getByRole("link", { name: "Flashcards" })).toHaveAttribute("href", "/subjects/higher-maths/flashcards");
+  await expect(resources.getByRole("link", { name: "Practice" })).toHaveAttribute("href", "/practice?path=basic-differentiation");
+  expect((await resources.boundingBox())!.y).toBeGreaterThan((await lesson.boundingBox())!.y + (await lesson.boundingBox())!.height);
+  expect(seriousBrowserErrors).toEqual([]);
+});
+
+for (const width of [390, 375, 320]) {
+  test(`mobile Notes contents remain a compact native disclosure at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: width === 320 ? 700 : 812 });
+    await page.goto(`${NOTES_ROUTE}?path=basic-differentiation`);
+    const contents = page.locator("[data-lesson-contents]");
+    await expect(contents).toBeVisible();
+    await expect(contents).not.toHaveAttribute("open", "");
+    const summary = contents.locator("summary");
+    await summary.focus();
+    await expect(summary).toBeFocused();
+    await summary.press("Enter");
+    await expect(contents).toHaveAttribute("open", "");
+    await expect(contents.getByRole("navigation", { name: "Lesson sections" }).getByRole("link", { name: "The power rule" })).toBeVisible();
+    await expectNoHorizontalOverflow(page);
+  });
+}
+
 for (const path of ["basic-differentiation", "chain-rule"]) {
   for (const width of [1440, 1024, 390, 375, 320]) {
     test(`${path} keeps worked examples in the reading column and feedback clear at ${width}px`, async ({ page }) => {
@@ -159,6 +196,9 @@ test("typography comparison changes only the explicit reading mode", async ({ pa
   await page.goto(NOTES_ROUTE);
   await expect(page.locator('[data-typography="system_sans"]')).toBeVisible();
   await page.goto(`${NOTES_ROUTE}?readingStyle=serif`);
-  await expect(page.locator('[data-typography="restrained_serif"]')).toBeVisible();
+  const reader = page.locator('[data-typography="restrained_serif"]');
+  await expect(reader).toBeVisible();
+  await expect(reader.locator(".lesson-prose").first()).toHaveCSS("font-family", /Georgia/);
+  await expect(reader.getByRole("heading", { level: 2, name: "The power rule" })).not.toHaveCSS("font-family", /Georgia/);
   await expect(page.getByTestId("lesson-document")).toHaveAttribute("data-lesson-id", "basic-differentiation-lesson");
 });
