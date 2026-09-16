@@ -442,10 +442,12 @@ export function QuestionWorkspace({
       <div className="mx-auto mb-2 flex max-w-[1080px] justify-end">
         <AppTopbar demo />
       </div>
-      <div className="mx-auto grid max-w-[1080px] grid-cols-[minmax(0,1fr)_250px] gap-3 max-lg:grid-cols-1">
-        <section className="grid min-w-0 gap-3">
+      <div className="mx-auto grid min-w-0 max-w-[1240px] grid-cols-[minmax(0,1fr)_280px] gap-7 max-lg:grid-cols-1">
+        <section className="grid min-w-0 gap-5">
           <nav className="flex flex-wrap items-center gap-2 text-sm text-muted" aria-label="Breadcrumb">
             <Link href={context?.subject.href ?? "/subjects"}>{context?.subject.subjectName ?? question.subject}</Link>
+            <span aria-hidden="true">/</span>
+            <Link href={context?.courseArea.href ?? "/subjects"}>{context?.courseArea.name ?? question.courseArea}</Link>
             <span aria-hidden="true">/</span>
             <Link href={fallbackPathHref}>{skillPath?.name ?? question.skillPath ?? "Question"}</Link>
             <span aria-hidden="true">/</span>
@@ -462,7 +464,7 @@ export function QuestionWorkspace({
 
           {session?.panel}
 
-          <Card className="p-4 max-sm:p-3" data-testid="question-workspace-card">
+          <Card className="!rounded-lg !border-rule p-7 !shadow-none max-sm:p-4" data-testid="question-workspace-card">
             <div className="flex flex-wrap items-start justify-between gap-2 border-b border-line pb-3">
               <div>
                 <p className="font-mono text-[11px] font-extrabold uppercase text-forge">Current stage</p>
@@ -483,13 +485,14 @@ export function QuestionWorkspace({
             </div>
 
             <h1 id="question-heading" tabIndex={-1} className="mt-4 text-[clamp(24px,3vw,32px)] font-extrabold leading-tight outline-none">{question.title}</h1>
+            <p className="mt-2 text-sm text-secondary" data-testid="question-completion-status">{questionProgress.navigationEligible ? "This question has been completed." : "This question has not yet been completed."}</p>
             {questionProgress.reviewRecommended && !submitted ? (
               <p className="mt-2 text-sm text-muted" data-testid="review-reason">{describeReviewReason(questionProgress)}</p>
             ) : null}
-            <div className="mt-3 p-5 max-sm:p-4" data-testid="question-interaction">
-              <div className="text-lg leading-relaxed"><MathContent>{question.questionText}</MathContent></div>
+            <div className="mt-6" data-testid="question-interaction">
+              <div className="rounded border border-rule bg-canvas p-6 text-lg leading-relaxed max-sm:p-4"><MathContent>{question.questionText}</MathContent></div>
               <QuestionGraphVisual question={question} />
-              <div className="mt-5 border-t border-line pt-4">
+              <div className="mt-7">
                 <label id="answer-label" htmlFor="question-answer" className="mb-2 block text-sm font-extrabold">Your answer</label>
                 <form
                   onSubmit={(event) => {
@@ -507,12 +510,12 @@ export function QuestionWorkspace({
                     describedBy={feedback ? "answer-feedback" : undefined}
                     invalid={feedback?.isInputError}
                   />
-                  <div className="mt-3 flex justify-end">
+                  <div className="mt-6 flex justify-start">
                     <button
                       type="submit"
                       onPointerDown={() => { submissionIntentRef.current = "pointer"; }}
                       disabled={submitted || submitting || session?.answerLocked}
-                      className="inline-flex min-h-11 items-center justify-center rounded-lg bg-forge px-6 text-sm font-extrabold text-white transition duration-300 ease-out hover:-translate-y-0.5 active:translate-y-0 active:duration-100 disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-y-0 max-sm:w-full"
+                      className="orthic-primary-action inline-flex min-h-11 items-center justify-center rounded bg-navy px-6 text-sm font-semibold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy disabled:cursor-not-allowed disabled:opacity-45 max-sm:w-full"
                     >
                       {session?.answerLocked ? "Session ended" : submitting ? "Saving..." : "Submit Answer"}
                     </button>
@@ -529,7 +532,7 @@ export function QuestionWorkspace({
                   aria-label={feedbackAccessibleLabel}
                   aria-live="polite"
                   aria-atomic="true"
-                  className={`mt-4 animate-fade-rise rounded-xl border p-4 ${feedbackPanelClass}`}
+                  className={`mt-4 rounded border p-4 ${feedbackPanelClass}`}
                 >
                   <div className="flex items-start gap-3 max-sm:grid">
                     <span aria-hidden="true" className={`grid size-9 shrink-0 place-items-center rounded-full text-white ${feedbackIconClass}`}>
@@ -603,7 +606,7 @@ export function QuestionWorkspace({
             </div>
           </Card>
 
-          {supportPresentation.showHintPanel ? <Card className="p-4" data-testid="question-hint-panel">
+          {supportPresentation.showHintPanel ? <Card className="!rounded-lg !border-rule p-6 !shadow-none max-sm:p-4" data-testid="question-hint-panel">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-3">
                 <span className="grid size-9 shrink-0 place-items-center rounded-full bg-forge-soft text-forge"><Lightbulb className="size-5" /></span>
@@ -613,7 +616,7 @@ export function QuestionWorkspace({
                 </div>
               </div>
               {supportPresentation.showHintControl ? (
-                <button type="button" data-testid="hint-control" onClick={() => void handleHintViewed()} className="inline-flex min-h-10 items-center justify-center rounded-lg border border-line bg-white px-4 text-sm font-extrabold text-forge max-sm:w-full">Show hint</button>
+                <button type="button" data-testid="hint-control" onClick={() => void handleHintViewed()} className="orthic-course-action inline-flex min-h-11 items-center justify-center rounded border border-rule bg-white px-4 text-sm font-medium text-navy focus-visible:outline focus-visible:outline-2 focus-visible:outline-navy max-sm:w-full">Show hint</button>
               ) : null}
             </div>
             {supportPresentation.showHintContent ? <div ref={hintContentRef} tabIndex={-1} data-testid="hint-content" className="mt-3 rounded-lg bg-paper p-4 outline-none"><p className="mb-2 text-sm font-extrabold text-forge">Hint</p><MathContent>{question.hint}</MathContent></div> : null}
@@ -648,8 +651,8 @@ export function QuestionWorkspace({
                 <ArrowLeft className="size-5" /> Previous
               </Link>
               {questionProgress.navigationEligible && nextAction.href ? (
-                <Link data-testid="next-question-action" href={nextAction.href} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-forge text-sm font-bold text-white transition duration-300 ease-out hover:-translate-y-0.5 active:translate-y-0 active:duration-100">
-                  {nextAction.label}<ArrowRight className="size-5" />
+                <Link data-testid="next-question-action" href={nextAction.href} className="orthic-primary-action inline-flex min-h-11 items-center justify-center gap-2 rounded bg-navy text-sm font-semibold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy">
+                  {nextAction.label}<ArrowRight aria-hidden="true" className="orthic-arrow size-5" />
                 </Link>
               ) : (
                 <span data-testid="next-question-locked" className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-line px-4 text-center text-sm font-bold text-muted">Complete this question to continue</span>
@@ -658,16 +661,16 @@ export function QuestionWorkspace({
           )}
         </section>
 
-        <aside className="grid content-start gap-3" aria-label="Question support">
+        <aside className="grid min-w-0 content-start gap-5 lg:pt-14" aria-label="Question support">
           {isHigherMathsQuestion ? (
-            <Card className="p-4">
-              <h2 className="mb-2 text-lg font-extrabold">Assessment reference</h2>
+            <Card className="!rounded-lg !border-rule p-6 !shadow-none">
+              <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide">Assessment reference</h2>
               <p className="mb-3 text-sm leading-relaxed text-muted">Open the official formulae supplied for Higher Mathematics assessments.</p>
               <FormulaSheetDrawer />
             </Card>
           ) : null}
-          <Card className="p-4">
-            <h2 className="mb-3 text-lg font-extrabold">Stage progress</h2>
+          <details className="disclosure-motion border-y border-rule py-2">
+            <summary className="min-h-11 cursor-pointer py-3 text-sm font-medium text-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-navy">Stage progress</summary>
             <PanelProgress
               label={stage?.name ?? "Current stage"}
               value={stageLocalProgress?.completionPercentage ?? 0}
@@ -681,11 +684,10 @@ export function QuestionWorkspace({
                 secondary
               />
             </div>
-          </Card>
+          </details>
           {relatedResources.length ? (
-            <Card className="p-4">
-              <h2 className="mb-2 text-lg font-extrabold">Helpful resources</h2>
-              <p className="mb-3 text-sm text-muted">These resources belong to {skillPath?.name ?? "this path"}. Opening one does not record an attempt.</p>
+            <div>
+              <h2 className="sr-only">Helpful resources</h2>
               <div className="grid gap-1">
                 {questionSupportResources.map((item) => {
                     const contextualNotesHref = isHigherMathsQuestion && !session?.returnHref
@@ -702,7 +704,7 @@ export function QuestionWorkspace({
                         key={item.resource.id}
                         href={contextualNotesHref ?? getContextualResourceHref(item.type, context?.subject.subjectSlug ?? "higher-maths", item.resource.id, session?.returnHref)}
                         onClick={contextualNotesHref ? () => recordNotesOrigin(notesOriginToken) : undefined}
-                        className="inline-flex min-h-10 items-center gap-2 rounded-lg px-2 text-sm font-bold text-forge hover:bg-forge-soft"
+                        className="orthic-secondary-link inline-flex min-h-11 items-center gap-2 rounded px-2 text-sm text-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-navy"
                       >
                         <FileText className="size-4" />
                         Notes: {item.resource.title}
@@ -710,7 +712,7 @@ export function QuestionWorkspace({
                     );
                 })}
               </div>
-            </Card>
+            </div>
           ) : null}
           <ReportDialog
             triggerLabel="Report this question"

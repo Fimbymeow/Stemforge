@@ -129,7 +129,7 @@ test("Question Workspace and Practice Session use the shared visual foundations 
   const interactionClasses = workspace.match(/className="([^"]+)" data-testid="question-interaction"/)?.[1] ?? "";
 
   assert.doesNotMatch(interactionClasses, /(?:^|\s)(?:rounded\S*|border\S*|bg-white|shadow\S*)(?:\s|$)/);
-  assert.equal((workspace.match(/disclosure-motion/g) ?? []).length, 2);
+  assert.match(workspace, /<details className="disclosure-motion[^\"]*"[\s\S]*?<summary[^>]*>Stage progress<\/summary>/);
   assert.equal((practiceSession.match(/<DialogShell/g) ?? []).length, 2);
   assert.doesNotMatch(practiceSession, /role="dialog"|aria-modal="true"/);
 });

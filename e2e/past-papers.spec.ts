@@ -10,7 +10,8 @@ test("Higher Maths exposes the official Past Papers library without confusing it
   await expect(page.getByText("Qualifications Scotland (formerly SQA)")).toBeVisible();
   await expect(page.getByText("Past Paper-style Questions")).toHaveCount(0);
 
-  await expect(page.locator("section > div > h2")).toHaveText(["2025", "2024", "2023", "2022"]);
+  await expect(page.getByTestId(/^past-papers-year-/)).toHaveText(["2025", "2024", "2023", "2022"]);
+  await expect(page.getByRole("table", { name: "Official Higher Maths past papers" })).toBeVisible();
   await expect(page.getByTestId(/^past-paper-/)).toHaveCount(8);
   await expect(page.getByRole("link", { name: /question paper on Qualifications Scotland \(opens in a new tab\)$/ })).toHaveCount(8);
   await expect(page.getByRole("link", { name: /marking instructions on Qualifications Scotland \(opens in a new tab\)$/ })).toHaveCount(8);

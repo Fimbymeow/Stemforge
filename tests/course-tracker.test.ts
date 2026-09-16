@@ -139,7 +139,8 @@ test("Course Tracker source guards the calmer product boundary", () => {
   assert.doesNotMatch(component + page, /skills available|coming soon|Set confidence/i);
   assert.doesNotMatch(component, /ConfidenceControl|ReviewStatus|MasteryMark|tracker-progress|skill\.progressLabel|bg-gradient|bg-forge-soft\/35/);
   assert.doesNotMatch(component, /Official requirements/);
-  assert.match(component, /Further skills in this strand/);
+  assert.match(component, /data-course-tracker-reference-group/);
+  assert.match(component, /Review now/);
   assert.match(component, /Reasoning across the course/);
   assert.match(component, /Confirmed current by Qualifications Scotland/);
 });

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, CircleAlert, ChevronDown } from "lucide-react";
+import { ArrowRight, CircleAlert } from "lucide-react";
 import type { Subject } from "@/data/types";
 import { deriveHigherMathsCourseTracker } from "@/lib/course-tracker";
 import type { CourseTrackerRequirement, CourseTrackerSkill } from "@/lib/course-tracker";
@@ -42,14 +42,10 @@ export function CourseTracker({ subject }: { subject: Subject }) {
   const area = model.areas[selectedArea] ?? model.areas[0];
 
   return (
-    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-5" data-testid="course-tracker">
-      <div className="border-b border-line pb-3">
-        <h2 className="text-lg font-extrabold">Skills by course area</h2>
-        <p className="mt-1 text-sm text-muted">Select an area and scan its skills.</p>
-      </div>
+    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-8" data-testid="course-tracker">
 
       <nav aria-label="Course areas" className="min-w-0" data-testid="course-tracker-unit-navigation">
-        <div className="flex gap-2 overflow-x-auto pb-1" data-testid="course-tracker-area-list">
+        <div className="grid grid-cols-2 gap-2 border-b border-rule pb-4 lg:grid-cols-4" data-testid="course-tracker-area-list">
           {model.areas.map((item, index) => {
             const isSelected = index === selectedArea;
             return (
@@ -58,7 +54,7 @@ export function CourseTracker({ subject }: { subject: Subject }) {
                 type="button"
                 aria-current={isSelected ? "page" : undefined}
                 onClick={() => setSelectedArea(index)}
-                className={`min-h-11 min-w-max flex-1 whitespace-nowrap rounded-lg border px-3 py-2 text-left text-sm font-extrabold leading-snug transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forge ${isSelected ? "border-forge bg-forge-soft text-forge" : "border-line bg-white text-ink hover:border-forge/50 hover:bg-paper"}`}
+                className={`orthic-nav-link min-h-11 min-w-0 rounded border px-3 py-3 text-center text-sm font-medium leading-snug focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy ${isSelected ? "border-navy bg-forge-soft text-navy" : "border-transparent text-secondary hover:border-rule hover:bg-white"}`}
               >
                 {item.title}
               </button>
@@ -69,8 +65,8 @@ export function CourseTracker({ subject }: { subject: Subject }) {
 
       {area ? (
         <section aria-labelledby={`tracker-area-${area.courseAreaId}`} className="min-w-0" data-testid={`tracker-area-${area.courseAreaId}`}>
-          <h3 id={`tracker-area-${area.courseAreaId}`} className="border-b border-ink pb-3 text-xl font-extrabold">{area.title}</h3>
-          <div className="divide-y divide-line">
+          <h2 id={`tracker-area-${area.courseAreaId}`} className="border-b border-rule pb-4 text-2xl font-bold tracking-tight">{area.title}</h2>
+          <div className="grid gap-2">
             {area.requirements.map((requirement) => <TrackerRequirement key={requirement.areaId} requirement={requirement} />)}
           </div>
         </section>
@@ -99,9 +95,9 @@ export function CourseTracker({ subject }: { subject: Subject }) {
 function TrackerRequirement({ requirement }: { requirement: CourseTrackerRequirement }) {
   const groups = groupCourseTrackerSkills(requirement.skills);
   return (
-    <section aria-labelledby={`tracker-topic-${requirement.areaId}`} className="py-5">
-      <h4 id={`tracker-topic-${requirement.areaId}`} className="text-sm font-extrabold text-muted">{requirement.title}</h4>
-      <ul className="mt-3 divide-y divide-line border-y border-line" aria-label={`${requirement.title} Higher Maths skills`}>
+    <section aria-labelledby={`tracker-topic-${requirement.areaId}`} className="pt-7">
+      <h3 id={`tracker-topic-${requirement.areaId}`} className="text-[15px] font-semibold leading-relaxed text-navy">{requirement.title}</h3>
+      <ul className="mt-3 divide-y divide-rule border-y border-rule" aria-label={`${requirement.title} Higher Maths skills`}>
         {groups.map((group, index) => group.kind === "actionable"
           ? <TrackerSkillRow key={group.skill.skillPathId} skill={group.skill} />
           : <CurriculumReferenceGroup key={`${group.skills[0].skillPathId}-${index}`} requirementTitle={requirement.title} skills={group.skills} />)}
@@ -116,9 +112,9 @@ function TrackerSkillRow({ skill }: { skill: CourseTrackerSkill }) {
   const confidenceDisagrees = hasCourseTrackerConfidenceDisagreement(skill.confidence);
   return (
     <li className="min-w-0" data-testid={`tracker-skill-${skill.skillPathId}`} data-course-tracker-skill="" data-tracker-row-kind="actionable">
-      <Link href={skill.action.href} aria-label={`Open ${skill.name} skill overview`} className="grid min-h-14 min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-sm px-2 py-2 transition-colors hover:bg-paper focus-visible:outline focus-visible:outline-2 focus-visible:outline-forge">
-        <span className="min-w-0 break-words text-sm font-extrabold text-ink">{skill.name}</span>
-        <span className="flex shrink-0 items-center gap-2 text-xs text-muted">
+      <Link href={skill.reviewDue ? `/practice?review=1&path=${encodeURIComponent(skill.skillPathId)}` : skill.action.href} aria-label={skill.reviewDue ? `Review now: ${skill.name}` : `Open ${skill.name} skill overview`} className="orthic-course-row orthic-secondary-link grid min-h-14 min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 px-3 py-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-navy max-sm:grid-cols-1">
+        <span className="min-w-0 break-words text-[15px] font-medium text-navy">{skill.name}</span>
+        <span className="flex items-center justify-end gap-4 text-[13px] text-secondary max-sm:justify-between">
           {learnerConfidence ? (
             <span className={`inline-flex items-center gap-1 ${CONFIDENCE_COLOR[learnerConfidence]}`} data-testid={`tracker-confidence-${skill.skillPathId}`}>
               {CONFIDENCE_LABEL[learnerConfidence]}
@@ -134,10 +130,10 @@ function TrackerSkillRow({ skill }: { skill: CourseTrackerSkill }) {
                 </span>
               ) : null}
             </span>
-          ) : null}
-          {learnerConfidence && skill.reviewDue ? <span aria-hidden="true">·</span> : null}
-          {skill.reviewDue ? <span className="font-bold text-warning" data-review-state="due">Review due</span> : null}
-          <ArrowRight aria-hidden="true" className="size-4 text-forge" />
+          ) : <span className="text-muted" data-testid={`tracker-confidence-${skill.skillPathId}`}>Unrated</span>}
+          <span className={`inline-flex min-w-[100px] items-center justify-end gap-2 font-medium ${skill.reviewDue ? "text-warning" : "text-secondary"}`} data-review-state={skill.reviewDue ? "due" : undefined}>
+            {skill.reviewDue ? "Review now" : "Open"}<ArrowRight aria-hidden="true" className="orthic-arrow size-4" />
+          </span>
         </span>
       </Link>
     </li>
@@ -146,13 +142,12 @@ function TrackerSkillRow({ skill }: { skill: CourseTrackerSkill }) {
 
 function CurriculumReferenceGroup({ requirementTitle, skills }: { requirementTitle: string; skills: CourseTrackerSkill[] }) {
   return (
-    <li className="px-2 py-3" data-course-tracker-reference-group="">
-      <h5 className="text-xs font-extrabold text-muted">Further skills in this strand</h5>
-      <ul className="mt-1 divide-y divide-line" aria-label={`Further skills in ${requirementTitle}`}>
+    <li data-course-tracker-reference-group="">
+      <ul className="divide-y divide-rule" aria-label={`Further skills in ${requirementTitle}`}>
         {skills.map((skill) => (
-          <li key={skill.skillPathId} className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 py-2 text-sm" data-testid={`tracker-skill-${skill.skillPathId}`} data-course-tracker-reference="">
-            <span className="min-w-0 break-words font-semibold text-ink">{skill.name}</span>
-            <span className="text-right text-xs text-muted">{skill.officialPoints.length} official requirement{skill.officialPoints.length === 1 ? "" : "s"}</span>
+          <li key={skill.skillPathId} className="grid min-h-14 min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 px-3 py-3 max-sm:grid-cols-1" data-testid={`tracker-skill-${skill.skillPathId}`} data-course-tracker-reference="">
+            <span className="min-w-0 break-words text-[15px] font-normal text-secondary">{skill.name}</span>
+            <span className="text-right font-mono text-[11px] text-secondary max-sm:text-left">{skill.officialPoints.length} official requirement{skill.officialPoints.length === 1 ? "" : "s"}</span>
           </li>
         ))}
       </ul>

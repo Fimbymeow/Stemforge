@@ -167,7 +167,7 @@ export function PracticeSetup({
       : null;
     return (
       <AppShell demo active="Practice" className="py-8 max-lg:pt-5" workingContextPathId={workingContextPathId}>
-        <div className="mx-auto grid max-w-[760px] gap-5">
+        <div className="mx-auto grid max-w-[1040px] gap-7" data-testid="review-page">
           <nav aria-label="Review navigation" className="flex min-h-10 flex-wrap items-center gap-x-5 gap-y-1 text-sm font-bold">
             <Link href="/subjects/higher-maths" className="inline-flex min-h-10 items-center gap-2 text-forge"><ArrowLeft aria-hidden="true" className="size-4" />Back to Higher Maths</Link>
             <Link href="/dashboard" className="inline-flex min-h-10 items-center text-muted hover:text-forge">Dashboard</Link>
@@ -175,28 +175,30 @@ export function PracticeSetup({
           </nav>
           <header>
             <p className="text-sm font-bold text-muted">Review</p>
-            <h1 className="mt-1 text-[28px] font-extrabold leading-tight">Review what is due</h1>
+            <h1 className="mt-2 text-[32px] font-bold leading-tight tracking-tight">Review what is due</h1>
             <p className="mt-3 text-muted">A short Review uses the same practice screen you already know.</p>
           </header>
-          <Card className="border-forge/30 bg-white p-5" data-testid="review-launch-card">
+          <Card className="max-w-[780px] !rounded-lg !border-rule bg-white p-6 !shadow-none sm:p-8" data-testid="review-launch-card">
             {reviewPreview.session ? (
               <>
                 <p className="text-sm font-extrabold text-forge">{singleDueSkill ? `${singleDueSkill} is ready to review` : `${dueCount} skill${dueCount === 1 ? "" : "s"} due`}</p>
-                <h2 className="mt-1 text-xl font-extrabold">
+                <h2 className="mt-3 text-2xl font-bold tracking-tight">
                   {reviewPreview.session.questionReferences.length} question{reviewPreview.session.questionReferences.length === 1 ? "" : "s"} ready
                 </h2>
-                <p className="mt-2 text-sm text-muted">{reviewReasonCopy(reason)}</p>
+                <p className="mt-3 text-[15px] leading-relaxed text-secondary">{reviewReasonCopy(reason)}</p>
+                {dueCount > 1 ? <ul className="mt-5 divide-y divide-rule border-y border-rule" aria-label="Skills due for review">{reviewPreview.dueStates.filter((state) => state.due).map((state) => <li key={state.target.targetId} className="py-3 text-sm"><span className="font-semibold text-navy">{contentResolver.getPathContext(state.target.targetId)?.skillPath.name}</span><p className="mt-1 text-secondary">{reviewReasonCopy(state.reason)}</p></li>)}</ul> : null}
                 {reviewPreview.remainingDueCount > 0 ? (
                   <p className="mt-2 text-sm font-bold text-muted">{reviewPreview.remainingDueCount} more due skill{reviewPreview.remainingDueCount === 1 ? "" : "s"} will remain for the next Review.</p>
                 ) : null}
-                <button type="button" onClick={startReviewSession} disabled={activation.busy} className="mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-forge px-5 font-extrabold text-white max-sm:w-full">
-                  Start Review <ArrowRight className="size-5" />
+                <button type="button" onClick={startReviewSession} disabled={activation.busy} className="orthic-primary-action mt-7 inline-flex min-h-11 items-center justify-center gap-2 rounded bg-navy px-5 font-semibold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy disabled:opacity-45 max-sm:w-full">
+                  Start Review <ArrowRight aria-hidden="true" className="orthic-arrow size-5" />
                 </button>
               </>
             ) : (
               <>
                 <h2 className="text-xl font-extrabold">Nothing is due right now</h2>
                 <p className="mt-2 text-muted">Keep learning or practising. Review will appear here when a completed skill is ready to revisit.</p>
+                <Link href="/subjects/higher-maths" className="orthic-secondary-link mt-5 inline-flex min-h-11 items-center gap-2 rounded text-sm font-semibold text-navy focus-visible:outline focus-visible:outline-2 focus-visible:outline-navy">Continue learning <ArrowRight aria-hidden="true" className="orthic-arrow size-4" /></Link>
               </>
             )}
             {activation.error ? <p role="alert" className="mt-3 text-sm font-bold text-danger">{activation.error}</p> : null}

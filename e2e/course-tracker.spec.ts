@@ -40,7 +40,7 @@ test("tracker keeps curriculum navigation while removing implementation coverage
 
   await navigation.getByRole("button", { name: "Algebra and Trigonometry" }).click();
   const reference = page.getByTestId("tracker-skill-factorising-cubics-and-quartics");
-  await expect(page.getByText("Further skills in this strand").first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Algebra and Trigonometry", exact: true })).toBeVisible();
   await expect(reference).toContainText("1 official requirement");
   await expect(reference.getByRole("link")).toHaveCount(0);
   await expect(reference.locator("details, button, [data-mastery-status], [data-review-state]")).toHaveCount(0);
@@ -62,15 +62,29 @@ test("official requirements live collapsed, keyboard accessible and exact on Ski
   await expect(disclosure).toContainText(point.officialStatement!);
 });
 
-test("Review appears only as quiet due text without stage progress or mastery", async ({ page }) => {
+test("Review now replaces Open and launches scoped Review without stage progress or mastery", async ({ page, seriousBrowserErrors }) => {
   const attempts = higherMathsDifferentiationQuestions.map((question, index) => attempt({ questionId: question.id, stageId: question.stageId, versionEvidence: { kind: "known", questionVersion: question.questionVersion }, attemptedAt: "2026-06-01T10:00:00.000Z", sequence: index + 1, eventId: `tracker-complete-${index}` }));
   await seedStoredProgress(page, payload(attempts));
   await page.goto(route);
   const basic = page.getByTestId("tracker-skill-basic-differentiation");
   await expect(basic.getByText(/Mastered|Learned|Foundations|Applications|Past Paper-style Questions/)).toHaveCount(0);
   await expect(basic.locator("[data-mastery-status]")).toHaveCount(0);
-  await expect(basic.locator('[data-review-state="due"]')).toHaveText("Review due");
+  await expect(basic.locator('[data-review-state="due"]')).toHaveText("Review now");
+  const action = basic.getByRole("link", { name: "Review now: Basic differentiation" });
+  await expect(action).toHaveAttribute("href", "/practice?review=1&path=basic-differentiation");
+  await expect(basic.getByRole("link")).toHaveCount(1);
+  await expect(basic.getByText("Open", { exact: true })).toHaveCount(0);
   await expect(basic.getByText(/Available|Recommended/, { exact: true })).toHaveCount(0);
+  await action.focus();
+  await expect(action).toBeFocused();
+  await action.press("Enter");
+  await expect(page).toHaveURL(/\/practice\?review=1&path=basic-differentiation/);
+  const launch = page.getByTestId("review-launch-card");
+  await expect(launch).toContainText("Basic differentiation is ready to review");
+  await launch.getByRole("button", { name: "Start Review" }).click();
+  await expect(page).toHaveURL(/\/practice\/session\/[^?]+$/);
+  await expect(page.getByTestId("practice-session-panel")).toContainText("Review");
+  expect(seriousBrowserErrors).toEqual([]);
 });
 
 test("recent completion hides non-due Review states", async ({ page }) => {
@@ -123,15 +137,15 @@ test("saved confidence uses restrained semantic text colour without changing its
   }
 });
 
-test("compact curriculum references materially reduce row height without becoming interactive", async ({ page }) => {
+test("curriculum rows remain readable and references do not become interactive", async ({ page }) => {
   await page.goto(route);
   const fullRow = page.getByTestId("tracker-skill-basic-differentiation");
   const reference = page.getByTestId("tracker-skill-trigonometric-differentiation");
   const fullHeight = await fullRow.evaluate((element) => element.getBoundingClientRect().height);
   const referenceHeight = await reference.evaluate((element) => element.getBoundingClientRect().height);
   expect(fullHeight).toBeGreaterThanOrEqual(48);
-  expect(fullHeight).toBeLessThanOrEqual(56);
-  expect(referenceHeight).toBeLessThanOrEqual(40);
+  expect(referenceHeight).toBeGreaterThanOrEqual(44);
+  expect(referenceHeight).toBeLessThanOrEqual(fullHeight + 16);
   await expect(reference.locator("a, button, details, summary")).toHaveCount(0);
 });
 
@@ -139,10 +153,16 @@ for (const viewport of [
   { width: 390, height: 844 },
   { width: 375, height: 812 },
   { width: 320, height: 760 },
+  { width: 1024, height: 900 },
 ]) {
   test(`tracker remains keyboard-usable and overflow-free at ${viewport.width}px`, async ({ page }) => {
     await page.setViewportSize(viewport);
     await page.goto(route);
+    await expect(page.getByTestId("course-hub-progress")).toHaveAccessibleName("Course progress: 0 of 49 skills learned, 0%");
+    const basic = page.getByTestId("tracker-skill-basic-differentiation");
+    await expect(basic.getByText("Unrated", { exact: true })).toBeVisible();
+    await expect(basic.getByRole("link")).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
     const navigation = page.getByTestId("course-tracker-unit-navigation");
     const algebra = navigation.getByRole("button", { name: "Algebra and Trigonometry" });
     await algebra.focus();
