@@ -33,6 +33,27 @@ test("a due Review stays advisory while Quick Practice remains available", async
   await expect(card.getByTestId("quick-practice-recommendation")).not.toContainText(/review/i);
 });
 
+for (const width of [1440, 375, 320]) {
+  test(`Practice duration bar remains keyboard-accessible and bounded at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/practice");
+    const durations = page.getByTestId("quick-practice-duration-options");
+    const thirty = durations.getByRole("button", { name: "30 min" });
+    await thirty.focus();
+    await expect(thirty).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(thirty).toHaveAttribute("aria-pressed", "true");
+    await expect(durations.getByRole("button", { name: "20 min" })).toHaveAttribute("aria-pressed", "false");
+    await expect(page.getByTestId("practice-quick-card")).toContainText("About 6 questions");
+    for (const button of await durations.getByRole("button").all()) {
+      const box = await button.boundingBox();
+      expect(box?.height).toBeGreaterThanOrEqual(44);
+    }
+    await expect(page.getByRole("link", { name: "Choose test content" })).toHaveAttribute("href", "/practice/test");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
+  });
+}
+
 test("mistake reason and duration controls remain calm and overflow-free at 375px", async ({ page }) => {
   await seedStoredProgress(page, v3Payload([currentAttempt(QUESTION_IDS[0], 1, {
     isCorrect: false,

@@ -19,12 +19,12 @@ export function StudyPlanItemRow({ item, availableDates, moving, onToggleMove, o
 }) {
   const assessmentText = presentStudyPlanAssessmentQualifier(item.assessmentQualifier);
   return (
-    <div data-testid="study-plan-item" data-item-key={item.itemKey} className={primaryAction ? "orthic-plan-row my-3 border border-rule bg-white px-4 py-3" : "py-3"}>
+    <div data-testid="study-plan-item" data-item-key={item.itemKey} className={primaryAction ? "orthic-plan-row py-5" : "py-3"}>
       <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-x-3 gap-y-2 max-sm:grid-cols-[auto_minmax(0,1fr)_auto]">
         <span aria-hidden="true" className={`flex size-8 shrink-0 items-center justify-center ${primaryAction ? "text-secondary" : `rounded-full ${item.state === "completed" ? "bg-forge-soft text-forge" : "bg-paper text-muted"}`}`}>{item.state === "completed" ? <Check className="size-4" /> : <CalendarDays className="size-4" />}</span>
         <span className="min-w-0">
-          <span className={`block text-sm ${primaryAction ? "font-medium" : "font-extrabold"} ${item.state === "completed" ? "text-muted line-through" : "text-ink"}`}>{item.skillName}</span>
-          <span className="block text-xs text-muted">{presentStudyPlanReason(item.reasonCode)}{assessmentText ? ` · ${assessmentText}` : ""} · {item.suggestedMinutes} min</span>
+          <span className={`block ${primaryAction ? "text-base font-semibold" : "text-sm font-extrabold"} ${item.state === "completed" ? "text-muted line-through" : "text-ink"}`}>{item.skillName}</span>
+          <span className={primaryAction ? "mt-1 block text-sm leading-relaxed text-secondary" : "block text-xs text-muted"}>{presentStudyPlanReason(item.reasonCode)}{assessmentText ? ` · ${assessmentText}` : ""} · {item.suggestedMinutes} min</span>
           {item.manualOverride === "moved" || item.manualOverride === "pulled_forward" ? <span className="block text-xs font-bold text-forge">Moved by you</span> : null}
         </span>
         <Link href={item.href} className={primaryAction ? `orthic-plan-action inline-flex min-h-11 items-center justify-center gap-2 rounded-sm px-3 text-sm font-medium ${!subduedAction && item.state !== "completed" ? "orthic-primary-action bg-navy text-white" : "orthic-secondary-link text-secondary"}` : "inline-flex min-h-10 items-center font-extrabold text-forge"}>{item.state === "completed" ? "Open" : "Start"}{primaryAction ? <span aria-hidden="true" className="orthic-arrow">→</span> : null}</Link>

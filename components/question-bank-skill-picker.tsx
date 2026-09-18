@@ -50,26 +50,26 @@ export function SkillFilterPicker({ label, values, onClear, onToggle, options, a
       aria-controls={panelId}
       aria-label={`${label}: ${summary}`}
       onClick={() => setOpen((current) => !current)}
-      className="flex min-h-11 min-w-0 items-center justify-between gap-2 rounded-lg border border-line bg-white px-3 text-left text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-forge"
+      className="orthic-course-action flex min-h-11 min-w-0 items-center justify-between gap-2 rounded border border-rule bg-white px-3 text-left text-sm font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-navy"
     >
-      <span className="truncate">{summary}</span><ChevronDown aria-hidden="true" className={`size-4 shrink-0 transition ${open ? "rotate-180" : ""}`} />
+      <span className="truncate">{summary}</span><ChevronDown aria-hidden="true" className={`orthic-disclosure-chevron size-4 shrink-0 ${open ? "rotate-180" : ""}`} />
     </button>
-    {open ? <div id={panelId} className={`${mobile ? "mt-1" : "absolute left-0 right-0 top-full z-30 mt-1 shadow-lg"} grid gap-2 rounded-lg border border-line bg-white p-3`}>
+    {open ? <div id={panelId} data-question-bank-dialog className={`orthic-transition-standard !duration-[180ms] ${mobile ? "mt-1" : "absolute left-0 right-0 top-full z-30 mt-1 shadow-sm"} grid gap-2 rounded border border-rule bg-white p-3`}>
       <label htmlFor={searchId} className="sr-only">Search skills</label>
       <div className="relative">
         <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" />
         <input id={searchId} type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search skills" className="min-h-11 w-full rounded-lg border border-line bg-white pl-9 pr-3 text-sm" />
       </div>
       <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs font-bold">
-        <button type="button" onClick={onClear} className="min-h-10 text-forge">Select all valid skills</button>
-        {values.length ? <button type="button" onClick={onClear} className="min-h-10 text-muted">Clear selected skills</button> : null}
+        <button type="button" onClick={onClear} className="min-h-11 text-forge">Select all valid skills</button>
+        {values.length ? <button type="button" onClick={onClear} className="min-h-11 text-muted">Clear selected skills</button> : null}
       </div>
       <div className="grid max-h-52 gap-1 overflow-y-auto overscroll-contain border-t border-line pt-1" data-testid="skill-picker-options">
-        {filteredOptions.length ? filteredOptions.map((item) => <label key={item.id} className="flex min-h-10 items-center gap-2 text-sm font-semibold">
+        {filteredOptions.length ? filteredOptions.map((item) => <label key={item.id} className="orthic-plan-row flex min-h-11 items-center gap-2 text-sm font-medium">
           <input type="checkbox" checked={values.includes(item.id)} onChange={(event) => onToggle(item.id, event.target.checked)} /> {item.name}
         </label>) : <p className="py-3 text-sm text-muted">No skills match that search.</p>}
       </div>
-      <button type="button" onClick={() => { setOpen(false); triggerRef.current?.focus(); }} className="min-h-10 justify-self-end px-2 text-sm font-bold text-forge">Done</button>
+      <button type="button" onClick={() => { setOpen(false); triggerRef.current?.focus(); }} className="min-h-11 justify-self-end px-2 text-sm font-bold text-forge">Done</button>
     </div> : null}
   </div>;
 }

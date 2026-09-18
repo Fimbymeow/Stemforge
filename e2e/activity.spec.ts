@@ -7,7 +7,8 @@ test("fresh learner sees a calm empty state with the real next action", async ({
   await page.goto("/dashboard");
   const dashboardActivity = page.getByTestId("dashboard-activity-summary");
   await expect(dashboardActivity).toContainText("No activity in the last 14 days");
-  await expect(dashboardActivity.getByTestId("dashboard-activity-strip").locator("[data-intensity]")).toHaveCount(14);
+  await expect(dashboardActivity.getByTestId("dashboard-activity-strip")).toHaveCount(0);
+  await expect(dashboardActivity).toHaveCSS("border-top-width", "0px");
   await page.goto("/activity");
   await expect(page.getByRole("heading", { name: "Activity", level: 1 })).toBeVisible();
   await expect(page.getByTestId("activity-empty-state")).toContainText("Your activity will appear here");

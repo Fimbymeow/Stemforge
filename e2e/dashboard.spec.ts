@@ -2,6 +2,19 @@ import { expect, test } from "./fixtures/test";
 import { currentAttempt, QUESTION_IDS, seedStoredProgress, v3Payload } from "./fixtures/progress";
 import { expectNoHorizontalOverflow } from "./fixtures/student-actions";
 
+test("Dashboard context surface spans the workspace even beyond the content measure", async ({ page }) => {
+  for (const width of [2200, 1440, 1024, 390, 375, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/dashboard");
+    const bar = page.getByTestId("workspace-context-bar");
+    await expect(bar).toHaveCSS("background-color", "rgb(255, 255, 255)");
+    const box = (await bar.boundingBox())!;
+    expect(box.x).toBe(width >= 1024 ? 240 : 0);
+    expect(box.x + box.width).toBe(width);
+    await expectNoHorizontalOverflow(page);
+  }
+});
+
 test("Dashboard action motion is tactile and disabled for reduced motion", async ({ page }) => {
   await page.goto("/dashboard");
   const action = page.getByTestId("dashboard-progress-summary").getByRole("link", { name: "Start learning" });

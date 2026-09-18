@@ -72,7 +72,12 @@ html {
 .orthic-stage:hover { background-color: #eaf0f7; border-color: #b9c5d4; }
 .orthic-plan-row:hover { background-color: #f5f7fa; }
 .orthic-plan-action:hover .orthic-arrow,
-.orthic-plan-action:focus-visible .orthic-arrow { transform: translateX(3px); }
+.orthic-plan-action:focus-visible .orthic-arrow { transform: translateX(2px); }
+.orthic-disclosure-chevron { transition: transform 150ms cubic-bezier(0.16, 1, 0.3, 1); }
+/* Functional popover/dialog appearance; no page or question-row entrances. */
+@starting-style {
+  [data-question-bank-dialog] { opacity: 0; }
+}
 .orthic-activity-cell { transition: border-color 100ms cubic-bezier(0.16, 1, 0.3, 1); }
 .orthic-activity-cell:hover { border-color: #7f91aa; }
 

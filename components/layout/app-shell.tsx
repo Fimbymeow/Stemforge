@@ -12,6 +12,7 @@ export function AppShell({
   className = "",
   workingContextPathId,
   feedbackPlacement = "floating",
+  contextBar,
 }: {
   children: ReactNode;
   demo: boolean;
@@ -19,6 +20,7 @@ export function AppShell({
   className?: string;
   workingContextPathId?: string | null;
   feedbackPlacement?: "floating" | "inline-mobile";
+  contextBar?: ReactNode;
 }) {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const dockRef = useRef<HTMLDivElement | null>(null);
@@ -45,6 +47,7 @@ export function AppShell({
         active={active}
         workingContextPathId={workingContextPathId}
       />
+      {contextBar ? <div data-testid="workspace-context-bar" className="ml-[240px] border-b border-rule bg-white max-lg:ml-0"><div className="mx-auto flex min-h-20 max-w-[1300px] flex-wrap items-center justify-between gap-3 px-10 py-4 text-secondary max-md:px-4">{contextBar}</div></div> : null}
       <PageContainer className={className}>{children}</PageContainer>
       <div
         ref={dockRef}

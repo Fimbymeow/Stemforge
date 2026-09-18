@@ -65,16 +65,16 @@ export function DashboardLocalProgressSection({ studyPlanEnabled = false }: { st
   const focusPath = planFocus ? planFocusPath : recommendedPath;
 
   return (
-    <section className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-10 text-navy max-sm:gap-7" aria-label="Your learning dashboard">
+    <section className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-8 text-navy max-sm:gap-7" aria-label="Your learning dashboard">
       <div data-testid="dashboard-learning-region">
-      {continueMode === "full" ? <section data-testid="dashboard-progress-summary" aria-label="Continue learning" className="rounded border border-rule bg-white p-6 md:p-8 lg:p-9">
-        <div className="grid gap-6">
+      {continueMode === "full" ? <section data-testid="dashboard-progress-summary" aria-label="Continue learning" className="rounded border border-rule bg-white p-6 md:px-8 md:py-6">
+        <div className="grid gap-5">
           <div className="min-w-0">
             <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-navy"><span aria-hidden="true" className="size-2 rounded-full bg-navy" />Continue learning · Higher Maths</p>
-            <h2 className="mt-5 text-[30px] font-semibold leading-tight tracking-tight max-sm:text-2xl">{recommendedPath?.name ?? "Higher Maths"}</h2>
+            <h2 className="mt-3 text-[30px] font-semibold leading-tight tracking-tight max-sm:text-2xl">{recommendedPath?.name ?? "Higher Maths"}</h2>
             <DashboardJourney path={recommendedPath} currentStageId={recommendation.stageId} />
-            {recommendedStage ? <p className="mt-4 text-xs text-secondary" data-testid="dashboard-current-stage">{recommendedStage.name} · {recommendedStage.completedQuestions}/{recommendedStage.totalQuestions} complete</p> : null}
-            <p className="mt-4 max-w-3xl text-[15px] leading-relaxed text-secondary">{recommendation.reason}</p>
+            {recommendedStage ? <p className="mt-3 text-xs text-secondary" data-testid="dashboard-current-stage">{recommendedStage.name} · {recommendedStage.completedQuestions}/{recommendedStage.totalQuestions} complete</p> : null}
+            <p className="mt-3 max-w-3xl text-[15px] leading-relaxed text-secondary">{recommendation.reason}</p>
           </div>
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
             {recommendation.href ? <Link href={recommendation.href} className="orthic-primary-action inline-flex min-h-12 items-center justify-center gap-3 rounded bg-navy px-6 text-base font-medium text-white max-sm:w-full">{recommendation.label}<ArrowRight aria-hidden="true" className="orthic-arrow size-4" /></Link> : null}
@@ -94,9 +94,9 @@ export function DashboardLocalProgressSection({ studyPlanEnabled = false }: { st
           </div>
         </section>
       ) : (
-        <section data-testid="dashboard-plan-focus" aria-labelledby="dashboard-plan-focus-title" className="rounded border border-rule bg-white p-6 md:p-8 lg:p-9">
+        <section data-testid="dashboard-plan-focus" aria-labelledby="dashboard-plan-focus-title" className="rounded border border-rule bg-white p-6 md:px-8 md:py-6">
           <p className="font-mono text-[11px] font-medium uppercase tracking-[0.1em]">Your learning · {effectiveCourses[0]?.name ?? "Higher Maths"}</p>
-          <h2 id="dashboard-plan-focus-title" className="mt-5 text-[30px] font-semibold leading-tight tracking-tight max-sm:text-2xl">{planFocus?.skillName ?? recommendedPath?.name ?? effectiveCourses[0]?.name ?? "Your study plan"}</h2>
+          <h2 id="dashboard-plan-focus-title" className="mt-3 text-[30px] font-semibold leading-tight tracking-tight max-sm:text-2xl">{planFocus?.skillName ?? recommendedPath?.name ?? effectiveCourses[0]?.name ?? "Your study plan"}</h2>
           <DashboardJourney path={focusPath ?? null} currentStageId={planFocus ? planFocus.stageId : recommendation.stageId} />
           {focusStage ? <p className="mt-4 text-xs text-secondary">{focusStage.name} · {focusStage.completedQuestions}/{focusStage.totalQuestions} complete</p> : null}
           {planFocus?.actionType === "review" ? <p className="mt-4 inline-block rounded-sm border border-amber-200 bg-amber-50 px-3 py-1 font-mono text-xs text-amber-800">Due for review · {planFocus.suggestedMinutes} min</p> : null}
@@ -121,7 +121,7 @@ export function DashboardLocalProgressSection({ studyPlanEnabled = false }: { st
 /** Curriculum context only: Notes has no completion evidence and Review is not a stage. */
 function DashboardJourney({ path, currentStageId }: { path: DashboardPathSummary | null; currentStageId?: string | null }) {
   if (!path) return null;
-  return <ol aria-label="Learning pathway" data-testid="dashboard-learning-pathway" className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-2 font-mono text-[11px] text-secondary">
+  return <ol aria-label="Learning pathway" data-testid="dashboard-learning-pathway" className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 font-mono text-[11px] text-secondary">
     <li className="inline-flex min-h-8 items-center">Notes</li>
     {path.stageSummaries.map((stage) => {
       const complete = stage.totalQuestions > 0 && stage.completedQuestions === stage.totalQuestions;

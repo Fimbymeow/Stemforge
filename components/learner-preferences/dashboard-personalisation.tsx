@@ -38,13 +38,6 @@ export function DashboardPersonalisation() {
 
   return (
     <>
-      <div className="-mx-4 -mt-8 flex min-h-20 flex-wrap items-center justify-between gap-3 border-b border-rule bg-white px-4 py-4 text-secondary md:-mx-10 md:px-10 max-lg:-mt-5">
-        <p className="font-mono text-xs uppercase tracking-[0.12em]">Orthic <span aria-hidden="true" className="mx-2 text-rule">/</span> Dashboard</p>
-        <div className="flex items-center gap-4">
-          {preferences.firstName ? <span className="flex items-center gap-3 text-sm">{preferences.firstName}<span aria-hidden="true" className="grid size-8 place-items-center rounded-full border border-rule bg-academic-blue text-xs">{preferences.firstName.charAt(0)}</span></span> : null}
-          <AppTopbar demo={false} />
-        </div>
-      </div>
       <header className="flex items-start justify-between gap-4 max-md:grid">
         <div>
           <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.12em] text-navy">{getActiveSubject().subjectName}</p>
@@ -76,4 +69,15 @@ export function DashboardPersonalisation() {
       ) : null}
     </>
   );
+}
+
+export function DashboardContextBar() {
+  const { preferences } = useLearnerPreferences();
+  return <>
+    <p className="font-mono text-xs uppercase tracking-[0.12em]">Orthic <span aria-hidden="true" className="mx-2 text-rule">/</span> Dashboard</p>
+    <div className="flex items-center gap-4">
+      {preferences.firstName ? <span className="flex items-center gap-3 text-sm">{preferences.firstName}<span aria-hidden="true" className="grid size-8 place-items-center rounded-full border border-rule bg-academic-blue text-xs">{preferences.firstName.charAt(0)}</span></span> : null}
+      <AppTopbar demo={false} />
+    </div>
+  </>;
 }

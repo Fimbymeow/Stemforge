@@ -45,6 +45,8 @@ test("skill and stage multi-select state is visible, shareable and removable", a
   await skills.getByLabel("Basic differentiation").click();
   await skills.getByLabel("Chain rule").click();
   await skills.getByRole("button", { name: "Done" }).click();
+  await expect(page).toHaveURL(/path=basic-differentiation%2Cchain-rule/);
+  await expect(page.getByRole("button", { name: "Remove Chain rule filter" })).toBeVisible();
   const stages = page.getByRole("group", { name: "Stages" });
   await stages.getByLabel("Foundations").click();
   await stages.getByLabel("Applications").click();
@@ -153,12 +155,13 @@ test("an active session is never overwritten without explicit confirmation", asy
   await expect(page).toHaveURL(/\/practice\/session\/practice_custom_/);
 });
 
-test("collapsed rows never mount full MathContent, and only the expanded row previews", async ({ page }) => {
+test("only the expanded row mounts its full preview, while row excerpts render mathematical notation", async ({ page }) => {
   await page.goto(bank);
   const previewMath = page.locator('[id^="question-bank-preview-"] .math-content');
   await expect(previewMath).toHaveCount(0);
   const firstRow = page.locator("li").filter({ hasText: "Differentiate a power" });
   const secondRow = page.locator("li").filter({ hasText: "Differentiate a sum of powers" });
+  await expect(firstRow.getByTestId("question-bank-math-excerpt").locator(".katex").first()).toBeVisible();
   await firstRow.getByRole("button", { name: "Preview" }).click();
   await expect(previewMath).toHaveCount(1);
   await expect(firstRow.getByRole("button", { name: "Hide preview" })).toBeVisible();
@@ -169,6 +172,39 @@ test("collapsed rows never mount full MathContent, and only the expanded row pre
   await secondRow.getByRole("button", { name: "Hide preview" }).click();
   await expect(previewMath).toHaveCount(0);
 });
+
+for (const width of [1440, 1024, 390, 375, 320]) {
+  test(`Design V2 Question Bank controls, maths and restrained motion remain usable at ${width}px`, async ({ page, seriousBrowserErrors }, testInfo) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto(bank);
+    await expect(page.getByText("42 questions available")).toBeVisible();
+    const row = page.getByTestId("question-bank-row").first();
+    await expect(row.getByTestId("question-bank-math-excerpt").locator(".katex").first()).toBeVisible();
+    await row.getByRole("button", { name: "Preview", exact: true }).focus();
+    await page.keyboard.press("Enter");
+    await expect(row.getByRole("button", { name: "Hide preview" })).toHaveAttribute("aria-expanded", "true");
+    const action = row.getByRole("link", { name: "Open Differentiate a power" });
+    await action.focus();
+    await expect(action).toBeFocused();
+    await expect(action).toHaveCSS("transform", "none");
+    await expect(action).toHaveCSS("transition-duration", "0.12s");
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await expect(action).toHaveCSS("transition-duration", "0s");
+    await expect(action.locator(".orthic-arrow")).toHaveCSS("transform", "none");
+    if (width < 1024) {
+      await page.getByRole("button", { name: "Filters", exact: true }).click();
+      const dialog = page.getByRole("dialog", { name: "Filters", exact: true });
+      await expect(dialog).toBeVisible();
+      await expect(dialog.getByRole("button", { name: "Close filters" })).toBeFocused();
+      await expect(dialog).toHaveCSS("transition-duration", "0s");
+      await page.keyboard.press("Escape");
+      await expect(page.getByRole("button", { name: "Filters", exact: true })).toBeFocused();
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
+    await page.screenshot({ path: testInfo.outputPath(`question-bank-v2-${width}.png`), fullPage: true, animations: "disabled" });
+    expect(seriousBrowserErrors).toEqual([]);
+  });
+}
 
 test("real mathematical titles render in rows and the selection review", async ({ page }) => {
   await page.goto(bank);

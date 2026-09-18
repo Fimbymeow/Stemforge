@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, ChevronDown, ClipboardCheck, Clock, SlidersHorizontal, Target } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
-import { AppTopbar } from "@/components/layout/app-topbar";
 import { QuickPracticeAction } from "@/components/practice/quick-practice-action";
 import { usePracticeActivation } from "@/components/practice/use-practice-activation";
 import { Button, Card } from "@/components/ui";
@@ -211,22 +210,21 @@ export function PracticeSetup({
 
   return (
     <AppShell demo active="Practice" className="py-8 max-lg:pt-5" workingContextPathId={workingContextPathId}>
-      <div className="mx-auto grid max-w-[920px] gap-5">
+      <div className="mx-auto grid max-w-[1040px] gap-7" data-testid="practice-page">
         <header className="flex items-start justify-between gap-4 max-md:grid">
           <div>
-            <p className="text-sm font-bold text-muted">Practice</p>
-            <h1 className="m-0 mt-1 text-[28px] font-extrabold leading-tight">Practise {workingContextPath?.skillPath.name ?? "Higher Maths"}</h1>
-            <p className="mt-3 max-w-3xl text-muted">Start a useful short session now, or choose options when you want more control.</p>
+            <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-secondary">Practice</p>
+            <h1 className="m-0 mt-2 text-[32px] font-bold leading-tight tracking-tight text-navy">Practise {workingContextPath?.skillPath.name ?? "Higher Maths"}</h1>
+            <p className="mt-3 max-w-3xl text-[15px] leading-relaxed text-secondary">Start a useful short session now, or choose options when you want more control.</p>
           </div>
-          <AppTopbar demo={false} />
         </header>
 
-        <Card className="border-forge/30 bg-white p-5" data-testid="practice-quick-card">
+        <Card className="!rounded-lg !border-rule bg-white p-6 !shadow-none sm:p-8" data-testid="practice-quick-card">
           <div className="grid grid-cols-[auto_1fr] items-start gap-4 max-md:grid-cols-[auto_1fr]">
-            <span className="grid size-10 place-items-center rounded-lg bg-forge-soft text-forge"><Target className="size-5" /></span>
+            <span className="grid size-10 place-items-center rounded bg-surface-dim text-navy"><Target aria-hidden="true" className="size-5" /></span>
             <div>
-              <p className="mb-1 text-xs font-extrabold uppercase text-forge">Recommended</p>
-              <h2 className="m-0 text-xl font-extrabold">Quick Practice</h2>
+              <p className="mb-2 font-mono text-[11px] uppercase tracking-[0.08em] text-secondary">Recommended</p>
+              <h2 className="m-0 text-2xl font-bold tracking-tight text-navy">Quick Practice</h2>
               {quickPreview.recommendation ? (
                 <p className="mt-1 text-sm text-muted" data-testid="quick-practice-recommendation">
                   <strong className="text-ink">{quickPreview.recommendation.primarySkillName}</strong>
@@ -239,7 +237,7 @@ export function PracticeSetup({
           </div>
 
           {quickPreview.reviewOffer ? (
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line bg-paper px-4 py-3" data-testid="quick-practice-review-advisory">
+            <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-y border-rule py-3" data-testid="quick-practice-review-advisory">
               <p className="text-sm text-muted">
                 <strong className="text-ink">Review due: {quickPreview.reviewOffer.skillName}</strong>
                 <span className="ml-1">Scheduled Review stays separate from this practice.</span>
@@ -248,17 +246,17 @@ export function PracticeSetup({
             </div>
           ) : null}
 
-          <div className="mt-5 flex items-end justify-between gap-4 max-md:grid">
-            <fieldset>
-              <legend className="mb-2 text-sm font-extrabold">Choose a session length</legend>
-              <div className="inline-flex rounded-lg border border-line bg-paper p-1" data-testid="quick-practice-duration-options">
+          <div className="mt-7 flex items-end justify-between gap-6 max-md:grid">
+            <fieldset className="w-full min-w-0 md:max-w-[360px]">
+              <legend className="font-mono text-[11px] uppercase tracking-[0.08em] text-secondary">Choose a session length</legend>
+              <div className="mt-3 grid grid-cols-3 overflow-hidden rounded-sm border border-rule" data-testid="quick-practice-duration-options">
                 {QUICK_PRACTICE_DURATION_OPTIONS.map((minutes) => (
                   <button
                     key={minutes}
                     type="button"
                     aria-pressed={quickDuration === minutes}
                     onClick={() => setQuickDuration(minutes)}
-                    className={`min-h-10 rounded-md px-3 text-sm font-extrabold ${quickDuration === minutes ? "bg-white text-forge shadow-sm" : "text-muted"}`}
+                    className={`orthic-stage min-h-14 min-w-0 border-r border-rule px-2 py-2 text-sm font-medium last:border-r-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-navy ${quickDuration === minutes ? "bg-surface-dim text-navy" : "bg-white text-secondary"}`}
                   >
                     {minutes} min
                   </button>
@@ -269,7 +267,7 @@ export function PracticeSetup({
               </p>
             </fieldset>
             <QuickPracticeAction
-              className="max-md:w-full"
+              className="orthic-primary-action !rounded !bg-navy !font-semibold hover:!translate-y-0 max-md:w-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy"
               preferredPathId={workingContextPathId}
               durationMinutes={quickDuration}
               preview={quickPreview}
@@ -277,7 +275,7 @@ export function PracticeSetup({
           </div>
         </Card>
 
-        <div className="grid grid-cols-[1fr_auto] items-center gap-4 rounded-xl border border-line bg-white p-5 max-md:grid-cols-1" data-testid="build-a-test-entry">
+        <div className="grid grid-cols-[1fr_auto] items-center gap-4 border-y border-rule py-5 max-md:grid-cols-1" data-testid="build-a-test-entry">
           <div className="flex min-w-0 items-start gap-3">
             <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-paper text-forge"><ClipboardCheck aria-hidden="true" className="size-5" /></span>
             <div>
@@ -285,10 +283,10 @@ export function PracticeSetup({
               <p className="mt-1 text-sm text-muted">Choose what your assessment covers and Orthic will build a test.</p>
             </div>
           </div>
-          <Link href="/practice/test" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-line bg-white px-4 text-sm font-extrabold hover:border-forge/45 max-md:w-full">Choose test content <ArrowRight aria-hidden="true" className="size-4" /></Link>
+          <Link href="/practice/test" className="orthic-course-action inline-flex min-h-11 items-center justify-center gap-2 rounded border border-rule bg-white px-4 text-sm font-semibold text-navy focus-visible:outline focus-visible:outline-2 focus-visible:outline-navy max-md:w-full">Choose test content <ArrowRight aria-hidden="true" className="orthic-arrow size-4" /></Link>
         </div>
 
-        <details className="group disclosure-motion rounded-xl border border-line bg-white">
+        <details className="group disclosure-motion rounded-lg border border-rule bg-white">
           <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-5 py-3 font-extrabold">
             <span className="inline-flex items-center gap-2"><SlidersHorizontal className="size-5 text-forge" />Choose practice options</span>
             <ChevronDown className="size-5 text-muted transition group-open:rotate-180" />
@@ -304,7 +302,7 @@ export function PracticeSetup({
                       type="button"
                       aria-pressed={mode === item}
                       onClick={() => setMode(item)}
-                      className={`rounded-xl border p-4 text-left ${mode === item ? "border-forge bg-forge-soft" : "border-line bg-white"}`}
+                      className={`orthic-course-action rounded border p-4 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-navy ${mode === item ? "border-rule bg-surface-dim text-navy" : "border-rule bg-white"}`}
                     >
                       <strong>{modeCopy[item].title}</strong>
                       <span className="mt-1 block text-sm text-muted">
@@ -317,7 +315,7 @@ export function PracticeSetup({
                 </div>
               </fieldset>
             ) : (
-              <p className="rounded-xl bg-paper p-3 text-sm text-muted">Path practice is the useful configurable option for the content available today.</p>
+              <p className="text-sm text-secondary">Path practice is the useful configurable option for the content available today.</p>
             )}
 
             {visibility.showCourseChoice ? <label className="grid gap-2">
@@ -342,7 +340,7 @@ export function PracticeSetup({
               </label>
             ) : null}
 
-            <details className="group/advanced disclosure-motion rounded-xl border border-line bg-paper">
+            <details className="group/advanced disclosure-motion border-y border-rule">
               <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-4 py-2 font-bold">
                 Advanced options
                 <ChevronDown className="size-4 transition group-open/advanced:rotate-180" />
@@ -353,7 +351,7 @@ export function PracticeSetup({
                   <input aria-label="Requested questions" type="number" min={1} max={30} value={questionCount} onChange={(event) => setQuestionCount(Number(event.target.value))} className="min-h-11 rounded-lg border border-line bg-white px-3" />
                 </label>
                 {(mode === "targeted" || mode === "mixed") ? (
-                  <fieldset className="grid gap-2 rounded-xl border border-line bg-white p-3">
+                  <fieldset className="grid gap-2 border-t border-rule pt-3">
                     <legend className="px-1 font-bold">Timing</legend>
                     <label className="flex min-h-10 items-center gap-2"><input type="checkbox" checked={timed} onChange={(event) => setTimed(event.target.checked)} /> Timed session</label>
                     {timed ? <input aria-label="Time limit minutes" type="number" min={1} max={180} value={timeLimitMinutes} onChange={(event) => setTimeLimitMinutes(Number(event.target.value))} className="min-h-11 rounded-lg border border-line bg-white px-3" /> : null}
@@ -362,12 +360,12 @@ export function PracticeSetup({
               </div>
             </details>
 
-            <div className="grid grid-cols-[1fr_auto] items-center gap-4 rounded-xl border border-line bg-paper p-4 max-md:grid-cols-1">
+            <div className="grid grid-cols-[1fr_auto] items-center gap-4 border-t border-rule pt-5 max-md:grid-cols-1">
               <div>
                 <h2 className="m-0 text-lg font-extrabold">Session preview</h2>
                 <p className="mt-1 text-sm text-muted">{preview.shortageReason ?? `${preview.session?.questionReferences.length ?? 0} question${preview.session?.questionReferences.length === 1 ? "" : "s"} selected from available content.`}</p>
               </div>
-              <Button onClick={startConfiguredSession} disabled={!preview.session || activation.busy} className="max-md:w-full">
+              <Button onClick={startConfiguredSession} disabled={!preview.session || activation.busy} className="orthic-primary-action !rounded !bg-navy !font-semibold hover:!translate-y-0 max-md:w-full">
                 {mode === "retry_incorrect" ? "Start mistake practice" : "Start configured practice"} <ArrowRight className="size-5" />
               </Button>
             </div>
