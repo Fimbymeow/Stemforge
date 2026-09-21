@@ -1,10 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { AuthFeatureProvider } from "@/components/auth-feature-provider";
+import { RuntimeBoundary } from "@/components/runtime-boundary";
 import { isAuthFeatureAvailable } from "@/lib/auth/config";
-import { ProgressSyncProvider } from "@/components/progress-sync-provider";
-import { AccountStateSyncProvider } from "@/components/account-state-sync-provider";
-import { PremiumPreviewProvider } from "@/components/premium-preview-provider";
 import { isPremiumPreviewAvailable } from "@/lib/premium-preview";
 import "katex/dist/katex.min.css";
 import "mathlive/fonts.css";
@@ -38,13 +35,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <a href="#main-content" className="skip-link">Skip to main content</a>
-        <AuthFeatureProvider accountsAvailable={accountsAvailable}>
-          <PremiumPreviewProvider available={premiumPreviewAvailable}>
-            <ProgressSyncProvider accountsAvailable={accountsAvailable}>
-              <AccountStateSyncProvider accountsAvailable={accountsAvailable}>{children}</AccountStateSyncProvider>
-            </ProgressSyncProvider>
-          </PremiumPreviewProvider>
-        </AuthFeatureProvider>
+        <RuntimeBoundary accountsAvailable={accountsAvailable} premiumPreviewAvailable={premiumPreviewAvailable}>{children}</RuntimeBoundary>
       </body>
     </html>
   );

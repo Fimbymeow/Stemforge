@@ -9,7 +9,7 @@ import { AppTopbar } from "@/components/layout/app-topbar";
 import { PathCompletionPanel } from "@/components/learning/path-completion-panel";
 import { StageCompletionPanel } from "@/components/learning/stage-completion-panel";
 import { useLearnerNextAction } from "@/components/learning/use-learner-next-action";
-import { MathContent } from "@/components/questions/math-content";
+import { InlineMathContent, MathContent } from "@/components/questions/math-content";
 import { QuestionAnswerInput } from "@/components/questions/answer-inputs";
 import { QuestionGraphVisual } from "@/components/questions/question-graph-visual";
 import { WorkedSolutionContent } from "@/components/questions/worked-solution-content";
@@ -17,29 +17,18 @@ import { FormulaSheetDrawer } from "@/components/questions/formula-sheet-drawer"
 import { Card, ProgressBar } from "@/components/ui";
 import type { Question } from "@/data/types";
 import { markQuestionAnswer } from "@/lib/answer-engine";
-import { recordPathCelebrated, recordStageCelebrated } from "@/lib/completion-tracking";
-import { getQuestionContext, getQuestionHref } from "@/lib/learning-paths";
-import {
-  getEmptyProgressEvidence,
-  getProgressEvidence,
-  getQuestionProgress,
-  getSkillPathProgress,
-  recordGuidedSelfAssessment,
-  recordHintViewed,
-  recordWorkedSolutionViewed,
-  saveQuestionAttempt,
-} from "@/lib/local-progress";
+import { getQuestionContext } from "@/lib/learning-paths";
+import { getEmptyProgressEvidence } from "@/lib/local-progress";
+import { productionLearningRuntime } from "@/lib/learning/production-runtime";
+import type { LearningRuntime } from "@/lib/learning/runtime";
+import type { LearnerNextAction } from "@/lib/learning/next-action";
 import {
   classifyAnswerFeedback,
   internalAnswerFailureFeedback,
   type StudentAnswerFeedback,
 } from "@/lib/questions/answer-feedback";
 import {
-  clearAnswerDraft,
   createAnswerDraftKey,
-  loadAnswerDraft,
-  saveAnswerDraft,
-  saveRichMathAnswerDraft,
   type AnswerDraftIdentity,
 } from "@/lib/questions/answer-drafts";
 import { deriveMathInputCapabilities } from "@/lib/questions/math-input-capabilities";
@@ -67,15 +56,33 @@ export type QuestionWorkspaceSessionConfig = {
   onEvidenceRecorded?: () => void | Promise<void>;
 };
 
-export function QuestionWorkspace({
-  question,
-  session,
-  persistenceMode = "persistent",
-}: {
+type WorkspaceProps = {
   question: Question;
   session?: QuestionWorkspaceSessionConfig;
   persistenceMode?: "persistent" | "ephemeral";
-}) {
+  runtime?: LearningRuntime;
+  preview?: { pathway: ReactNode; nextAction: { href: string; label: string } };
+};
+
+/** Production recommendation hooks are mounted only in the production branch. */
+export function QuestionWorkspace(props: WorkspaceProps) {
+  if (props.runtime?.kind === "demo") return <QuestionWorkspaceCore {...props} runtime={props.runtime} />;
+  return <ProductionQuestionWorkspace {...props} />;
+}
+
+function ProductionQuestionWorkspace(props: WorkspaceProps) {
+  const nextAction = useLearnerNextAction();
+  return <QuestionWorkspaceCore {...props} runtime={productionLearningRuntime} productionNextAction={nextAction} />;
+}
+
+function QuestionWorkspaceCore({
+  question,
+  session,
+  persistenceMode = "persistent",
+  runtime,
+  preview,
+  productionNextAction,
+}: WorkspaceProps & { runtime: LearningRuntime; productionNextAction?: LearnerNextAction }) {
   const [answer, setAnswer] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [submittedAnswer, setSubmittedAnswer] = useState<string | null>(null);
@@ -98,8 +105,10 @@ export function QuestionWorkspace({
   const solutionHeadingRef = useRef<HTMLHeadingElement | null>(null);
   const submissionIntentRef = useRef<SubmissionIntent>("keyboard");
   const hasMounted = useHasMounted();
-  const shouldPersist = persistenceMode === "persistent";
-  const nextAction = useLearnerNextAction();
+  const isPreview = runtime.kind === "demo";
+  const shouldPersist = isPreview || persistenceMode === "persistent";
+  const nextAction = productionNextAction;
+  const resetVersion = runtime.resetVersion;
   const context = useMemo(() => getQuestionContext(question.id), [question.id]);
   const skillPath = context?.skillPath;
   const stage = context?.stage;
@@ -119,11 +128,11 @@ export function QuestionWorkspace({
     contentRevision: question.contentRevision,
   }), [question.id, question.questionVersion, question.contentRevision]);
   const draftKey = createAnswerDraftKey(draftIdentity);
-  const evidenceOverride = hasMounted ? undefined : getEmptyProgressEvidence();
+  const evidenceOverride = hasMounted || isPreview ? undefined : getEmptyProgressEvidence();
   void progressVersion;
-  const localProgress = skillPath ? getSkillPathProgress(skillPath, evidenceOverride) : undefined;
+  const localProgress = skillPath ? runtime.getSkillProgress(skillPath, evidenceOverride) : undefined;
   const stageLocalProgress = stage ? localProgress?.stageProgress[stage.id] : undefined;
-  const questionProgress = getQuestionProgress(question.id, evidenceOverride);
+  const questionProgress = runtime.getQuestionProgress(question.id, evidenceOverride);
   const relatedResources = getRelatedResourcesForQuestion(question.id);
   const questionSupportResources = [
     relatedResources.find((item) => item.type === "revision-notes"),
@@ -137,14 +146,14 @@ export function QuestionWorkspace({
     hintViewed,
     solutionViewed: solutionVisible,
   });
-  const usesGuidedMarking = question.answerType === "written" || question.answerType === "multi_step";
   const usesRichMathInput = question.answerType === "algebraic";
   const mathInputCapabilities = useMemo(() => deriveMathInputCapabilities(question), [question]);
   const markedSubmission = submitted && submittedAnswer !== null ? markQuestionAnswer(question, submittedAnswer) : null;
+  const usesGuidedMarking = markedSubmission?.outcomeKind === "guided_pending";
   const isCorrect = markedSubmission?.isCorrect === true;
   const completedWithCurrentSolution = submitted && solutionOpenedThisInteraction;
   const isPositiveFeedback = isCorrect || completedWithCurrentSolution || feedback?.category === "guided";
-  const fallbackPathHref = skillPath?.href ?? "/subjects";
+  const fallbackPathHref = isPreview ? runtime.navigation.skill : skillPath?.href ?? "/subjects";
   const pathCompletedQuestionCount = localProgress?.completedQuestionIds.length ?? 0;
   const pathTotalQuestionCount = localProgress?.totalQuestions ?? 0;
   const pathStatus = localProgress?.status;
@@ -153,7 +162,7 @@ export function QuestionWorkspace({
   const stageStatus = stageLocalProgress?.status;
 
   useEffect(() => {
-    const draft = shouldPersist ? loadAnswerDraft(browserStorage(), draftIdentity) : null;
+    const draft = shouldPersist ? runtime.loadDraft(draftIdentity) : null;
     const restoredAnswer = draft?.kind === "rich-math"
       ? draft.source
       : draft?.kind === "plain" && usesRichMathInput
@@ -165,24 +174,19 @@ export function QuestionWorkspace({
     setFeedback(null);
     setSubmitting(false);
     setSubmissionInteractionCompleted(false);
-    setHintViewed(false);
+    setHintViewed(isPreview && runtime.getQuestionProgress(question.id).hintViewed);
     setSolutionOpenedThisInteraction(false);
     setSelfAssessmentSaving(false);
     setSelfAssessmentError(null);
     setClearedEarlierMistake(false);
     setShowCompletionPanel(false);
     setShowStageCompletionPanel(false);
-  }, [draftKey, draftIdentity, mathInputCapabilities, shouldPersist, usesRichMathInput]);
+  }, [draftKey, draftIdentity, mathInputCapabilities, shouldPersist, usesRichMathInput, runtime, isPreview, question.id, resetVersion]);
 
   useEffect(() => {
     const update = () => setProgressVersion((current) => current + 1);
-    window.addEventListener("stemforge:local-progress-updated", update);
-    window.addEventListener("storage", update);
-    return () => {
-      window.removeEventListener("stemforge:local-progress-updated", update);
-      window.removeEventListener("storage", update);
-    };
-  }, []);
+    return runtime.subscribe(update);
+  }, [runtime]);
 
   useEffect(() => {
     if (!hintViewed) return;
@@ -203,15 +207,15 @@ export function QuestionWorkspace({
   }, [feedback, feedbackSequence, submitted]);
 
   useEffect(() => {
-    if (shouldPersist && submitted && markedSubmission?.isCorrect === true) clearAnswerDraft(browserStorage(), draftIdentity);
-  }, [draftIdentity, markedSubmission?.isCorrect, shouldPersist, submitted]);
+    if (shouldPersist && submitted && markedSubmission?.isCorrect === true) runtime.clearDraft(draftIdentity);
+  }, [draftIdentity, markedSubmission?.isCorrect, shouldPersist, submitted, runtime]);
 
   useEffect(() => {
     if (!hasMounted) return;
     wasPathCompleteRef.current = pathTotalQuestionCount > 0 && pathCompletedQuestionCount >= pathTotalQuestionCount;
     wasStageCompleteRef.current = stageTotalQuestionCount > 0 && stageCompletedQuestionCount >= stageTotalQuestionCount;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [question.id, hasMounted]);
+  }, [question.id, hasMounted, resetVersion]);
 
   useEffect(() => {
     if (!hasMounted || !skillPath || !pathStatus || pathTotalQuestionCount === 0) return;
@@ -223,13 +227,13 @@ export function QuestionWorkspace({
       // render anyway (sessionPanel takes over this row) — claiming it here would silently
       // burn the one-time acknowledgement before the summary gets a chance to show it.
       if (!session) {
-        const acknowledgement = recordPathCelebrated(skillPath.slug, pathStatus);
+        const acknowledgement = runtime.acknowledgePath(skillPath.slug, pathStatus);
         setShowCompletionPanel(
           acknowledgement === "recorded" || acknowledgement === "unavailable" || acknowledgement === "write-failed",
         );
       }
     }
-  }, [hasMounted, skillPath, pathStatus, pathCompletedQuestionCount, pathTotalQuestionCount, session]);
+  }, [hasMounted, skillPath, pathStatus, pathCompletedQuestionCount, pathTotalQuestionCount, session, runtime]);
 
   useEffect(() => {
     if (!hasMounted || !skillPath || !stage || !stageStatus || stageTotalQuestionCount === 0) return;
@@ -241,19 +245,18 @@ export function QuestionWorkspace({
       // never stack two completion panels for one submission.
       const isPathCompleteAlso = pathTotalQuestionCount > 0 && pathCompletedQuestionCount >= pathTotalQuestionCount;
       if (isPathCompleteAlso || session) return;
-      const acknowledgement = recordStageCelebrated(skillPath.slug, stage.id, stageStatus);
+      const acknowledgement = runtime.acknowledgeStage(skillPath.slug, stage.id, stageStatus);
       setShowStageCompletionPanel(
         acknowledgement === "recorded" || acknowledgement === "unavailable" || acknowledgement === "write-failed",
       );
     }
-  }, [hasMounted, skillPath, stage, stageStatus, stageCompletedQuestionCount, stageTotalQuestionCount, pathCompletedQuestionCount, pathTotalQuestionCount, session]);
+  }, [hasMounted, skillPath, stage, stageStatus, stageCompletedQuestionCount, stageTotalQuestionCount, pathCompletedQuestionCount, pathTotalQuestionCount, session, runtime]);
 
   function updateAnswer(nextAnswer: string) {
     setAnswer(nextAnswer);
     if (feedback?.isInputError) setFeedback(null);
     if (!shouldPersist) return;
-    if (usesRichMathInput) saveRichMathAnswerDraft(browserStorage(), draftIdentity, nextAnswer);
-    else saveAnswerDraft(browserStorage(), draftIdentity, nextAnswer);
+    runtime.saveDraft(draftIdentity, nextAnswer, usesRichMathInput);
   }
 
   function showFeedback(nextFeedback: StudentAnswerFeedback) {
@@ -286,8 +289,8 @@ export function QuestionWorkspace({
         showFeedback(classified);
         return;
       }
-      const evidenceBefore = shouldPersist ? getProgressEvidence() : null;
-      const saved = !shouldPersist || await saveQuestionAttempt({
+      const evidenceBefore = shouldPersist ? runtime.getEvidence() : null;
+      const saved = !shouldPersist || await runtime.saveAttempt({
         questionId: question.id,
         skillPathId: question.skillPathId ?? skillPath?.slug ?? "unknown",
         stageId: question.stageId ?? stage?.id ?? question.stage,
@@ -307,7 +310,7 @@ export function QuestionWorkspace({
       if (evidenceBefore && marking.isCorrect === true) {
         setClearedEarlierMistake(didCurrentSubmissionResolveMistake({
           before: evidenceBefore,
-          after: getProgressEvidence(),
+          after: runtime.getEvidence(),
           questionId: question.id,
           questionVersion: question.questionVersion,
           skillPathId: question.skillPathId ?? skillPath?.slug ?? "unknown",
@@ -318,7 +321,7 @@ export function QuestionWorkspace({
       setSubmitted(true);
       showFeedback(classified);
       await session?.onEvidenceRecorded?.();
-      if (shouldPersist && marking.isCorrect === true) clearAnswerDraft(browserStorage(), draftIdentity);
+      if (shouldPersist && marking.isCorrect === true) runtime.clearDraft(draftIdentity);
     } catch {
       showFeedback(internalAnswerFailureFeedback());
     } finally {
@@ -340,7 +343,7 @@ export function QuestionWorkspace({
     if (!session || !usesGuidedMarking || !submitted || selfAssessmentSaving) return;
     setSelfAssessmentSaving(true);
     setSelfAssessmentError(null);
-    const saved = await recordGuidedSelfAssessment({
+    const saved = await runtime.recordSelfAssessment({
       practiceSessionId: session.practiceSessionId,
       questionId: question.id,
       skillPathId: question.skillPathId ?? skillPath?.slug ?? "unknown",
@@ -357,13 +360,13 @@ export function QuestionWorkspace({
   }
 
   async function handleHintViewed() {
-    if (shouldPersist && !hintViewed) await recordHintViewed(supportEventInput());
+    if (shouldPersist && !hintViewed) await runtime.recordHint(supportEventInput());
     setHintViewed(true);
   }
 
     async function handleSolutionViewed() {
       if (questionProgress.attempted) {
-        const recorded = shouldPersist ? await recordWorkedSolutionViewed(supportEventInput()) : true;
+        const recorded = shouldPersist ? await runtime.recordSolution(supportEventInput()) : true;
         if (!recorded && !submissionInteractionCompleted) return;
       } else if (!submissionInteractionCompleted) return;
       setSolutionOpenedThisInteraction(true);
@@ -433,33 +436,29 @@ export function QuestionWorkspace({
         ? "bg-warning"
         : "bg-forge";
 
-  return (
-    <AppShell
-      demo
-      active="Current Path"
-      workingContextPathId={skillPath?.slug}
-    >
-      <div className="mx-auto mb-2 flex max-w-[1080px] justify-end">
+  const workspace = <>
+      {!isPreview ? <div className="mx-auto mb-2 flex max-w-[1080px] justify-end">
         <AppTopbar demo />
-      </div>
+      </div> : preview?.pathway}
       <div className="mx-auto grid min-w-0 max-w-[1240px] grid-cols-[minmax(0,1fr)_280px] gap-7 max-lg:grid-cols-1">
         <section className="grid min-w-0 gap-5">
           <nav className="flex flex-wrap items-center gap-2 text-sm text-muted" aria-label="Breadcrumb">
-            <Link href={context?.subject.href ?? "/subjects"}>{context?.subject.subjectName ?? question.subject}</Link>
+            <Link className="inline-flex min-h-11 items-center" href={isPreview ? runtime.navigation.home : context?.subject.href ?? "/subjects"}>{isPreview ? "Preview overview" : context?.subject.subjectName ?? question.subject}</Link>
             <span aria-hidden="true">/</span>
-            <Link href={context?.courseArea.href ?? "/subjects"}>{context?.courseArea.name ?? question.courseArea}</Link>
+            {!isPreview ? <><Link href={context?.courseArea.href ?? "/subjects"}>{context?.courseArea.name ?? question.courseArea}</Link>
             <span aria-hidden="true">/</span>
+            </> : null}
             <Link href={fallbackPathHref}>{skillPath?.name ?? question.skillPath ?? "Question"}</Link>
             <span aria-hidden="true">/</span>
-            <span className="font-bold text-forge">{stage?.name ?? question.stage}</span>
-            <details className="disclosure-motion ml-auto max-sm:ml-0 max-sm:w-full">
+            <span className="font-bold text-forge">{isPreview && stage?.name === "Past Paper-style Questions" ? "Exam practice" : stage?.name ?? question.stage}</span>
+            {!isPreview ? <details className="disclosure-motion ml-auto max-sm:ml-0 max-sm:w-full">
               <summary className="inline-flex min-h-10 cursor-pointer items-center text-xs font-bold text-forge">More context</summary>
               <span className="mt-2 flex flex-wrap gap-2 rounded-lg bg-paper p-2 text-xs">
                 <Link href={context?.courseArea.href ?? "/subjects"}>{context?.courseArea.name ?? question.courseArea}</Link>
                 <span aria-hidden="true">/</span>
                 <Link href={context?.specificationStrand.href ?? fallbackPathHref}>{context?.specificationStrand.name ?? question.specArea}</Link>
               </span>
-            </details>
+            </details> : null}
           </nav>
 
           {session?.panel}
@@ -469,8 +468,9 @@ export function QuestionWorkspace({
               <div>
                 <p className="font-mono text-[11px] font-extrabold uppercase text-forge">Current stage</p>
                 <p className="mt-1 font-extrabold" data-testid="stage-question-position">
-                  {stagePosition?.label ?? `${question.stage} · Question ${currentQuestion}`}
+                  {isPreview && stagePosition ? stagePosition.label.replace("Past Paper-style Questions", "Exam practice") : stagePosition?.label ?? `${question.stage} · Question ${currentQuestion}`}
                 </p>
+                {isPreview && stage?.name === "Past Paper-style Questions" ? <p className="mt-2 text-xs leading-relaxed text-secondary">Orthic-authored practice, not copied from official past papers.</p> : null}
               </div>
               <details className="disclosure-motion text-sm text-muted">
                 <summary className="inline-flex min-h-10 cursor-pointer items-center font-bold text-forge">Question details</summary>
@@ -484,7 +484,7 @@ export function QuestionWorkspace({
               </details>
             </div>
 
-            <h1 id="question-heading" tabIndex={-1} className="mt-4 text-[clamp(24px,3vw,32px)] font-extrabold leading-tight outline-none">{question.title}</h1>
+            <h1 id="question-heading" tabIndex={-1} className="mt-4 text-[clamp(24px,3vw,32px)] font-extrabold leading-tight outline-none"><InlineMathContent>{question.title}</InlineMathContent></h1>
             <p className="mt-2 text-sm text-secondary" data-testid="question-completion-status">{questionProgress.navigationEligible ? "This question has been completed." : "This question has not yet been completed."}</p>
             {questionProgress.reviewRecommended && !submitted ? (
               <p className="mt-2 text-sm text-muted" data-testid="review-reason">{describeReviewReason(questionProgress)}</p>
@@ -557,7 +557,7 @@ export function QuestionWorkspace({
                       {isCorrect || completedWithCurrentSolution ? (
                         <div className="mt-3 rounded-lg bg-white/75 px-4 py-3">
                           <span className="mb-1 block text-sm font-bold text-muted">Accepted final answer</span>
-                          <MathContent>{question.finalAnswer}</MathContent>
+                          <MathContent>{question.answerType === "algebraic" && !question.finalAnswer.includes("$") ? `$${question.finalAnswer}$` : question.finalAnswer}</MathContent>
                         </div>
                       ) : null}
                       {submitted && !usesGuidedMarking && !isCorrect ? (
@@ -641,16 +641,22 @@ export function QuestionWorkspace({
             </>
           ) : null}
 
-          {showCompletionPanel && !session && skillPath && localProgress ? (
+          {isPreview ? <div className="grid gap-3">
+            {showCompletionPanel || showStageCompletionPanel ? <p role="status" className="text-sm text-secondary">{showCompletionPanel ? "All Chain Rule questions completed in this preview." : "All questions in this stage completed in this preview."}</p> : null}
+            {preview && (submissionInteractionCompleted || questionProgress.attempted || questionProgress.hintViewed) ?
+              <Link data-testid="preview-next-action" href={preview.nextAction.href} className="orthic-primary-action inline-flex min-h-11 items-center justify-center gap-2 rounded bg-navy px-4 py-3 text-center text-sm font-semibold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-navy">{preview.nextAction.label}<ArrowRight aria-hidden="true" className="orthic-arrow size-4" /></Link>
+              : <p className="text-sm text-secondary">Try this question or use a hint to explore the next sample. Sampling a stage does not complete it.</p>}
+            <Link className="orthic-secondary-link inline-flex min-h-11 items-center text-sm text-secondary" href={runtime.navigation.skill}>Explore Chain Rule</Link>
+          </div> : showCompletionPanel && !session && skillPath && localProgress && nextAction ? (
             <PathCompletionPanel skillPath={skillPath} progress={localProgress} nextAction={nextAction} />
-          ) : showStageCompletionPanel && !session && skillPath && stage && stageLocalProgress ? (
+          ) : showStageCompletionPanel && !session && skillPath && stage && stageLocalProgress && nextAction ? (
             <StageCompletionPanel skillPath={skillPath} stage={stage} progress={stageLocalProgress} nextAction={nextAction} />
           ) : session ? null : (
             <div className="grid grid-cols-2 gap-3 max-md:grid-cols-1">
-              <Link href={position.previous ? getQuestionHref(position.previous.id) : fallbackPathHref} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-line bg-white text-sm font-bold transition hover:border-forge">
+              <Link href={position.previous ? runtime.navigation.question(position.previous.id) ?? fallbackPathHref : fallbackPathHref} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-line bg-white text-sm font-bold transition hover:border-forge">
                 <ArrowLeft className="size-5" /> Previous
               </Link>
-              {questionProgress.navigationEligible && nextAction.href ? (
+              {questionProgress.navigationEligible && nextAction?.href ? (
                 <Link data-testid="next-question-action" href={nextAction.href} className="orthic-primary-action inline-flex min-h-11 items-center justify-center gap-2 rounded bg-navy text-sm font-semibold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy">
                   {nextAction.label}<ArrowRight aria-hidden="true" className="orthic-arrow size-5" />
                 </Link>
@@ -662,7 +668,7 @@ export function QuestionWorkspace({
         </section>
 
         <aside className="grid min-w-0 content-start gap-5 lg:pt-14" aria-label="Question support">
-          {isHigherMathsQuestion ? (
+          {isHigherMathsQuestion && !isPreview ? (
             <Card className="!rounded-lg !border-rule p-6 !shadow-none">
               <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide">Assessment reference</h2>
               <p className="mb-3 text-sm leading-relaxed text-muted">Open the official formulae supplied for Higher Mathematics assessments.</p>
@@ -685,7 +691,7 @@ export function QuestionWorkspace({
               />
             </div>
           </details>
-          {relatedResources.length ? (
+          {isPreview ? <Link href={runtime.navigation.notes} className="orthic-secondary-link inline-flex min-h-11 items-center gap-2 rounded text-sm text-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-navy"><FileText aria-hidden="true" className="size-4" />Chain Rule Notes</Link> : relatedResources.length ? (
             <div>
               <h2 className="sr-only">Helpful resources</h2>
               <div className="grid gap-1">
@@ -714,7 +720,7 @@ export function QuestionWorkspace({
               </div>
             </div>
           ) : null}
-          <ReportDialog
+          {!isPreview ? <ReportDialog
             triggerLabel="Report this question"
             defaultKind="content_issue"
             pageArea="question_workspace"
@@ -729,11 +735,11 @@ export function QuestionWorkspace({
               questionType: question.answerType,
             }}
             component={question.graphConfig ? "graph_question" : question.natureTableConfig ? "nature_table_question" : question.answerType}
-          />
+          /> : null}
         </aside>
       </div>
-    </AppShell>
-  );
+    </>;
+  return isPreview ? workspace : <AppShell demo active="Current Path" workingContextPathId={skillPath?.slug}>{workspace}</AppShell>;
 
   function recordNotesOrigin(token: string) {
     try {
@@ -757,11 +763,6 @@ function PanelProgress({ label, value, valueLabel, secondary = false }: { label:
       <ProgressBar value={value} />
     </div>
   );
-}
-
-function browserStorage() {
-  if (typeof window === "undefined") return null;
-  try { return window.localStorage; } catch { return null; }
 }
 
 function richMathInputFeedback(status: "incomplete" | "unsupported" | "invalid"): StudentAnswerFeedback {

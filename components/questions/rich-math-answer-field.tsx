@@ -90,7 +90,7 @@ export function RichMathAnswerField({ value, onChange, capabilities, disabled, i
     else field.removeAttribute("aria-invalid");
     const focusTimer = invalid ? window.setTimeout(() => field.focus(), 100) : undefined;
     return () => { if (focusTimer !== undefined) window.clearTimeout(focusTimer); };
-  }, [describedBy, disabled, invalid]);
+  }, [describedBy, disabled, invalid, ready]);
 
   function insert(latex: string) {
     const field = fieldRef.current;
