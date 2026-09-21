@@ -24,7 +24,7 @@ export function TuitionTestimonials() {
       <div className="grid grid-cols-2 gap-6 max-md:grid-cols-1">
         {tuitionTestimonials.map((testimonial, index) => (
           <TuitionReveal key={index} delayMs={index * 90} className="h-full">
-            <figure className="relative m-0 h-full overflow-hidden rounded-[6px] border border-line bg-white p-7 transition duration-300 ease-out hover:-translate-y-1 hover:shadow-card">
+            <figure className="tuition-card relative m-0 h-full overflow-hidden rounded-lg border border-line bg-white p-7">
               <span className={`${lora.className} pointer-events-none absolute -left-1 -top-6 text-[110px] italic leading-none text-warning-soft`} aria-hidden="true">
                 &ldquo;
               </span>

@@ -8,6 +8,7 @@ import { TuitionButtonLink } from "@/components/tuition/tuition-button";
 import { getTuitionLevelBySlug, tuitionLevels } from "@/components/tuition/tuition-data";
 import { lora } from "@/components/tuition/tuition-fonts";
 import { TuitionEmphasis, TuitionKicker } from "@/components/tuition/tuition-kicker";
+import { TUITION_CARD, TUITION_CONTAINER, TUITION_SECTION_SPACING } from "@/components/tuition/tuition-styles";
 
 export function TuitionSubjects() {
   const searchParams = useSearchParams();
@@ -17,23 +18,21 @@ export function TuitionSubjects() {
   const selected = getTuitionLevelBySlug(selectedSlug) ?? tuitionLevels[0];
 
   return (
-    <section className="mx-auto w-[min(1040px,calc(100%_-_40px))] py-20">
-      <div className="animate-hero-rise text-center" style={{ animationDelay: "0ms" }}>
+    <section className={`${TUITION_CONTAINER} ${TUITION_SECTION_SPACING}`}>
+      <div className="text-center">
         <TuitionKicker>Subjects</TuitionKicker>
       </div>
       <h1
-        className={`${lora.className} animate-hero-rise mx-auto mb-4 mt-5 max-w-[640px] text-center text-[clamp(30px,4vw,44px)] font-bold leading-[1.15]`}
-        style={{ animationDelay: "100ms" }}
+        className={`${lora.className} mx-auto mb-4 mt-5 max-w-[760px] text-center text-[clamp(36px,5vw,52px)] font-bold leading-[1.12]`}
       >
         Structured tutoring, tailored to the <TuitionEmphasis>Qualifications Scotland curriculum</TuitionEmphasis>.
       </h1>
-      <p className="animate-hero-rise mx-auto mb-11 max-w-[560px] text-center text-lg leading-[1.5] text-muted" style={{ animationDelay: "180ms" }}>
+      <p className="mx-auto mb-11 max-w-[620px] text-center text-lg leading-[1.55] text-muted">
         Comprehensive, methodical tutoring built around National 5 and Higher Maths and Physics.
       </p>
 
       <div
-        className="animate-hero-rise mb-8 flex flex-wrap justify-center gap-2"
-        style={{ animationDelay: "260ms" }}
+        className="mb-8 flex flex-wrap justify-center gap-2"
         role="tablist"
         aria-label="Tuition levels"
       >
@@ -44,9 +43,9 @@ export function TuitionSubjects() {
             role="tab"
             aria-selected={level.slug === selectedSlug}
             onClick={() => setSelectedSlug(level.slug)}
-            className={`inline-flex min-h-11 items-center gap-2 rounded-lg border px-4 text-sm font-extrabold transition duration-300 ${
+            className={`tuition-tab inline-flex min-h-11 items-center gap-2 rounded-md border px-4 text-sm font-semibold ${
               level.slug === selectedSlug
-                ? "border-forge bg-forge-soft text-forge"
+                ? "border-forge bg-forge text-white"
                 : "border-line bg-white text-muted hover:border-forge/40"
             }`}
           >
@@ -56,14 +55,14 @@ export function TuitionSubjects() {
         ))}
       </div>
 
-      <div key={selectedSlug} className="animate-tuition-reveal rounded-xl border border-line bg-white p-8 max-sm:p-6">
+      <div key={selectedSlug} className={`${TUITION_CARD} tuition-content-change p-8 max-sm:p-6`}>
         <p className="mb-2 text-[12.5px] font-extrabold uppercase tracking-wide text-warning">
           Qualifications Scotland {selected.level} · {selected.subject}
         </p>
         <h2 className={`${lora.className} m-0 text-2xl font-bold`}>{selected.name}</h2>
         <p className="mt-3 max-w-[640px] leading-relaxed text-muted">{selected.copy}</p>
 
-        <p className="mt-7 mb-3 text-sm font-extrabold uppercase text-ink">Core syllabus</p>
+        <p className="mb-3 mt-7 text-xs font-bold uppercase tracking-[0.1em] text-ink">Core syllabus</p>
         <ul className="m-0 grid gap-2.5 p-0">
           {selected.topics.map((topic) => (
             <li key={topic} className="flex items-start gap-2.5 text-sm leading-relaxed text-muted">

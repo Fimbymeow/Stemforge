@@ -81,9 +81,46 @@ html {
 .orthic-activity-cell { transition: border-color 100ms cubic-bezier(0.16, 1, 0.3, 1); }
 .orthic-activity-cell:hover { border-color: #7f91aa; }
 
+/* Shared public Tuition interactions. Motion is direct and functional only. */
+.tuition-interactive,
+.tuition-card,
+.tuition-tab {
+  transition-property: color, background-color, border-color, text-decoration-color;
+  transition-duration: 140ms;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+.tuition-card:hover { border-color: #b9c5d4; }
+.tuition-nav-link {
+  position: relative;
+  transition: color 140ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.tuition-nav-link::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 1px;
+  content: "";
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 160ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.tuition-nav-link:hover::after,
+.tuition-nav-link:focus-visible::after,
+.tuition-nav-link[aria-current="page"]::after { transform: scaleX(1); }
+.tuition-nav-link[aria-current="page"] { color: #17324d; }
+.tuition-arrow,
+.tuition-disclosure-chevron { transition: transform 160ms cubic-bezier(0.16, 1, 0.3, 1); }
+.tuition-interactive:hover .tuition-arrow,
+.tuition-interactive:focus-visible .tuition-arrow { transform: translateX(2px); }
+.tuition-content-change { animation: tuition-content-change 160ms ease-out both; }
+@keyframes tuition-content-change { from { opacity: 0.75; } to { opacity: 1; } }
+
 @media (prefers-reduced-motion: reduce) {
-  [class*="orthic-"], [data-app-sidebar] [data-testid="working-context-trigger"] { transition-duration: 0ms !important; }
+  [class*="orthic-"], [class*="tuition-"], [data-app-sidebar] [data-testid="working-context-trigger"] { transition-duration: 0ms !important; animation-duration: 0ms !important; }
   .orthic-arrow { transform: none !important; }
+  .tuition-arrow { transform: none !important; }
 }
 
 body {
@@ -245,29 +282,6 @@ math-field::part(menu-toggle) {
 
 @keyframes orthic-fill-in {
   to { opacity: 1; }
-}
-
-/* Tuition sub-brand's own, slightly slower pace for scroll reveals and tab crossfades —
-   kept separate from .animate-fade-rise above so the rest of the app's product-register
-   feedback timing (question workspace, completion panel) is untouched. */
-.animate-tuition-reveal {
-  animation: fade-rise 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-/* Larger, slower variant reserved for the one hero entrance per page. */
-@keyframes hero-rise {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-hero-rise {
-  animation: hero-rise 850ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 /* Path-completion moment (question-workspace.tsx, path-completion-panel.tsx). Fixed r=16

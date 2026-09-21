@@ -21,14 +21,14 @@ export function TuitionButtonLink({
 }) {
   const variantClass =
     variant === "primary"
-      ? "bg-forge text-white hover:shadow-card"
-      : "border border-line bg-white text-ink hover:border-forge/40 hover:shadow-card";
-  const sizeClass = size === "lg" ? "min-h-[52px] px-7 text-base" : "min-h-11 px-6 text-sm";
+      ? "border border-forge bg-forge text-white hover:bg-[#0b2b4a]"
+      : "border border-line bg-white text-ink hover:border-forge/45 hover:bg-forge-soft/30";
+  const sizeClass = size === "lg" ? "min-h-12 px-6 text-[15px]" : "min-h-11 px-5 text-sm";
 
   return (
     <Link
       href={href}
-      className={`inline-flex items-center justify-center rounded-lg font-bold transition duration-300 ease-out hover:-translate-y-0.5 active:translate-y-0 active:duration-100 ${variantClass} ${sizeClass} ${className}`}
+      className={`tuition-interactive inline-flex items-center justify-center rounded-md font-semibold ${variantClass} ${sizeClass} ${className}`}
     >
       {children}
     </Link>

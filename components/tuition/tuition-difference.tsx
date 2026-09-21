@@ -1,26 +1,22 @@
-import { BookOpen, Compass, Target, TrendingUp } from "lucide-react";
 import { lora } from "@/components/tuition/tuition-fonts";
 import { TuitionKicker } from "@/components/tuition/tuition-kicker";
 import { TuitionReveal } from "@/components/tuition/tuition-reveal";
+import { TUITION_CARD, TUITION_CONTAINER, TUITION_SECTION_SPACING } from "@/components/tuition/tuition-styles";
 
 const points = [
   {
-    icon: Target,
     title: "Focused one-to-one support",
     copy: "Sessions concentrate on the exact methods and question types causing difficulty, rather than following a fixed class pace.",
   },
   {
-    icon: BookOpen,
     title: "Clear explanations followed by practice",
     copy: "We first make the method understandable, then use guided and independent questions to ensure it can actually be applied.",
   },
   {
-    icon: Compass,
     title: "Current Scottish course focus",
     copy: "Lessons are built around National 5 and Higher course requirements and recurring exam-style skills.",
   },
   {
-    icon: TrendingUp,
     title: "Original Orthic practice",
     copy: "Where useful, sessions can draw on original staged questions developed through Orthic, progressing from direct fluency to harder applications.",
   },
@@ -28,8 +24,8 @@ const points = [
 
 export function TuitionDifference() {
   return (
-    <section className="bg-forge-soft/40 px-5 py-20">
-      <div className="mx-auto w-[min(1000px,100%)]">
+    <section className={`border-y border-line bg-white ${TUITION_SECTION_SPACING}`}>
+      <div className={TUITION_CONTAINER}>
         <TuitionReveal className="text-center">
           <TuitionKicker>The Orthic difference</TuitionKicker>
         </TuitionReveal>
@@ -44,15 +40,15 @@ export function TuitionDifference() {
             explanations and exam-style practice throughout.
           </p>
         </TuitionReveal>
-        <div className="grid grid-cols-2 gap-x-12 gap-y-10 max-md:grid-cols-1">
+        <div className={`${TUITION_CARD} grid grid-cols-2 overflow-hidden max-md:grid-cols-1`}>
           {points.map((point, index) => (
             <TuitionReveal key={point.title} delayMs={index * 70}>
-              <div className="flex gap-4">
-                <span className="grid size-11 shrink-0 place-items-center rounded-lg bg-white text-forge shadow-card transition duration-300 hover:-translate-y-0.5">
-                  <point.icon className="size-5" />
+              <div className={`flex min-h-full gap-4 p-6 ${index < 2 ? "border-b border-line" : ""} ${index % 2 === 0 ? "border-r border-line max-md:border-r-0" : ""} max-md:border-b max-md:border-line max-md:last:border-b-0`}>
+                <span className="grid size-8 shrink-0 place-items-center rounded-full bg-forge-soft font-semibold text-forge">
+                  {index + 1}
                 </span>
                 <div>
-                  <h3 className="m-0 text-base font-extrabold">{point.title}</h3>
+                  <h3 className="m-0 text-base font-semibold">{point.title}</h3>
                   <p className="mt-1.5 text-sm leading-relaxed text-muted">{point.copy}</p>
                 </div>
               </div>

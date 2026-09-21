@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { Eyebrow } from "@/components/ui";
 import { useLearnerNextAction } from "@/components/learning/use-learner-next-action";
 import { deriveActivityHistory, type ActivityDay, type ActivityIntensityLevel, type ActivityWeek } from "@/lib/activity/derivation";
 import { activityIntensityClass, activityIntensityName } from "@/lib/activity/presentation";
@@ -45,33 +46,38 @@ export function ActivityHistorySurface() {
   const selectedDay = history.days.find((day) => day.dayKey === selectedDayKey)
     ?? [...history.days].reverse().find((day) => day.rawScore > 0)
     ?? history.days[history.days.length - 1];
+  const currentDay = history.days[history.days.length - 1];
 
   return (
-    <section className="max-w-4xl border-y border-line py-5 sm:py-6" data-testid="activity-history">
-      <header className="flex flex-wrap items-end justify-between gap-2">
+    <section data-testid="activity-history">
+      <header className="flex flex-wrap items-end justify-between gap-3 border-b border-rule pb-4">
         <div>
-          <p className="m-0 text-xs font-extrabold uppercase tracking-wide text-muted">Learning history</p>
-          <h2 className="mb-0 mt-1 text-2xl font-extrabold">Last 12 weeks</h2>
+          <Eyebrow className="text-secondary">Learning history</Eyebrow>
+          <h2 className="mb-0 mt-2 text-2xl font-semibold tracking-tight text-navy">Last 12 weeks</h2>
         </div>
-        <p className="m-0 text-sm font-semibold text-muted" aria-hidden="true">{history.activeDayCount} active day{history.activeDayCount === 1 ? "" : "s"}</p>
+        <p className="m-0 pb-1 text-sm font-medium text-secondary" aria-hidden="true">{history.activeDayCount} active day{history.activeDayCount === 1 ? "" : "s"}</p>
         <p className="sr-only" id="activity-summary">{history.summaryText}</p>
       </header>
 
-      <div className="mt-5 grid grid-cols-[minmax(0,420px)_minmax(240px,1fr)] items-start gap-6 max-md:grid-cols-1">
-        <div className="min-w-0 overflow-x-auto pb-1" data-testid="activity-history-scroll">
+      <div className="grid grid-cols-[minmax(0,1.45fr)_minmax(280px,0.8fr)] items-stretch max-md:grid-cols-1">
+        <div className="min-w-0 overflow-x-auto border-b border-rule py-7 pr-8 max-md:pr-0" data-testid="activity-history-scroll">
           <div className="grid min-w-[372px] gap-2" role="group" aria-label="Activity by week" aria-describedby="activity-summary">
+            <div aria-hidden="true" className="grid grid-cols-[64px_repeat(7,minmax(0,36px))] items-center gap-1 text-center font-mono text-[11px] uppercase tracking-[0.08em] text-secondary sm:grid-cols-[92px_repeat(7,40px)] sm:gap-2">
+              <span className="text-left">Week</span>
+              {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((label, index) => <span key={`${label}-${index}`}>{label}</span>)}
+            </div>
             {history.weeks.map((week) => <ActivityWeekRow key={week.startDayKey} week={week} selectedDayKey={selectedDay.dayKey} onInspect={(day) => setSelectedDayKey(day.dayKey)} />)}
           </div>
         </div>
-        <DayDetail day={selectedDay} />
+        <DayDetail day={selectedDay} isCurrentDay={selectedDay.dayKey === currentDay.dayKey} onJumpToCurrentDay={() => setSelectedDayKey(currentDay.dayKey)} />
       </div>
 
-      <div className="mt-5 border-t border-line pt-4">
-        <p className="m-0 text-xs font-bold uppercase tracking-wide text-muted">Activity level</p>
-        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2" aria-label="Activity level legend">
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-3 border-b border-rule py-5">
+        <p className="m-0 font-mono text-[11px] uppercase tracking-[0.1em] text-secondary">Activity level</p>
+        <div className="flex flex-wrap gap-x-4 gap-y-2" aria-label="Activity level legend">
           {([0, 1, 2, 3, 4] as const).map((level) => (
-            <span key={level} className="inline-flex items-center gap-2 text-xs font-semibold text-muted">
-              <span aria-hidden="true" className={`size-4 rounded border ${activityIntensityClass(level)}`} />
+            <span key={level} className="inline-flex items-center gap-2 text-xs font-medium text-secondary">
+              <span aria-hidden="true" className={`size-4 rounded-sm border ${activityIntensityClass(level)}`} />
               {activityIntensityName(level)}
             </span>
           ))}
@@ -81,7 +87,7 @@ export function ActivityHistorySurface() {
   );
 }
 
-function DayDetail({ day }: { day: ActivityDay }) {
+function DayDetail({ day, isCurrentDay, onJumpToCurrentDay }: { day: ActivityDay; isCurrentDay: boolean; onJumpToCurrentDay: () => void }) {
   const rows = [
     ["Questions worked on", day.distinctQuestionsWorkedOn],
     ["Completed independently", day.independentlyCompletedQuestionCount],
@@ -91,20 +97,25 @@ function DayDetail({ day }: { day: ActivityDay }) {
   ] as const;
   const activeRows = rows.filter(([, count]) => count > 0);
   return (
-    <section className="rounded-lg border border-ink/15 bg-paper/50 p-4" aria-live="polite" aria-labelledby="activity-detail-heading" data-testid="activity-detail-panel">
-      <h3 id="activity-detail-heading" className="m-0 text-base font-extrabold">{formatDay(day.date)}</h3>
+    <section className="orthic-transition-standard min-w-0 border-b border-l border-rule py-7 pl-8 max-md:border-l-0 max-md:pl-0" aria-live="polite" aria-labelledby="activity-detail-heading" data-testid="activity-detail-panel">
+      <Eyebrow className="text-secondary">Inspecting day</Eyebrow>
+      <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
+        <h3 id="activity-detail-heading" className="m-0 text-lg font-semibold text-navy">{formatDay(day.date)}</h3>
+        <span className="rounded-sm bg-surface-dim px-2 py-1 text-xs font-medium text-secondary">{activeRows.length ? `${day.intensityLabel} activity` : "No records"}</span>
+      </div>
       {activeRows.length ? (
-        <>
-          <p className="mb-0 mt-1 text-xs font-bold uppercase tracking-wide text-muted">{day.intensityLabel} activity</p>
-          <dl className="mb-0 mt-3 divide-y divide-line border-y border-line">
+          <dl className="mb-0 mt-5 divide-y divide-rule border-y border-rule">
             {activeRows.map(([label, count]) => (
-              <div key={label} className="flex items-center justify-between gap-4 py-2 text-sm">
-                <dt className="text-muted">{label}</dt><dd className="m-0 font-extrabold tabular-nums">{count}</dd>
+              <div key={label} className="flex items-center justify-between gap-4 py-2.5 text-sm">
+                <dt className="text-secondary">{label}</dt><dd className="m-0 font-semibold tabular-nums text-navy">{count}</dd>
               </div>
             ))}
           </dl>
-        </>
-      ) : <p className="mb-0 mt-3 text-sm text-muted">No learning activity recorded for this day.</p>}
+      ) : <p className="mb-0 mt-7 text-sm leading-relaxed text-secondary">No learning activity recorded for this day.</p>}
+      <div className="mt-6 flex min-h-11 items-center justify-between gap-4 border-t border-rule pt-4 text-xs text-secondary">
+        <span>Selected from last 12 weeks</span>
+        {!isCurrentDay ? <button type="button" onClick={onJumpToCurrentDay} className="orthic-secondary-link min-h-11 font-medium text-navy">Jump to current day</button> : <span className="font-medium text-navy">Current day</span>}
+      </div>
     </section>
   );
 }
@@ -142,7 +153,7 @@ function ActivityWeekRow({ week, selectedDayKey, onInspect }: { week: ActivityWe
           onMouseEnter={() => onInspect(day)}
           onClick={() => { setFocusIndex(index); onInspect(day); }}
           onKeyDown={(event) => handleKey(event, index)}
-          className={`aspect-square w-full rounded-md border outline-none transition-colors focus-visible:ring-2 focus-visible:ring-forge focus-visible:ring-offset-2 focus-visible:ring-offset-white ${day.dayKey === selectedDayKey ? "ring-2 ring-ink ring-offset-1 ring-offset-white" : ""} ${activityIntensityClass(day.intensityLevel)}`}
+          className={`orthic-transition-fast aspect-square w-full rounded-sm border outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy ${day.dayKey === selectedDayKey ? "border-navy shadow-[inset_0_0_0_2px_#fff,inset_0_0_0_3px_#10263a]" : ""} ${activityIntensityClass(day.intensityLevel)}`}
         />
       ))}
     </div>

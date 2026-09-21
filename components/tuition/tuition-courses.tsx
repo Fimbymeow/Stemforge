@@ -4,10 +4,11 @@ import { tuitionLevels } from "@/components/tuition/tuition-data";
 import { lora } from "@/components/tuition/tuition-fonts";
 import { TuitionKicker } from "@/components/tuition/tuition-kicker";
 import { TuitionReveal } from "@/components/tuition/tuition-reveal";
+import { TUITION_CARD, TUITION_CONTAINER, TUITION_ICON, TUITION_SECTION_SPACING } from "@/components/tuition/tuition-styles";
 
 export function TuitionCourses() {
   return (
-    <section id="levels" className="mx-auto w-[min(1120px,calc(100%_-_40px))] py-20">
+    <section id="levels" className={`${TUITION_CONTAINER} ${TUITION_SECTION_SPACING}`}>
       <TuitionReveal className="text-center">
         <TuitionKicker>Our levels</TuitionKicker>
       </TuitionReveal>
@@ -19,28 +20,28 @@ export function TuitionCourses() {
       <div className="grid grid-cols-4 gap-5 max-lg:grid-cols-2 max-sm:grid-cols-1">
         {tuitionLevels.map((level, index) => (
           <TuitionReveal key={level.slug} delayMs={index * 70} className="h-full">
-            <article className="grid h-full content-between gap-5 overflow-hidden rounded-[6px] border border-line bg-white transition duration-300 ease-out hover:-translate-y-1 hover:border-forge/50 hover:shadow-card">
+            <article className={`${TUITION_CARD} grid h-full content-between gap-5 overflow-hidden`}>
               <div className="p-6 pb-0">
                 <div className="mb-4 flex items-center justify-between">
-                  <span className="grid size-11 place-items-center rounded-lg bg-forge-soft text-forge">
+                  <span className={TUITION_ICON}>
                     <level.icon className="size-5" />
                   </span>
-                  <span className="rounded-full border border-line px-2.5 py-1 text-[11px] font-extrabold uppercase text-muted">
+                  <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">
                     {level.level}
                   </span>
                 </div>
                 <h3 className="m-0 text-lg font-extrabold leading-tight">{level.name}</h3>
                 <p className="mt-3 text-sm leading-relaxed text-muted">{level.copy}</p>
               </div>
-              <div className="flex items-center justify-between border-t border-line bg-paper px-6 py-4">
+              <div className="flex items-center justify-between border-t border-line px-6 py-4">
                 <span className="text-sm font-extrabold text-ink">
                   From £{level.pricePerHour}<span className="font-semibold text-muted">/hour</span>
                 </span>
                 <Link
                   href={`/tuition/subjects?level=${level.slug}`}
-                  className="inline-flex items-center gap-1 text-sm font-extrabold text-warning"
+                  className="tuition-interactive inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-forge"
                 >
-                  Learn more <ArrowRight className="size-3.5" />
+                  View subject <ArrowRight className="tuition-arrow size-3.5" />
                 </Link>
               </div>
             </article>
