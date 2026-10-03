@@ -37,7 +37,7 @@
         </div>
       </section>
 
-      <section class="section" aria-labelledby="approach-title">
+      <section class="section approach-section" aria-labelledby="approach-title">
         <div class="section-inner">
           <div class="section-heading">
             <p class="eyebrow">The Orthic approach</p>
@@ -81,20 +81,26 @@
 
     <footer class="site-footer">
       <div class="footer-inner">
-        <p>© {{YEAR}} Orthic</p>
-        <a href="/privacy/">Privacy</a>
+        <div class="footer-copy">
+          <strong>Orthic</strong>
+          <p>Independent Scottish learning platform. Not affiliated with or endorsed by Qualifications Scotland.</p>
+        </div>
+        <div class="footer-meta">
+          <span>© {{YEAR}} Orthic</span>
+          <a href="/privacy/">Privacy</a>
+        </div>
       </div>
     </footer>
 
     <template id="waitlist-form-template">
       <form class="waitlist-form" novalidate>
-        <label class="sr-only" data-email-label>Email address</label>
+        <label class="form-label" data-email-label>Email address</label>
         <div class="form-row">
           <input data-email-input name="email" type="email" inputmode="email" autocomplete="email" maxlength="254" required placeholder="Email address">
           <div class="honeypot" aria-hidden="true">
             <label>Leave this field empty<input name="website" type="text" tabindex="-1" autocomplete="off"></label>
           </div>
-          <button type="submit"><span data-button-label>Join the waitlist</span><span aria-hidden="true">→</span></button>
+          <button type="submit"><span data-button-label>Join the waitlist</span><span class="button-arrow" aria-hidden="true">→</span></button>
         </div>
         <p class="form-help" data-help>We’ll email you about Orthic’s launch. Unsubscribe anytime.</p>
         <p class="form-message" data-message aria-live="polite"></p>
@@ -102,4 +108,3 @@
     </template>
   </body>
 </html>
-
