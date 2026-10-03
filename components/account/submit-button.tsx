@@ -13,7 +13,7 @@ export function GoogleSignInSubmitButton() {
   const status = useFormStatus();
   return (
     <button
-      className="flex min-h-12 w-full items-center justify-center gap-3 rounded-lg border border-line bg-white px-6 text-sm font-extrabold text-ink transition-colors hover:bg-paper disabled:cursor-wait disabled:opacity-60"
+      className="flex min-h-12 w-full items-center justify-center gap-3 rounded border border-rule bg-white px-6 text-sm font-semibold text-navy transition-colors duration-150 hover:bg-shell motion-reduce:transition-none disabled:cursor-wait disabled:opacity-60"
       type="submit"
       disabled={status.pending}
     >

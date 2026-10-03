@@ -9,9 +9,9 @@ export type SurfaceLevel = "primary" | "secondary" | "inline";
  * inline = low-weight supporting panel or disclosure content.
  */
 export const SURFACE_LEVEL_CLASSES: Record<SurfaceLevel, string> = {
-  primary: "rounded-2xl border border-rule bg-surface shadow-card",
-  secondary: "rounded-xl border border-rule bg-surface",
-  inline: "rounded-lg bg-surface-dim",
+  primary: "rounded-lg border border-rule bg-surface",
+  secondary: "rounded-md border border-rule bg-surface",
+  inline: "rounded bg-surface-dim",
 };
 
 export function Surface({ level = "secondary", children, className = "", ...props }: HTMLAttributes<HTMLDivElement> & { level?: SurfaceLevel }) {
@@ -63,7 +63,7 @@ export type ButtonVariant = "primary" | "secondary" | "quiet" | "destructive";
 export type ButtonSize = "sm" | "md";
 
 export const BUTTON_VARIANT_CLASSES: Record<ButtonVariant, string> = {
-  primary: "border-forge bg-forge text-white hover:bg-forge/90",
+  primary: "border-navy bg-navy text-white hover:bg-navy/90",
   secondary: "border-rule bg-surface-strong text-ink hover:border-forge/45 hover:bg-surface-dim",
   quiet: "border-transparent bg-transparent text-ink hover:bg-forge-soft",
   destructive: "border-danger bg-danger text-white hover:bg-danger/90",
@@ -74,7 +74,7 @@ const BUTTON_SIZE_CLASSES: Record<ButtonSize, string> = {
   md: "min-h-11 px-4 text-sm",
 };
 
-const BUTTON_INTERACTION_CLASSES = "transition-[background-color,border-color,color,transform] duration-150 ease-out active:translate-y-px motion-reduce:transform-none disabled:pointer-events-none disabled:opacity-45";
+const BUTTON_INTERACTION_CLASSES = "transition-[background-color,border-color,color] duration-150 ease-out disabled:pointer-events-none disabled:opacity-45";
 
 export const Button = forwardRef<HTMLButtonElement, ButtonHTMLAttributes<HTMLButtonElement> & { variant?: ButtonVariant; size?: ButtonSize }>(
   function Button({ variant = "primary", size = "md", type = "button", className = "", children, ...props }, ref) {
@@ -83,7 +83,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonHTMLAttributes<HTMLBut
         {...props}
         ref={ref}
         type={type}
-        className={`inline-flex items-center justify-center gap-2 rounded-lg border font-extrabold ${BUTTON_SIZE_CLASSES[size]} ${BUTTON_VARIANT_CLASSES[variant]} ${BUTTON_INTERACTION_CLASSES} ${className}`}
+        className={`inline-flex items-center justify-center gap-2 rounded border font-semibold ${BUTTON_SIZE_CLASSES[size]} ${BUTTON_VARIANT_CLASSES[variant]} ${BUTTON_INTERACTION_CLASSES} ${className}`}
       >
         {children}
       </button>
@@ -108,14 +108,14 @@ export function ButtonLink({
 }: ButtonLinkProps) {
   const variantClass =
     variant === "primary"
-      ? "border-forge bg-forge text-white"
+      ? "border-navy bg-navy text-white"
       : "border-ink bg-transparent text-ink";
   const sizeClass = size === "lg" ? "min-h-[54px] min-w-[170px]" : "min-h-11";
 
   return (
     <Link
       href={href}
-      className={`inline-flex items-center justify-center rounded-lg border px-6 text-sm font-extrabold uppercase ${variantClass} ${sizeClass} ${BUTTON_INTERACTION_CLASSES} ${className}`}
+      className={`inline-flex items-center justify-center rounded border px-6 text-sm font-semibold ${variantClass} ${sizeClass} ${BUTTON_INTERACTION_CLASSES} ${className}`}
     >
       {children}
     </Link>

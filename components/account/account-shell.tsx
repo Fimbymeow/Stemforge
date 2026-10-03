@@ -25,7 +25,7 @@ export function AccountShell({
   const settings = variant === "settings";
   const header = (
     <header className={authEntry ? "text-center" : "flex items-start gap-4"}>
-      {!authEntry ? <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-forge-soft text-forge"><UserRound aria-hidden="true" className="size-6" /></span> : null}
+      {!authEntry ? <span className="grid size-11 shrink-0 place-items-center rounded bg-academic-blue text-navy"><UserRound aria-hidden="true" className="size-5" /></span> : null}
       <div className={authEntry ? "mx-auto" : "min-w-0"}>
         <h1 className={`m-0 font-extrabold ${authEntry ? "text-2xl" : "text-3xl"}`}>{title}</h1>
         <p className={`mt-2 text-muted ${authEntry ? "text-sm leading-relaxed" : "leading-relaxed"}`}>{introduction}</p>
@@ -76,5 +76,5 @@ export function AccountUnavailable() {
   );
 }
 
-export const inputClass = "mt-2 min-h-12 w-full rounded-lg border border-line bg-white px-4 text-base outline-none focus:border-forge focus:ring-2 focus:ring-forge-soft";
-export const buttonClass = "mt-6 min-h-12 w-full rounded-lg bg-forge px-6 text-sm font-extrabold text-white disabled:cursor-wait disabled:opacity-60";
+export const inputClass = "mt-2 min-h-12 w-full rounded border border-rule bg-white px-4 text-base outline-none transition-[border-color,box-shadow] duration-150 focus:border-navy focus:ring-2 focus:ring-academic-blue motion-reduce:transition-none";
+export const buttonClass = "mt-6 min-h-12 w-full rounded bg-navy px-6 text-sm font-semibold text-white transition-colors duration-150 hover:bg-navy/90 motion-reduce:transition-none disabled:cursor-wait disabled:opacity-60";

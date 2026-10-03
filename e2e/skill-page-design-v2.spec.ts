@@ -23,7 +23,7 @@ test("guest confidence uses one shared store across Skill Page, Tracker and tabs
   }
   await page.getByRole("button", { name: "Clear rating", exact: true }).click();
   await expect(page.getByRole("group", { name: "Your confidence" }).getByRole("button", { pressed: true })).toHaveCount(0);
-  await expect(saved).toHaveCount(0);
+  await expect(saved).toHaveText("Unrated");
   await page.reload();
   await expect(page.getByText("Not rated", { exact: true })).toBeVisible();
   await tracker.close();

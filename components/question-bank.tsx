@@ -486,8 +486,8 @@ export function QuestionBank({ subjectSlug }: { subjectSlug: string }) {
               const indeterminate = someSelected && !allSelected;
               const ineligibleCount = group.allEntries.length - group.eligibleIds.length;
               const groupLabel = `${allSelected ? "Deselect" : "Select"} all ${group.eligibleIds.length} matching ${group.stageName} questions`;
-              return <section key={`${group.pathId}:${group.stageId}`} className="min-w-0" aria-labelledby={`group-${group.stageId}`}>
-                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-rule py-3">
+              return <section key={`${group.pathId}:${group.stageId}`} className="min-w-0 overflow-hidden rounded-lg border border-rule bg-surface" aria-labelledby={`group-${group.stageId}`}>
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-rule bg-shell px-4 py-3 max-sm:px-3">
                   <div>
                     <p className="font-mono text-[11px] uppercase tracking-wide text-secondary">{group.pathName}</p>
                     <h3 id={`group-${group.stageId}`} className="mt-1 text-sm font-semibold text-navy">{displayStageName(group.stageName)} · {group.allEntries.length} questions</h3>
@@ -505,7 +505,7 @@ export function QuestionBank({ subjectSlug }: { subjectSlug: string }) {
                     Select this stage
                   </label>
                 </div>
-                <ol className="divide-y divide-line">{visibleEntries.map((entry) => <QuestionRow
+                <ol className="divide-y divide-line px-4 max-sm:px-3">{visibleEntries.map((entry) => <QuestionRow
                   key={entry.question.id}
                   entry={entry}
                   selected={selected.has(entry.question.id)}
@@ -617,27 +617,27 @@ function QuestionRow({ entry, selected, expanded, onSelected, onToggleExpand }: 
   const panelId = `question-bank-preview-${entry.question.id}`;
   const label = `Select ${entry.context.skillPath.name}, ${entry.context.stage.name}, Question ${position}`;
   const hasInteractiveVisualAnswer = VISUAL_ANSWER_TYPES.has(entry.question.answerType);
-  return <li data-testid="question-bank-row" className={`orthic-plan-row grid min-w-0 gap-2 py-3 focus-within:bg-surface-dim ${selected ? "bg-surface-dim" : ""}`}>
-    <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 max-sm:grid-cols-[auto_minmax(0,1fr)]">
+  return <li data-testid="question-bank-row" className={`orthic-plan-row grid min-w-0 gap-2 py-4 transition-colors duration-150 focus-within:bg-academic-blue/55 hover:bg-shell motion-reduce:transition-none ${selected ? "bg-academic-blue/55" : ""}`}>
+    <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3 max-sm:grid-cols-[auto_minmax(0,1fr)]">
       <label className="grid min-h-11 min-w-11 place-items-center"><input type="checkbox" checked={selected} disabled={!eligibility.eligible} onChange={(event) => onSelected(event.target.checked)} aria-label={label} className="orthic-transition-fast size-5 accent-navy" /></label>
       <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-secondary">
-          <span>Question {position}</span>
-          <span>{entry.question.marks} mark{entry.question.marks === 1 ? "" : "s"}</span>
-          <span className={entry.progress.reviewRecommended ? "text-amber-800" : undefined}>{questionStatus(entry)}</span>
-          <span>{ANSWER_TYPE_LABELS[entry.question.answerType]} question</span>
-          {entry.question.calculatorAllowed ? <span>Calculator allowed</span> : null}
-          {!eligibility.eligible ? <span className="font-extrabold text-muted">Not yet available for practice</span> : null}
+        <h4 className="text-base font-semibold leading-snug text-navy"><InlineMathContent>{entry.question.title}</InlineMathContent></h4>
+        <div data-testid="question-bank-math-excerpt" className="mt-1.5 max-h-24 overflow-auto text-sm leading-relaxed text-secondary"><InlineMathContent>{excerpt}</InlineMathContent></div>
+        <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-secondary">
+          <span>Question {position}</span><span aria-hidden="true">·</span>
+          <span>{entry.question.marks} mark{entry.question.marks === 1 ? "" : "s"}</span><span aria-hidden="true">·</span>
+          <span>{ANSWER_TYPE_LABELS[entry.question.answerType]}</span>
+          {entry.question.calculatorAllowed ? <><span aria-hidden="true">·</span><span>Calculator</span></> : null}
+          <span className={`font-medium ${entry.progress.reviewRecommended ? "text-warning" : "text-muted"}`}>{questionStatus(entry)}</span>
+          {!eligibility.eligible ? <span className="font-semibold text-muted">Not yet available for practice</span> : null}
         </div>
-        <h4 className="mt-1 text-base font-semibold text-navy"><InlineMathContent>{entry.question.title}</InlineMathContent></h4>
-        <div data-testid="question-bank-math-excerpt" className="mt-1 max-h-24 overflow-auto text-sm leading-relaxed text-secondary"><InlineMathContent>{excerpt}</InlineMathContent></div>
       </div>
       <div className="flex items-center gap-3 max-sm:col-span-2 max-sm:ml-14 max-sm:flex-wrap">
         <button type="button" onClick={onToggleExpand} aria-expanded={expanded} aria-controls={panelId} className="orthic-secondary-link inline-flex min-h-11 items-center justify-center text-sm text-secondary">{expanded ? "Hide preview" : "Preview"}</button>
         <Link href={`/question/${entry.question.id}`} aria-label={`Open ${entry.question.title}`} className="orthic-secondary-link inline-flex min-h-11 items-center justify-center gap-1 text-sm font-medium text-navy">Open question<span aria-hidden="true" className="orthic-arrow">→</span></Link>
       </div>
     </div>
-    {expanded ? <div id={panelId} className="min-w-0 rounded-lg bg-paper p-3 text-sm leading-relaxed">
+    {expanded ? <div id={panelId} className="min-w-0 rounded bg-paper p-3 text-sm leading-relaxed">
       <MathContent>{entry.question.questionText}</MathContent>
       <QuestionGraphVisual question={entry.question} />
       {hasInteractiveVisualAnswer ? <p className="mt-2 font-bold text-muted">Open the question page to use the interactive {entry.question.answerType === "nature_table" ? "table" : "graph"} answer tool.</p> : null}

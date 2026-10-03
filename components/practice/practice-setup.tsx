@@ -177,7 +177,9 @@ export function PracticeSetup({
             <h1 className="mt-2 text-[32px] font-bold leading-tight tracking-tight">Review what is due</h1>
             <p className="mt-3 text-muted">A short Review uses the same practice screen you already know.</p>
           </header>
-          <Card className="max-w-[780px] !rounded-lg !border-rule bg-white p-6 !shadow-none sm:p-8" data-testid="review-launch-card">
+          <Card className={reviewPreview.session
+            ? "max-w-[780px] !rounded-lg !border-rule bg-white p-6 !shadow-none sm:p-8"
+            : "max-w-[780px] !rounded-none !border-x-0 !border-b-0 !border-rule !bg-transparent px-0 py-6 !shadow-none"} data-testid="review-launch-card">
             {reviewPreview.session ? (
               <>
                 <p className="text-sm font-extrabold text-forge">{singleDueSkill ? `${singleDueSkill} is ready to review` : `${dueCount} skill${dueCount === 1 ? "" : "s"} due`}</p>

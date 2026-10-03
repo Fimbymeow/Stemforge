@@ -49,10 +49,10 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
     return (
       <AccountShell title="Your account" introduction="Sign in to protect progress across devices, or keep learning as a guest." result={result}>
         <div className="mt-5 grid gap-3 sm:grid-cols-2" data-testid="signed-out-account-actions">
-          <Link href={authHref("/account/sign-in", next)} className="inline-flex min-h-12 items-center justify-center rounded-lg bg-forge px-5 text-sm font-extrabold text-white">Sign in</Link>
-          <Link href={authHref("/account/sign-up", next)} className="inline-flex min-h-12 items-center justify-center rounded-lg border border-ink px-5 text-sm font-extrabold">Create account</Link>
+          <Link href={authHref("/account/sign-in", next)} className="inline-flex min-h-12 items-center justify-center rounded bg-navy px-5 text-sm font-semibold text-white">Sign in</Link>
+          <Link href={authHref("/account/sign-up", next)} className="inline-flex min-h-12 items-center justify-center rounded border border-rule bg-white px-5 text-sm font-semibold text-navy">Create account</Link>
         </div>
-        <div className="mt-5 rounded-xl border border-line bg-paper p-4" data-testid="signed-out-guest-context">
+        <div className="mt-5 rounded border border-rule bg-paper p-4" data-testid="signed-out-guest-context">
           <h2 className="m-0 text-lg font-extrabold">Your browser progress stays yours</h2>
           <p className="mb-0 mt-2 text-sm leading-relaxed text-muted">
             Guest progress stays on this browser. After signing in, you can choose to add it to your account and separately choose whether to sync across devices.

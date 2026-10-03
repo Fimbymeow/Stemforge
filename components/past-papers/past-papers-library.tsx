@@ -8,7 +8,7 @@ import type { PastPaperRecord, PastPaperResource } from "@/lib/past-papers/types
 function OfficialResourceLink({ resource, label, accessibleLabel }: { resource: PastPaperResource; label: string; accessibleLabel: string }) {
   if (resource.status !== "available") {
     return (
-      <div className="flex min-h-11 items-center justify-between gap-3 rounded-lg border border-line bg-paper px-4 py-2 text-sm text-muted">
+      <div className="flex min-h-11 items-center justify-between gap-3 rounded border border-rule bg-paper px-3 py-2 text-sm text-muted">
         <span className="font-bold">{label}</span>
         <span>{resource.status === "pending" ? "Pending" : "Unavailable"}</span>
         <span className="sr-only">{resource.note}</span>
@@ -54,15 +54,15 @@ export function PastPapersLibrary({ records }: { records: readonly PastPaperReco
           </aside>
         </header>
 
-        <div role="table" aria-label="Official Higher Maths past papers" className="min-w-0 overflow-hidden rounded-lg border border-rule bg-white" data-testid="past-papers-ledger">
-        <div role="row" className="hidden grid-cols-[100px_minmax(0,1fr)_minmax(0,1fr)_minmax(160px,.8fr)] gap-5 border-b border-rule bg-canvas px-6 py-4 text-xs font-semibold uppercase tracking-wide text-secondary xl:grid">
+        <div role="table" aria-label="Official Higher Maths past papers" className="min-w-0 overflow-hidden rounded-lg border border-rule bg-surface" data-testid="past-papers-ledger">
+        <div role="row" className="hidden grid-cols-[100px_minmax(0,1fr)_minmax(0,1fr)_minmax(160px,.8fr)] gap-5 border-b border-rule bg-shell px-6 py-4 text-xs font-semibold uppercase tracking-wide text-secondary xl:grid">
           <span role="columnheader">Exam diet</span><span role="columnheader">Paper 1 (Non-calculator)</span><span role="columnheader">Paper 2 (Calculator permitted)</span><span role="columnheader">Specification notes</span>
         </div>
         {years.map((year) => {
           const yearRecords = records.filter((record) => record.year === year);
           const note = yearRecords.find((record) => record.note)?.note;
           return (
-            <div key={year} role="row" className="grid min-w-0 gap-5 border-b border-rule p-5 last:border-b-0 sm:grid-cols-2 xl:grid-cols-[100px_minmax(0,1fr)_minmax(0,1fr)_minmax(160px,.8fr)] xl:items-center xl:px-6 xl:py-7">
+            <div key={year} role="row" className="grid min-w-0 gap-5 border-b border-rule p-5 transition-colors duration-150 last:border-b-0 hover:bg-shell motion-reduce:transition-none sm:grid-cols-2 xl:grid-cols-[100px_minmax(0,1fr)_minmax(0,1fr)_minmax(160px,.8fr)] xl:items-center xl:px-6 xl:py-6">
               <div role="rowheader" className="sm:col-span-2 xl:col-span-1"><h2 className="text-xl font-bold" data-testid={`past-papers-year-${year}`}>{year}</h2></div>
                 {[1, 2].map((paperNumber) => {
                   const record = yearRecords.find((item) => item.paperNumber === paperNumber);

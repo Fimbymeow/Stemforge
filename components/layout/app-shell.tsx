@@ -52,7 +52,7 @@ export function AppShell({
       <div
         ref={dockRef}
         data-global-report-dock
-        className={`pointer-events-none fixed inset-x-4 z-30 mx-auto flex max-w-2xl justify-end md:inset-x-auto md:right-4 md:max-w-md ${feedbackPlacement === "inline-mobile" ? "max-sm:static max-sm:px-4 max-sm:pb-[calc(1rem+var(--question-bank-selection-height))]" : ""}`}
+        className="pointer-events-none fixed inset-x-4 z-30 mx-auto flex max-w-2xl justify-end max-sm:static max-sm:px-4 max-sm:pb-[calc(1rem+var(--question-bank-selection-height))] md:inset-x-auto md:right-4 md:max-w-md"
         style={{ bottom: "var(--global-bottom-inset)" }}
       >
         <div className="pointer-events-auto">

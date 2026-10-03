@@ -54,7 +54,7 @@ export function CourseTracker({ subject }: { subject: Subject }) {
                 type="button"
                 aria-current={isSelected ? "page" : undefined}
                 onClick={() => setSelectedArea(index)}
-                className={`orthic-nav-link min-h-11 min-w-0 rounded border px-3 py-3 text-center text-sm font-medium leading-snug focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy ${isSelected ? "border-navy bg-forge-soft text-navy" : "border-transparent text-secondary hover:border-rule hover:bg-white"}`}
+                className={`orthic-nav-link min-h-11 min-w-0 rounded border px-3 py-3 text-center text-sm font-medium leading-snug focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy ${isSelected ? "border-navy/25 bg-academic-blue text-navy" : "border-transparent text-secondary hover:border-rule hover:bg-white"}`}
               >
                 {item.title}
               </button>
@@ -112,9 +112,9 @@ function TrackerSkillRow({ skill }: { skill: CourseTrackerSkill }) {
   const confidenceDisagrees = hasCourseTrackerConfidenceDisagreement(skill.confidence);
   return (
     <li className="min-w-0" data-testid={`tracker-skill-${skill.skillPathId}`} data-course-tracker-skill="" data-tracker-row-kind="actionable">
-      <Link href={skill.reviewDue ? `/practice?review=1&path=${encodeURIComponent(skill.skillPathId)}` : skill.action.href} aria-label={skill.reviewDue ? `Review now: ${skill.name}` : `Open ${skill.name} skill overview`} className="orthic-course-row orthic-secondary-link grid min-h-14 min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 px-3 py-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-navy max-sm:grid-cols-1">
+      <Link href={skill.reviewDue ? `/practice?review=1&path=${encodeURIComponent(skill.skillPathId)}` : skill.action.href} aria-label={skill.reviewDue ? `Review now: ${skill.name}` : `Open ${skill.name} skill overview`} className="orthic-course-row orthic-secondary-link grid min-h-14 min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 px-3 py-3 transition-colors duration-150 hover:bg-shell focus-visible:bg-shell focus-visible:outline focus-visible:outline-2 focus-visible:outline-navy motion-reduce:transition-none max-sm:grid-cols-1">
         <span className="min-w-0 break-words text-[15px] font-medium text-navy">{skill.name}</span>
-        <span className="flex items-center justify-end gap-4 text-[13px] text-secondary max-sm:justify-between">
+        <span className="flex items-center justify-end gap-4 text-[13px] text-secondary max-sm:w-full max-sm:justify-between">
           {learnerConfidence ? (
             <span className={`inline-flex items-center gap-1 ${CONFIDENCE_COLOR[learnerConfidence]}`} data-testid={`tracker-confidence-${skill.skillPathId}`}>
               {CONFIDENCE_LABEL[learnerConfidence]}
