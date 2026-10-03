@@ -4,28 +4,33 @@ test("public homepage presents truthful product-led Orthic positioning", async (
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.goto("/");
   await expect(page).toHaveTitle(/Orthic.*Learn with Precision/);
-  await expect(page.getByRole("heading", { level: 1, name: "Learn with Precision." })).toBeVisible();
-  await expect(page.getByTestId("homepage-product-visual")).toHaveAccessibleName("Orthic Basic differentiation learning journey");
+  await expect(page.getByRole("heading", { level: 1, name: "Master Higher Maths, one skill at a time." })).toBeVisible();
+  await expect(page.getByTestId("homepage-product-visual")).toHaveAccessibleName("Orthic Basic differentiation question workspace");
   await expect(page.getByText("Mechanics", { exact: false })).toHaveCount(0);
   await expect(page.getByText("Kinematics", { exact: false })).toHaveCount(0);
   await expect(page.getByText("Chemistry", { exact: true })).toHaveCount(0);
   await expect(page.getByText("Biology", { exact: true })).toHaveCount(0);
-  await expect(page.getByRole("heading", { name: "Higher Maths", level: 3 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "The 4-stage skill pathway", level: 2 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Official past papers & marking instructions", level: 2 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Self-rated confidence & spaced Review", level: 2 })).toBeVisible();
+  await expect(page.getByText("01 / SKILL PROGRESSION", { exact: true })).toHaveCount(0);
+  await expect(page.getByText(/curriculum calibrated/i)).toHaveCount(0);
+  await expect(page.getByText(/1,200\+ authored questions/i)).toHaveCount(0);
   await expect(page.getByText("Higher Physics", { exact: true })).toHaveCount(0);
   await expect(page.getByText("Coming soon", { exact: true })).toHaveCount(0);
   await expect(page.getByText(/public beta/i)).toHaveCount(0);
   await expect(page.getByText("Premium", { exact: false })).toHaveCount(0);
   await expect(page.locator('meta[property="og:image"]')).toHaveAttribute("content", /opengraph-image/);
   await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute("content", "summary_large_image");
-  const headingBox = await page.getByRole("heading", { level: 1, name: "Learn with Precision." }).boundingBox();
+  const headingBox = await page.getByRole("heading", { level: 1, name: "Master Higher Maths, one skill at a time." }).boundingBox();
   const proofBox = await page.getByTestId("homepage-product-visual").boundingBox();
   const nextSectionBox = await page.locator("#how-it-works").boundingBox();
   expect(headingBox).not.toBeNull();
   expect(proofBox).not.toBeNull();
   expect(nextSectionBox).not.toBeNull();
-  expect(headingBox!.x + headingBox!.width).toBeLessThan(proofBox!.x);
-  expect(proofBox!.y).toBeLessThan(headingBox!.y + headingBox!.height + 260);
-  expect(nextSectionBox!.y).toBeLessThan(760);
+  expect(proofBox!.y).toBeGreaterThan(headingBox!.y + headingBox!.height);
+  expect(proofBox!.y).toBeLessThan(headingBox!.y + headingBox!.height + 300);
+  expect(nextSectionBox!.y).toBeLessThan(1200);
   expect(seriousBrowserErrors).toEqual([]);
 });
 
@@ -38,7 +43,7 @@ test("public navigation keeps course actions focused and routes real CTAs", asyn
   await expect(primary.getByRole("link", { name: "Account" })).toHaveAttribute("href", "/account");
   await expect(page.getByRole("navigation", { name: "Footer" }).getByRole("link", { name: "Orthic Tuition" })).toHaveAttribute("href", "/tuition");
   await expect(page.getByRole("link", { name: "Start Learning" }).first()).toHaveAttribute("href", "/dashboard");
-  await expect(page.getByRole("link", { name: "Explore Higher Maths" })).toHaveAttribute("href", "/subjects/higher-maths");
+  await expect(page.getByRole("link", { name: "Explore Higher Maths" }).first()).toHaveAttribute("href", "/subjects/higher-maths");
 
   await page.goto("/tuition");
   await expect(page.getByRole("link", { name: "Back to Orthic" })).toHaveAttribute("href", "/");
@@ -56,13 +61,11 @@ test("mobile navigation and product proof remain compact, accessible and overflo
     await page.setViewportSize(viewport);
     await page.goto("/");
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), `${viewport.width}px overflow`).toBe(0);
-    await expect(page.getByRole("heading", { level: 1, name: "Learn with Precision." })).toBeVisible();
-    const mobileHeading = page.getByRole("heading", { level: 1, name: "Learn with Precision." });
+    await expect(page.getByRole("heading", { level: 1, name: "Master Higher Maths, one skill at a time." })).toBeVisible();
+    const mobileHeading = page.getByRole("heading", { level: 1, name: "Master Higher Maths, one skill at a time." });
     const mobileProof = page.getByTestId("homepage-product-visual");
     await expect(mobileProof).toBeVisible();
-    if (viewport.width < 900) {
-      expect((await mobileProof.boundingBox())!.y).toBeGreaterThan((await mobileHeading.boundingBox())!.y);
-    }
+    expect((await mobileProof.boundingBox())!.y).toBeGreaterThan((await mobileHeading.boundingBox())!.y);
     if (viewport.width < 768) {
       const trigger = page.getByRole("button", { name: "Open navigation" });
       await trigger.click();

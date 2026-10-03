@@ -21,7 +21,7 @@ test("production guest surface, health, security and internal denial are operati
   expect(landing?.headers()["content-security-policy"]).toContain("frame-ancestors 'none'");
   expect(landing?.headers()["strict-transport-security"]).toContain("max-age=");
   expect(landing?.headers()["x-content-type-options"]).toBe("nosniff");
-  await expect(page.getByRole("heading", { name: "Learn with Precision.", level: 1 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Master Higher Maths, one skill at a time.", level: 1 })).toBeVisible();
 
   const health = await page.request.get("/api/health");
   expect(health.status()).toBe(200);

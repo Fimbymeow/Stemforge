@@ -2,7 +2,7 @@ import { test, expect } from "./fixtures/test";
 
 test("homepage makes a confident, bounded product promise and all primary actions are real", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "Learn with Precision.", level: 1 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Master Higher Maths, one skill at a time.", level: 1 })).toBeVisible();
   await expect(page.getByText("Build Higher Maths one skill at a time", { exact: false })).toBeVisible();
   await expect(page.getByText("No account needed. Progress can stay on this browser.")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Exam Questions", level: 3 })).toBeVisible();

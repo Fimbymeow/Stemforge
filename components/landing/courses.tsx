@@ -1,21 +1,45 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
-import { getActiveSubject, getAvailableSkillPaths } from "@/lib/learning-paths";
+import { ArrowRight, Check } from "lucide-react";
+import { getPastPapersForSubject } from "@/lib/past-papers/catalog";
 
 export function Courses() {
-  const availableSkills = getAvailableSkillPaths(getActiveSubject());
-  const names = availableSkills.map((skill) => skill.name).join(" and ");
+  const records = getPastPapersForSubject("higher-maths");
+  const years = Array.from(new Set(records.map((record) => record.year)));
 
   return (
-    <section id="courses" aria-labelledby="courses-title" className="scroll-mt-20 border-b border-line px-5 py-[clamp(56px,7vw,84px)]">
-      <div className="mx-auto w-[min(980px,100%)]">
-        <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-forge">Flagship course</p>
-        <h2 id="courses-title" className="mt-3 text-[clamp(34px,5vw,54px)] font-extrabold tracking-[-0.03em]">Start with Higher Maths.</h2>
-        <div className="mt-9 border-y border-line">
-          <article className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-5 py-6 max-sm:grid-cols-1">
-            <div><p className="text-xs font-extrabold uppercase text-forge">Learn now</p><h3 className="mt-2 text-2xl font-extrabold">Higher Maths</h3><p className="mt-2 text-sm leading-relaxed text-muted">Begin with {names}. Every skill connects clear teaching, purposeful practice and complete worked solutions.</p></div>
-            <Link href="/subjects/higher-maths" className="inline-flex min-h-11 items-center gap-2 font-extrabold text-forge">Explore course <ArrowRight aria-hidden="true" className="size-4" /></Link>
-          </article>
+    <section id="courses" aria-labelledby="courses-title" className="scroll-mt-20 px-5 py-[clamp(36px,5vw,64px)]">
+      <div className="mx-auto grid w-[min(1120px,100%)] items-center gap-[clamp(36px,6vw,76px)] lg:grid-cols-[minmax(300px,0.85fr)_minmax(0,1.15fr)]">
+        <div>
+          <h2 id="courses-title" className="text-[clamp(30px,4vw,46px)] font-bold leading-[1.08] tracking-[-0.035em]">Official past papers &amp; marking instructions</h2>
+          <p className="mt-5 text-base leading-relaxed text-muted">Open official Higher Maths papers and their marking instructions from one clear archive, organised by exam year and paper.</p>
+          <p className="mt-3 text-sm leading-relaxed text-muted">Resources open from the official source. Orthic does not host or relabel copies of these documents.</p>
+          <Link href="/subjects/higher-maths/past-papers" className="orthic-secondary-link mt-6 inline-flex min-h-11 items-center gap-2 font-semibold text-forge">Browse Higher Maths past papers <ArrowRight aria-hidden="true" className="orthic-arrow size-4" /></Link>
+        </div>
+
+        <div aria-label="Higher Maths past papers archive preview" className="overflow-hidden rounded-lg border border-line bg-white shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-4 sm:px-6">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">Archive ledger</p>
+              <h3 className="mt-1 text-lg font-bold">Higher Mathematics</h3>
+            </div>
+            <span className="text-xs text-muted">Official source links</span>
+          </div>
+          <div className="grid sm:grid-cols-2">
+            {years.map((year, index) => {
+              const papers = records.filter((record) => record.year === year);
+              return (
+                <div key={year} className={`px-5 py-5 sm:px-6 ${index < 2 ? "border-b border-line" : ""} ${index % 2 === 0 ? "sm:border-r sm:border-line" : ""}`}>
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-xl font-bold">{year}</p>
+                    <Check aria-label="Available" className="size-4 text-success" />
+                  </div>
+                  <div className="mt-4 grid gap-2 text-xs text-muted">
+                    {papers.map((paper) => <p key={paper.id}>Paper {paper.paperNumber} · Marking instructions</p>)}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </section>

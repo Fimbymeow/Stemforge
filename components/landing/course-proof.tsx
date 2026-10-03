@@ -1,35 +1,44 @@
 import Link from "next/link";
-import { ArrowRight, BookOpen, Check, PenLine } from "lucide-react";
+import { ArrowRight, BookOpen, FileCheck2, PenLine, ScrollText } from "lucide-react";
 import { getActiveSubject, getAvailableSkillPaths } from "@/lib/learning-paths";
 
+const stages = [
+  { name: "Notes", description: "Focused explanations and worked examples", icon: BookOpen },
+  { name: "Foundations", description: "Build the essential method accurately", icon: PenLine },
+  { name: "Applications", description: "Use the method in varied contexts", icon: FileCheck2 },
+  { name: "Exam practice", description: "Apply the skill independently", icon: ScrollText },
+] as const;
+
 export function CourseProof() {
-  const subject = getActiveSubject();
-  const availableSkills = getAvailableSkillPaths(subject);
+  const [skill] = getAvailableSkillPaths(getActiveSubject());
 
   return (
-    <section aria-labelledby="course-proof-title" className="border-b border-line px-5 py-[clamp(56px,7vw,88px)]">
-      <div className="mx-auto grid w-[min(1180px,100%)] grid-cols-[minmax(0,0.72fr)_minmax(520px,1.28fr)] items-center gap-[clamp(40px,7vw,90px)] max-lg:grid-cols-1">
-        <div>
-          <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-forge">Built around the course</p>
-          <h2 id="course-proof-title" className="mt-3 text-[clamp(34px,5vw,58px)] font-extrabold leading-[1.02] tracking-[-0.035em]">Know where each skill fits.</h2>
-          <p className="mt-5 max-w-xl text-lg leading-relaxed text-muted">Orthic follows the Higher Maths course structure, so learning, practice and progress stay connected to real curriculum skills.</p>
-          <Link href="/subjects/higher-maths/course-tracker" className="mt-6 inline-flex min-h-11 items-center gap-2 font-extrabold text-forge">Open Course Tracker <ArrowRight aria-hidden="true" className="size-4" /></Link>
-        </div>
-
-        <div aria-label="Higher Maths Course Tracker preview" className="overflow-hidden rounded-xl border border-line bg-white shadow-card">
-          <div className="flex items-center justify-between gap-4 border-b border-line px-5 py-4">
-            <div><p className="text-xs font-extrabold uppercase text-forge">Higher Maths</p><p className="mt-1 text-xl font-extrabold">Calculus · Differentiation</p></div>
-            <span className="rounded-full bg-forge-soft px-3 py-1 text-xs font-bold text-forge">Structured by skill</span>
+    <section aria-labelledby="course-proof-title" className="px-5 py-[clamp(36px,5vw,64px)]">
+      <div className="mx-auto grid w-[min(1120px,100%)] items-center gap-[clamp(36px,6vw,76px)] lg:grid-cols-[minmax(0,1.15fr)_minmax(300px,0.85fr)]">
+        <div aria-label="Four-stage Basic differentiation pathway preview" className="overflow-hidden rounded-lg border border-line bg-white shadow-sm">
+          <div className="border-b border-line px-5 py-4 sm:px-6">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">Higher Mathematics</p>
+            <h3 className="mt-1 text-lg font-bold">{skill?.name ?? "Basic differentiation"}</h3>
           </div>
-          <div className="grid divide-y divide-line">
-            {availableSkills.map((skill, index) => (
-              <div key={skill.slug} className="grid grid-cols-[auto_1fr_auto] items-center gap-3 px-5 py-4">
-                <span className="grid size-8 place-items-center rounded-full bg-forge-soft text-forge">{index === 0 ? <BookOpen aria-hidden="true" className="size-4" /> : <PenLine aria-hidden="true" className="size-4" />}</span>
-                <div><p className="font-extrabold">{skill.name}</p><p className="mt-0.5 text-xs text-muted">Notes, staged practice and worked solutions</p></div>
-                <Check aria-label="Ready to learn" className="size-4 text-success" />
+          <div className="divide-y divide-line">
+            {stages.map(({ name, description, icon: Icon }) => (
+              <div key={name} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-4 py-4 sm:px-6">
+                <span className="grid size-9 place-items-center rounded-md bg-forge-soft text-forge"><Icon aria-hidden="true" className="size-4" /></span>
+                <span className="min-w-0">
+                  <span className="block text-sm font-semibold">{name}</span>
+                  <span className="mt-0.5 block text-xs leading-relaxed text-muted">{description}</span>
+                </span>
+                <span className="hidden text-xs text-muted sm:block">Available</span>
               </div>
             ))}
           </div>
+        </div>
+
+        <div>
+          <h2 id="course-proof-title" className="text-[clamp(30px,4vw,46px)] font-bold leading-[1.08] tracking-[-0.035em]">The 4-stage skill pathway</h2>
+          <p className="mt-5 text-base leading-relaxed text-muted">Every available skill follows the same purposeful route: learn the method, secure the foundations, apply it in context and finish with original exam-style practice.</p>
+          <p className="mt-3 text-sm leading-relaxed text-muted">The structure stays visible throughout, so the next useful step is always clear.</p>
+          <Link href="/subjects/higher-maths/course-tracker" className="orthic-secondary-link mt-6 inline-flex min-h-11 items-center gap-2 font-semibold text-forge">Explore the skill pathway <ArrowRight aria-hidden="true" className="orthic-arrow size-4" /></Link>
         </div>
       </div>
     </section>

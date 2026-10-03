@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ConfidenceReview } from "@/components/landing/confidence-review";
 import { Courses } from "@/components/landing/courses";
 import { CourseProof } from "@/components/landing/course-proof";
 import { FinalCta } from "@/components/landing/final-cta";
@@ -20,6 +21,7 @@ export default function HomePage() {
         <HowItWorks />
         <CourseProof />
         <Courses />
+        <ConfidenceReview />
         <FinalCta />
       </main>
       <Footer />
