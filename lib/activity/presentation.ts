@@ -5,7 +5,7 @@ export function activityIntensityClass(level: ActivityIntensityLevel) {
   if (level === 2) return "border-forge/30 bg-activity-moderate forced-colors:border-[Highlight]";
   if (level === 3) return "border-forge/40 bg-activity-strong forced-colors:border-[Highlight]";
   if (level === 4) return "border-forge bg-forge forced-colors:border-[Highlight]";
-  return "border-line bg-paper forced-colors:border-[CanvasText]";
+  return "border-rule bg-surface-dim forced-colors:border-[CanvasText]";
 }
 
 export function activityIntensityName(level: ActivityIntensityLevel) {

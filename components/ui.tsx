@@ -9,9 +9,9 @@ export type SurfaceLevel = "primary" | "secondary" | "inline";
  * inline = low-weight supporting panel or disclosure content.
  */
 export const SURFACE_LEVEL_CLASSES: Record<SurfaceLevel, string> = {
-  primary: "rounded-2xl border border-line bg-white shadow-card",
-  secondary: "rounded-xl border border-line bg-white",
-  inline: "rounded-lg bg-paper",
+  primary: "rounded-2xl border border-rule bg-surface shadow-card",
+  secondary: "rounded-xl border border-rule bg-surface",
+  inline: "rounded-lg bg-surface-dim",
 };
 
 export function Surface({ level = "secondary", children, className = "", ...props }: HTMLAttributes<HTMLDivElement> & { level?: SurfaceLevel }) {
@@ -64,7 +64,7 @@ export type ButtonSize = "sm" | "md";
 
 export const BUTTON_VARIANT_CLASSES: Record<ButtonVariant, string> = {
   primary: "border-forge bg-forge text-white hover:bg-forge/90",
-  secondary: "border-line bg-white text-ink hover:border-forge/45 hover:bg-paper",
+  secondary: "border-rule bg-surface-strong text-ink hover:border-forge/45 hover:bg-surface-dim",
   quiet: "border-transparent bg-transparent text-ink hover:bg-forge-soft",
   destructive: "border-danger bg-danger text-white hover:bg-danger/90",
 };

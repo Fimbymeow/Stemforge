@@ -12,7 +12,7 @@ export function FocusedProductShell({
   compact?: boolean;
 }) {
   return (
-    <main id="main-content" tabIndex={-1} className={`min-h-screen bg-paper px-4 text-ink ${compact ? "py-6 sm:py-10" : "py-10 sm:py-14"}`}>
+    <main id="main-content" tabIndex={-1} data-orthic-learner-app className={`min-h-screen bg-canvas px-4 text-ink ${compact ? "py-6 sm:py-10" : "py-10 sm:py-14"}`}>
       <div className={`mx-auto w-full ${maxWidth}`}>
         <Link href="/" className={`mx-auto block w-44 ${compact ? "mb-6" : "mb-8"}`} aria-label="Orthic home">
           <Image src="/assets/orthic-wordmark.svg" alt="Orthic" width={260} height={64} priority />

@@ -35,7 +35,7 @@ export function AppSidebar({
     ? [...navItems, ["Account", UserRound, "account", "Account"] as const]
     : navItems;
   return (
-    <aside data-app-sidebar className="fixed inset-y-0 left-0 z-10 flex w-[240px] flex-col border-r border-rule bg-white max-lg:sticky max-lg:top-0 max-lg:h-auto max-lg:w-full max-lg:border-b max-lg:border-r-0 max-lg:px-4 max-lg:py-3">
+    <aside data-app-sidebar className="fixed inset-y-0 left-0 z-10 flex w-[240px] flex-col border-r border-rule-strong bg-shell max-lg:sticky max-lg:top-0 max-lg:h-auto max-lg:w-full max-lg:border-b max-lg:border-r-0 max-lg:px-4 max-lg:py-3">
       <Link href="/" className="flex h-20 items-center border-b border-rule px-6 max-lg:mb-3 max-lg:h-auto max-lg:border-0 max-lg:px-0">
         <span className="block w-[132px]">
         <Image src="/assets/orthic-wordmark.svg" alt="Orthic" width={260} height={64} />

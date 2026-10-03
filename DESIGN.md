@@ -45,7 +45,7 @@ Orthic is:
 Academic sophistication is an **editorial and typographic quality**, never an institutional roleplay.
 
 ### Visual Foundations
-- **Surfaces:** Warm paper / off-white canvas backgrounds (`#f8f9fd` / `#f9fafb`) paired with pure white elevated focal surfaces (`#ffffff`).
+- **Surfaces:** Warm paper canvas (`#f3f2ed`), a lighter navigation shell (`#f8f7f3`), and near-white focal surfaces (`#fcfbf8`, with `#ffffff` reserved for controls or maximum-contrast content).
 - **Contrast & Inks:** Deep academic navy and charcoal inks (`#0f172a` / `#111827`) providing authoritative contrast without harsh pure black.
 - **Restrained Semantic Accents:**
   - **Amber:** Strictly reserved for review due alerts, pending attention, and warning notes (`#fef3c7` bg, `#b45309` text, `#fde68a` border).
@@ -57,7 +57,7 @@ Academic sophistication is an **editorial and typographic quality**, never an in
   - Small tags / badges / buttons: `rounded` (4px) or `rounded-md` (6px)
   - Cards & dominant hero panels: `rounded-lg` (8px)
   - Overly soft pills (`rounded-2xl`, `rounded-3xl`, `rounded-full`) must not be used for content cards or structural wrappers.
-- **Minimal Shadows:** Standard panels and cards rely on hairline borders (`1px solid #e2e8f0`) rather than drop shadows. Elevation (`shadow-sm` or `shadow-md`) is restricted to floating dialogs, popovers, or tooltips.
+- **Minimal Shadows:** Standard panels and cards rely on warm hairline borders (`1px solid #dfded8`) rather than drop shadows. Elevation (`shadow-sm` or `shadow-md`) is restricted to floating dialogs, popovers, or tooltips.
 
 ---
 

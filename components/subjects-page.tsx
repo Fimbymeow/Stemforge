@@ -25,7 +25,7 @@ export function SubjectsPage({ mode }: { mode: SubjectsMode }) {
   const courses = useMemo(() => presentSubjectCourses(preferences, evidence), [preferences, evidence]);
 
   return <AppShell demo={demo} active="Subjects" feedbackPlacement="inline-mobile" className="!px-10 py-8 max-md:!px-4 max-lg:pt-5">
-    <div className="-mx-4 -mt-8 flex min-h-20 flex-wrap items-center justify-between gap-3 border-b border-rule bg-white px-4 py-4 text-secondary md:-mx-10 md:px-10 max-lg:-mt-5">
+    <div className="-mx-4 -mt-8 flex min-h-20 flex-wrap items-center justify-between gap-3 border-b border-rule-strong bg-shell px-4 py-4 text-secondary md:-mx-10 md:px-10 max-lg:-mt-5">
       <p className="font-mono text-xs uppercase tracking-[0.12em]">Orthic <span aria-hidden="true" className="mx-2 text-rule">/</span> Courses</p>
       <div className="flex items-center gap-4">
         {preferences.firstName ? <span className="flex items-center gap-3 text-sm">{preferences.firstName}<span aria-hidden="true" className="grid size-8 place-items-center rounded-full border border-rule bg-academic-blue text-xs">{preferences.firstName.charAt(0)}</span></span> : null}
@@ -53,7 +53,7 @@ type Course = ReturnType<typeof presentSubjectCourses>["yourCourses"][number];
 function CourseSection({ title, id, courses }: { title: string; id: string; courses: Course[] }) {
   return <section aria-labelledby={id} data-testid={id}>
     <h2 id={id} className="mb-5 border-b border-rule pb-3 text-lg font-semibold">{title}</h2>
-    <div className="divide-y divide-rule rounded-sm border border-rule bg-white">
+    <div className="divide-y divide-rule rounded-sm border border-rule bg-surface">
       {courses.map((course) => <article key={course.slug} data-testid={`subject-card-${course.slug}`} className="orthic-course-row flex min-w-0 flex-col gap-5 border-rule p-5 md:flex-row md:items-center md:justify-between md:p-7">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-3">

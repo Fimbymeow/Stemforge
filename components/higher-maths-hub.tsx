@@ -17,7 +17,7 @@ export function HigherMathsHub() {
 
   return (
     <AppShell demo active="Subjects" workingContextPathId={nextAction.pathId} feedbackPlacement="inline-mobile" className="!px-10 py-8 max-md:!px-4 max-lg:pt-5">
-      <div className="-mx-4 -mt-8 flex min-h-20 flex-wrap items-center justify-between gap-3 border-b border-rule bg-white px-4 py-4 text-secondary md:-mx-10 md:px-10 max-lg:-mt-5">
+      <div className="-mx-4 -mt-8 flex min-h-20 flex-wrap items-center justify-between gap-3 border-b border-rule-strong bg-shell px-4 py-4 text-secondary md:-mx-10 md:px-10 max-lg:-mt-5">
         <nav className="flex flex-wrap items-center gap-3 font-mono text-xs uppercase tracking-[0.12em]" aria-label="Breadcrumb">
           <Link href="/subjects" className="orthic-secondary-link inline-flex min-h-11 items-center">Courses</Link><span aria-hidden="true" className="text-rule">/</span><span aria-current="page">Higher Maths</span>
         </nav>
@@ -62,7 +62,7 @@ export function HigherMathsHub() {
 
 function Destination({ href, label, detail, icon: Icon, testId }: { href: string; label: string; detail: string; icon: typeof Shuffle; testId?: string }) {
   return (
-    <Link href={href} aria-label={label} data-testid={testId} className="orthic-course-action flex min-h-20 items-center gap-3 border-b border-r border-rule bg-white px-4 py-4 text-navy focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-navy">
+    <Link href={href} aria-label={label} data-testid={testId} className="orthic-course-action flex min-h-20 items-center gap-3 border-b border-r border-rule bg-surface px-4 py-4 text-navy focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-navy">
       <Icon aria-hidden="true" className="size-4 shrink-0 text-secondary" />
       <span className="min-w-0"><span className="block text-sm font-semibold">{label}</span><span className="mt-1 block text-xs leading-relaxed text-secondary">{detail}</span></span>
     </Link>

@@ -8,11 +8,16 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        canvas: "#f8f9fd",
+        canvas: "#f3f2ed",
+        shell: "#f8f7f3",
+        surface: "#fcfbf8",
+        "surface-strong": "#ffffff",
+        "surface-dim": "#ecebe6",
         navy: "#0f172a",
-        rule: "#e2e8f0",
-        secondary: "#596579",
-        "academic-blue": "#eff6ff",
+        rule: "#dfded8",
+        "rule-strong": "#d4d3cd",
+        secondary: "#526071",
+        "academic-blue": "#e8eef5",
         paper: "#f5f4f0",
         ink: "#16191c",
         muted: "#6e6a62",

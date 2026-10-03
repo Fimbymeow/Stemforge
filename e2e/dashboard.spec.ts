@@ -7,7 +7,7 @@ test("Dashboard context surface spans the workspace even beyond the content meas
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/dashboard");
     const bar = page.getByTestId("workspace-context-bar");
-    await expect(bar).toHaveCSS("background-color", "rgb(255, 255, 255)");
+    await expect(bar).toHaveCSS("background-color", "rgb(248, 247, 243)");
     const box = (await bar.boundingBox())!;
     expect(box.x).toBe(width >= 1024 ? 240 : 0);
     expect(box.x + box.width).toBe(width);
