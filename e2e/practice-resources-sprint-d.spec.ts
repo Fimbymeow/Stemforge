@@ -78,13 +78,11 @@ test("Course tracker distinguishes official requirements within its selected uni
   await expect(page.getByTestId("course-tracker")).toHaveCount(0);
 });
 
-test("Dashboard reaches the focused Practice setup without a competing chooser", async ({ page }) => {
+test("Dashboard keeps Practice secondary navigation out of the Continue Learning card", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 568 });
   await page.goto("/dashboard");
-  const trigger = page.getByTestId("dashboard-progress-summary").getByRole("link", { name: "Practise your way" });
-  await trigger.focus();
-  await trigger.press("Enter");
-  await expect(page).toHaveURL("/practice");
+  await expect(page.getByTestId("dashboard-progress-summary").getByRole("link", { name: "Practise your way" })).toHaveCount(0);
+  await page.goto("/practice");
   await expect(page.getByTestId("quick-practice-action")).toBeVisible();
   await expect(page.getByText("Choose practice options", { exact: true })).toBeVisible();
   await expectNoDocumentOverflow(page);
@@ -92,7 +90,7 @@ test("Dashboard reaches the focused Practice setup without a competing chooser",
 
 test("Practice destinations reuse Quick Practice and preserve Question Bank access", async ({ page }) => {
   await page.goto("/dashboard");
-  await page.getByTestId("dashboard-progress-summary").getByRole("link", { name: "Practise your way" }).click();
+  await page.goto("/practice");
   await page.getByTestId("quick-practice-action").click();
   await expect(page).toHaveURL(/\/practice\/session\//);
   const quick = await page.evaluate((key) => {
@@ -146,7 +144,7 @@ test("official formula sheet opens in structured, Quick and custom Higher Maths 
   await verifyFormulaDrawer(page);
 
   await page.goto("/dashboard");
-  await page.getByTestId("dashboard-progress-summary").getByRole("link", { name: "Practise your way" }).click();
+  await page.goto("/practice");
   await page.getByTestId("quick-practice-action").click();
   await verifyFormulaDrawer(page);
 

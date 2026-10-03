@@ -4,9 +4,8 @@ import { expectNoHorizontalOverflow, openQuestion, openWorkedSolution, submitAns
 
 test("mobile student can navigate, answer, use support and continue without overflow", async ({ page }) => {
   await page.goto("/dashboard");
-  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Foundations \u00b7 0/3 complete");
   await expect(page.getByRole("link", { name: "Open Higher Maths", exact: true })).toHaveAttribute("href", "/subjects/higher-maths");
-  await expect(page.getByRole("link", { name: "Start learning" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
+  await expect(page.getByRole("link", { name: "Continue Basic differentiation" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
   await expect(page.getByRole("heading", { name: "Course progress" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Recent activity" })).toHaveCount(0);
   await expectNoHorizontalOverflow(page);

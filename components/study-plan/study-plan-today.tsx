@@ -11,9 +11,9 @@ import type { ProgressEvidence } from "@/lib/progress/types";
 import type { StudyPlanDashboardState } from "@/lib/study-plan/dashboard-dedup";
 import { usePremiumPreview } from "@/components/premium-preview-provider";
 
-type Props = { evidence: ProgressEvidence; courseSlug: string; courseName: string; presentation?: "default" | "dashboard"; heroOwnsResume?: boolean; onDashboardStateChange?: (state: StudyPlanDashboardState) => void };
+type Props = { evidence: ProgressEvidence; courseSlug: string; courseName: string; presentation?: "default" | "dashboard"; onDashboardStateChange?: (state: StudyPlanDashboardState) => void };
 
-export function StudyPlanToday({ evidence, courseSlug, courseName, presentation = "default", heroOwnsResume = false, onDashboardStateChange }: Props) {
+export function StudyPlanToday({ evidence, courseSlug, courseName, presentation = "default", onDashboardStateChange }: Props) {
   const sectionClass = presentation === "dashboard" ? "min-w-0" : "rounded-2xl border border-forge/25 bg-white p-4 shadow-card md:p-5";
   const setupButtonClass = presentation === "dashboard" ? "orthic-course-action mt-4 min-h-11 rounded-md border border-rule bg-white px-5 text-sm font-semibold text-navy hover:border-navy" : "mt-4 min-h-11 rounded-lg bg-forge px-5 text-sm font-extrabold text-white";
   const premiumPreview = usePremiumPreview();
@@ -66,13 +66,12 @@ export function StudyPlanToday({ evidence, courseSlug, courseName, presentation 
         <div className={`flex flex-wrap items-start justify-between gap-3 ${presentation === "dashboard" ? "border-b border-rule pb-3" : ""}`}>
           <div>
             {presentation !== "dashboard" ? <p className="text-xs font-extrabold uppercase tracking-wide text-forge">Study Plan</p> : null}
-            <h2 id="study-plan-today-title" className={presentation === "dashboard" ? "text-lg font-semibold uppercase tracking-wide text-navy" : "mt-1 text-xl font-extrabold"}>{presentation === "dashboard" ? <>Study Plan <span className="ml-2 font-mono text-[10px] font-normal text-secondary">Today</span></> : "Today"}</h2>
+            <h2 id="study-plan-today-title" className={presentation === "dashboard" ? "text-sm font-semibold uppercase tracking-[0.04em] text-navy" : "mt-1 text-xl font-extrabold"}>{presentation === "dashboard" ? "Study Plan" : "Today"}</h2>
             {presentation !== "dashboard" ? <p className="mt-1 text-sm text-muted">What Orthic recommends next for {courseName}, based on your learning so far.</p> : null}
           </div>
           <div className="flex flex-wrap items-center gap-1 text-sm">
             <Link href="/study-plan" className={presentation === "dashboard" ? "orthic-secondary-link inline-flex min-h-11 items-center gap-1 text-sm font-medium text-navy" : "inline-flex min-h-10 items-center rounded-lg px-3 font-extrabold text-forge"}>View this week <span aria-hidden="true" className={presentation === "dashboard" ? "orthic-arrow" : undefined}>→</span></Link>
-            <button type="button" aria-label="Refresh" onClick={studyPlan.refresh} className={presentation === "dashboard" ? "orthic-secondary-link grid size-11 place-items-center text-secondary" : quietButton}><RefreshCw aria-hidden="true" className="size-4" /><span className={presentation === "dashboard" ? "sr-only" : undefined}>Refresh</span></button>
-            <button type="button" onClick={() => setSettingsOpen(true)} className={presentation === "dashboard" ? "orthic-secondary-link inline-flex min-h-11 items-center gap-1 text-sm text-secondary" : quietButton}><Settings2 aria-hidden="true" className="size-4" />Plan settings</button>
+            {presentation !== "dashboard" ? <><button type="button" aria-label="Refresh" onClick={studyPlan.refresh} className={quietButton}><RefreshCw aria-hidden="true" className="size-4" />Refresh</button><button type="button" onClick={() => setSettingsOpen(true)} className={quietButton}><Settings2 aria-hidden="true" className="size-4" />Plan settings</button></> : null}
           </div>
         </div>
 
@@ -84,8 +83,8 @@ export function StudyPlanToday({ evidence, courseSlug, courseName, presentation 
             {presentation === "dashboard" ? <p className="mt-2 text-sm leading-relaxed text-secondary">{plan.caughtUp ? "Your course is still available whenever you want to practise or revisit a skill." : "Your study rhythm continues across the week. View this week to see your plan or adjust your study days in Plan settings."}</p> : null}
           </div>
         ) : (
-          <ol className="mt-4 divide-y divide-line">
-            {studyPlan.todayItems.map((item) => <li key={item.itemKey}><StudyPlanItemRow primaryAction={presentation === "dashboard"} subduedAction={heroOwnsResume} item={item} availableDates={studyPlan.availableDates} moving={movingItemKey === item.itemKey} onToggleMove={() => setMovingItemKey(movingItemKey === item.itemKey ? null : item.itemKey)} onDone={() => studyPlan.markItem(item.itemKey, "completed")} onSkip={() => studyPlan.markItem(item.itemKey, "skipped")} onMove={(date) => { studyPlan.moveItem(item.itemKey, date); setMovingItemKey(null); }} onSwap={() => studyPlan.swapItem(item)} /></li>)}
+          <ol className={presentation === "dashboard" ? "mt-2 divide-y divide-rule overflow-visible rounded border border-rule bg-surface" : "mt-4 divide-y divide-line"}>
+            {studyPlan.todayItems.map((item) => <li key={item.itemKey}><StudyPlanItemRow primaryAction={presentation === "dashboard"} item={item} availableDates={studyPlan.availableDates} moving={movingItemKey === item.itemKey} onToggleMove={() => setMovingItemKey(movingItemKey === item.itemKey ? null : item.itemKey)} onDone={() => studyPlan.markItem(item.itemKey, "completed")} onSkip={() => studyPlan.markItem(item.itemKey, "skipped")} onMove={(date) => { studyPlan.moveItem(item.itemKey, date); setMovingItemKey(null); }} onSwap={() => studyPlan.swapItem(item)} /></li>)}
           </ol>
         )}
         {oneMore ? <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-paper p-3"><p className="text-sm font-bold">Finished for today. Want one more?</p><button type="button" onClick={studyPlan.pullForward} className="min-h-10 rounded-lg border border-forge px-3 text-sm font-extrabold text-forge">Add one more</button></div> : null}

@@ -20,14 +20,14 @@ test.describe("feature-flagged Study Plan Today", () => {
     await page.reload();
   });
 
-  test("a learner who skipped Study Rhythm gets continuation, setup, courses and Activity in that order", async ({ page }) => {
+  test("a learner who skipped Study Rhythm gets continuation, setup and courses in that order", async ({ page }) => {
     await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
     await expect(page.getByTestId("study-plan-setup")).toBeVisible();
     await expect(page.getByTestId("dashboard-progress-summary")).toBeVisible();
     await expect(page.getByTestId("dashboard-courses-section")).toBeVisible();
-    await expect(page.getByTestId("dashboard-activity-summary")).toContainText("No activity in the last 14 days");
+    await expect(page.getByTestId("dashboard-activity-summary")).toHaveCount(0);
     await expect(page.getByTestId("learner-name-prompt")).toHaveCount(0);
-    await expectVerticalOrder(page, ["dashboard-progress-summary", "study-plan-setup", "dashboard-courses-section", "dashboard-activity-summary"]);
+    await expectVerticalOrder(page, ["dashboard-progress-summary", "study-plan-setup", "dashboard-courses-section"]);
   });
 
   for (const width of [1440, 1024, 390, 375, 320]) test(`configured empty day retains a real learning focus at ${width}px`, async ({ page, seriousBrowserErrors }, testInfo) => {
@@ -38,10 +38,9 @@ test.describe("feature-flagged Study Plan Today", () => {
     await setup.getByRole("button", { name: "Create my plan" }).click();
     await expect(page.getByTestId("study-plan-today")).toContainText("Nothing is planned for today.");
     await expect(page.getByTestId("study-plan-item")).toHaveCount(0);
-    const focus = page.getByTestId("dashboard-plan-focus");
+    const focus = page.getByTestId("dashboard-progress-summary");
     await expect(focus).toBeVisible();
-    await expect(focus.getByRole("link", { name: "View this week" })).toHaveAttribute("href", "/study-plan");
-    await expect(page.getByTestId("dashboard-progress-summary")).toHaveCount(0);
+    await expect(focus.getByRole("link", { name: "Continue Basic differentiation" })).toHaveAttribute("href", /\/question\/hm-calc-diff-basic-f-001$/);
     await expect(page.getByTestId("dashboard-courses").getByRole("link", { name: "Open Higher Maths" })).toBeVisible();
     await expectNoHorizontalOverflow(page);
     await captureDashboard(page, testInfo.outputPath(`empty-${width}.png`));
@@ -54,13 +53,12 @@ test.describe("feature-flagged Study Plan Today", () => {
       await seedStoredProgress(page, v3Payload([currentAttempt("hm-calc-diff-basic-f-001", 1, { isCorrect: false })]));
       await page.goto("/dashboard");
       const focus = page.getByTestId("dashboard-progress-summary");
-      await expect(focus.getByRole("link", { name: "Resume question" })).toHaveAttribute("href", "/question/hm-calc-diff-basic-f-001");
+      await expect(focus.getByRole("link", { name: "Continue Basic differentiation" })).toHaveAttribute("href", "/question/hm-calc-diff-basic-f-001");
       await expect(focus).toContainText("Foundations");
       await createPlan(page);
-      await expect(focus.getByRole("link", { name: "Resume question" })).toHaveAttribute("href", "/question/hm-calc-diff-basic-f-001");
-      await expect(page.getByTestId("dashboard-plan-focus")).toHaveCount(0);
+      await expect(focus.getByRole("link", { name: "Continue Basic differentiation" })).toHaveAttribute("href", "/question/hm-calc-diff-basic-f-001");
       await expect(page.getByTestId("study-plan-today").getByRole("link", { name: "Start" })).toBeVisible();
-      await expectVerticalOrder(page, ["dashboard-progress-summary", "study-plan-today", "dashboard-courses-section", "dashboard-activity-summary"]);
+      await expectVerticalOrder(page, ["dashboard-progress-summary", "study-plan-today", "dashboard-courses-section"]);
       await expectNoHorizontalOverflow(page);
       await captureDashboard(page, testInfo.outputPath(`resume-${width}.png`));
     });
@@ -69,18 +67,18 @@ test.describe("feature-flagged Study Plan Today", () => {
       await seedStoredProgress(page, v3Payload(completedPathAttempts("basic-differentiation", "2026-08-01T08:00:00.000Z")));
       await page.goto("/dashboard");
       await createPlan(page);
-      const focus = page.getByTestId("dashboard-plan-focus");
+      const focus = page.getByTestId("dashboard-progress-summary");
       await expect(focus.getByRole("heading", { name: "Basic differentiation" })).toBeVisible();
-      await expect(focus.getByRole("link", { name: "Open today’s plan" })).toHaveAttribute("href", "#study-plan-today-title");
+      await expect(focus).toContainText("Due for review");
+      await expect(focus.getByRole("link", { name: "Continue Basic differentiation" })).toBeVisible();
       await expect(page.getByTestId("study-plan-item")).toContainText(/Review/);
-      await expect(page.getByTestId("dashboard-progress-summary")).toHaveCount(0);
       await expect(page.getByTestId("dashboard-courses")).toContainText("1 review due");
       await expectNoHorizontalOverflow(page);
       await captureDashboard(page, testInfo.outputPath(`review-${width}.png`));
     });
   }
 
-  test("setup makes Today the sole equivalent next-action surface and preserves evidence when marked Done", async ({ page, seriousBrowserErrors }) => {
+  test("setup keeps an operational Today list and preserves evidence when marked Done", async ({ page, seriousBrowserErrors }) => {
     await page.getByTestId("study-plan-setup").getByRole("button", { name: "Set up my plan" }).click();
     const setup = page.getByRole("dialog", { name: "Plan your study week" });
     await expect(setup.getByRole("heading", { name: "Plan your study week" })).toBeVisible();
@@ -89,11 +87,10 @@ test.describe("feature-flagged Study Plan Today", () => {
     await setup.getByRole("button", { name: "Create my plan" }).click();
 
     const today = page.getByTestId("study-plan-today");
-    await expect(today.getByRole("heading", { name: "Study Plan Today" })).toBeVisible();
+    await expect(today.getByRole("heading", { name: "Study Plan" })).toBeVisible();
     await expect(today.getByTestId("study-plan-item")).toHaveCount(1);
     await expect(today.getByTestId("study-plan-item").getByRole("link", { name: "Start" })).toHaveAttribute("href", /\/question\/hm-calc-diff-basic-f-001$/);
-    await expect(page.getByTestId("dashboard-progress-summary")).toHaveCount(0);
-    await expect(page.getByTestId("dashboard-resume-course")).toHaveCount(0);
+    await expect(page.getByTestId("dashboard-progress-summary")).toBeVisible();
 
     const evidenceBefore = await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY);
     const actions = today.getByLabel(/Actions for/);
@@ -116,9 +113,8 @@ test.describe("feature-flagged Study Plan Today", () => {
     const setup = page.getByRole("dialog", { name: "Plan your study week" });
     for (const day of ["Tuesday", "Thursday", "Friday", "Sunday"]) await setup.getByTitle(day).click();
     await setup.getByRole("button", { name: "Create my plan" }).click();
-    await expect(page.getByTestId("dashboard-progress-summary").getByRole("link", { name: "Resume practice" })).toHaveAttribute("href", /\/practice\/session\//);
-    await expect(page.getByTestId("dashboard-resume-course")).toHaveCount(0);
-    await expectVerticalOrder(page, ["study-plan-today", "dashboard-courses-section", "dashboard-activity-summary"]);
+    await expect(page.getByTestId("dashboard-progress-summary").getByRole("link", { name: "Continue Basic differentiation" })).toHaveAttribute("href", /\/practice\/session\//);
+    await expectVerticalOrder(page, ["dashboard-progress-summary", "study-plan-today", "dashboard-courses-section"]);
     await expect(page.getByTestId("study-plan-today")).toBeVisible();
   });
 
@@ -149,7 +145,9 @@ test.describe("feature-flagged Study Plan Today", () => {
     await today.getByRole("button", { name: "Skip" }).click();
     await expect(today.getByTestId("study-plan-item")).toHaveCount(0);
     await expect(today).toContainText("Nothing is planned for today");
-    await today.getByRole("button", { name: "Plan settings" }).click();
+    await page.getByRole("link", { name: "View this week" }).click();
+    await expect(page).toHaveURL(/\/study-plan$/);
+    await page.getByRole("button", { name: "Plan settings" }).click();
     await expect(page.getByRole("dialog", { name: "Plan settings" }).getByRole("button", { name: "Save plan" })).toBeVisible();
     expect(seriousBrowserErrors).toEqual([]);
   });
@@ -164,9 +162,8 @@ test.describe("feature-flagged Study Plan Today", () => {
     const today = page.getByTestId("study-plan-today");
     await expect(today).toContainText("You’re caught up for now.");
     await expect(today.getByTestId("study-plan-item")).toHaveCount(0);
-    await expect(page.getByTestId("dashboard-progress-summary")).toHaveCount(0);
-    await expect(page.getByTestId("dashboard-resume-course")).toBeVisible();
-    await expect(page.getByTestId("dashboard-resume-course")).toContainText("Continue learning");
+    await expect(page.getByTestId("dashboard-progress-summary")).toBeVisible();
+    await expect(page.getByTestId("dashboard-progress-summary")).toContainText("Continue learning");
   });
 
   test("Review due is carried by Today without creating a separate Dashboard Review card", async ({ page }) => {
@@ -177,7 +174,7 @@ test.describe("feature-flagged Study Plan Today", () => {
     await expect(today.getByTestId("study-plan-item")).toContainText("Basic differentiation");
     await expect(today.getByTestId("study-plan-item")).toContainText(/Review/);
     await expect(page.getByRole("heading", { name: "Review" })).toHaveCount(0);
-    await expect(page.getByTestId("dashboard-progress-summary")).toHaveCount(0);
+    await expect(page.getByTestId("dashboard-progress-summary")).toContainText("Due for review");
   });
 
   test("an upcoming assessment stays contextual to the existing Today item", async ({ page }) => {
@@ -207,15 +204,15 @@ test.describe("feature-flagged Study Plan Today", () => {
     const today = page.getByTestId("study-plan-today");
     await expect(today.getByTestId("study-plan-item")).toContainText("On your test in 24 days");
     await expect(page.getByRole("heading", { name: /assessment/i })).toHaveCount(0);
-    await expect(page.getByTestId("dashboard-progress-summary")).toHaveCount(0);
+    await expect(page.getByTestId("dashboard-progress-summary")).toBeVisible();
   });
 
-  for (const width of [390, 320]) test(`Today and Activity remain overflow-free at ${width}px`, async ({ page }) => {
+  for (const width of [390, 320]) test(`Today remains overflow-free at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 800 });
     await expect(page.getByTestId("study-plan-setup")).toBeVisible();
     await expect(page.getByTestId("dashboard-progress-summary")).toBeVisible();
     await expectNoHorizontalOverflow(page);
-    await expect(page.getByTestId("dashboard-activity-summary")).toBeVisible();
+    await expect(page.getByTestId("dashboard-activity-summary")).toHaveCount(0);
   });
 });
 
@@ -294,5 +291,5 @@ test("Study Plan is absent when the feature flag is disabled", async ({ page }) 
   await expect(page.getByTestId("study-plan-today")).toHaveCount(0);
   await expect(page.getByTestId("study-plan-setup")).toHaveCount(0);
   await expect(page.getByTestId("dashboard-progress-summary")).toBeVisible();
-  await expect(page.getByTestId("dashboard-activity-summary")).toBeVisible();
+  await expect(page.getByTestId("dashboard-activity-summary")).toHaveCount(0);
 });

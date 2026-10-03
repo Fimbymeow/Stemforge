@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { UserRound } from "lucide-react";
 import { AppTopbar } from "@/components/layout/app-topbar";
 import { MAX_FIRST_NAME_LENGTH } from "@/lib/learner-preferences";
 import { useLearnerPreferences } from "@/components/learner-preferences/use-learner-preferences";
@@ -76,7 +78,10 @@ export function DashboardContextBar() {
   return <>
     <p className="font-mono text-xs uppercase tracking-[0.12em]">Orthic <span aria-hidden="true" className="mx-2 text-rule">/</span> Dashboard</p>
     <div className="flex items-center gap-4">
-      {preferences.firstName ? <span className="flex items-center gap-3 text-sm">{preferences.firstName}<span aria-hidden="true" className="grid size-8 place-items-center rounded-full border border-rule bg-academic-blue text-xs">{preferences.firstName.charAt(0)}</span></span> : null}
+      <Link href="/account" aria-label="Account" className="orthic-secondary-link flex min-h-11 items-center gap-3 text-sm">
+        {preferences.firstName ? <span>{preferences.firstName}</span> : null}
+        <span aria-hidden="true" className="grid size-8 place-items-center rounded-full border border-rule bg-surface text-xs">{preferences.firstName ? preferences.firstName.charAt(0) : <UserRound className="size-4" strokeWidth={1.5} />}</span>
+      </Link>
       <AppTopbar demo={false} />
     </div>
   </>;

@@ -45,7 +45,7 @@ test("Dashboard recap is calm and factual for empty, low, Review, flashcard and 
 
 test("one canonical activity colour ramp uses the existing semantic tokens", () => {
   assert.deepEqual([0, 1, 2, 3, 4].map((level) => activityIntensityClass(level as 0 | 1 | 2 | 3 | 4)), [
-    "border-line bg-paper forced-colors:border-[CanvasText]",
+    "border-rule bg-surface-dim forced-colors:border-[CanvasText]",
     "border-forge/20 bg-forge-soft forced-colors:border-[Highlight]",
     "border-forge/30 bg-activity-moderate forced-colors:border-[Highlight]",
     "border-forge/40 bg-activity-strong forced-colors:border-[Highlight]",

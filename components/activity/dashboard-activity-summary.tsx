@@ -5,6 +5,7 @@ import type { ProgressEvidence } from "@/lib/progress/types";
 
 export function DashboardActivitySummary({ evidence, now = new Date() }: { evidence: ProgressEvidence; now?: Date }) {
   const history = deriveActivityHistory(evidence, now, { rangeDays: 14 });
+  if (!history.hasActivity) return null;
   const recap = deriveDashboardActivityRecap(history);
   return (
     <section aria-labelledby="dashboard-activity-title" data-testid="dashboard-activity-summary" className="text-secondary">

@@ -25,7 +25,7 @@ test("revised dashboard and subject access remain distinct, ordered and overflow
       if (route === "/dashboard") {
         const learn = page.getByTestId("dashboard-progress-summary");
         await expect(learn.getByText("Recommended next")).toHaveCount(0);
-        await expect(learn.getByRole("link", { name: "Start learning" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
+        await expect(learn.getByRole("link", { name: "Continue Basic differentiation" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
       } else {
         await expect(page.getByRole("link", { name: /^(Start learning|Continue|Resume question|Resume practice|Review \d+)/ })).toHaveCount(0);
       }
@@ -35,7 +35,7 @@ test("revised dashboard and subject access remain distinct, ordered and overflow
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/dashboard");
-  const primary = page.getByRole("link", { name: "Start learning", exact: true });
+  const primary = page.getByRole("link", { name: "Continue Basic differentiation", exact: true });
   await primary.focus();
   await expect(primary).toBeFocused();
   expect(seriousBrowserErrors).toEqual([]);
@@ -69,7 +69,7 @@ test("review and active-practice recommendations never replace course access at 
   ));
   await page.goto("/dashboard");
   await expect(page.getByRole("link", { name: "Open Higher Maths", exact: true })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Practise 1 question again", exact: true })).toBeVisible();
+  await expect(page.getByTestId("dashboard-progress-summary").getByRole("link", { name: "Continue Basic differentiation", exact: true })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
   await expectNoHorizontalOverflow(page);
 
   await page.goto("/practice");
@@ -79,7 +79,7 @@ test("review and active-practice recommendations never replace course access at 
 
   await page.goto("/dashboard");
   await expect(page.getByRole("link", { name: "Open Higher Maths", exact: true })).toBeVisible();
-  await expect(page.getByTestId("dashboard-progress-summary").getByRole("link", { name: "Resume practice", exact: true })).toHaveAttribute("href", sessionPath);
+  await expect(page.getByTestId("dashboard-progress-summary").getByRole("link", { name: "Continue Basic differentiation", exact: true })).toHaveAttribute("href", sessionPath);
   await expectNoHorizontalOverflow(page);
 
   await page.goto("/subjects");

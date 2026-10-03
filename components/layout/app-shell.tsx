@@ -47,7 +47,7 @@ export function AppShell({
         active={active}
         workingContextPathId={workingContextPathId}
       />
-      {contextBar ? <div data-testid="workspace-context-bar" className="ml-[240px] border-b border-rule-strong bg-shell max-lg:ml-0"><div className="mx-auto flex min-h-20 max-w-[1300px] flex-wrap items-center justify-between gap-3 px-10 py-4 text-secondary max-md:px-4">{contextBar}</div></div> : null}
+      {contextBar ? <div data-testid="workspace-context-bar" className="ml-[240px] border-b border-rule-strong bg-shell max-lg:ml-0"><div className="mx-auto flex min-h-14 max-w-[1300px] flex-wrap items-center justify-between gap-3 px-6 py-2 text-secondary max-md:px-4">{contextBar}</div></div> : null}
       <PageContainer className={className}>{children}</PageContainer>
       <div
         ref={dockRef}

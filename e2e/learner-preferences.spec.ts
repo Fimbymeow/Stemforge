@@ -34,7 +34,7 @@ test("an unnamed learner completes onboarding and retains the generic greeting",
   await page.getByRole("button", { name: "Skip for now" }).click();
   await page.getByRole("button", { name: "Go to Dashboard" }).click();
   await expect(page.getByRole("heading", { name: "Welcome back", exact: true })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Start learning" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Continue Basic differentiation" })).toBeVisible();
   await page.reload();
   await expect(page.getByTestId("learner-name-prompt")).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Welcome back", exact: true })).toBeVisible();

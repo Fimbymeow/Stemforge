@@ -6,7 +6,7 @@ test("real Dashboard retains course access, quiet full catalogue link and keyboa
   await page.goto("/dashboard");
   const section = page.getByTestId("dashboard-courses-section");
   await expect(section.getByTestId("dashboard-course-row")).toHaveCount(1);
-  const all = section.getByRole("link", { name: "View all courses" });
+  const all = section.getByRole("link", { name: "View all" });
   await expect(all).toHaveAttribute("href", "/subjects");
   await all.focus();
   await expect(all).toBeFocused();
@@ -30,9 +30,7 @@ for (const count of [1, 2, 4]) test(`isolated ${count}-course fixture renders at
     await expect(rows).toHaveCount(Math.min(count, 2));
     await expect(rows.first().getByRole("link", { name: `Open Fixture course ${count}`, exact: true })).toBeVisible();
     if (count > 2) await expect(rows.nth(1)).toContainText("Fixture course 2");
-    const coursesBox = (await section.boundingBox())!;
-    const activityBox = (await page.getByTestId("dashboard-activity-summary").boundingBox())!;
-    expect(activityBox.y).toBeGreaterThanOrEqual(coursesBox.y + coursesBox.height);
+    await expect(page.getByTestId("dashboard-activity-summary")).toHaveCount(0);
     for (const action of await rows.getByRole("link").all()) {
       await action.focus();
       await expect(action).toBeFocused();

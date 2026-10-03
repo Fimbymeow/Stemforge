@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarDays, Check, ChevronDown } from "lucide-react";
+import { CalendarDays, Check, MoreHorizontal } from "lucide-react";
 import { presentStudyPlanAssessmentQualifier, presentStudyPlanReason } from "@/lib/study-plan/presenter";
 import type { StudyPlanWeeklyItem } from "@/lib/study-plan/types";
 
-export function StudyPlanItemRow({ item, availableDates, moving, onToggleMove, onDone, onSkip, onMove, onSwap, primaryAction = false, subduedAction = false }: {
+export function StudyPlanItemRow({ item, availableDates, moving, onToggleMove, onDone, onSkip, onMove, onSwap, primaryAction = false }: {
   item: StudyPlanWeeklyItem;
   availableDates: readonly string[];
   moving: boolean;
@@ -15,22 +15,21 @@ export function StudyPlanItemRow({ item, availableDates, moving, onToggleMove, o
   onMove: (date: string | null) => void;
   onSwap: () => void;
   primaryAction?: boolean;
-  subduedAction?: boolean;
 }) {
   const assessmentText = presentStudyPlanAssessmentQualifier(item.assessmentQualifier);
   return (
-    <div data-testid="study-plan-item" data-item-key={item.itemKey} className={primaryAction ? "orthic-plan-row py-5" : "py-3"}>
-      <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-x-3 gap-y-2 max-sm:grid-cols-[auto_minmax(0,1fr)_auto]">
-        <span aria-hidden="true" className={`flex size-8 shrink-0 items-center justify-center ${primaryAction ? "text-secondary" : `rounded-full ${item.state === "completed" ? "bg-forge-soft text-forge" : "bg-paper text-muted"}`}`}>{item.state === "completed" ? <Check className="size-4" /> : <CalendarDays className="size-4" />}</span>
+    <div data-testid="study-plan-item" data-item-key={item.itemKey} className={primaryAction ? "orthic-plan-row px-4 py-3.5" : "py-3"}>
+      <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-x-3 gap-y-2">
+        <span aria-hidden="true" className={`flex size-8 shrink-0 items-center justify-center ${primaryAction ? "rounded-sm bg-surface-dim text-forge" : `rounded-full ${item.state === "completed" ? "bg-forge-soft text-forge" : "bg-paper text-muted"}`}`}>{item.state === "completed" ? <Check className="size-4" /> : <CalendarDays className="size-4" />}</span>
         <span className="min-w-0">
           <span className={`block ${primaryAction ? "text-base font-semibold" : "text-sm font-extrabold"} ${item.state === "completed" ? "text-muted line-through" : "text-ink"}`}>{item.skillName}</span>
-          <span className={primaryAction ? "mt-1 block text-sm leading-relaxed text-secondary" : "block text-xs text-muted"}>{presentStudyPlanReason(item.reasonCode)}{assessmentText ? ` · ${assessmentText}` : ""} · {item.suggestedMinutes} min</span>
+          <span className={primaryAction ? "mt-1 flex flex-wrap items-center gap-x-2 text-sm leading-relaxed text-secondary" : "block text-xs text-muted"}>{primaryAction ? <span aria-hidden="true" className={`size-1.5 rounded-full ${item.actionType === "review" ? "bg-amber-600" : "bg-forge"}`} /> : null}<span>{presentStudyPlanReason(item.reasonCode)}{assessmentText ? ` · ${assessmentText}` : ""} · {item.suggestedMinutes} min</span></span>
           {item.manualOverride === "moved" || item.manualOverride === "pulled_forward" ? <span className="block text-xs font-bold text-forge">Moved by you</span> : null}
         </span>
-        <Link href={item.href} className={primaryAction ? `orthic-plan-action inline-flex min-h-11 items-center justify-center gap-2 rounded-sm px-3 text-sm font-medium ${!subduedAction && item.state !== "completed" ? "orthic-primary-action bg-navy text-white" : "orthic-secondary-link text-secondary"}` : "inline-flex min-h-10 items-center font-extrabold text-forge"}>{item.state === "completed" ? "Open" : "Start"}{primaryAction ? <span aria-hidden="true" className="orthic-arrow">→</span> : null}</Link>
-        <details className="relative max-sm:col-span-3 max-sm:w-full">
-          <summary aria-label={`Actions for ${item.skillName}`} className="flex min-h-10 cursor-pointer list-none items-center gap-1 rounded-lg px-2 text-sm font-bold text-muted">Actions<ChevronDown aria-hidden="true" className="size-4" /></summary>
-          <div className="mt-2 grid min-w-40 grid-cols-2 gap-1 rounded-lg border border-line bg-white p-2 sm:absolute sm:right-0 sm:z-10 sm:grid-cols-1 sm:shadow-card">
+        <Link href={item.href} className={primaryAction ? `orthic-plan-action inline-flex min-h-11 items-center justify-center gap-2 rounded-sm px-3 text-sm font-medium ${item.state !== "completed" ? "orthic-primary-action bg-navy text-white" : "orthic-secondary-link text-secondary"}` : "inline-flex min-h-10 items-center font-extrabold text-forge"}>{item.state === "completed" ? "Open" : "Start"}{primaryAction ? <span aria-hidden="true" className="orthic-arrow">→</span> : null}</Link>
+        <details className="relative">
+          <summary aria-label={`Actions for ${item.skillName}`} className="grid size-11 cursor-pointer list-none place-items-center rounded-sm text-muted hover:bg-surface-dim"><MoreHorizontal aria-hidden="true" className="size-4" /><span className="sr-only">More actions</span></summary>
+          <div className="absolute right-0 z-10 mt-2 grid min-w-40 grid-cols-1 gap-1 rounded border border-line bg-surface p-2 shadow-card">
             <button type="button" className={actionButton} disabled={item.state === "completed"} onClick={onDone}>Done</button>
             <button type="button" className={actionButton} disabled={item.state === "skipped"} onClick={onSkip}>Skip</button>
             <button type="button" className={actionButton} disabled={item.state !== "planned"} onClick={onToggleMove}>Move</button>

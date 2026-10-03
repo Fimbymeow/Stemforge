@@ -69,8 +69,7 @@ test("path reset clears only Basic differentiation and remains valid after refre
   await expect(page.locator('[data-mastery-status="not_started"]')).toHaveAccessibleName("Progress: Not started");
   await page.goto("/dashboard");
   await expect(page).toHaveURL(/\/dashboard$/);
-  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Foundations \u00b7 0/3 complete");
-  await expect(page.getByTestId("dashboard-progress-summary").getByRole("link", { name: "Start learning" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
+  await expect(page.getByTestId("dashboard-progress-summary").getByRole("link", { name: "Continue Basic differentiation" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
   await expect(page.getByRole("navigation", { name: "Main" })).toBeVisible();
   stored = await readStoredProgress(page) as ProgressPayload;
   expect(stored.data.attempts.some((item) => item.skillPathId === PATH_ID)).toBe(false);

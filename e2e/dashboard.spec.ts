@@ -17,7 +17,7 @@ test("Dashboard context surface spans the workspace even beyond the content meas
 
 test("Dashboard action motion is tactile and disabled for reduced motion", async ({ page }) => {
   await page.goto("/dashboard");
-  const action = page.getByTestId("dashboard-progress-summary").getByRole("link", { name: "Start learning" });
+  const action = page.getByTestId("dashboard-progress-summary").getByRole("link", { name: "Continue Basic differentiation" });
   const arrow = action.locator("svg");
   const background = await action.evaluate((element) => getComputedStyle(element).backgroundColor);
   await action.hover();
@@ -38,9 +38,8 @@ test("guest learner dashboard hydrates without errors and presents calm course a
 
   const summary = page.getByTestId("dashboard-progress-summary");
   await expect(summary.getByText("Recommended next")).toHaveCount(0);
-  await expect(summary.getByRole("link", { name: "Start learning" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
+  await expect(summary.getByRole("link", { name: "Continue Basic differentiation" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
   await expect(summary).toContainText("Basic differentiation");
-  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Foundations \u00b7 0/3 complete");
   const pathway = summary.getByRole("list", { name: "Learning pathway" });
   await expect(pathway.getByRole("listitem", { name: "Foundations: current" })).toHaveAttribute("aria-current", "step");
   await expect(pathway.getByRole("listitem", { name: "Applications: not complete" })).toBeVisible();
@@ -58,11 +57,11 @@ test("guest learner dashboard hydrates without errors and presents calm course a
   await expect(page.getByRole("heading", { name: "Needs work" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Secure and mastered" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Quick links" })).toHaveCount(0);
-  await expect(page.getByTestId("dashboard-progress-summary").getByRole("link", { name: "Practise your way" })).toHaveAttribute("href", "/practice");
+  await expect(page.getByTestId("dashboard-progress-summary").getByRole("link", { name: "Practise your way" })).toHaveCount(0);
   const course = page.getByTestId("dashboard-courses").getByRole("link", { name: "Open Higher Maths" });
   await expect(course).toContainText("0 of 2 skills learned");
   await expect(course).toContainText("Up to date");
-  await expect(page.getByRole("link", { name: "Higher Maths course hub" })).toHaveAttribute("href", "/subjects/higher-maths");
+  await expect(page.getByRole("link", { name: "Higher Maths course hub" })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Higher Maths course tracker" })).toHaveAttribute("href", "/subjects/higher-maths/course-tracker");
   await expect(page.getByTestId("dashboard-review-summary")).toHaveCount(0);
   await expect(page.getByText("Needs attention", { exact: true })).toHaveCount(0);
@@ -82,9 +81,8 @@ test("dashboard updates from stored evidence with compact course context and a r
 
   const summary = page.getByTestId("dashboard-progress-summary");
   await expect(summary).not.toContainText("Combined progress across the Higher Maths skills available now");
-  await expect(summary.getByRole("link", { name: "Resume question" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
+  await expect(summary.getByRole("link", { name: "Continue Basic differentiation" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
   await expect(summary).toContainText("Basic differentiation");
-  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Foundations \u00b7 1/3 complete");
   await expect(page.getByTestId("dashboard-course-progress")).toHaveCount(0);
   await expect(page.getByTestId("dashboard-per-skill-progress")).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Recent activity" })).toHaveCount(0);
@@ -114,17 +112,16 @@ test("Design V2 keeps continuation first and course access usable at each target
     await page.goto("/dashboard");
     const continuation = page.getByTestId("dashboard-progress-summary");
     const courses = page.getByTestId("dashboard-courses-section");
-    const activity = page.getByTestId("dashboard-activity-summary");
-    await expect(continuation.getByRole("link", { name: "Start learning" })).toBeVisible();
+    await expect(continuation.getByRole("link", { name: "Continue Basic differentiation" })).toBeVisible();
     await expect(courses.getByRole("link", { name: "Open Higher Maths" })).toHaveAttribute("href", "/subjects/higher-maths");
     await expect(courses.getByRole("progressbar")).toHaveCount(0);
-    const boxes = await Promise.all([continuation, courses, activity].map((element) => element.boundingBox()));
+    await expect(page.getByTestId("dashboard-activity-summary")).toHaveCount(0);
+    const boxes = await Promise.all([continuation, courses].map((element) => element.boundingBox()));
     expect(boxes[0]!.y + boxes[0]!.height).toBeLessThanOrEqual(boxes[1]!.y);
-    expect(boxes[1]!.y + boxes[1]!.height).toBeLessThanOrEqual(boxes[2]!.y);
     if (viewport.width < 640) {
       const feedback = page.getByRole("button", { name: "Send feedback", exact: true });
       await expect(feedback).toBeVisible();
-      expect((await feedback.boundingBox())!.y).toBeGreaterThanOrEqual(boxes[2]!.y + boxes[2]!.height);
+      expect((await feedback.boundingBox())!.y).toBeGreaterThanOrEqual(boxes[1]!.y + boxes[1]!.height);
     }
     await expectNoHorizontalOverflow(page);
   }

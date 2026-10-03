@@ -31,13 +31,11 @@ export function AppSidebar({
   useEffect(() => {
     setCurrentDestination(`${window.location.pathname}${window.location.search}${window.location.hash}`);
   }, [pathname]);
-  const visibleNavItems = accountsAvailable
-    ? [...navItems, ["Account", UserRound, "account", "Account"] as const]
-    : navItems;
+  const visibleNavItems = [...navItems, ["Account", UserRound, "account", "Account"] as const];
   return (
     <aside data-app-sidebar className="fixed inset-y-0 left-0 z-10 flex w-[240px] flex-col border-r border-rule-strong bg-shell max-lg:sticky max-lg:top-0 max-lg:h-auto max-lg:w-full max-lg:border-b max-lg:border-r-0 max-lg:px-4 max-lg:py-3">
-      <Link href="/" className="flex h-20 items-center border-b border-rule px-6 max-lg:mb-3 max-lg:h-auto max-lg:border-0 max-lg:px-0">
-        <span className="block w-[132px]">
+      <Link href="/" className="flex h-16 items-center border-b border-rule px-6 max-lg:mb-3 max-lg:h-auto max-lg:border-0 max-lg:px-0">
+        <span className="block w-[124px]">
         <Image src="/assets/orthic-wordmark.svg" alt="Orthic" width={260} height={64} />
         </span>
       </Link>
@@ -49,7 +47,7 @@ export function AppSidebar({
           }
           const link = (
             <Link
-              href={key === "account" ? accountHrefFor(currentDestination) : getAppNavHref(key, demo)}
+              href={key === "account" ? accountsAvailable ? accountHrefFor(currentDestination) : "/account" : getAppNavHref(key, demo)}
               aria-current={isActive ? "page" : undefined}
               className={`orthic-nav-link flex min-h-11 w-full items-center border-l-2 px-6 text-sm font-medium max-lg:min-h-11 max-lg:justify-center max-lg:border-l-0 max-lg:px-1 max-lg:text-xs sm:max-lg:text-sm ${
                 isActive
@@ -68,7 +66,7 @@ export function AppSidebar({
         })}
       </nav>
       <div className="mt-auto border-t border-rule px-6 py-6 max-lg:hidden">
-        <Link href="/" className="orthic-secondary-link inline-flex min-h-11 items-center text-xs text-secondary">Back to website <span aria-hidden="true" className="orthic-arrow ml-2">↗</span></Link>
+        <Link href="/" className="orthic-secondary-link inline-flex min-h-11 items-center text-xs text-secondary"><span aria-hidden="true" className="orthic-arrow mr-2">↗</span>Back to website</Link>
       </div>
     </aside>
   );

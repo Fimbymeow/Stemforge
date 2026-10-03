@@ -13,24 +13,11 @@ test("Courses presents only usable course access without roadmap placeholders", 
   expect(seriousBrowserErrors).toEqual([]);
 });
 
-test("Dashboard Activity remains secondary within the responsive composition", async ({ page }) => {
+test("Dashboard omits empty Activity while keeping the course rail quiet", async ({ page }) => {
   await page.goto("/dashboard");
-  const courses = await page.getByTestId("dashboard-courses").boundingBox();
-  const activity = page.getByTestId("dashboard-activity-summary");
-  const activityBox = await activity.boundingBox();
-  expect(courses).not.toBeNull();
-  expect(activityBox).not.toBeNull();
-  expect(activityBox!.y).toBeGreaterThanOrEqual(courses!.y + courses!.height);
-  await expect(activity.getByRole("link", { name: "View full activity history" })).toHaveAttribute("href", "/activity");
-  await expect(activity.getByTestId("dashboard-activity-strip").locator("[data-intensity]")).toHaveCount(14);
-  const content = await activity.getByTestId("dashboard-activity-content").boundingBox();
-  expect(content).not.toBeNull();
-  expect(content!.width).toBeLessThanOrEqual(activityBox!.width);
-  expect(await activity.getByTestId("dashboard-activity-content").evaluate((surface) => getComputedStyle(surface).boxShadow)).toBe("none");
-  expect(await activity.getByTestId("dashboard-activity-content").evaluate((surface) => getComputedStyle(surface).borderTopWidth)).toBe("0px");
-  const courseHeadingSize = await page.getByRole("heading", { name: "Your courses" }).evaluate((heading) => Number.parseFloat(getComputedStyle(heading).fontSize));
-  const activityHeadingSize = await activity.getByRole("heading", { name: "Activity" }).evaluate((heading) => Number.parseFloat(getComputedStyle(heading).fontSize));
-  expect(activityHeadingSize).toBeLessThan(courseHeadingSize);
+  await expect(page.getByTestId("dashboard-courses")).toBeVisible();
+  await expect(page.getByTestId("dashboard-activity-summary")).toHaveCount(0);
+  await expect(page.getByTestId("dashboard-courses-section").getByRole("link", { name: "View all" })).toHaveAttribute("href", "/subjects");
 });
 
 test("Practice and Review use solid restrained setup surfaces", async ({ page }) => {
