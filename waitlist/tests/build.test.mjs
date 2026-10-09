@@ -40,9 +40,9 @@ test("production build refuses to ship without a monitored privacy contact", asy
   await assert.rejects(buildSite({ production: true, outputDirectory: path.join(os.tmpdir(), "orthic-invalid-build"), privacyEmail: "" }), /ORTHIC_PRIVACY_CONTACT_EMAIL/);
 });
 
-test("isolated source contains no Tuition or learner-product navigation", async () => {
+test("isolated source links to canonical Tuition without exposing learner-product navigation", async () => {
   const html = await readFile(new URL("../site/index.template.html", import.meta.url), "utf8");
-  assert.doesNotMatch(html, /Tuition/i);
+  assert.match(html, /href="https:\/\/stemforge-6an8\.vercel\.app\/tuition">Tuition/);
   for (const pathName of ["dashboard", "subjects", "courses", "practice", "review", "activity", "account"]) {
     assert.doesNotMatch(html, new RegExp(`href=["']/${pathName}`, "i"));
   }
@@ -55,4 +55,3 @@ test("client assets contain no server binding, database identifier or secret", a
   const client = (await Promise.all(files.map((file) => readFile(new URL(`../site/${file}`, import.meta.url), "utf8")))).join("\n");
   assert.doesNotMatch(client, /WAITLIST_DB|WAITLIST_RATE_LIMITER|database_id|ORTHIC_PRIVACY_CONTACT_EMAIL|00000000-0000/);
 });
-

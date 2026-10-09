@@ -28,9 +28,9 @@ export function TuitionNavbar() {
           ))}
         </div>
         <div className="flex items-center gap-4 justify-self-end max-md:justify-self-center">
-          <Link href="/" className="tuition-interactive text-sm font-medium text-muted hover:text-ink">
+          <a href="https://orthic.co.uk/" className="tuition-interactive text-sm font-medium text-muted hover:text-ink">
             Back to Orthic
-          </Link>
+          </a>
           <TuitionButtonLink href="/tuition#contact">Free first session</TuitionButtonLink>
         </div>
       </nav>

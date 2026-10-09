@@ -12,7 +12,7 @@ for (const [route, activeLabel] of routes) {
     await page.goto(route);
     const navigation = page.getByRole("navigation", { name: "Tuition", exact: true });
     await expect(navigation.getByRole("link", { name: activeLabel, exact: true })).toHaveAttribute("aria-current", "page");
-    await expect(navigation.getByRole("link", { name: "Back to Orthic" })).toHaveAttribute("href", "/");
+    await expect(navigation.getByRole("link", { name: "Back to Orthic" })).toHaveAttribute("href", "https://orthic.co.uk/");
     await expect(navigation.getByRole("link", { name: "Free first session" })).toHaveAttribute("href", "/tuition#contact");
     await expect(page.getByRole("contentinfo")).toContainText("not affiliated with or endorsed by Qualifications Scotland");
 

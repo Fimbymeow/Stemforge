@@ -182,6 +182,12 @@ test("mobile-sensitive layout classes are retained on the navbar and hero (bound
   assert.match(hero, /flex-wrap/, "hero CTAs must still wrap on narrow viewports");
 });
 
+test("Tuition returns to the canonical Orthic waitlist rather than the learner app", () => {
+  const navbar = source("components/tuition/tuition-navbar.tsx");
+  assert.match(navbar, /href="https:\/\/orthic\.co\.uk\/"[^>]*>\s*Back to Orthic/);
+  assert.doesNotMatch(navbar, /href="\/"[^>]*>\s*Back to Orthic/);
+});
+
 test("the homepage renders the tutor introduction before the final enquiry CTA", () => {
   const page = source("app/tuition/page.tsx");
   // Match JSX usage (<TuitionIntro) specifically, not the (alphabetically-sorted) import
