@@ -35,6 +35,18 @@ test("remote validation accepts legal new outcomes alongside legacy attempts", (
   assert.deepEqual(result.payload.data.attempts, [graded, malformed, unmarkable, guided, elementary, legacy]);
 });
 
+test("remote validation accepts internally consistent multipart evidence and rejects tampered part aggregation", () => {
+  const partOutcomes = [
+    { fieldId: "gradient", label: "Gradient", outcomeKind: "graded" as const, isCorrect: true, normalizedStudentAnswer: "2", strategy: "numeric" as const, strategyVersion: 1 },
+    { fieldId: "equation", label: "Tangent equation", outcomeKind: "graded" as const, isCorrect: true, normalizedStudentAnswer: "y=2x+3", strategy: "linear_equation_equivalence" as const, strategyVersion: 1 },
+  ];
+  const valid = attempt({ eventId: "multipart_valid", answer: JSON.stringify({ gradient: "2", equation: "y=2x+3" }), isCorrect: true, outcomeKind: "graded", strategy: "multipart", strategyVersion: 1, partOutcomes });
+  const tampered = { ...valid, eventId: "multipart_tampered", isCorrect: false, outcomeReason: "value_wrong" as const };
+  const result = validateRemoteEvidenceBatch(payload({ attempts: [valid, tampered], supportEvents: [] }));
+  assert.deepEqual(result.payload.data.attempts, [valid]);
+  assert.equal(result.rejected.length, 1);
+});
+
 test("remote validation rejects incomplete metadata, illegal reasons and unknown keys", () => {
   const missing = attempt({ eventId: "missing", outcomeKind: "graded", isCorrect: true });
   const illegal = attempt({ eventId: "illegal", outcomeKind: "graded", isCorrect: true, outcomeReason: "value_wrong", strategy: "numeric", strategyVersion: 1 });

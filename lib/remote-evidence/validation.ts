@@ -163,7 +163,7 @@ const attemptKeys = [
   "hintViewedBeforeSubmission", "supportKnowledge", "versionEvidence", "eventId",
 ] as const;
 const attemptOptionalKeys = [
-  "legacyCompleted", "practiceSessionId", "outcomeKind", "outcomeReason", "strategy", "strategyVersion",
+  "legacyCompleted", "practiceSessionId", "outcomeKind", "outcomeReason", "strategy", "strategyVersion", "partOutcomes",
 ] as const;
 const supportKeys = [
   "questionId", "skillPathId", "stageId", "type", "occurredAt", "sequence", "afterGenuineAttempt", "versionEvidence", "eventId",

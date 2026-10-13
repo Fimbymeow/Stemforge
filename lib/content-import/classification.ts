@@ -20,10 +20,14 @@ import type {
 import { buildVocabulary } from "@/lib/marking/closed-vocabulary-text";
 import type {
   ClosedVocabularyTextAnswerMarkingContract,
+  AtomicMarkingContract,
   CompositeAlgebraicEquivalenceMarkingContract,
   MarkingFixtures,
+  MultipartMarkingContract,
   NumericMarkingContract,
   PolynomialMarkingContract,
+  CoordinatePairMarkingContract,
+  LinearEquationEquivalenceMarkingContract,
   QuestionMarkingContract,
 } from "@/lib/marking/types";
 
@@ -90,7 +94,14 @@ export function classifyBank(
     if (assessed.conversion) conversions.push(assessed.conversion);
     let markerCompatibility: MarkerCompatibilityCheck | undefined;
     let canonicalQuestion: Question | undefined;
-    if (assessed.candidate) {
+    if (assessed.candidates) {
+      const marker = analyseMultipartMarkability(question, assessed.candidates);
+      markerCompatibility = marker.compatibility;
+      blockers.push(...marker.blockers);
+      if (marker.contract && !blockers.length && placement.targetStageId) {
+        canonicalQuestion = toCanonicalQuestion(question, assessed.candidates, marker.contract, marker.correctAnswer, curriculum!, placement.targetSkillPathSlug, placement.targetStageId, registry);
+      }
+    } else if (assessed.candidate) {
       const marker = analyseMarkability(question, assessed.candidate);
       markerCompatibility = marker.compatibility;
       blockers.push(...marker.blockers);
@@ -151,7 +162,11 @@ export function auditBankAssessment(bank: ContentBankIR): ImportClassification[]
     }
     const conversions: ImportConversion[] = assessed.conversion ? [assessed.conversion] : [];
     let markerCompatibility: MarkerCompatibilityCheck | undefined;
-    if (assessed.candidate) {
+    if (assessed.candidates) {
+      const marker = analyseMultipartMarkability(question, assessed.candidates);
+      blockers.push(...marker.blockers);
+      markerCompatibility = marker.compatibility;
+    } else if (assessed.candidate) {
       const marker = analyseMarkability(question, assessed.candidate);
       blockers.push(...marker.blockers);
       markerCompatibility = marker.compatibility;
@@ -171,18 +186,29 @@ export function auditBankAssessment(bank: ContentBankIR): ImportClassification[]
 
 function selectAssessedCandidate(question: ImportQuestionIR): {
   candidate?: ImportAnswerCandidate;
+  candidates?: ImportAnswerCandidate[];
   conversion?: ImportConversion;
   blockers: ImportBlocker[];
 } {
   if (question.answerCandidates.length === 1) return { candidate: question.answerCandidates[0], blockers: [] };
+  const multiFieldCapability = detectMultiFieldCapability(question);
+  if (multiFieldCapability === "repeated_coordinate_nature_group") return {
+    blockers: [{ code: "requires_repeated_coordinate_nature_group", message: "Repeated coordinate/nature groups remain outside the bounded multipart contract.", requiredCapability: multiFieldCapability }],
+  };
   if (question.explicitFieldAssessment) {
     const assessed = question.answerCandidates.filter((candidate) => candidate.assessed);
     const scaffolding = question.answerCandidates.filter((candidate) => candidate.assessed === false);
     if (assessed.length === 1 && scaffolding.length === question.answerCandidates.length - 1) {
       return { candidate: assessed[0], conversion: "explicit_scaffolding_field_drop", blockers: [] };
     }
+    if (assessed.length > 1 && assessed.length + scaffolding.length === question.answerCandidates.length) {
+      return { candidates: assessed, ...(scaffolding.length ? { conversion: "explicit_scaffolding_field_drop" as const } : {}), blockers: [] };
+    }
   }
-  const requiredCapability = detectMultiFieldCapability(question);
+  if (question.answerCandidates.length > 1 && !question.explicitFieldAssessment && question.interactionType?.toLowerCase() === "multi_step") {
+    return { candidates: question.answerCandidates, blockers: [] };
+  }
+  const requiredCapability = multiFieldCapability;
   return {
     blockers: [{
       code: "undeclared_multi_field_assessment",
@@ -192,8 +218,9 @@ function selectAssessedCandidate(question: ImportQuestionIR): {
   };
 }
 
-function analyseMarkability(question: ImportQuestionIR, candidate: ImportAnswerCandidate) {
+function analyseMarkability(question: ImportQuestionIR, candidate: ImportAnswerCandidate, allowFieldWrappers = false) {
   const blockers: ImportBlocker[] = [];
+  const fieldType = candidate.type.toLowerCase();
   const capability = detectCapability(question, candidate);
   // closed_vocabulary_text_answer is the one detected capability with a real, narrowly-scoped
   // marker behind it — but only for the exact constrained field type the marker was designed
@@ -201,15 +228,30 @@ function analyseMarkability(question: ImportQuestionIR, candidate: ImportAnswerC
   // capability, still blocks immediately exactly as before: this must never widen into inferring
   // the marker for arbitrary free-text fields merely because they happen to declare aliases.
   const isNarrowClosedVocabularyField = capability === "closed_vocabulary_text_answer" && candidate.type.toLowerCase() === "text_short";
-  if (capability && !isNarrowClosedVocabularyField) {
+  const isSupportedEquation = capability === "equation_form_answer" && candidate.type.toLowerCase() === "algebraic";
+  const isSupportedCoordinate = capability === "structured_coordinate_pair" && candidate.type.toLowerCase() === "coordinate";
+  if (capability && !isNarrowClosedVocabularyField && !isSupportedEquation && !isSupportedCoordinate) {
     blockers.push({ code: `requires_${capability}`, message: `Answer requires unsupported capability "${capability}".`, requiredCapability: capability, candidateId: candidate.id });
+    return { blockers, compatibility: { aliasOutcomes: [] } as MarkerCompatibilityCheck, correctAnswer: candidate.correctAnswer, lexicallyNormalised: false };
+  }
+  const supportedTypes = new Set(["numeric", "numerical", "exact", "algebraic", "coordinate", "text_short", "multiple_choice"]);
+  if (!supportedTypes.has(fieldType)) {
+    blockers.push({ code: "unsupported_answer_field_type", message: `Answer field type "${candidate.type}" is not in the bounded authoring contract.`, candidateId: candidate.id });
     return { blockers, compatibility: { aliasOutcomes: [] } as MarkerCompatibilityCheck, correctAnswer: candidate.correctAnswer, lexicallyNormalised: false };
   }
   const interaction = (question.interactionType || candidate.type).toLowerCase();
   const rawCorrect = candidate.correctAnswer;
   const correctAnswer = normalizeMarkerLexeme(rawCorrect);
   let contract: QuestionMarkingContract | undefined;
-  if (isNarrowClosedVocabularyField) {
+  if (isSupportedEquation) {
+    const line = linearEquationContract(correctAnswer, candidate.acceptedAnswers.map(normalizeMarkerLexeme));
+    if (line && markQuestionAnswer({ marking: line }, line.target).outcomeKind === "graded") contract = line;
+    else blockers.push({ code: "requires_equation_form_answer", message: "Equation is outside the supported affine x/y line-equation domain.", requiredCapability: "equation_form_answer", candidateId: candidate.id });
+  } else if (isSupportedCoordinate) {
+    const coordinate = coordinatePairContract(correctAnswer, candidate.acceptedAnswers.map(normalizeMarkerLexeme));
+    if (coordinate && markQuestionAnswer({ marking: coordinate }, coordinate.target).outcomeKind === "graded") contract = coordinate;
+    else blockers.push({ code: "requires_structured_coordinate_pair", message: "Coordinate is outside the supported exact ordered-pair domain.", requiredCapability: "structured_coordinate_pair", candidateId: candidate.id });
+  } else if (isNarrowClosedVocabularyField) {
     const closedVocabulary = closedVocabularyTextAnswerContract(candidate);
     if (closedVocabulary && markQuestionAnswer({ marking: closedVocabulary }, closedVocabulary.target).outcomeKind === "graded") contract = closedVocabulary;
     else {
@@ -260,7 +302,7 @@ function analyseMarkability(question: ImportQuestionIR, candidate: ImportAnswerC
       // that normalizeMarkerLexeme would mangle; the marker's own narrow text normaliser handles it.
       : contract.strategy === "closed_vocabulary_text_answer"
         ? answer
-        : normalizeMarkerLexeme(answer);
+        : allowFieldWrappers ? normalizeFieldLexeme(candidate, answer) : normalizeMarkerLexeme(answer);
     const result = markQuestionAnswer({ marking: contract }, submitted);
     return { answer, outcomeKind: result.outcomeKind, isCorrect: result.isCorrect };
   }) : [];
@@ -292,9 +334,44 @@ function analyseMarkability(question: ImportQuestionIR, candidate: ImportAnswerC
   };
 }
 
+function analyseMultipartMarkability(question: ImportQuestionIR, candidates: ImportAnswerCandidate[]) {
+  const blockers: ImportBlocker[] = [];
+  const fields: MultipartMarkingContract["fields"] = [];
+  for (const candidate of candidates) {
+    const marker = analyseMarkability(question, candidate, true);
+    blockers.push(...marker.blockers);
+    if (!marker.contract || !isAtomicContract(marker.contract)) continue;
+    fields.push({
+      id: candidate.id,
+      label: candidate.label,
+      inputType: marker.contract.strategy === "numeric" ? "numeric"
+        : marker.contract.strategy === "coordinate_pair" ? "coordinate"
+        : marker.contract.strategy === "linear_equation_equivalence" ? "line_equation"
+        : marker.contract.strategy === "closed_vocabulary_text_answer" ? "text" : "algebraic",
+      marking: marker.contract,
+    });
+  }
+  const contract: MultipartMarkingContract | undefined = !blockers.length && fields.length === candidates.length
+    ? { strategy: "multipart", strategyVersion: 1, fields }
+    : undefined;
+  const correctAnswer = contract ? JSON.stringify(Object.fromEntries(candidates.map((candidate) => [candidate.id, normalizeFieldLexeme(candidate, candidate.correctAnswer)]))) : "";
+  const targetOutcome = contract ? markQuestionAnswer({ marking: contract }, correctAnswer).outcomeKind : undefined;
+  if (contract && targetOutcome !== "graded") blockers.push({ code: "unsupported_multipart_target", message: "The multipart target does not produce a graded outcome." });
+  return {
+    blockers,
+    contract: blockers.length ? undefined : contract,
+    correctAnswer,
+    compatibility: { ...(contract ? { strategy: contract.strategy, strategyVersion: contract.strategyVersion } : {}), ...(targetOutcome ? { targetOutcome } : {}), aliasOutcomes: [] } as MarkerCompatibilityCheck,
+  };
+}
+
+function isAtomicContract(contract: QuestionMarkingContract): contract is AtomicMarkingContract {
+  return !["multiple_choice", "guided_self_check", "structured_graph", "multipart"].includes(contract.strategy);
+}
+
 function toCanonicalQuestion(
   source: ImportQuestionIR,
-  candidate: ImportAnswerCandidate,
+  candidate: ImportAnswerCandidate | ImportAnswerCandidate[],
   marking: QuestionMarkingContract,
   correctAnswer: string,
   curriculum: NonNullable<Question["curriculum"]>,
@@ -307,6 +384,7 @@ function toCanonicalQuestion(
   const answerType = marking.strategy === "multiple_choice" ? "multiple_choice"
     : marking.strategy === "numeric" ? "numerical"
     : marking.strategy === "closed_vocabulary_text_answer" ? "written"
+    : marking.strategy === "multipart" ? "multi_step"
     : "algebraic";
   const options = marking.strategy === "multiple_choice" ? parseOptions(source.questionText) : undefined;
   return {
@@ -327,6 +405,7 @@ function toCanonicalQuestion(
     marks: source.marks,
     answerType,
     marking,
+    ...(marking.strategy === "multipart" ? { answerFields: marking.fields } : {}),
     curriculum,
     ...(source.graphConfig ? { graphConfig: source.graphConfig } : {}),
     correctAnswer,
@@ -334,7 +413,9 @@ function toCanonicalQuestion(
       ? [marking.correctOptionId]
       : marking.strategy === "closed_vocabulary_text_answer"
         ? marking.acceptedAnswers
-        : unique(candidate.acceptedAnswers.map(normalizeMarkerLexeme)),
+        : marking.strategy === "multipart"
+          ? [correctAnswer]
+          : unique((candidate as ImportAnswerCandidate).acceptedAnswers.map(normalizeMarkerLexeme)),
     ...(options?.length ? { options } : {}),
     workedSolution: source.workedSolution,
     finalAnswer: correctAnswer,
@@ -422,6 +503,33 @@ function compositeAlgebraicContract(target: string, accepted: string[]): Composi
   return undefined;
 }
 
+function linearEquationContract(target: string, accepted: string[]): LinearEquationEquivalenceMarkingContract | undefined {
+  if (!/=/.test(target)) return undefined;
+  return { strategy: "linear_equation_equivalence", strategyVersion: 1, target, variables: ["x", "y"], fixtures: lineEquationFixtures(unique([target, ...accepted])) };
+}
+
+function coordinatePairContract(target: string, accepted: string[]): CoordinatePairMarkingContract | undefined {
+  return { strategy: "coordinate_pair", strategyVersion: 1, target, fixtures: coordinatePairFixtures(unique([target, ...accepted])) };
+}
+
+function lineEquationFixtures(correct: string[]): MarkingFixtures {
+  return {
+    correct: correct.map((input) => ({ input })),
+    incorrect: [{ input: "y=0", reason: "value_wrong" }],
+    malformed: [{ input: "not-an-equation", reason: "malformed_linear_equation" }],
+    unmarkable: [{ input: "y=x^2", reason: "unsupported_mathematical_form" }],
+  };
+}
+
+function coordinatePairFixtures(correct: string[]): MarkingFixtures {
+  return {
+    correct: correct.map((input) => ({ input })),
+    incorrect: [{ input: "(0,0)", reason: "value_wrong" }],
+    malformed: [{ input: "(1,)", reason: "malformed_coordinate_pair" }],
+    unmarkable: [{ input: "(x,1)", reason: "unsupported_mathematical_form" }],
+  };
+}
+
 // Reasons attached below are the exact legal values per strategy in isLegalPersistedMarkerMetadata
 // (lib/marking/types.ts) — malformed/unmarkable reasons differ per strategy; "value_wrong" for
 // incorrect is legal across every graded, non-guided strategy. The probe inputs ("0"/"1", "++",
@@ -488,6 +596,18 @@ export function normalizeMarkerLexeme(value: string) {
     .trim();
   if (output.startsWith("$") && output.endsWith("$")) output = output.slice(1, -1).trim();
   return output;
+}
+
+function normalizeFieldLexeme(candidate: ImportAnswerCandidate, value: string) {
+  const normalized = normalizeMarkerLexeme(value);
+  const type = candidate.type.toLowerCase();
+  if (type === "exact") return normalized.replace(/^(?:m|gradient)\s*=\s*/i, "");
+  if (type === "algebraic" && !/=/.test(candidate.correctAnswer)) {
+    const expression = normalized.replace(/^(?:dy\s*\/\s*dx|f'\s*\(\s*x\s*\))\s*=\s*/i, "");
+    const root = /^sqrt\((.+)\)$/.exec(expression);
+    return root ? `(${root[1]})^(1/2)` : expression;
+  }
+  return normalized;
 }
 
 function detectCapability(question: ImportQuestionIR, candidate: ImportAnswerCandidate): RequiredCapability | undefined {

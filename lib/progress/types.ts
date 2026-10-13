@@ -85,6 +85,7 @@ export type QuestionAttempt = QuestionAttemptV3 & {
   outcomeReason?: import("@/lib/marking/types").MarkerOutcomeReason;
   strategy?: import("@/lib/marking/types").MarkingStrategy;
   strategyVersion?: number;
+  partOutcomes?: import("@/lib/marking/types").MarkingPartResult[];
 };
 
 export type QuestionSupportEvent = QuestionSupportEventV3 & {

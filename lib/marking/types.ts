@@ -3,6 +3,9 @@ export const MARKING_STRATEGIES = [
   "polynomial_form",
   "composite_algebraic_equivalence",
   "elementary_expression_equivalence",
+  "linear_equation_equivalence",
+  "coordinate_pair",
+  "multipart",
   "closed_vocabulary_text_answer",
   "multiple_choice",
   "guided_self_check",
@@ -12,7 +15,7 @@ export const MARKING_STRATEGIES = [
 export type MarkingStrategy = (typeof MARKING_STRATEGIES)[number];
 export type MarkerOutcomeKind = "graded" | "guided_pending" | "unmarkable" | "malformed" | "internal_error";
 export type GradedIncorrectReason = "value_wrong" | "form_wrong" | "precision_wrong" | "unit_wrong";
-export type MalformedReason = "malformed_numeric" | "malformed_polynomial" | "malformed_composite_expression" | "malformed_elementary_expression" | "malformed_closed_vocabulary_text" | "malformed_structured";
+export type MalformedReason = "malformed_numeric" | "malformed_polynomial" | "malformed_composite_expression" | "malformed_elementary_expression" | "malformed_closed_vocabulary_text" | "malformed_linear_equation" | "malformed_coordinate_pair" | "malformed_multipart" | "malformed_structured";
 export type UnmarkableReason = "expression_not_permitted" | "unsupported_mathematical_form";
 export type MarkerOutcomeReason = GradedIncorrectReason | MalformedReason | UnmarkableReason;
 
@@ -25,6 +28,18 @@ export type MarkingResult = {
   strategy: MarkingStrategy;
   strategyVersion: number;
   diagnosticReason?: string;
+  partResults?: MarkingPartResult[];
+};
+
+export type MarkingPartResult = {
+  fieldId: string;
+  label: string;
+  outcomeKind: MarkerOutcomeKind;
+  isCorrect: boolean | null;
+  outcomeReason?: MarkerOutcomeReason;
+  normalizedStudentAnswer: string;
+  strategy: Exclude<MarkingStrategy, "multipart">;
+  strategyVersion: number;
 };
 
 export type MarkingFixture = { input: string; reason?: MarkerOutcomeReason };
@@ -117,12 +132,46 @@ export type StructuredGraphMarkingContract = {
   strategyVersion: 1;
 };
 
-export type QuestionMarkingContract =
+export type LinearEquationEquivalenceMarkingContract = {
+  strategy: "linear_equation_equivalence";
+  strategyVersion: 1;
+  target: string;
+  variables: ["x", "y"];
+  fixtures: MarkingFixtures;
+};
+
+export type CoordinatePairMarkingContract = {
+  strategy: "coordinate_pair";
+  strategyVersion: 1;
+  target: string;
+  fixtures: MarkingFixtures;
+};
+
+export type AtomicMarkingContract =
   | NumericMarkingContract
   | PolynomialMarkingContract
   | CompositeAlgebraicEquivalenceMarkingContract
   | ElementaryExpressionEquivalenceMarkingContract
-  | ClosedVocabularyTextAnswerMarkingContract
+  | LinearEquationEquivalenceMarkingContract
+  | CoordinatePairMarkingContract
+  | ClosedVocabularyTextAnswerMarkingContract;
+
+export type MultipartFieldMarkingContract = {
+  id: string;
+  label: string;
+  inputType: "numeric" | "algebraic" | "coordinate" | "line_equation" | "text";
+  marking: AtomicMarkingContract;
+};
+
+export type MultipartMarkingContract = {
+  strategy: "multipart";
+  strategyVersion: 1;
+  fields: MultipartFieldMarkingContract[];
+};
+
+export type QuestionMarkingContract =
+  | AtomicMarkingContract
+  | MultipartMarkingContract
   | MultipleChoiceMarkingContract
   | GuidedMarkingContract
   | StructuredGraphMarkingContract;
@@ -155,6 +204,9 @@ export function isLegalPersistedMarkerMetadata(value: PersistedMarkerMetadata) {
       (value.strategy === "polynomial_form" && value.outcomeReason === "malformed_polynomial") ||
       (value.strategy === "composite_algebraic_equivalence" && value.outcomeReason === "malformed_composite_expression") ||
       (value.strategy === "elementary_expression_equivalence" && value.outcomeReason === "malformed_elementary_expression") ||
+      (value.strategy === "linear_equation_equivalence" && value.outcomeReason === "malformed_linear_equation") ||
+      (value.strategy === "coordinate_pair" && value.outcomeReason === "malformed_coordinate_pair") ||
+      (value.strategy === "multipart" && value.outcomeReason === "malformed_multipart") ||
       (value.strategy === "closed_vocabulary_text_answer" && value.outcomeReason === "malformed_closed_vocabulary_text") ||
       (value.strategy === "structured_graph" && value.outcomeReason === "malformed_structured");
   }
@@ -163,6 +215,9 @@ export function isLegalPersistedMarkerMetadata(value: PersistedMarkerMetadata) {
       (value.strategy === "polynomial_form" && value.outcomeReason === "unsupported_mathematical_form") ||
       (value.strategy === "composite_algebraic_equivalence" && value.outcomeReason === "unsupported_mathematical_form") ||
       (value.strategy === "elementary_expression_equivalence" && value.outcomeReason === "unsupported_mathematical_form") ||
+      (value.strategy === "linear_equation_equivalence" && value.outcomeReason === "unsupported_mathematical_form") ||
+      (value.strategy === "coordinate_pair" && value.outcomeReason === "unsupported_mathematical_form") ||
+      (value.strategy === "multipart" && value.outcomeReason === "unsupported_mathematical_form") ||
       (value.strategy === "closed_vocabulary_text_answer" && value.outcomeReason === "expression_not_permitted");
   }
   return false;

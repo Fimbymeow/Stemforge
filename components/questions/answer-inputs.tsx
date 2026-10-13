@@ -51,7 +51,46 @@ export function WrittenAnswerInput(props: InputProps) {
 }
 
 export function MultiStepInput(props: InputProps) {
+  if (props.question.marking.strategy === "multipart" && props.question.answerFields?.length) return <MultipartInput {...props} />;
   return <TextAreaInput {...props} placeholder="Show your working, then compare it with the worked solution." />;
+}
+
+function MultipartInput({ question, value, submitted, onChange, describedBy, invalid }: InputProps) {
+  const answers = parseMultipartValue(value);
+  const update = (id: string, next: string) => onChange(JSON.stringify({ ...answers, [id]: next }));
+  return (
+    <fieldset className="grid gap-4" aria-labelledby="answer-label" aria-describedby={describedBy} aria-invalid={invalid || undefined}>
+      <legend className="sr-only">Answer all assessed parts</legend>
+      {question.answerFields?.map((field) => (
+        <label key={field.id} className="grid gap-2 text-sm font-bold" htmlFor={`question-answer-${field.id}`}>
+          <span>{field.label}</span>
+          <input
+            id={`question-answer-${field.id}`}
+            data-testid={`answer-field-${field.id}`}
+            value={answers[field.id] ?? ""}
+            onChange={(event) => update(field.id, event.target.value)}
+            disabled={submitted}
+            autoComplete="off"
+            inputMode={field.inputType === "numeric" ? "decimal" : "text"}
+            placeholder={field.inputType === "line_equation" ? "Enter an equation in x and y" : field.inputType === "coordinate" ? "Enter (x, y)" : "Enter your answer"}
+            aria-label={field.label}
+            aria-describedby={describedBy}
+            maxLength={4096}
+            className="min-h-12 w-full rounded-lg border border-line bg-white px-4 text-lg font-normal outline-none transition focus:border-forge focus:ring-2 focus:ring-forge/15 disabled:bg-line/40"
+          />
+        </label>
+      ))}
+      <p className="text-sm font-normal text-muted">All labelled parts are assessed together. Marks are defined by the question, not by the number of fields.</p>
+    </fieldset>
+  );
+}
+
+function parseMultipartValue(value: string): Record<string, string> {
+  try {
+    const parsed: unknown = JSON.parse(value || "{}");
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+    return Object.fromEntries(Object.entries(parsed).filter((entry): entry is [string, string] => typeof entry[1] === "string"));
+  } catch { return {}; }
 }
 
 function TextInput({ value, submitted, onChange, placeholder, helper, inputId = "question-answer", describedBy, invalid }: InputProps & { placeholder: string; helper?: string }) {

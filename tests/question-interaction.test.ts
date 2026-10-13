@@ -115,6 +115,16 @@ test("drafts round-trip, remain local-only data, and clear explicitly", () => {
   assert.ok(storage.getItem(ANSWER_DRAFT_STORAGE_KEY));
 });
 
+test("multipart JSON drafts round-trip as one local draft and clear after submission", () => {
+  const storage = memoryStorage();
+  const answer = JSON.stringify({ gradient: "2", point: "(1,5)", equation: "y-5=2(x-1)" });
+  assert.equal(saveAnswerDraft(storage, identity, answer, "2026-07-21T10:00:00.000Z"), true);
+  const restored = loadAnswerDraft(storage, identity);
+  assert.equal(restored?.kind === "plain" ? restored.answer : null, answer);
+  assert.equal(clearAnswerDraft(storage, identity), true);
+  assert.equal(loadAnswerDraft(storage, identity), null);
+});
+
 test("empty drafts remove entries and long drafts are bounded", () => {
   const storage = memoryStorage();
   saveAnswerDraft(storage, identity, "x".repeat(MAX_DRAFT_LENGTH + 50));

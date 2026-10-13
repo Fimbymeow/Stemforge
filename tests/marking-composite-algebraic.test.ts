@@ -70,11 +70,24 @@ test("near-miss expressions parse successfully but grade incorrect, never unmark
   }
 });
 
+test("one unpowered polynomial bracket with a leading monomial is a bounded exact product", () => {
+  const contract = composite("x(30-2x)");
+  for (const equivalent of ["30x-2x^2", "2x(15-x)", "x*(30-2*x)"]) {
+    const result = markCompositeAlgebraicEquivalence(contract, equivalent);
+    assert.equal(result.outcomeKind, "graded", equivalent);
+    assert.equal(result.isCorrect, true, equivalent);
+  }
+
+  const nearMiss = markCompositeAlgebraicEquivalence(contract, "x(30-x)");
+  assert.equal(nearMiss.outcomeKind, "graded");
+  assert.equal(nearMiss.isCorrect, false);
+});
+
 test("out-of-V1-scope grammar returns an honest unmarkable result, never silently routed to plain polynomial marking", () => {
   const contract = composite("15(3x+2)^4");
   for (const input of [
     "-12(4x+5)^(-4)", "-12/(4x+5)^4", "x^-2", "x^(1/2)", "sqrt(x)", "1/sqrt(x+1)", "2/x", "2/(x+1)",
-    "y=3x+2", "dy/dx=15(3x+2)^4", "x(30-2x)", "(x+1)^2(x-1)^3", "-6x(x^2+1)(x+2)^(-4)",
+    "y=3x+2", "dy/dx=15(3x+2)^4", "(x+1)^2(x-1)^3", "-6x(x^2+1)(x+2)^(-4)",
     "sin(x)", "e^x", "log(x)", "2x^2+2000/x",
   ]) {
     assert.equal(markCompositeAlgebraicEquivalence(contract, input).outcomeKind, "unmarkable", input);

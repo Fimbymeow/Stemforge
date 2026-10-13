@@ -747,20 +747,20 @@ test("Tangents is not ready for import or publication, and reports its real bloc
   const codes = readiness.blockers.map((blocker) => blocker.code);
   assert.ok(codes.includes("missing-foundations-source"), "no Foundations-tier Tangents content is authored yet");
   assert.ok(codes.includes("missing-notes-source"), "no Tangents Notes/LessonDocument exists yet");
-  assert.ok(codes.includes("unsupported-marking-capability"), "the live marker cannot currently import any of the five migrated questions");
+  assert.ok(!codes.includes("unsupported-marking-capability"), "bounded affine-equation and multipart marking now support all five migrated questions");
   assert.ok(codes.includes("import-config-missing"), "no tangents-and-normals-v1.import.json exists");
   assert.ok(!codes.includes("source-reference-stale"), "the manifest hash matches the freshly written draft");
 });
 
-test("Tangents' equation-form blockers are the real, honestly-reported ones — not forced to match any expectation", () => {
+test("Tangents' former equation-form and multipart marking blockers are cleared without implying publication readiness", () => {
   const evidence = resolveSkillPackageEvidence(tangentsPackage);
   const applications = evidence.sources.find((source) => source.kind === "applications")!;
   const ppq = evidence.sources.find((source) => source.kind === "pastPaperPractice")!;
   const applicationsCapabilities = applications.unsupportedMarkingCapabilities.map((entry) => entry.requiredCapability ?? entry.code);
   const ppqCapabilities = new Set(ppq.unsupportedMarkingCapabilities.map((entry) => entry.requiredCapability ?? entry.code));
-  assert.deepEqual(applicationsCapabilities, ["equation_form_answer"], "A001's single-field tangent equation is blocked by equation-form marking, exactly as the migration spec predicted");
-  assert.deepEqual(ppqCapabilities, new Set(["structured_multi_field_answer"]));
-  assert.equal(ppq.unsupportedMarkingCapabilities.length, 4, "all four migrated PPQ questions remain blocked by undeclared multi-field assessment, unchanged by this migration");
+  assert.deepEqual(applicationsCapabilities, [], "A001 uses the bounded affine x/y equation marker");
+  assert.deepEqual(ppqCapabilities, new Set());
+  assert.equal(ppq.unsupportedMarkingCapabilities.length, 0, "all four migrated PPQ questions use bounded multipart marking");
 });
 
 // ---- Non-regression ----

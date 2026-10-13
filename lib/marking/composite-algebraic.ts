@@ -83,8 +83,8 @@ type V1ParseResult = { status: "parsed"; value: Polynomial; normalized: string }
 /**
  * Bounded recursive-descent V1 grammar: a sum/difference of terms, where each term is either a
  * plain single-variable monomial (delegated wholesale to parsePolynomial) or a product of an
- * optional leading factor (rational coefficient, one variable power, or one bare bracket) and
- * exactly one bracket raised to a non-negative integer exponent. Every accepted bracket power is
+ * optional leading rational/variable factor and one bracket, optionally raised to a
+ * non-negative integer exponent. Every accepted bracket product/power is
  * expanded through exact polynomial multiplication into the same Polynomial representation
  * parsePolynomial already produces, so the whole expression reduces to one canonical polynomial.
  */
@@ -187,9 +187,9 @@ function parseTermToPolynomial(body: string, variable: string): TermResult {
         index += exponentMatch[0].length;
         continue;
       }
-      // A bracket with no explicit exponent: only supported as a single leading polynomial
-      // factor alongside a genuine bracket power elsewhere in the same term (e.g. 4(2x+3)(x^2+3x+1)^3).
-      if (bracketPower || sawBareBracket || sawVariablePower) return { status: "unmarkable" };
+      // One unpowered polynomial bracket is a bounded exact product, including a preceding
+      // monomial such as 4x(x^2+3). Multiple independent brackets remain unsupported.
+      if (bracketPower || sawBareBracket) return { status: "unmarkable" };
       const inner = parsePolynomial(innerText, variable);
       if (inner.status !== "parsed") return { status: inner.status };
       leading = multiplyPolynomial(leading, inner.value);
@@ -199,7 +199,7 @@ function parseTermToPolynomial(body: string, variable: string): TermResult {
     return { status: "malformed" };
   }
 
-  if (!bracketPower) return { status: "unmarkable" };
+  if (!bracketPower) return sawBareBracket ? { status: "parsed", value: leading } : { status: "unmarkable" };
   return { status: "parsed", value: multiplyPolynomial(leading, bracketPower) };
 }
 

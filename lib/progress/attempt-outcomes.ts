@@ -1,4 +1,4 @@
-import type { MarkerOutcomeKind, MarkerOutcomeReason, MarkingStrategy } from "@/lib/marking/types";
+import type { MarkerOutcomeKind, MarkerOutcomeReason, MarkingPartResult, MarkingStrategy } from "@/lib/marking/types";
 import type { QuestionAttempt } from "@/lib/progress/types";
 
 export type EffectiveAttemptOutcome = {
@@ -31,4 +31,5 @@ export type NewAttemptMarkerFields = {
   outcomeReason?: MarkerOutcomeReason;
   strategy: MarkingStrategy;
   strategyVersion: number;
+  partOutcomes?: MarkingPartResult[];
 };

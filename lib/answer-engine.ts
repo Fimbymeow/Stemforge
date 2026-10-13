@@ -6,6 +6,8 @@ import { markCompositeAlgebraicEquivalence } from "@/lib/marking/composite-algeb
 import { markElementaryExpression } from "@/lib/marking/elementary-expression";
 import { markNumeric } from "@/lib/marking/numeric";
 import { markPolynomial } from "@/lib/marking/polynomial";
+import { markLinearEquation } from "@/lib/marking/linear-equation";
+import { markCoordinatePair } from "@/lib/marking/coordinate-pair";
 import type { MarkingResult } from "@/lib/marking/types";
 import { validateStructuredGraphAnswer } from "@/lib/questions/graph-answer-validation";
 
@@ -52,6 +54,9 @@ export function markQuestionAnswer(question: Pick<Question, "marking" | "structu
     if (contract.strategy === "composite_algebraic_equivalence") return markCompositeAlgebraicEquivalence(contract, studentAnswer);
     if (contract.strategy === "elementary_expression_equivalence") return markElementaryExpression(contract, studentAnswer);
     if (contract.strategy === "closed_vocabulary_text_answer") return markClosedVocabularyTextAnswer(contract, studentAnswer);
+    if (contract.strategy === "linear_equation_equivalence") return markLinearEquation(contract, studentAnswer);
+    if (contract.strategy === "coordinate_pair") return markCoordinatePair(contract, studentAnswer);
+    if (contract.strategy === "multipart") return markMultipart(contract, studentAnswer);
     if (contract.strategy === "multiple_choice") {
       const correct = studentAnswer === contract.correctOptionId;
       return {
@@ -69,6 +74,40 @@ export function markQuestionAnswer(question: Pick<Question, "marking" | "structu
     const contract = question.marking;
     return internal(contract?.strategy ?? "numeric", contract?.strategyVersion ?? 1, studentAnswer, "unexpected_marker_failure");
   }
+}
+
+function markMultipart(contract: Extract<import("@/lib/marking/types").QuestionMarkingContract, { strategy: "multipart" }>, studentAnswer: string): MarkingResult {
+  if (studentAnswer.length > 32_768 || contract.fields.length < 2 || contract.fields.length > 32 ||
+      new Set(contract.fields.map((field) => field.id)).size !== contract.fields.length) {
+    return multipartFailure(contract, studentAnswer, "malformed", "malformed_multipart");
+  }
+  let answers: Record<string, unknown>;
+  try { answers = JSON.parse(studentAnswer) as Record<string, unknown>; } catch { return multipartFailure(contract, studentAnswer, "malformed", "malformed_multipart"); }
+  if (!answers || typeof answers !== "object" || Array.isArray(answers) || Object.keys(answers).some((key) => !contract.fields.some((field) => field.id === key))) {
+    return multipartFailure(contract, studentAnswer, "malformed", "malformed_multipart");
+  }
+  const partResults = contract.fields.map((field) => {
+    const raw = answers[field.id];
+    const result = markQuestionAnswer({ marking: field.marking }, typeof raw === "string" ? normalizeMultipartInput(field.inputType, raw) : "");
+    return { fieldId: field.id, label: field.label, ...result, strategy: result.strategy as Exclude<typeof result.strategy, "multipart"> };
+  });
+  const base = { normalizedStudentAnswer: JSON.stringify(Object.fromEntries(contract.fields.map((field) => [field.id, typeof answers[field.id] === "string" ? normalizeMultipartInput(field.inputType, answers[field.id] as string) : ""]))), strategy: contract.strategy, strategyVersion: contract.strategyVersion, partResults };
+  if (partResults.some((part) => part.outcomeKind === "internal_error")) return { ...base, outcomeKind: "internal_error", isCorrect: null, diagnosticReason: "multipart_part_internal_error" };
+  if (partResults.some((part) => part.outcomeKind === "malformed")) return { ...base, outcomeKind: "malformed", isCorrect: null, outcomeReason: "malformed_multipart" };
+  if (partResults.some((part) => part.outcomeKind === "unmarkable")) return { ...base, outcomeKind: "unmarkable", isCorrect: null, outcomeReason: "unsupported_mathematical_form" };
+  const correct = partResults.every((part) => part.outcomeKind === "graded" && part.isCorrect === true);
+  return correct ? { ...base, outcomeKind: "graded", isCorrect: true } : { ...base, outcomeKind: "graded", isCorrect: false, outcomeReason: "value_wrong" };
+}
+
+function normalizeMultipartInput(type: string, raw: string) {
+  const trimmed = raw.trim();
+  if (type === "numeric") return trimmed.replace(/^(?:m|gradient)\s*=\s*/i, "");
+  if (type === "algebraic") return trimmed.replace(/^(?:dy\s*\/\s*dx|f'\s*\(\s*x\s*\))\s*=\s*/i, "");
+  return trimmed;
+}
+
+function multipartFailure(contract: Extract<import("@/lib/marking/types").QuestionMarkingContract, { strategy: "multipart" }>, input: string, outcomeKind: "malformed", outcomeReason: "malformed_multipart"): MarkingResult {
+  return { outcomeKind, isCorrect: null, outcomeReason, normalizedStudentAnswer: input, strategy: contract.strategy, strategyVersion: contract.strategyVersion };
 }
 
 function markStructured(question: Question, studentAnswer: string): MarkingResult {

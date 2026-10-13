@@ -19,6 +19,7 @@ import { parseNumericLiteral } from "@/lib/marking/numeric";
 import { parsePolynomial } from "@/lib/marking/polynomial";
 import { parseCompositeAlgebraicExpression } from "@/lib/marking/composite-algebraic";
 import { buildVocabulary } from "@/lib/marking/closed-vocabulary-text";
+import { parseLinearEquation } from "@/lib/marking/linear-equation";
 import { validateGraphDefinition } from "@/lib/maths/graph-validation";
 import { higherMathematicsCalculusPrerequisites } from "@/data/curriculum/higher-mathematics/calculus-prerequisites";
 import { higherMathematicsSkillPackageById } from "@/data/curriculum/higher-mathematics/skill-packages";
@@ -506,12 +507,49 @@ function validateMarkingContract(question: Question, location: string, issue: Is
     issue("error", "alpha-units-deferred", `Question "${question.id}" cannot declare active unit marking during Alpha.`, location);
   }
   const legalStrategies: readonly string[] = question.answerType === "numerical" ? ["numeric"]
-    : question.answerType === "algebraic" ? ["polynomial_form", "composite_algebraic_equivalence", "elementary_expression_equivalence"]
+    : question.answerType === "algebraic" ? ["polynomial_form", "composite_algebraic_equivalence", "elementary_expression_equivalence", "linear_equation_equivalence", "coordinate_pair"]
       : question.answerType === "multiple_choice" ? ["multiple_choice"]
-        : question.answerType === "written" || question.answerType === "multi_step" ? ["guided_self_check", "closed_vocabulary_text_answer"]
+        : question.answerType === "written" ? ["guided_self_check", "closed_vocabulary_text_answer"]
+          : question.answerType === "multi_step" ? ["guided_self_check", "closed_vocabulary_text_answer", "multipart"]
           : ["structured_graph"];
   if (!legalStrategies.includes(contract.strategy)) {
     issue("error", "marking-answer-type-mismatch", `Question "${question.id}" answer type requires one of strategies: ${legalStrategies.join(", ")}.`, location);
+    return;
+  }
+  if (contract.strategy === "multipart") {
+    const fields = contract.fields;
+    if (fields.length < 2 || fields.length > 32 || new Set(fields.map((field) => field.id)).size !== fields.length) {
+      issue("error", "invalid-multipart-contract", `Question "${question.id}" must declare between 2 and 32 uniquely identified assessed fields.`, location);
+      return;
+    }
+    if (!question.answerFields || JSON.stringify(question.answerFields) !== JSON.stringify(fields)) {
+      issue("error", "invalid-multipart-contract", `Question "${question.id}" answerFields must exactly match its multipart marking fields.`, location);
+    }
+    for (const field of fields) {
+      if (!/^[a-z][a-z0-9_]*$/.test(field.id) || !field.label.trim()) {
+        issue("error", "invalid-multipart-field", `Question "${question.id}" has an invalid multipart field identity.`, location);
+        continue;
+      }
+      const expectedInput = field.marking.strategy === "numeric" ? "numeric"
+        : field.marking.strategy === "coordinate_pair" ? "coordinate"
+        : field.marking.strategy === "linear_equation_equivalence" ? "line_equation"
+        : field.marking.strategy === "closed_vocabulary_text_answer" ? "text" : "algebraic";
+      if (field.inputType !== expectedInput) issue("error", "invalid-multipart-field", `Question "${question.id}" field "${field.id}" has an input type that does not match its marker.`, location);
+      const fixtures = field.marking.fixtures;
+      const fieldQuestion: Question = {
+        ...question,
+        answerType: field.marking.strategy === "numeric" ? "numerical" : field.marking.strategy === "closed_vocabulary_text_answer" ? "written" : "algebraic",
+        marking: field.marking,
+        answerFields: undefined,
+        correctAnswer: fixtures.correct[0]?.input ?? "",
+        acceptedAnswers: fixtures.correct.map((fixture) => fixture.input),
+      };
+      validateMarkingContract(fieldQuestion, `${location}/answerFields/${field.id}`, issue);
+    }
+    const target = markQuestionAnswer(question, question.correctAnswer);
+    if (target.outcomeKind !== "graded" || target.isCorrect !== true) {
+      issue("error", "invalid-multipart-target", `Question "${question.id}" canonical multipart answer must grade correct.`, location);
+    }
     return;
   }
   if (contract.strategy === "numeric") {
@@ -560,6 +598,15 @@ function validateMarkingContract(question: Question, location: string, issue: Is
     validateFixtures(question, contract.fixtures, location, issue);
   } else if (contract.strategy === "elementary_expression_equivalence") {
     if (!validateElementaryExpressionContract(contract)) issue("error", "invalid-elementary-expression-contract", `Question "${question.id}" has an invalid elementary-expression target or capability subset.`, location);
+    validateFixtures(question, contract.fixtures, location, issue);
+  } else if (contract.strategy === "linear_equation_equivalence") {
+    if (contract.variables[0] !== "x" || contract.variables[1] !== "y" || parseLinearEquation(contract.target).status !== "parsed") {
+      issue("error", "invalid-linear-equation-contract", `Question "${question.id}" has an invalid affine x/y equation target.`, location);
+    }
+    validateFixtures(question, contract.fixtures, location, issue);
+  } else if (contract.strategy === "coordinate_pair") {
+    const target = markQuestionAnswer(question, contract.target);
+    if (target.outcomeKind !== "graded" || target.isCorrect !== true) issue("error", "invalid-coordinate-pair-contract", `Question "${question.id}" has an invalid exact coordinate-pair target.`, location);
     validateFixtures(question, contract.fixtures, location, issue);
   } else if (contract.strategy === "closed_vocabulary_text_answer") {
     const vocabulary = buildVocabulary({ target: contract.target, acceptedAnswers: contract.acceptedAnswers });

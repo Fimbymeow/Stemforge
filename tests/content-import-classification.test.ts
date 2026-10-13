@@ -143,17 +143,14 @@ test("live marker oracle supports flat polynomials and exact numeric fractions",
   }
 });
 
-test("unsupported composite, equation, coordinate, interval and integration forms block with exact capabilities", () => {
+test("unsupported composite, interval and integration forms still block with exact capabilities", () => {
   const fixtures: Array<[string, string, RequiredCapability]> = [
     ["(x+1)^(1/3)", "algebraic", "composite_algebraic_equivalence"],
-    ["x(30-2x)", "algebraic", "composite_algebraic_equivalence"],
     ["2x^2+2000/x", "algebraic", "composite_algebraic_equivalence"],
     ["x^-2", "algebraic", "composite_algebraic_equivalence"],
     ["x^(1/2)", "algebraic", "composite_algebraic_equivalence"],
     ["sqrt(x)", "algebraic", "composite_algebraic_equivalence"],
     ["2/x", "algebraic", "composite_algebraic_equivalence"],
-    ["y=3x+2", "algebraic", "equation_form_answer"],
-    ["(2,3)", "coordinate", "structured_coordinate_pair"],
     ["x<2", "interval", "interval_set"],
     ["x^2+C", "algebraic", "arbitrary_integration_constant"],
   ];
@@ -162,6 +159,15 @@ test("unsupported composite, equation, coordinate, interval and integration form
     assert.equal(classification.status, "blocked", answer);
     assert.ok(classification.blockers.some((item) => item.requiredCapability === capability), answer);
   }
+});
+
+test("bounded line equations and exact coordinate pairs now classify through explicit strategies", () => {
+  const equation = auditBankAssessment(syntheticBank(questionIR({ answerCandidates: [candidate("y=3x+2", "algebraic")] })))[0];
+  assert.equal(equation.status, "ready");
+  assert.equal(equation.markerCompatibility?.strategy, "linear_equation_equivalence");
+  const coordinate = auditBankAssessment(syntheticBank(questionIR({ answerCandidates: [candidate("(2,3)", "coordinate")] })))[0];
+  assert.equal(coordinate.status, "ready");
+  assert.equal(coordinate.markerCompatibility?.strategy, "coordinate_pair");
 });
 
 test("a supported V1 composite-algebraic target reaches ready or convertible with every declared alias checked", () => {
@@ -289,6 +295,37 @@ test("undeclared multi-field answers block while explicit single-assessed scaffo
   const converted = auditBankAssessment(syntheticBank(questionIR({ answerCandidates: explicit, explicitFieldAssessment: true })))[0];
   assert.equal(converted.status, "convertible");
   assert.ok(converted.conversions.includes("explicit_scaffolding_field_drop"));
+});
+
+test("explicit multipart assessment preserves every assessed field, drops only declared scaffolding, and keeps question marks authoritative", () => {
+  const fields = [
+    { ...candidate("2", "exact", "gradient"), label: "Gradient", assessed: true },
+    { ...candidate("y=2x+3", "algebraic", "equation"), label: "Tangent equation", assessed: true },
+    { ...candidate("working", "unsupported_working", "working"), label: "Working", assessed: false },
+  ];
+  const classification = auditBankAssessment(syntheticBank(questionIR({ marks: 5, interactionType: "multi_step", answerCandidates: fields, explicitFieldAssessment: true })))[0];
+  assert.notEqual(classification.status, "blocked");
+  assert.equal(classification.markerCompatibility?.strategy, "multipart");
+  assert.ok(classification.conversions.includes("explicit_scaffolding_field_drop"));
+});
+
+test("multipart import fails closed for undeclared shapes and arbitrary assessed field types", () => {
+  const undeclared = auditBankAssessment(syntheticBank(questionIR({
+    answerCandidates: [candidate("2", "exact", "gradient"), candidate("y=2x+3", "algebraic", "equation")],
+  })))[0];
+  assert.equal(undeclared.status, "blocked");
+  assert.ok(undeclared.blockers.some((item) => item.code === "undeclared_multi_field_assessment"));
+
+  const arbitrary = auditBankAssessment(syntheticBank(questionIR({
+    interactionType: "multi_step",
+    answerCandidates: [
+      { ...candidate("2", "exact", "gradient"), assessed: true },
+      { ...candidate("because", "essay", "reason"), assessed: true },
+    ],
+    explicitFieldAssessment: true,
+  })))[0];
+  assert.equal(arbitrary.status, "blocked");
+  assert.ok(arbitrary.blockers.some((item) => item.code === "unsupported_answer_field_type"));
 });
 
 test("closed vocabulary, prompt diagrams, graph responses and repeated coordinate/nature groups have bounded blocker codes", () => {
@@ -645,18 +682,20 @@ test("undeclared_multi_field_assessment no longer appears anywhere in the Chain 
   assert.deepEqual(occurrences, []);
 });
 
-test("the new Tangents draft's five migrated questions are honestly reported: all remain blocked by equation-form / multi-field marking limitations", () => {
+test("the Tangents acceptance fixture now classifies all five questions through bounded equation and multipart marking", () => {
   const bank = loadBank("tangents-and-normals-v1.md");
   const classifications = auditBankAssessment(bank);
   assert.equal(bank.questions.length, 5);
-  assert.ok(classifications.every((c) => c.status === "blocked"), "no marking metadata was changed by this migration, so nothing became ready or convertible");
+  assert.ok(classifications.every((c) => c.status === "ready"));
 
   const a001 = classifications.find((c) => c.questionId === "hm-calc-tangent-a-001")!;
-  assert.deepEqual(a001.blockers.map((b) => b.code), ["requires_equation_form_answer"]);
+  assert.equal(a001.markerCompatibility?.strategy, "linear_equation_equivalence");
+  assert.deepEqual(a001.blockers, []);
 
   for (const id of ["hm-calc-tangent-ppq-001", "hm-calc-tangent-ppq-002", "hm-calc-tangent-ppq-003", "hm-calc-tangent-ppq-004"]) {
     const classification = classifications.find((c) => c.questionId === id)!;
-    assert.deepEqual(classification.blockers.map((b) => b.code), ["undeclared_multi_field_assessment"], id);
+    assert.equal(classification.markerCompatibility?.strategy, "multipart", id);
+    assert.deepEqual(classification.blockers, [], id);
   }
 });
 

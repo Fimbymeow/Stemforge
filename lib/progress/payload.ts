@@ -67,13 +67,32 @@ export const isQuestionAttempt = (value: unknown): value is QuestionAttempt =>
   validMarkerFields(value as QuestionAttempt);
 
 function validMarkerFields(attempt: QuestionAttempt) {
-  if (!hasCompleteMarkerMetadata(attempt)) return true;
+  if (!hasCompleteMarkerMetadata(attempt)) return attempt.partOutcomes === undefined;
   if (!isLegalPersistedMarkerMetadata(attempt)) return false;
+  if (attempt.partOutcomes !== undefined && (!Array.isArray(attempt.partOutcomes) || !attempt.partOutcomes.every(validPartOutcome))) return false;
+  if (attempt.strategy !== "multipart") return attempt.partOutcomes === undefined && validAggregateOutcome(attempt);
+  if (!attempt.partOutcomes || attempt.partOutcomes.length < 2 || new Set(attempt.partOutcomes.map((part) => part.fieldId)).size !== attempt.partOutcomes.length) return false;
+  const kinds = attempt.partOutcomes.map((part) => part.outcomeKind);
+  if (attempt.outcomeKind === "graded" && (!kinds.every((kind) => kind === "graded") || attempt.isCorrect !== attempt.partOutcomes.every((part) => part.isCorrect === true))) return false;
+  if (attempt.outcomeKind === "malformed" && !kinds.includes("malformed")) return false;
+  if (attempt.outcomeKind === "unmarkable" && (kinds.includes("malformed") || !kinds.includes("unmarkable"))) return false;
+  if (attempt.outcomeKind === "guided_pending") return false;
+  return validAggregateOutcome(attempt);
+}
+
+function validAggregateOutcome(attempt: QuestionAttempt) {
   if (attempt.outcomeKind === "graded") {
     return typeof attempt.isCorrect === "boolean" &&
       (attempt.isCorrect ? attempt.outcomeReason === undefined : attempt.outcomeReason !== undefined);
   }
   return attempt.isCorrect === null;
+}
+
+function validPartOutcome(part: import("@/lib/marking/types").MarkingPartResult) {
+  if (!part || typeof part !== "object" || !hasText(part.fieldId) || !hasText(part.label) || typeof part.normalizedStudentAnswer !== "string") return false;
+  if (part.outcomeKind === "internal_error") return false;
+  return isLegalPersistedMarkerMetadata({ outcomeKind: part.outcomeKind, outcomeReason: part.outcomeReason, strategy: part.strategy, strategyVersion: part.strategyVersion }) &&
+    (part.outcomeKind === "graded" ? typeof part.isCorrect === "boolean" : part.isCorrect === null);
 }
 
 export function isQuestionSupportEventV2(value: unknown): value is QuestionSupportEventV2 {

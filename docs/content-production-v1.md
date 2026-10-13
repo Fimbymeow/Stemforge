@@ -28,6 +28,20 @@ The generated production tracker is the operational view. Do not maintain a seco
 
 Every stage must use real evidence. Missing evidence stays incomplete; filenames, hashes and manifests are references, not proof of human review.
 
+### Current bounded multipart marking contract
+
+The import and learner workspace now support genuinely multipart assessed responses. New Markdown
+must use fenced `answerFields` YAML and explicitly mark every field with `assessed: true` or
+`assessed: false`; two or more assessed fields are submitted and marked together. Use only the
+repository-supported exact numeric, bounded algebraic-expression, exact coordinate-pair,
+closed-vocabulary `text_short`, and affine `x`/`y` line-equation shapes documented in
+`docs/content-import-foundation.md`. Question marks are authored independently of field count.
+
+Equivalent line equations may use slope-intercept, point-gradient or rearranged implicit form.
+Nonlinear equations, inequalities, systems, arbitrary free text and other symbolic forms remain
+unsupported and must block production. Hints and worked solutions remain question-level support,
+not per-field evidence.
+
 ## Question ownership and cross-topic integration
 
 Question ownership is determined by the primary assessed objective: the mathematical evidence the learner must produce for the question to have done its main job. A method, representation or context used on the way does not become the owner merely because it appears in the prompt or solution.
@@ -124,6 +138,8 @@ Automated validation does not prove pedagogy, originality, mathematical quality 
 
 - **Chain Rule:** standard, published and production-ready; 10 Foundations, 9 Applications and 15 Past Paper-style questions. Its apply receipt is present; later version-controlled rebrand/LaTeX edits mean the original receipt output hash is historical rather than the current file hash.
 - **Basic Differentiation:** live grandfathered baseline; 3/3/2 canonical questions; not production-ready until its recorded issues and missing approvals are resolved.
-- **Tangents:** unpublished package in progress; 0/1/4 authored questions, no Notes, known marking blockers, and historical-pattern audit is the next stage.
+- **Tangents:** unpublished package in progress; 0/1/4 authored questions and no Notes. Its former
+  affine-equation and multipart marking infrastructure blockers are resolved, but the skill still
+  requires the normal production, QA, approval and import gates before publication.
 
 The tracker selects Tangents as the current global recommendation because it is the earliest canonical unpublished skill with an existing in-progress package. This is a deterministic coordination recommendation, not an automatic publication instruction.

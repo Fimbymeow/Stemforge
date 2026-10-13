@@ -48,8 +48,10 @@ The other banks deliberately have no production-valid configuration yet:
 - Optimisation and Basic Integration have path slugs but no live stage IDs.
 - Stationary Points has no live stages and also requires an unresolved product decision between
   the Stationary Points and Nature of stationary points paths.
-- Tangents has a draft import configuration reference, but its missing Foundations source and
-  unsupported equation-form/structured marking keep it non-importable.
+- Tangents has only a draft import configuration reference and remains unpublished. Its former
+  straight-line-equation and multipart-response infrastructure blockers are resolved, but this
+  does not supply missing production evidence, content approval, a production-valid import
+  configuration, or permission to import it.
 
 Inventing stage IDs or resolving that split would violate strict configuration and product
 ownership. Tests retain explicit invalid/pending examples to prove these cases fail closed.
@@ -144,6 +146,73 @@ The parser supports the two real bank patterns:
 - bare `Correct answer` plus Markdown `Accepted answers`;
 - fenced YAML `answerFields`.
 
+### Bounded multipart answers and straight-line equations
+
+New multipart authoring must declare every field as assessed or scaffolding. More than one
+`assessed: true` field produces one multipart response; `assessed: false` fields are discarded as
+authoring scaffolding. A single assessed field keeps the existing scaffolding-drop conversion.
+Question `marks` remain authoritative and are not inferred from the number of fields.
+
+````markdown
+Answer fields:
+```yaml
+answerFields:
+  - id: gradient
+    label: Gradient at x = 1
+    type: exact
+    correctAnswer: 2
+    acceptedAnswers:
+      - 2
+      - m=2
+      - gradient=2
+    assessed: true
+
+  - id: point
+    label: Point of contact
+    type: coordinate
+    correctAnswer: (1,5)
+    acceptedAnswers:
+      - (1,5)
+      - x=1,y=5
+    assessed: true
+
+  - id: tangent_equation
+    label: Tangent equation
+    type: algebraic
+    correctAnswer: y=2x+3
+    acceptedAnswers:
+      - y=2x+3
+      - y-5=2(x-1)
+      - 2x-y+3=0
+    assessed: true
+```
+````
+
+The supported multipart field shapes are deliberately narrow:
+
+- `numeric`, `numerical`, or `exact`: existing exact numeric marking, with bounded `m=` or
+  `gradient=` wrappers for multipart numeric fields;
+- `algebraic`: an existing supported expression, with bounded derivative wrappers, or an affine
+  equation in `x` and `y` when the target contains `=`;
+- `coordinate`: one exact ordered pair, including `(a,b)`, `a,b`, or `x=a,y=b`;
+- `text_short`: only the existing small, explicit closed vocabulary.
+
+The line-equation marker accepts mathematically equivalent affine forms, including slope-intercept,
+point-gradient and rearranged implicit equations with exact integer, decimal or fractional
+coefficients. It rejects nonlinear equations, inequalities, systems, extra variables, functions,
+and division by a variable. Unsupported mathematics is never sent to a general symbolic solver.
+
+Multipart answers are submitted atomically. Each field receives its own deterministic marker
+result, while the aggregate question is correct only when every assessed field is correct. A
+malformed field makes the aggregate malformed; otherwise an unsupported field makes it
+unmarkable. Marks remain question-owned. Hints and worked solutions remain question-level support:
+viewing a hint before submission applies to the whole multipart attempt, and the worked solution
+keeps the existing post-attempt behaviour.
+
+For backward compatibility, already reviewed `Type: multi_step` source using the legacy Tangents
+shape can be classified as multipart without rewriting the source. Do not copy that exception into
+new banks: new multipart content must use explicit `assessed` values.
+
 It also supports a fenced `Curriculum metadata` YAML block using the existing canonical shape only:
 `curriculum.primarySkillId` and `curriculum.requiredSkillIds`. Classification requires the primary
 skill to match the configured target and every required skill ID to exist in the canonical registry;
@@ -181,8 +250,8 @@ bank.
 
 ## Classification and blocker taxonomy
 
-Ready questions have exactly one assessed answer and every declared accepted answer succeeds under
-the same live marking strategy.
+Ready questions have either one assessed answer or a bounded, explicitly declared multipart
+response, and every declared accepted answer succeeds under its field's live marking strategy.
 
 Permitted conversions are limited to:
 

@@ -141,6 +141,32 @@ test("all eight production marking contracts execute their outcome-specific fixt
   assert.equal(higherMathsDifferentiationQuestions.length, 8);
 });
 
+test("content validation accepts a coherent multipart contract and rejects field metadata drift", () => {
+  const questions = cloneQuestions();
+  const fixtures = {
+    correct: [{ input: "2" }],
+    incorrect: [{ input: "3", reason: "value_wrong" as const }],
+    malformed: [{ input: "++", reason: "malformed_numeric" as const }],
+    unmarkable: [{ input: "sin(x)", reason: "expression_not_permitted" as const }],
+  };
+  const equationFixtures = {
+    correct: [{ input: "y=2x+3" }],
+    incorrect: [{ input: "y=0", reason: "value_wrong" as const }],
+    malformed: [{ input: "not-an-equation", reason: "malformed_linear_equation" as const }],
+    unmarkable: [{ input: "y=x^2", reason: "unsupported_mathematical_form" as const }],
+  };
+  const fields = [
+    { id: "gradient", label: "Gradient", inputType: "numeric" as const, marking: { strategy: "numeric" as const, strategyVersion: 1 as const, target: "2", comparison: { type: "exact" as const }, fixtures } },
+    { id: "equation", label: "Tangent equation", inputType: "line_equation" as const, marking: { strategy: "linear_equation_equivalence" as const, strategyVersion: 1 as const, target: "y=2x+3", variables: ["x", "y"] as ["x", "y"], fixtures: equationFixtures } },
+  ];
+  questions[0] = { ...questions[0], answerType: "multi_step", marking: { strategy: "multipart", strategyVersion: 1, fields }, answerFields: fields, marks: 5, correctAnswer: JSON.stringify({ gradient: "2", equation: "y=2x+3" }), acceptedAnswers: [JSON.stringify({ gradient: "2", equation: "y=2x+3" })] };
+  const coherent = reportFor(cloneSubject(), questions);
+  assert.ok(!coherent.errors.some((issue) => issue.code.includes("multipart") || issue.code.includes("linear-equation")), coherent.errors.map((issue) => `${issue.code}:${issue.message}`).join("\n"));
+
+  questions[0] = { ...questions[0], answerFields: fields.slice(0, 1) };
+  assert.ok(reportFor(cloneSubject(), questions).errors.some((issue) => issue.code === "invalid-multipart-contract"));
+});
+
 for (const invalid of [undefined, 0, -1, 1.5, "1"]) {
   test(`invalid questionVersion ${String(invalid)} is rejected`, () => {
     const questions = cloneQuestions();

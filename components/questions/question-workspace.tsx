@@ -290,6 +290,7 @@ function QuestionWorkspaceCore({
         return;
       }
       const evidenceBefore = shouldPersist ? runtime.getEvidence() : null;
+      const answerForEvidence = marking.strategy === "multipart" ? marking.normalizedStudentAnswer : answerForMarking;
       const saved = !shouldPersist || await runtime.saveAttempt({
         questionId: question.id,
         skillPathId: question.skillPathId ?? skillPath?.slug ?? "unknown",
@@ -299,7 +300,8 @@ function QuestionWorkspaceCore({
         ...(marking.outcomeReason ? { outcomeReason: marking.outcomeReason } : {}),
         strategy: marking.strategy,
         strategyVersion: marking.strategyVersion,
-        answer: answerForMarking,
+        answer: answerForEvidence,
+        ...(marking.partResults ? { partOutcomes: marking.partResults } : {}),
         attemptedAt: new Date().toISOString(),
         ...(session ? { practiceSessionId: session.practiceSessionId } : {}),
       });
@@ -317,7 +319,7 @@ function QuestionWorkspaceCore({
           subjectSlug: context?.subject.subjectSlug,
         }));
       }
-      setSubmittedAnswer(answerForMarking);
+      setSubmittedAnswer(answerForEvidence);
       setSubmitted(true);
       showFeedback(classified);
       await session?.onEvidenceRecorded?.();
@@ -379,7 +381,10 @@ function QuestionWorkspaceCore({
     setSolutionOpenedThisInteraction(false);
     setClearedEarlierMistake(false);
     window.requestAnimationFrame(() => {
-      const input = document.getElementById("question-answer") as HTMLInputElement | HTMLTextAreaElement | HTMLElement | null;
+      const input = (
+        document.getElementById("question-answer")
+        ?? document.querySelector<HTMLElement>('[data-testid^="answer-field-"]')
+      ) as HTMLInputElement | HTMLTextAreaElement | HTMLElement | null;
       input?.focus();
       if (input instanceof HTMLInputElement || input instanceof HTMLTextAreaElement) input.select();
     });
@@ -493,7 +498,9 @@ function QuestionWorkspaceCore({
               <div className="rounded border border-rule bg-canvas p-6 text-lg leading-relaxed max-sm:p-4"><MathContent>{question.questionText}</MathContent></div>
               <QuestionGraphVisual question={question} />
               <div className="mt-7">
-                <label id="answer-label" htmlFor="question-answer" className="mb-2 block text-sm font-extrabold">Your answer</label>
+                {question.marking.strategy === "multipart"
+                  ? <p id="answer-label" className="mb-2 text-sm font-extrabold">Your answers</p>
+                  : <label id="answer-label" htmlFor="question-answer" className="mb-2 block text-sm font-extrabold">Your answer</label>}
                 <form
                   onSubmit={(event) => {
                     event.preventDefault();
@@ -551,7 +558,18 @@ function QuestionWorkspaceCore({
                       {submittedAnswer !== null ? (
                         <div className="mt-3 rounded-lg bg-white/75 px-4 py-3" data-testid="submitted-answer">
                           <span className="mb-1 block text-sm font-bold text-muted">Your submitted answer</span>
-                          <code className="block whitespace-pre-wrap break-words font-mono text-base text-ink">{submittedAnswer}</code>
+                          {markedSubmission?.partResults?.length ? (
+                            <ul className="grid gap-2" aria-label="Results by answer part">
+                              {markedSubmission.partResults.map((part) => (
+                                <li key={part.fieldId} data-testid={`answer-result-${part.fieldId}`} className="flex flex-wrap items-center justify-between gap-2 border-b border-line/60 pb-2 last:border-0 last:pb-0">
+                                  <span className="font-semibold">{part.label}</span>
+                                  <span className={part.isCorrect === true ? "text-success" : part.outcomeKind === "graded" ? "text-danger" : "text-warning"}>
+                                    {part.isCorrect === true ? "Correct" : part.outcomeKind === "graded" ? "Check this part" : "Could not mark this part"}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : <code className="block whitespace-pre-wrap break-words font-mono text-base text-ink">{submittedAnswer}</code>}
                         </div>
                       ) : null}
                       {isCorrect || completedWithCurrentSolution ? (

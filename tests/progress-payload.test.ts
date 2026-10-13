@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createDefaultProgressPayload, migrateProgressPayload } from "../lib/progress/payload";
+import { createDefaultProgressPayload, isQuestionAttempt, migrateProgressPayload } from "../lib/progress/payload";
 import type { AchievementSnapshot, QuestionAttemptV2, QuestionSupportEventV2 } from "../lib/progress/types";
 import { attempt, selfAssessment, supportEvent } from "./progress-fixtures";
 
@@ -25,6 +25,19 @@ function v2Event(overrides: Partial<QuestionSupportEventV2> = {}): QuestionSuppo
 
 test("creates an empty version 7 payload", () => {
   assert.deepEqual(createDefaultProgressPayload(), { version: 7, data: { attempts: [], supportEvents: [], guidedSelfAssessments: [], achievementSnapshots: [], reviewEvents: [], flashcardReviews: [] } });
+});
+
+test("multipart evidence preserves canonical aggregate and field outcomes but rejects inconsistent aggregation", () => {
+  const partOutcomes = [
+    { fieldId: "gradient", label: "Gradient", outcomeKind: "graded" as const, isCorrect: true, normalizedStudentAnswer: "2", strategy: "numeric" as const, strategyVersion: 1 },
+    { fieldId: "equation", label: "Tangent equation", outcomeKind: "graded" as const, isCorrect: true, normalizedStudentAnswer: "y=2x+3", strategy: "linear_equation_equivalence" as const, strategyVersion: 1 },
+  ];
+  const valid = attempt({ answer: JSON.stringify({ gradient: "2", equation: "y=2x+3" }), isCorrect: true, outcomeKind: "graded", strategy: "multipart", strategyVersion: 1, partOutcomes });
+  assert.equal(isQuestionAttempt(valid), true);
+  assert.equal(isQuestionAttempt({ ...valid, isCorrect: false, outcomeReason: "value_wrong" }), false);
+  assert.equal(isQuestionAttempt({ ...valid, strategy: "numeric" }), false);
+  assert.equal(isQuestionAttempt({ ...attempt(), partOutcomes }), false);
+  assert.equal(isQuestionAttempt({ ...valid, partOutcomes: [...partOutcomes, { ...partOutcomes[0] }] }), false);
 });
 
 test("loads valid V3 known and unknown evidence without semantic mutation", () => {
