@@ -2,7 +2,6 @@ import { expect, test } from "./fixtures/test";
 
 const routes = [
   ["/tuition", "Home"],
-  ["/tuition/subjects", "Subjects"],
   ["/tuition/about", "About"],
   ["/tuition/pricing", "Pricing"],
 ] as const;
@@ -26,13 +25,14 @@ for (const [route, activeLabel] of routes) {
   });
 }
 
-test("Subjects tabs preserve real course content and accessible state", async ({ page, seriousBrowserErrors }) => {
-  await page.goto("/tuition/subjects");
-  const higherMaths = page.getByRole("tab", { name: "Higher Maths" });
-  await higherMaths.click();
-  await expect(higherMaths).toHaveAttribute("aria-selected", "true");
-  await expect(page.getByRole("heading", { level: 2, name: "Higher Maths" })).toBeVisible();
-  await expect(page.getByText("£25/hour", { exact: false })).toBeVisible();
+test("Tuition exposes only the three canonical pages", async ({ page, seriousBrowserErrors }) => {
+  await page.goto("/tuition");
+  const navigation = page.getByRole("navigation", { name: "Tuition", exact: true });
+  await expect(navigation.getByRole("link", { name: "Home", exact: true })).toBeVisible();
+  await expect(navigation.getByRole("link", { name: "About", exact: true })).toBeVisible();
+  await expect(navigation.getByRole("link", { name: "Pricing", exact: true })).toBeVisible();
+  await expect(navigation.getByRole("link", { name: "Subjects", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "View pricing", exact: true }).first()).toHaveAttribute("href", "/tuition/pricing");
   expect(seriousBrowserErrors).toEqual([]);
 });
 

@@ -7,7 +7,6 @@ import { TuitionButtonLink } from "@/components/tuition/tuition-button";
 
 const navItems = [
   ["Home", "/tuition"],
-  ["Subjects", "/tuition/subjects"],
   ["About", "/tuition/about"],
   ["Pricing", "/tuition/pricing"],
 ] as const;

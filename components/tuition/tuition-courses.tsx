@@ -38,10 +38,10 @@ export function TuitionCourses() {
                   From £{level.pricePerHour}<span className="font-semibold text-muted">/hour</span>
                 </span>
                 <Link
-                  href={`/tuition/subjects?level=${level.slug}`}
+                  href="/tuition/pricing"
                   className="tuition-interactive inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-forge"
                 >
-                  View subject <ArrowRight className="tuition-arrow size-3.5" />
+                  View pricing <ArrowRight className="tuition-arrow size-3.5" />
                 </Link>
               </div>
             </article>

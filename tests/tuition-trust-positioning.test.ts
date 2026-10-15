@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
 import { tuitionLevels, tuitionTestimonials } from "../components/tuition/tuition-data";
 
@@ -9,7 +9,6 @@ const TUITION_FILES = [
   "app/tuition/page.tsx",
   "app/tuition/about/page.tsx",
   "app/tuition/pricing/page.tsx",
-  "app/tuition/subjects/page.tsx",
   "components/tuition/tuition-hero.tsx",
   "components/tuition/tuition-intro.tsx",
   "components/tuition/tuition-about.tsx",
@@ -205,11 +204,18 @@ test("the stale placeholder tuition contact route is removed and the limitation 
 });
 
 test("key Tuition pages exist and import their navbar and footer (structural render check)", () => {
-  for (const file of ["app/tuition/page.tsx", "app/tuition/about/page.tsx", "app/tuition/pricing/page.tsx", "app/tuition/subjects/page.tsx"]) {
+  for (const file of ["app/tuition/page.tsx", "app/tuition/about/page.tsx", "app/tuition/pricing/page.tsx"]) {
     const text = source(file);
     assert.match(text, /TuitionNavbar/, `${file} must render the shared navbar`);
     assert.match(text, /TuitionFooter/, `${file} must render the shared footer`);
   }
+});
+
+test("Tuition exposes only Home, About and Pricing as standalone pages", () => {
+  const navbar = source("components/tuition/tuition-navbar.tsx");
+  assert.doesNotMatch(navbar, /\/tuition\/subjects|\["Subjects"/);
+  assert.equal(existsSync("app/tuition/subjects/page.tsx"), false);
+  assert.equal(existsSync("components/tuition/tuition-subjects.tsx"), false);
 });
 
 test("mobile-sensitive layout classes are retained on the navbar and hero (bounded mobile correction, not a navigation rewrite)", () => {

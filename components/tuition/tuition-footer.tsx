@@ -20,20 +20,17 @@ export function TuitionFooter() {
           <p className="m-0 text-xs font-bold uppercase tracking-[0.1em] text-ink">Navigation</p>
           <nav className="mt-3 grid gap-2 text-sm text-muted" aria-label="Tuition footer">
             <Link href="/tuition">Home</Link>
-            <Link href="/tuition/subjects">Subjects</Link>
             <Link href="/tuition/about">About</Link>
             <Link href="/tuition/pricing">Pricing</Link>
           </nav>
         </div>
         <div>
           <p className="m-0 text-xs font-bold uppercase tracking-[0.1em] text-ink">Levels</p>
-          <nav className="mt-3 grid gap-2 text-sm text-muted" aria-label="Tuition levels">
+          <ul className="mt-3 grid gap-2 p-0 text-sm text-muted" aria-label="Tuition levels">
             {tuitionLevels.map((level) => (
-              <Link key={level.slug} href={`/tuition/subjects?level=${level.slug}`}>
-                {level.name}
-              </Link>
+              <li key={level.slug}>{level.name}</li>
             ))}
-          </nav>
+          </ul>
         </div>
       </div>
       <div className={`${TUITION_CONTAINER} mt-10 flex flex-wrap items-start justify-between gap-4 border-t border-line pt-6 text-xs leading-relaxed text-muted`}>
