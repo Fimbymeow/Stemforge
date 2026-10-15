@@ -13,8 +13,8 @@ export function TuitionHero() {
         Clear, <TuitionEmphasis>structured</TuitionEmphasis> Maths and Physics tuition for National 5 and Higher.
       </h1>
       <p className="mx-auto mt-6 max-w-[590px] text-lg leading-[1.55] text-muted">
-        One-to-one support from Finlay Kennedy, who achieved A grades across five Highers and is now studying
-        Advanced Higher Maths, Physics and Chemistry.
+        One-to-one support from Finlay Kennedy, with 2+ years of tutoring experience and A grades across five
+        Highers.
       </p>
       <div className="mt-9 flex flex-wrap justify-center gap-3">
         <TuitionButtonLink href="#contact" size="lg">
@@ -24,7 +24,10 @@ export function TuitionHero() {
           Explore levels
         </TuitionButtonLink>
       </div>
-      <p className="mx-auto mt-7 max-w-[600px] text-sm leading-relaxed text-muted">Five Higher A grades · Currently studying Advanced Higher Maths, Physics and Chemistry · First session free</p>
+      <p className="mx-auto mt-7 max-w-[720px] text-sm leading-relaxed text-muted">
+        Currently studying Advanced Higher Mathematics, Physics, Chemistry and Mathematics of Mechanics · First
+        session free
+      </p>
     </section>
   );
 }

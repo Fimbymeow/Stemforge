@@ -14,7 +14,9 @@
     {{CANONICAL}}
     <link rel="icon" href="/assets/orthic-mark.svg" type="image/svg+xml">
     <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/chain-rule-demo.css">
     <script src="/waitlist.js" defer></script>
+    <script src="/chain-rule-demo.js" type="module"></script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">Skip to main content</a>
@@ -33,8 +35,44 @@
           <p class="eyebrow">Built for Scottish STEM</p>
           <h1>Master Scottish STEM, one skill at a time.</h1>
           <p class="hero-copy">Orthic turns Scottish qualifications into clear learning paths, deliberate practice and exam-focused revision.</p>
-          <div class="hero-form"><div data-waitlist-form></div></div>
+          <div class="hero-form" id="join-waitlist"><div data-waitlist-form></div></div>
           <p class="launch-scope">Launching soon. Starting with Higher Maths.</p>
+        </div>
+      </section>
+
+      <section class="section demo-section" aria-labelledby="demo-title" data-chain-rule-demo data-question-id="hm-calc-diff-chain-f-003">
+        <div class="section-inner demo-layout">
+          <div class="demo-introduction">
+            <p class="eyebrow">Try Orthic</p>
+            <h2 id="demo-title">A real Higher Maths question.</h2>
+            <p>See how Orthic helps you work through a skill, check an equivalent answer and learn from the method.</p>
+          </div>
+          <article class="demo-workspace" aria-labelledby="demo-question-title">
+            <header class="demo-question-header">
+              <p>Higher Maths <span aria-hidden="true">·</span> Chain Rule</p>
+              <span data-demo-marks></span>
+            </header>
+            <h3 id="demo-question-title" class="sr-only">Chain Rule question</h3>
+            <div class="demo-question" data-demo-question role="group" aria-labelledby="demo-question-title"></div>
+
+            <form class="demo-answer-form" data-demo-answer-form novalidate>
+              <label id="demo-answer-label" for="orthic-demo-answer">Your answer</label>
+              <div class="demo-answer-host" data-demo-answer-host>
+                <input id="orthic-demo-answer" name="answer" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="512" aria-describedby="demo-answer-help demo-feedback" placeholder="Enter an algebraic expression">
+              </div>
+              <p id="demo-answer-help" class="demo-answer-help">Use brackets and powers as you would on paper. Press Enter to check.</p>
+              <button class="demo-check-button" type="submit">Check answer <span aria-hidden="true">→</span></button>
+            </form>
+
+            <div id="demo-feedback" class="demo-feedback" data-demo-feedback aria-live="polite" hidden></div>
+            <div class="demo-support-actions">
+              <button type="button" data-demo-hint-button aria-expanded="false" aria-controls="demo-hint">Show hint</button>
+              <button type="button" data-demo-solution-button aria-expanded="false" aria-controls="demo-solution">Show worked solution</button>
+            </div>
+            <div id="demo-hint" class="demo-support-panel" data-demo-hint hidden></div>
+            <div id="demo-solution" class="demo-support-panel demo-solution" data-demo-solution hidden></div>
+            <a class="demo-continue-link" data-demo-continue hidden href="/#join-waitlist">Join the Orthic waitlist <span aria-hidden="true">→</span></a>
+          </article>
         </div>
       </section>
 
@@ -52,7 +90,7 @@
         </div>
       </section>
 
-      <section class="section" aria-labelledby="subjects-title">
+      <section class="section subjects-section" aria-labelledby="subjects-title">
         <div class="section-inner subjects-layout">
           <div class="subjects-copy">
             <p class="eyebrow">Built for Scottish STEM</p>

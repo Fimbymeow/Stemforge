@@ -43,15 +43,28 @@ test("production build refuses to ship without a monitored privacy contact", asy
 test("isolated source links to canonical Tuition without exposing learner-product navigation", async () => {
   const html = await readFile(new URL("../site/index.template.html", import.meta.url), "utf8");
   assert.match(html, /href="https:\/\/stemforge-6an8\.vercel\.app\/tuition">Tuition/);
+  assert.match(html, /id="join-waitlist"/);
+  assert.match(html, /href="\/#join-waitlist">Join the Orthic waitlist/);
   for (const pathName of ["dashboard", "subjects", "courses", "practice", "review", "activity", "account"]) {
     assert.doesNotMatch(html, new RegExp(`href=["']/${pathName}`, "i"));
   }
   const hrefs = [...html.matchAll(/href="([^"]+)"/g)].map((match) => match[1]);
-  assert.deepEqual([...new Set(hrefs.filter((href) => href.startsWith("/")))].sort(), ["/", "/assets/orthic-mark.svg", "/privacy/", "/styles.css"]);
+  assert.deepEqual([...new Set(hrefs.filter((href) => href.startsWith("/")))].sort(), ["/", "/#join-waitlist", "/assets/orthic-mark.svg", "/chain-rule-demo.css", "/privacy/", "/styles.css"]);
+});
+
+test("build emits the isolated canonical Chain Rule demo bundle and its local maths assets", async () => {
+  await withBuild({ production: false }, async (output) => {
+    const html = await readFile(path.join(output, "index.html"), "utf8");
+    const demo = await readFile(path.join(output, "chain-rule-demo.js"), "utf8");
+    assert.match(html, /data-question-id="hm-calc-diff-chain-f-003"/);
+    assert.match(html, /src="\/chain-rule-demo\.js" type="module"/);
+    assert.match(demo, /hm-calc-diff-chain-f-003/);
+    assert.doesNotMatch(demo, /\/api\/(?:auth|progress|evidence|premium)/);
+  });
 });
 
 test("client assets contain no server binding, database identifier or secret", async () => {
-  const files = ["index.template.html", "privacy.template.html", "waitlist.js", "styles.css"];
+  const files = ["index.template.html", "privacy.template.html", "waitlist.js", "chain-rule-demo.ts", "styles.css"];
   const client = (await Promise.all(files.map((file) => readFile(new URL(`../site/${file}`, import.meta.url), "utf8")))).join("\n");
   assert.doesNotMatch(client, /WAITLIST_DB|WAITLIST_RATE_LIMITER|database_id|ORTHIC_PRIVACY_CONTACT_EMAIL|00000000-0000/);
 });

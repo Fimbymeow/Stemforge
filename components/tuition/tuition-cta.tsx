@@ -12,8 +12,8 @@ export function TuitionCta() {
             Ready to get started?
           </p>
           <p className="mx-auto mt-3 max-w-[520px] text-center text-base leading-relaxed text-white/80">
-            Your first session is free — send a few details below and you&apos;ll get a reply directly, or email
-            us straight away.
+            Finlay replies directly. The free first session is for discussing your goals, identifying current gaps
+            and deciding whether ongoing tuition is the right fit.
           </p>
         </TuitionReveal>
         <TuitionReveal delayMs={100} className="mt-7">

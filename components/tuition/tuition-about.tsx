@@ -1,4 +1,4 @@
-import { Check, Laptop, MessageCircleHeart, Target } from "lucide-react";
+import { Check } from "lucide-react";
 import { TuitionButtonLink } from "@/components/tuition/tuition-button";
 import { lora } from "@/components/tuition/tuition-fonts";
 import { TuitionEmphasis, TuitionKicker } from "@/components/tuition/tuition-kicker";
@@ -14,31 +14,34 @@ const qualifications = [
   "A in Higher English",
 ] as const;
 
-const currentStudy = ["Advanced Higher Mathematics", "Advanced Higher Physics", "Advanced Higher Chemistry"] as const;
-
-const lessonSteps = [
-  { title: "Identify the gap", copy: "We start by pinning down exactly what's causing difficulty, not just the topic in general." },
-  { title: "Explain the method", copy: "A clear walkthrough of the method itself, in plain language, before any question is attempted." },
-  { title: "Work through it together", copy: "A worked example done together, so the method is applied while it's still fresh." },
-  { title: "Attempt it independently", copy: "Similar questions attempted alone, with support close by if needed." },
-  { title: "Leave with a next step", copy: "Every session ends with a clear, specific thing to practise or revisit before the next one." },
+const currentStudy = [
+  "Advanced Higher Mathematics",
+  "Advanced Higher Physics",
+  "Advanced Higher Chemistry",
+  "Advanced Higher Mathematics of Mechanics",
 ] as const;
 
-const differentiators = [
+const lessonSteps = [
+  { title: "Review", copy: "Look over homework and anything that caused difficulty." },
+  { title: "Diagnose", copy: "Identify the exact gaps or misconceptions holding the topic back." },
+  { title: "Explain", copy: "Break down the method clearly and connect it to what the student already knows." },
+  { title: "Work together", copy: "Solve examples collaboratively until the method is secure." },
+  { title: "Independent practice", copy: "The student attempts questions independently while I check method and reasoning." },
+  { title: "Next steps", copy: "Agree focused homework and what we will tackle next." },
+] as const;
+
+const credibility = [
   {
-    icon: MessageCircleHeart,
-    title: "Patient & supportive",
-    copy: "A calm, stress-free environment where questions are welcomed and mistakes are treated as part of learning.",
+    title: "2+ years tutoring",
+    copy: "One-to-one experience supporting pupils with National 5 and Higher work.",
   },
   {
-    icon: Target,
-    title: "Focused on exam technique",
-    copy: "Every session is structured with the exam in mind, working on the methods and question types that come up most.",
+    title: "Maths and Physics",
+    copy: "Tuition for National 5 and Higher Maths and Physics, delivered online.",
   },
   {
-    icon: Laptop,
-    title: "Online sessions",
-    copy: "All tuition is delivered online, fitting around your schedule wherever you are.",
+    title: "Current Scottish courses",
+    copy: "Recent first-hand course experience, five Higher A grades and current Advanced Higher study.",
   },
 ] as const;
 
@@ -61,53 +64,39 @@ export function TuitionAbout() {
 
       <section className="mx-auto w-[min(760px,calc(100%_-_40px))] py-[clamp(64px,8vw,88px)]">
         <TuitionReveal>
-          <TuitionKicker>My philosophy</TuitionKicker>
-          <p className="mt-5 text-lg leading-[1.6] text-ink">
-            Maths and Physics aren&apos;t a collection of rules to memorise — they&apos;re a way of thinking that clicks
-            once you understand why a method works, not just how to apply it.
-          </p>
-          <p className="mt-4 text-lg leading-[1.6] text-ink">
-            Sessions focus on building that understanding from solid foundations, then applying it under exam
-            conditions — the same structured, worked-solution approach behind Orthic itself.
-          </p>
-        </TuitionReveal>
-
-        <TuitionReveal delayMs={80} className="mt-14">
           <div className="text-center">
             <TuitionKicker>Meet the tutor</TuitionKicker>
           </div>
           <div className="mt-5">
             <TuitionTutorCard>
               <p className="m-0">
-                I recently sat the same National 5 and Higher courses my students are working through now, so the
-                material and exam pressure are both still fresh. Sessions are structured around a clear explanation,
-                a worked example, and then guided and independent practice, so a method is genuinely understood
-                before it&apos;s relied on in an exam. I&apos;m also building Orthic, a structured Scottish STEM
-                learning platform with original practice questions — the same systematic approach carries over into
-                every lesson. This tutoring service is new, so it&apos;s built around the same standards Orthic
-                is held to, not a long track record.
+                I have 2+ years of tutoring experience and achieved A grades across Higher Maths, Physics, Chemistry,
+                Biology and English. I&apos;m currently studying Advanced Higher Mathematics, Physics, Chemistry and
+                Mathematics of Mechanics. That recent experience of Scottish courses shapes sessions built around
+                clear explanation, worked examples, guided practice and independent attempts. I&apos;m also building
+                Orthic, a structured Scottish STEM learning platform with original practice questions.
               </p>
             </TuitionTutorCard>
           </div>
         </TuitionReveal>
 
-        <TuitionReveal delayMs={140} className="mt-10">
+        <TuitionReveal delayMs={80} className="mt-10">
           <TuitionKicker>Why a recent student?</TuitionKicker>
           <p className="mt-5 text-lg leading-[1.6] text-ink">
-            I&apos;m 17, which means I have recent first-hand experience of the exact courses and exam pressures my
-            students are facing. I combine that recency with structured preparation and clear, patient teaching.
+            I&apos;m 17 and have 2+ years of tutoring experience. That combines recent first-hand knowledge of Scottish
+            courses and exam pressure with an established, structured approach to preparation and teaching.
           </p>
         </TuitionReveal>
 
-        <TuitionReveal delayMs={180} className="mt-14">
+        <TuitionReveal delayMs={140} className="mt-14">
           <div className="text-center">
             <TuitionKicker>What a lesson looks like</TuitionKicker>
           </div>
-          <ol className="mx-auto mt-6 grid max-w-[560px] list-none gap-5 p-0">
+          <ol className="mx-auto mt-6 max-w-[620px] list-none border-y border-line p-0">
             {lessonSteps.map((step, index) => (
-              <li key={step.title} className="flex gap-4">
-                <span className="grid size-8 shrink-0 place-items-center rounded-full bg-forge-soft text-sm font-extrabold text-forge">
-                  {index + 1}
+              <li key={step.title} className="grid grid-cols-[44px_1fr] gap-4 border-b border-line py-4 last:border-b-0">
+                <span className="pt-0.5 font-mono text-xs font-semibold tracking-[0.12em] text-forge">
+                  {String(index + 1).padStart(2, "0")}
                 </span>
                 <div>
                   <p className="m-0 text-base font-extrabold text-ink">{step.title}</p>
@@ -143,17 +132,12 @@ export function TuitionAbout() {
       </section>
 
       <section className={`px-5 ${TUITION_SECTION_SPACING}`}>
-        <div className={`${TUITION_CONTAINER} grid grid-cols-3 gap-5 max-md:grid-cols-1`}>
-          {differentiators.map((item, index) => (
+        <div className={`${TUITION_CONTAINER} grid grid-cols-3 border-y border-line max-md:grid-cols-1`}>
+          {credibility.map((item, index) => (
             <TuitionReveal key={item.title} delayMs={index * 70}>
-              <div className={`${TUITION_CARD} flex h-full gap-4 p-6`}>
-                <span className="grid size-10 shrink-0 place-items-center rounded-md bg-forge-soft text-forge">
-                  <item.icon className="size-5" />
-                </span>
-                <div>
+              <div className={`h-full py-7 ${index > 0 ? "border-l border-line pl-7 max-md:border-l-0 max-md:border-t max-md:pl-0" : "pr-7 max-md:pr-0"} ${index === 1 ? "pr-7" : ""}`}>
                   <h3 className="m-0 text-base font-extrabold">{item.title}</h3>
                   <p className="mt-1.5 text-sm leading-relaxed text-muted">{item.copy}</p>
-                </div>
               </div>
             </TuitionReveal>
           ))}

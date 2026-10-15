@@ -20,12 +20,12 @@ const FAQS = [
   {
     question: "Who teaches the lessons?",
     answer:
-      "Finlay Kennedy — achieved A grades across all five Highers (Maths, Physics, Chemistry, Biology and English) and is currently studying Advanced Higher Maths, Physics and Chemistry.",
+      "Finlay Kennedy has 2+ years of tutoring experience, achieved A grades across all five Highers (Maths, Physics, Chemistry, Biology and English), and is currently studying Advanced Higher Mathematics, Physics, Chemistry and Mathematics of Mechanics.",
   },
   {
     question: "Why choose a recent student tutor?",
     answer:
-      "The material and exam pressure are still fresh, having just been through the same courses. That recency is combined with structured, one-to-one preparation — not a comparison against what a qualified teacher offers.",
+      "The material and exam pressure are still fresh. That recent course experience is combined with 2+ years of tutoring and structured, one-to-one preparation — not a comparison against what a qualified teacher offers.",
   },
   {
     question: "Which subjects and levels are available?",
@@ -34,7 +34,7 @@ const FAQS = [
   {
     question: "What happens in the free first session?",
     answer:
-      "Your first session is free with no obligation — it's a chance to talk through your goals and see if it's the right fit before booking any further sessions.",
+      "Your first session is free with no obligation. It is a chance to discuss your goals, identify current gaps and decide whether ongoing tuition is the right fit.",
   },
   {
     question: "Are sessions online or in person?",

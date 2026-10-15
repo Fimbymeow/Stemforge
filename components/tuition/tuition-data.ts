@@ -72,13 +72,37 @@ export function getTuitionLevelBySlug(slug: string) {
 
 export type TuitionTestimonial = {
   quote: string;
-  name: string;
-  detail: string;
+  attribution: string;
+  featured?: boolean;
+  quantitative?: boolean;
 };
 
-/**
- * Empty until real student feedback exists. TuitionTestimonials gates its own rendering on
- * this array's length, so the section (heading included) simply doesn't render while empty —
- * never populate this with invented quotes, ratings, or student counts.
- */
-export const tuitionTestimonials: TuitionTestimonial[] = [];
+export const tuitionTestimonials: TuitionTestimonial[] = [
+  {
+    quote: "Finlay was crucial in helping my child go from a D in the Maths prelim to an A in the final exam.",
+    attribution: "Parent of a Higher Maths student",
+    featured: true,
+    quantitative: true,
+  },
+  {
+    quote:
+      "Finlay is an absolutely fantastic tutor. He was so important in helping my child achieve an A in Higher Maths after failing her prelim. He has undoubtedly had a hugely positive impact on her career.",
+    attribution: "Parent of a Higher Maths student",
+    featured: true,
+    quantitative: true,
+  },
+  {
+    quote: "Finlay taught me how to think through Physics methods more clearly.",
+    attribution: "Higher Physics student",
+  },
+  {
+    quote: "Finlay was crucial in helping my child achieve an A in Higher Physics.",
+    attribution: "Parent of a Higher Physics student",
+    quantitative: true,
+  },
+  {
+    quote:
+      "Finlay was the best tutor I could have had for my child: friendly, helpful and, more importantly, a great role model for them to look up to.",
+    attribution: "Parent",
+  },
+];

@@ -15,6 +15,7 @@ const TUITION_FILES = [
   "components/tuition/tuition-about.tsx",
   "components/tuition/tuition-difference.tsx",
   "components/tuition/tuition-testimonials.tsx",
+  "components/tuition/tuition-data.ts",
   "components/tuition/tuition-cta.tsx",
   "components/tuition/tuition-pricing.tsx",
   "components/tuition/tuition-navbar.tsx",
@@ -22,13 +23,14 @@ const TUITION_FILES = [
   "components/landing/tuition-contact-form.tsx",
 ];
 
-test("Finlay's verified credential text (name, five Higher A's, Advanced Higher subjects) appears on the Tuition homepage", () => {
+test("Finlay's verified credential text (name, tutoring experience, five Higher A's and current study) appears on the Tuition homepage", () => {
   const hero = source("components/tuition/tuition-hero.tsx");
   const intro = source("components/tuition/tuition-intro.tsx");
   const combined = hero + intro;
   assert.match(combined, /Finlay Kennedy/);
+  assert.match(combined, /2\+ years of tutoring experience/);
   assert.match(combined, /five Highers|A grades/i);
-  assert.match(combined, /Advanced Higher Maths, Physics(?: and| &)? Chemistry/);
+  assert.match(combined, /Advanced Higher Mathematics, Physics, Chemistry and Mathematics of Mechanics/);
 });
 
 test("the About page states all five real Higher subjects as A grades, not a fabricated count", () => {
@@ -38,9 +40,9 @@ test("the About page states all five real Higher subjects as A grades, not a fab
   }
 });
 
-test("the About page states all three current Advanced Higher subjects", () => {
+test("the About page states all four current Advanced Higher subjects", () => {
   const about = source("components/tuition/tuition-about.tsx");
-  for (const subject of ["Mathematics", "Physics", "Chemistry"]) {
+  for (const subject of ["Mathematics", "Physics", "Chemistry", "Mathematics of Mechanics"]) {
     assert.match(about, new RegExp(`Advanced Higher ${subject}`), `About page must list "Advanced Higher ${subject}"`);
   }
 });
@@ -68,14 +70,21 @@ test("generic 'expert precision' positioning and the 'elevate your results' clic
   }
 });
 
-test("no banned superlative or unsupported claim (expert, elite, best, guaranteed) appears anywhere on the tuition site", () => {
+test("no unsupported founder superlative or guarantee appears in presentation copy", () => {
   for (const file of TUITION_FILES) {
     const text = source(file);
     assert.doesNotMatch(text, /\bexpert\b/i, `${file} must not claim "expert" status`);
     assert.doesNotMatch(text, /\belite\b/i, `${file} must not claim "elite" status`);
-    assert.doesNotMatch(text, /\bthe best\b/i, `${file} must not claim to be "the best"`);
+    if (file !== "components/tuition/tuition-data.ts") {
+      assert.doesNotMatch(text, /\bthe best\b/i, `${file} must not claim to be "the best"`);
+    }
     assert.doesNotMatch(text, /guarantee(?:d)? (?:grade|result)/i, `${file} must not guarantee grade improvement`);
   }
+  assert.match(
+    source("components/tuition/tuition-data.ts"),
+    /best tutor I could have had for my child/,
+    "the supplied parent testimonial must remain identifiable as quoted feedback",
+  );
 });
 
 test("no About-page placeholder bracket text remains anywhere on the tuition site", () => {
@@ -88,26 +97,54 @@ test("no About-page placeholder bracket text remains anywhere on the tuition sit
   }
 });
 
-test("no invented experience, prior tutoring history, or student count is claimed", () => {
+test("the supplied 2+ years of tutoring experience is used without inventing a student count", () => {
+  const combined = TUITION_FILES.map(source).join("\n");
+  assert.match(combined, /2\+ years of tutoring experience/);
   for (const file of TUITION_FILES) {
     const text = source(file);
-    assert.doesNotMatch(text, /\d+\+?\s*years?\s*(?:of\s*)?(?:tutoring|teaching)\s*experience/i, `${file} must not claim a specific number of years' experience`);
     assert.doesNotMatch(text, /\d+\+?\s*students?\s*(?:tutored|taught|helped)/i, `${file} must not claim a student count`);
   }
 });
 
-test("the testimonials array is empty and TuitionTestimonials renders nothing (no invented quotes ship)", () => {
-  assert.deepEqual(tuitionTestimonials, []);
+test("exactly five supplied testimonials ship with honest attribution and no invented identities", () => {
+  assert.equal(tuitionTestimonials.length, 5);
+  assert.equal(tuitionTestimonials.filter((testimonial) => testimonial.featured).length, 2);
+  assert.equal(tuitionTestimonials.filter((testimonial) => testimonial.quantitative).length, 3);
+  assert.ok(tuitionTestimonials.every((testimonial) => testimonial.attribution.length > 0));
+  assert.ok(tuitionTestimonials.every((testimonial) => !("name" in testimonial)));
+  assert.ok(tuitionTestimonials.some((testimonial) => /D in the Maths prelim to an A/.test(testimonial.quote)));
+  assert.ok(tuitionTestimonials.some((testimonial) => /A in Higher Physics/.test(testimonial.quote)));
+  assert.ok(tuitionTestimonials.some((testimonial) => /A in Higher Maths after failing her prelim/.test(testimonial.quote)));
   const componentSource = source("components/tuition/tuition-testimonials.tsx");
   assert.match(componentSource, /tuitionTestimonials\.length === 0/, "the component must gate on a data-driven length check");
-  assert.match(componentSource, /return null/, "the component must return null while there are zero real testimonials");
+  assert.match(componentSource, /return null/, "the component must remain safe if approved testimonials are removed later");
 });
 
-test("the testimonial component and layout remain intact and reusable once real data is supplied", () => {
+test("testimonials use a two-tier editorial layout rather than a generic card wall", () => {
   const componentSource = source("components/tuition/tuition-testimonials.tsx");
   assert.match(componentSource, /export function TuitionTestimonials/);
-  assert.match(componentSource, /tuitionTestimonials\.map/, "the render path for real testimonial data must still exist");
+  assert.match(componentSource, /testimonial\.featured/);
+  assert.match(componentSource, /featured\.map/);
+  assert.match(componentSource, /supporting\.map/);
   assert.match(componentSource, /figure/, "the card layout (figure/blockquote/figcaption) must be preserved");
+  assert.doesNotMatch(componentSource, /tuition-card/);
+});
+
+test("decorative Tuition kickers and process numbers are plain editorial text, not pills or circles", () => {
+  const kicker = source("components/tuition/tuition-kicker.tsx");
+  assert.doesNotMatch(kicker, /rounded-full|border border-warning|bg-warning-soft|px-3 py-1/);
+  const about = source("components/tuition/tuition-about.tsx");
+  const difference = source("components/tuition/tuition-difference.tsx");
+  assert.doesNotMatch(about, /My philosophy/i);
+  assert.doesNotMatch(about, /rounded-full/);
+  assert.doesNotMatch(difference, /rounded-full/);
+});
+
+test("the About page describes the six concrete lesson stages", () => {
+  const about = source("components/tuition/tuition-about.tsx");
+  for (const stage of ["Review", "Diagnose", "Explain", "Work together", "Independent practice", "Next steps"]) {
+    assert.match(about, new RegExp(`title: "${stage}"`));
+  }
 });
 
 test("no disguised trust claims (student counts, star ratings, 'proven results', 'trusted by') replace real testimonials", () => {

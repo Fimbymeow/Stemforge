@@ -1,6 +1,7 @@
 import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { build } from "esbuild";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const repositoryRoot = resolve(projectRoot, "..");
@@ -40,6 +41,23 @@ export async function buildSite({ production = false, outputDirectory = resolve(
   for (const file of ["orthic-mark.svg", "orthic-wordmark.svg"]) {
     await cp(resolve(repositoryRoot, "public", "assets", file), resolve(outputDirectory, "assets", file));
   }
+  await build({
+    absWorkingDir: repositoryRoot,
+    entryPoints: [resolve(projectRoot, "site", "chain-rule-demo.ts")],
+    outdir: outputDirectory,
+    entryNames: "chain-rule-demo",
+    chunkNames: "chunks/[name]-[hash]",
+    assetNames: "assets/[name]-[hash]",
+    bundle: true,
+    splitting: true,
+    format: "esm",
+    platform: "browser",
+    target: ["es2022"],
+    loader: { ".woff2": "file" },
+    minify: production,
+    sourcemap: false,
+    tsconfig: resolve(repositoryRoot, "tsconfig.json"),
+  });
   await writeFile(
     resolve(outputDirectory, "robots.txt"),
     production ? "User-agent: *\nAllow: /\n" : "User-agent: *\nDisallow: /\n",

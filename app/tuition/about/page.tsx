@@ -6,7 +6,7 @@ import { TuitionNavbar } from "@/components/tuition/tuition-navbar";
 export const metadata: Metadata = {
   title: "About — Tuition",
   description:
-    "Finlay Kennedy, 17, achieved A grades across five Highers and is now studying Advanced Higher Maths, Physics and Chemistry while tutoring National 5 and Higher Maths and Physics.",
+    "Finlay Kennedy has 2+ years of tutoring experience, achieved A grades across five Highers and is currently studying Advanced Higher Mathematics, Physics, Chemistry and Mathematics of Mechanics.",
 };
 
 export default function TuitionAboutPage() {

@@ -15,10 +15,10 @@ export function TuitionIntro() {
         <TuitionReveal delayMs={80} className="mt-8">
           <TuitionTutorCard compact>
             <p className="m-0">
-              I recently completed the same Higher courses my students are preparing for, achieving A grades across
-              Maths, Physics, Chemistry, Biology and English. I&apos;m now studying Advanced Higher Maths, Physics
-              and Chemistry, while building Orthic — a structured Scottish STEM learning platform. My lessons
-              combine clear explanations with guided and independent exam-style practice.
+              I have 2+ years of tutoring experience and achieved A grades across Higher Maths, Physics, Chemistry,
+              Biology and English. I&apos;m currently studying Advanced Higher Mathematics, Physics, Chemistry and
+              Mathematics of Mechanics while building Orthic, a structured Scottish STEM learning platform. My
+              lessons combine clear explanations with guided and independent exam-style practice.
             </p>
             <Link
               href="/tuition/about"

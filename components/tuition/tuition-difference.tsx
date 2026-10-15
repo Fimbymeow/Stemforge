@@ -44,8 +44,8 @@ export function TuitionDifference() {
           {points.map((point, index) => (
             <TuitionReveal key={point.title} delayMs={index * 70}>
               <div className={`flex min-h-full gap-4 p-6 ${index < 2 ? "border-b border-line" : ""} ${index % 2 === 0 ? "border-r border-line max-md:border-r-0" : ""} max-md:border-b max-md:border-line max-md:last:border-b-0`}>
-                <span className="grid size-8 shrink-0 place-items-center rounded-full bg-forge-soft font-semibold text-forge">
-                  {index + 1}
+                <span className="shrink-0 pt-0.5 font-mono text-xs font-semibold tracking-[0.12em] text-forge">
+                  {String(index + 1).padStart(2, "0")}
                 </span>
                 <div>
                   <h3 className="m-0 text-base font-semibold">{point.title}</h3>
