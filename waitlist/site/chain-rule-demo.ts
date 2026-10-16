@@ -1,19 +1,17 @@
 import "mathlive/static.css";
 import "mathlive/fonts.css";
 import { convertLatexToMarkup } from "mathlive/ssr";
-import { higherMathsChainRuleQuestions } from "../../content/questions/higher-maths/chain-rule";
 import { markQuestionAnswer } from "../../lib/answer-engine";
 import { deriveMathInputCapabilities } from "../../lib/questions/math-input-capabilities";
 import { normalizeRichMathSource } from "../../lib/questions/rich-math-normalization";
+import { publicChainRuleDemoQuestion } from "./chain-rule-demo-question";
 
-const QUESTION_ID = "hm-calc-diff-chain-f-003";
-const selectedQuestion = higherMathsChainRuleQuestions.find((candidate) => candidate.id === QUESTION_ID);
-
-if (!selectedQuestion || selectedQuestion.contentStatus !== "active" || selectedQuestion.skillPathId !== "chain-rule"
-    || selectedQuestion.marking.strategy !== "composite_algebraic_equivalence") {
+if (publicChainRuleDemoQuestion.contentStatus !== "active"
+    || publicChainRuleDemoQuestion.skillPathId !== "chain-rule"
+    || publicChainRuleDemoQuestion.marking.strategy !== "composite_algebraic_equivalence") {
   throw new Error("The public Chain Rule demo question is unavailable or no longer compatible.");
 }
-const question = selectedQuestion;
+const question = publicChainRuleDemoQuestion;
 
 const root = document.querySelector<HTMLElement>("[data-chain-rule-demo]");
 if (root) initializeDemo(root);

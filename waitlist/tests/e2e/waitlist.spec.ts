@@ -75,32 +75,32 @@ test("privacy is public while learner routes and unknown routes return 404", asy
   expect(method.headers().allow).toBe("POST");
 });
 
-test("the canonical Chain Rule demo uses real equivalence marking and remains ephemeral", async ({ page }) => {
+test("the canonical-backed Chain Rule demo uses real equivalence marking and remains ephemeral", async ({ page }) => {
   const backgroundRequests: string[] = [];
   page.on("request", (request) => {
     if (["fetch", "xhr"].includes(request.resourceType())) backgroundRequests.push(request.url());
   });
   await page.goto("/");
   const demo = page.locator("[data-chain-rule-demo]");
-  await expect(demo).toHaveAttribute("data-question-id", "hm-calc-diff-chain-f-003");
+  await expect(demo).toHaveAttribute("data-question-id", "orthic-public-chain-rule-square-v1");
   await expect(demo).toContainText("Differentiate");
   await expect(demo).toContainText("Chain Rule");
   await expect(demo.getByRole("link", { name: /Join the Orthic waitlist/ })).toBeHidden();
 
-  await setDemoAnswer(page, "15(3x+2)^3");
+  await setDemoAnswer(page, "2(3x+2)");
   await page.getByLabel("Your answer").press("Enter");
   await expect(demo.getByText("Not quite", { exact: true })).toBeVisible();
 
-  await setDemoAnswer(page, "15(3x+2)^4");
+  await setDemoAnswer(page, "6(3x+2)");
   await demo.getByRole("button", { name: /Check answer/ }).click();
   await expect(demo.getByText("Correct", { exact: true })).toBeVisible();
 
-  await setDemoAnswer(page, "1215x^4+3240x^3+3240x^2+1440x+240");
+  await setDemoAnswer(page, "18x+12");
   await demo.getByRole("button", { name: /Check answer/ }).click();
   await expect(demo.getByText("Correct", { exact: true })).toBeVisible();
 
   await demo.getByRole("button", { name: "Show hint" }).click();
-  await expect(demo.locator("[data-demo-hint]")).toContainText("Bring down the outside power");
+  await expect(demo.locator("[data-demo-hint]")).toContainText("Bring down the outside power 2");
   await demo.getByRole("button", { name: "Show worked solution" }).click();
   await expect(demo.locator("[data-demo-solution]")).toContainText("multiply by the derivative of the bracket");
   await expect(demo.getByRole("link", { name: /Join the Orthic waitlist/ })).toHaveAttribute("href", "/#join-waitlist");
