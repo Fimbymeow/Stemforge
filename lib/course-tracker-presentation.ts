@@ -5,6 +5,8 @@ export type CourseTrackerSkillGroup =
   | { kind: "actionable"; skill: CourseTrackerSkill }
   | { kind: "curriculum_references"; skills: CourseTrackerSkill[] };
 
+export type CourseTrackerStatusTone = "review-due" | "confident" | "developing" | "needs-work" | "neutral";
+
 /** Preserve canonical order while compacting each contiguous run of curriculum-reference skills. */
 export function groupCourseTrackerSkills(skills: readonly CourseTrackerSkill[]): CourseTrackerSkillGroup[] {
   const groups: CourseTrackerSkillGroup[] = [];
@@ -26,4 +28,18 @@ export function hasCourseTrackerConfidenceDisagreement(confidence: CourseTracker
     && confidence.suggestion
     && CONFIDENCE_LEVEL_RANK[confidence.learnerLevel] > CONFIDENCE_LEVEL_RANK[confidence.suggestion.level],
   );
+}
+
+/**
+ * Compact tracker rows project existing Review and learner-confidence state into colour only.
+ * Review remains the actionable priority; no new learner state is inferred here.
+ */
+export function getCourseTrackerStatusTone(skill: CourseTrackerSkill): CourseTrackerStatusTone {
+  if (skill.reviewDue) return "review-due";
+  switch (skill.confidence?.learnerLevel) {
+    case "confident": return "confident";
+    case "developing": return "developing";
+    case "needs_work": return "needs-work";
+    default: return "neutral";
+  }
 }

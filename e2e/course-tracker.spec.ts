@@ -34,6 +34,8 @@ test("tracker keeps curriculum navigation while removing implementation coverage
   const basic = page.getByTestId("tracker-skill-basic-differentiation");
   await expect(basic.getByText(/Not started|Foundations|Applications|Past Paper-style Questions/)).toHaveCount(0);
   await expect(basic.getByText(/Confident|Developing|Needs work/, { exact: true })).toHaveCount(0);
+  await expect(basic.getByText(/Notes available|Practice \d+\/\d+ complete/)).toHaveCount(0);
+  await expect(basic.getByTestId("tracker-status-basic-differentiation")).toHaveAttribute("data-tracker-status", "neutral");
   await expect(basic.getByRole("link", { name: "Open Basic differentiation skill overview" })).toHaveAttribute("href", "/subjects/higher-maths/calculus/differentiation/basic-differentiation");
   await expect(basic.locator("[data-review-state]")).toHaveCount(0);
   await expect(basic.locator("details, summary, [data-mastery-status]")).toHaveCount(0);
@@ -41,7 +43,8 @@ test("tracker keeps curriculum navigation while removing implementation coverage
   await navigation.getByRole("button", { name: "Algebra and Trigonometry" }).click();
   const reference = page.getByTestId("tracker-skill-factorising-cubics-and-quartics");
   await expect(page.getByRole("heading", { name: "Algebra and Trigonometry", exact: true })).toBeVisible();
-  await expect(reference).toContainText("1 official requirement");
+  await expect(reference).not.toContainText(/\d+ official requirements?/);
+  await expect(reference.getByTestId("tracker-status-factorising-cubics-and-quartics")).toHaveAttribute("data-tracker-status", "neutral");
   await expect(reference.getByRole("link")).toHaveCount(0);
   await expect(reference.locator("details, button, [data-mastery-status], [data-review-state]")).toHaveCount(0);
   await expect(page.getByTestId("course-wide-requirements")).not.toHaveAttribute("open", "");
@@ -55,7 +58,8 @@ test("official requirements live collapsed, keyboard accessible and exact on Ski
   const disclosure = page.getByTestId("skill-official-requirements");
   await expect(disclosure).not.toHaveAttribute("open", "");
   const summary = disclosure.locator("summary");
-  await expect(summary).toHaveAccessibleName("Qualifications Scotland specification 1 mapped outcome");
+  await expect(summary).toHaveAccessibleName("Qualifications Scotland specification");
+  await expect(summary).not.toContainText(/\d+ mapped outcomes?/);
   await summary.focus();
   await summary.press("Enter");
   await expect(disclosure).toHaveAttribute("open", "");
@@ -70,6 +74,7 @@ test("Review now replaces Open and launches scoped Review without stage progress
   await expect(basic.getByText(/Mastered|Learned|Foundations|Applications|Past Paper-style Questions/)).toHaveCount(0);
   await expect(basic.locator("[data-mastery-status]")).toHaveCount(0);
   await expect(basic.locator('[data-review-state="due"]')).toHaveText("Review now");
+  await expect(basic.getByTestId("tracker-status-basic-differentiation")).toHaveAttribute("data-tracker-status", "review-due");
   const action = basic.getByRole("link", { name: "Review now: Basic differentiation" });
   await expect(action).toHaveAttribute("href", "/practice?review=1&path=basic-differentiation");
   await expect(basic.getByRole("link")).toHaveCount(1);
@@ -94,6 +99,7 @@ test("recent completion hides non-due Review states", async ({ page }) => {
   await page.goto(route);
   const basic = page.getByTestId("tracker-skill-basic-differentiation");
   await expect(basic.locator("[data-review-state]")).toHaveCount(0);
+  await expect(basic.getByTestId("tracker-status-basic-differentiation")).toHaveAttribute("data-tracker-status", "neutral");
   await expect(basic.getByText(/Review|Available|Recommended/, { exact: true })).toHaveCount(0);
   await expect(basic.getByRole("link", { name: "Open Basic differentiation skill overview" })).toBeVisible();
 });
@@ -111,29 +117,30 @@ test("detailed progress remains off the compact Tracker row", async ({ page }) =
   expect(await basic.evaluate((element) => getComputedStyle(element).backgroundColor)).toBe("rgba(0, 0, 0, 0)");
 });
 
-test("saved confidence is read-only and disagreement stays in the same compact signal", async ({ page }) => {
+test("saved confidence remains stored but tracker exposes only its compact semantic indicator", async ({ page }) => {
   await seedStoredProgress(page, payload([attempt()]));
   await seedConfidence(page, "confident");
   await page.goto(route);
   const basic = page.getByTestId("tracker-skill-basic-differentiation");
-  await expect(basic.getByTestId("tracker-confidence-basic-differentiation")).toContainText("Confident");
-  await expect(basic.getByTestId("tracker-confidence-disagreement-basic-differentiation")).toHaveAccessibleName("Your confidence and recent evidence differ");
-  await expect(basic.getByText("Your confidence and recent evidence differ", { exact: true })).toHaveCount(0);
-  await expect(basic.getByText(/Orthic suggests|Set confidence/, { exact: true })).toHaveCount(0);
+  await expect(basic.getByText(/Confident|Developing|Needs work|Unrated/, { exact: true })).toHaveCount(0);
+  await expect(basic.getByTestId("tracker-status-basic-differentiation")).toHaveAttribute("data-tracker-status", "confident");
+  await expect(basic.getByTestId("tracker-status-basic-differentiation")).toHaveCSS("background-color", "rgb(47, 122, 77)");
+  await expect(basic.getByText(/Orthic suggests|Set confidence|Your confidence and recent evidence differ/, { exact: true })).toHaveCount(0);
   await expect(basic.locator("button, details[class*='confidence']")).toHaveCount(0);
 });
 
-test("saved confidence uses restrained semantic text colour without changing its wording", async ({ page }) => {
-  for (const [level, label, colour] of [
-    ["confident", "Confident", "text-success"],
-    ["developing", "Developing", "text-warning"],
-    ["needs_work", "Needs work", "text-danger"],
+test("saved confidence uses the existing restrained semantic colour mapping", async ({ page }) => {
+  for (const [level, tone, colour] of [
+    ["confident", "confident", "rgb(47, 122, 77)"],
+    ["developing", "developing", "rgb(138, 97, 24)"],
+    ["needs_work", "needs-work", "rgb(178, 58, 52)"],
   ] as const) {
     await seedConfidence(page, level);
     await page.goto(route);
-    const confidence = page.getByTestId("tracker-confidence-basic-differentiation");
-    await expect(confidence).toHaveText(label);
-    await expect(confidence).toHaveClass(new RegExp(`\\b${colour}\\b`));
+    const status = page.getByTestId("tracker-status-basic-differentiation");
+    await expect(status).toHaveAttribute("data-tracker-status", tone);
+    await expect(status).toHaveCSS("background-color", colour);
+    await expect(page.getByTestId("tracker-skill-basic-differentiation").getByText(/Confident|Developing|Needs work/, { exact: true })).toHaveCount(0);
   }
 });
 
@@ -150,17 +157,21 @@ test("curriculum rows remain readable and references do not become interactive",
 });
 
 for (const viewport of [
+  { width: 1440, height: 900 },
+  { width: 1024, height: 900 },
+  { width: 768, height: 900 },
+  { width: 430, height: 900 },
   { width: 390, height: 844 },
   { width: 375, height: 812 },
   { width: 320, height: 760 },
-  { width: 1024, height: 900 },
 ]) {
   test(`tracker remains keyboard-usable and overflow-free at ${viewport.width}px`, async ({ page }) => {
     await page.setViewportSize(viewport);
     await page.goto(route);
     await expect(page.getByTestId("course-hub-progress")).toHaveAccessibleName("Course progress: 0 of 49 skills learned, 0%");
     const basic = page.getByTestId("tracker-skill-basic-differentiation");
-    await expect(basic.getByText("Unrated", { exact: true })).toBeVisible();
+    await expect(basic.getByTestId("tracker-status-basic-differentiation")).toBeVisible();
+    await expect(basic.getByText("Open", { exact: true })).toBeVisible();
     await expect(basic.getByRole("link")).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
     const navigation = page.getByTestId("course-tracker-unit-navigation");

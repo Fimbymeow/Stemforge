@@ -46,7 +46,21 @@ test("Skill Page owns the exact official requirements in one collapsed native di
   assert.match(points[0].text, /differentiating an algebraic function/);
   assert.match(source, /<details[^>]+data-testid="skill-official-requirements"/);
   assert.match(source, /data-testid="skill-official-requirement"/);
+  assert.match(source, /officialPoints\.length > 0/);
   assert.doesNotMatch(source, /<details[^>]+open=/);
+  assert.doesNotMatch(source, /mapped outcome|official requirement\{?/i);
+});
+
+test("Practice V2 learning journey uses whitespace and omits redundant availability labels", () => {
+  const source = readFileSync("components/working-context/working-context-overview.tsx", "utf8");
+  const start = source.indexOf("if (model.practiceCompatible)");
+  const end = source.indexOf("\n  return (", start + 1);
+  assert.ok(start >= 0 && end > start);
+  const journey = source.slice(start, end);
+  assert.doesNotMatch(journey, /border-y border-rule|border-b border-rule pb-3/);
+  assert.doesNotMatch(journey, /model\.notesHref \? "Available"/);
+  assert.match(journey, /meta=\{model\.notesHref \? null : "Unavailable"\}/);
+  assert.match(journey, /emphasized/);
 });
 
 test("Design V2 Skill Page separates Review and uses real derived primary actions", () => {

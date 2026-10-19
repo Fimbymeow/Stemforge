@@ -96,8 +96,8 @@ export function WorkingContextOverview({ pathId }: { pathId: string }) {
 
         {officialPoints.length > 0 ? (
           <details className="group/requirements disclosure-motion text-sm text-secondary motion-reduce:[&::details-content]:!transition-none motion-reduce:[&::details-content]:!duration-0" data-testid="skill-official-requirements">
-            <summary className="flex min-h-14 cursor-pointer list-none flex-wrap items-center justify-between gap-3 py-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy">
-              <h2 className="text-lg font-semibold text-navy">Qualifications Scotland specification</h2><span className="ml-auto text-xs">{officialPoints.length} mapped outcome{officialPoints.length === 1 ? "" : "s"}</span>
+            <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 py-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy">
+              <h2 className="text-lg font-semibold text-navy">Qualifications Scotland specification</h2>
               <ChevronDown aria-hidden="true" className="size-4 group-open/requirements:rotate-180" />
             </summary>
             <ul className="divide-y divide-rule pb-3 leading-relaxed">
@@ -128,12 +128,12 @@ function SkillLearningJourney({ model }: { model: NonNullable<ReturnType<typeof 
 
   if (model.practiceCompatible) {
     return (
-      <section aria-labelledby="stages" className="grid gap-3">
-        <h2 id="stages" tabIndex={-1} className="border-b border-rule pb-3 text-2xl font-semibold tracking-tight text-navy">Learn this skill</h2>
-        <ol aria-label="Notes, Practice and Review" data-testid="skill-learning-journey" className="divide-y divide-rule border-y border-rule">
-          <PracticeJourneyRow title="Notes" copy="Understand the method and worked examples." meta={model.notesHref ? "Available" : "Unavailable"} href={model.notesHref} action="Open Notes" />
-          <PracticeJourneyRow title="Practice" copy="Work through the skill's questions in one continuous sequence." meta={`${model.completed} of ${model.total} questions completed`} href={model.practiceSequenceHref} action={model.isComplete ? "Revisit Practice" : model.completed > 0 ? "Continue Practice" : "Start Practice"} current={!model.isComplete} completed={model.isComplete} />
-          <PracticeJourneyRow title="Review" copy="Revisit previous learning when it is due." meta={reviewDue ? `${model.reviewCount} skill due` : "No review due"} href={null} action={null} reviewDue={reviewDue} />
+      <section aria-labelledby="stages">
+        <h2 id="stages" tabIndex={-1} className="text-2xl font-semibold tracking-tight text-navy">Learn this skill</h2>
+        <ol aria-label="Notes, Practice and Review" data-testid="skill-learning-journey" className="mt-5 grid gap-2">
+          <PracticeJourneyRow title="Notes" copy="Understand the method and worked examples." meta={model.notesHref ? null : "Unavailable"} href={model.notesHref} action="Open Notes" />
+          <PracticeJourneyRow title="Practice" copy="Work through the skill's questions in one continuous sequence." meta={`${model.completed} of ${model.total} questions completed`} href={model.practiceSequenceHref} action={model.isComplete ? "Revisit Practice" : model.completed > 0 ? "Continue Practice" : "Start Practice"} current={!model.isComplete} completed={model.isComplete} emphasized />
+          <PracticeJourneyRow title="Review" copy="Revisit previous learning when it is due." meta={reviewDue ? "Due for review" : null} href={null} action={null} reviewDue={reviewDue} />
         </ol>
       </section>
     );
@@ -188,10 +188,10 @@ function SkillLearningJourney({ model }: { model: NonNullable<ReturnType<typeof 
   );
 }
 
-function PracticeJourneyRow({ title, copy, meta, href, action, current = false, completed = false, reviewDue = false }: { title: string; copy: string; meta: string; href: string | null; action: string | null; current?: boolean; completed?: boolean; reviewDue?: boolean }) {
+function PracticeJourneyRow({ title, copy, meta, href, action, current = false, completed = false, reviewDue = false, emphasized = false }: { title: string; copy: string; meta: string | null; href: string | null; action: string | null; current?: boolean; completed?: boolean; reviewDue?: boolean; emphasized?: boolean }) {
   const state = reviewDue ? "due" : completed ? "complete" : title === "Review" ? "not-due" : current ? "current" : "available";
-  return <li className={`grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-1 py-5 max-sm:grid-cols-1 ${current ? "bg-academic-blue/50 px-4" : ""}`} aria-current={current ? "step" : undefined} aria-label={`${title}: ${state}`} data-journey-kind={title.toLowerCase()} data-journey-state={state}>
-    <div className="min-w-0"><h3 className="text-base font-semibold text-navy">{title}</h3><p className="mt-1 text-sm leading-relaxed text-secondary">{copy}</p><p className={`mt-2 text-xs ${reviewDue ? "text-amber-800" : "text-secondary"}`}>{meta}</p></div>
+  return <li className={`grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-4 rounded-sm px-1 py-4 max-sm:grid-cols-1 ${emphasized ? "bg-surface-dim px-4" : ""}`} aria-current={current ? "step" : undefined} aria-label={`${title}: ${state}`} data-journey-kind={title.toLowerCase()} data-journey-state={state}>
+    <div className="min-w-0"><h3 className="text-base font-semibold text-navy">{title}</h3><p className="mt-1 text-sm leading-relaxed text-secondary">{copy}</p>{meta ? <p className={`mt-2 text-xs ${reviewDue ? "text-warning" : "text-secondary"}`}>{meta}</p> : null}</div>
     {href && action ? <Link href={href} className={`${current ? "orthic-primary-action bg-navy px-4 text-white" : "orthic-secondary-link text-navy"} inline-flex min-h-11 items-center justify-center gap-2 rounded-sm text-sm font-medium`}>{action}<ArrowRight aria-hidden="true" className="orthic-arrow size-4" /></Link> : null}
   </li>;
 }

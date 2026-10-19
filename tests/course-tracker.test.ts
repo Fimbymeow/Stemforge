@@ -6,7 +6,7 @@ import { higherMathematicsOfficialSkillMappings } from "../data/curriculum/highe
 import { higherMathematicsSpecificationRegister } from "../data/curriculum/higher-mathematics/specification-register";
 import { contentResolver } from "../lib/content-resolver";
 import { deriveHigherMathsCourseTracker } from "../lib/course-tracker";
-import { groupCourseTrackerSkills, hasCourseTrackerConfidenceDisagreement } from "../lib/course-tracker-presentation";
+import { getCourseTrackerStatusTone, groupCourseTrackerSkills, hasCourseTrackerConfidenceDisagreement } from "../lib/course-tracker-presentation";
 import type { CourseTrackerSkill } from "../lib/course-tracker";
 import type { ProgressEvidence, QuestionAttempt } from "../lib/progress/types";
 
@@ -119,6 +119,16 @@ test("untouched actionable skills retain no suggestion and curriculum references
   assert.equal(reference.confidence, null);
 });
 
+test("compact status tones project existing Review and confidence state without changing it", () => {
+  const model = deriveHigherMathsCourseTracker(higherMaths, empty(), new Date("2026-08-07T12:00:00Z"));
+  const basic = findSkill(model, "basic-differentiation"); assert.ok(basic);
+  assert.equal(getCourseTrackerStatusTone(basic), "neutral");
+  assert.equal(getCourseTrackerStatusTone({ ...basic, confidence: { ...basic.confidence!, learnerLevel: "confident" } }), "confident");
+  assert.equal(getCourseTrackerStatusTone({ ...basic, confidence: { ...basic.confidence!, learnerLevel: "developing" } }), "developing");
+  assert.equal(getCourseTrackerStatusTone({ ...basic, confidence: { ...basic.confidence!, learnerLevel: "needs_work" } }), "needs-work");
+  assert.equal(getCourseTrackerStatusTone({ ...basic, reviewDue: true, confidence: { ...basic.confidence!, learnerLevel: "confident" } }), "review-due");
+});
+
 test("a deterministic mature 49-skill model stays compact with 25 actionable rows", () => {
   const source = allSkills(deriveHigherMathsCourseTracker(higherMaths, empty()));
   const mature = source.map((skill, index): CourseTrackerSkill => index < 25
@@ -138,8 +148,9 @@ test("Course Tracker source guards the calmer product boundary", () => {
   const page = readFileSync("app/subjects/higher-maths/course-tracker/page.tsx", "utf8");
   assert.doesNotMatch(component + page, /skills available|coming soon|Set confidence/i);
   assert.doesNotMatch(component, /ConfidenceControl|ReviewStatus|MasteryMark|tracker-progress|bg-gradient|bg-forge-soft\/35/);
-  assert.match(component, /Notes available/);
-  assert.doesNotMatch(component, /Official requirements/);
+  assert.doesNotMatch(component, /Notes available|Practice \$\{skill\.progressLabel\}|official requirement\{?/i);
+  assert.doesNotMatch(component, /CONFIDENCE_LABEL|tracker-confidence|CircleAlert/);
+  assert.match(component, /data-tracker-status/);
   assert.match(component, /data-course-tracker-reference-group/);
   assert.match(component, /Review now/);
   assert.match(component, /Reasoning across the course/);

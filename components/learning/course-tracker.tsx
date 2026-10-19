@@ -2,15 +2,23 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, CircleAlert } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import type { Subject } from "@/data/types";
 import { deriveHigherMathsCourseTracker } from "@/lib/course-tracker";
 import type { CourseTrackerRequirement, CourseTrackerSkill } from "@/lib/course-tracker";
-import { groupCourseTrackerSkills, hasCourseTrackerConfidenceDisagreement } from "@/lib/course-tracker-presentation";
+import { getCourseTrackerStatusTone, groupCourseTrackerSkills } from "@/lib/course-tracker-presentation";
+import type { CourseTrackerStatusTone } from "@/lib/course-tracker-presentation";
 import { getEmptyProgressEvidence, getProgressEvidence } from "@/lib/local-progress";
 import type { ProgressEvidence } from "@/lib/progress/types";
 import { useLearnerConfidence } from "@/components/confidence/use-learner-confidence";
-import { CONFIDENCE_LABEL, CONFIDENCE_TEXT as CONFIDENCE_COLOR } from "@/components/confidence/confidence-presentation";
+
+const TRACKER_STATUS_DOT: Record<CourseTrackerStatusTone, string> = {
+  "review-due": "bg-warning",
+  confident: "bg-success",
+  developing: "bg-warning",
+  "needs-work": "bg-danger",
+  neutral: "bg-rule-strong",
+};
 
 export function CourseTracker({ subject }: { subject: Subject }) {
   const [evidence, setEvidence] = useState<ProgressEvidence>(() => getEmptyProgressEvidence());
@@ -97,7 +105,7 @@ function TrackerRequirement({ requirement }: { requirement: CourseTrackerRequire
   return (
     <section aria-labelledby={`tracker-topic-${requirement.areaId}`} className="pt-7">
       <h3 id={`tracker-topic-${requirement.areaId}`} className="text-[15px] font-semibold leading-relaxed text-navy">{requirement.title}</h3>
-      <ul className="mt-3 divide-y divide-rule border-y border-rule" aria-label={`${requirement.title} Higher Maths skills`}>
+      <ul className="mt-3 divide-y divide-rule" aria-label={`${requirement.title} Higher Maths skills`}>
         {groups.map((group, index) => group.kind === "actionable"
           ? <TrackerSkillRow key={group.skill.skillPathId} skill={group.skill} />
           : <CurriculumReferenceGroup key={`${group.skills[0].skillPathId}-${index}`} requirementTitle={requirement.title} skills={group.skills} />)}
@@ -108,32 +116,14 @@ function TrackerRequirement({ requirement }: { requirement: CourseTrackerRequire
 
 function TrackerSkillRow({ skill }: { skill: CourseTrackerSkill }) {
   if (!skill.action) return null;
-  const learnerConfidence = skill.confidence?.learnerLevel ?? null;
-  const confidenceDisagrees = hasCourseTrackerConfidenceDisagreement(skill.confidence);
+  const statusTone = getCourseTrackerStatusTone(skill);
   return (
     <li className="min-w-0" data-testid={`tracker-skill-${skill.skillPathId}`} data-course-tracker-skill="" data-tracker-row-kind="actionable">
-      <Link href={skill.reviewDue ? `/practice?review=1&path=${encodeURIComponent(skill.skillPathId)}` : skill.action.href} aria-label={skill.reviewDue ? `Review now: ${skill.name}` : `Open ${skill.name} skill overview`} className="orthic-course-row orthic-secondary-link grid min-h-14 min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 px-3 py-3 transition-colors duration-150 hover:bg-shell focus-visible:bg-shell focus-visible:outline focus-visible:outline-2 focus-visible:outline-navy motion-reduce:transition-none max-sm:grid-cols-1">
-        <span className="min-w-0"><span className="block break-words text-[15px] font-medium text-navy">{skill.name}</span>{skill.progressLabel ? <span className="mt-1 block text-xs text-secondary">Notes available · {skill.progressLabel}</span> : null}</span>
-        <span className="flex items-center justify-end gap-4 text-[13px] text-secondary max-sm:w-full max-sm:justify-between">
-          {learnerConfidence ? (
-            <span className={`inline-flex items-center gap-1 ${CONFIDENCE_COLOR[learnerConfidence]}`} data-testid={`tracker-confidence-${skill.skillPathId}`}>
-              {CONFIDENCE_LABEL[learnerConfidence]}
-              {confidenceDisagrees ? (
-                <span
-                  role="img"
-                  aria-label="Your confidence and recent evidence differ"
-                  title="Your confidence and recent evidence differ"
-                  className="inline-flex text-warning"
-                  data-testid={`tracker-confidence-disagreement-${skill.skillPathId}`}
-                >
-                  <CircleAlert aria-hidden="true" className="size-3.5" />
-                </span>
-              ) : null}
-            </span>
-          ) : <span className="text-muted" data-testid={`tracker-confidence-${skill.skillPathId}`}>Unrated</span>}
-          <span className={`inline-flex min-w-[100px] items-center justify-end gap-2 font-medium ${skill.reviewDue ? "text-warning" : "text-secondary"}`} data-review-state={skill.reviewDue ? "due" : undefined}>
-            {skill.reviewDue ? "Review now" : "Open"}<ArrowRight aria-hidden="true" className="orthic-arrow size-4" />
-          </span>
+      <Link href={skill.reviewDue ? `/practice?review=1&path=${encodeURIComponent(skill.skillPathId)}` : skill.action.href} aria-label={skill.reviewDue ? `Review now: ${skill.name}` : `Open ${skill.name} skill overview`} className="orthic-course-row orthic-secondary-link grid min-h-14 min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-3 py-4 transition-colors duration-150 hover:bg-shell focus-visible:bg-shell focus-visible:outline focus-visible:outline-2 focus-visible:outline-navy motion-reduce:transition-none">
+        <span aria-hidden="true" className={`size-2 shrink-0 rounded-full ${TRACKER_STATUS_DOT[statusTone]}`} data-testid={`tracker-status-${skill.skillPathId}`} data-tracker-status={statusTone} />
+        <span className="min-w-0 break-words text-[15px] font-medium leading-snug text-navy">{skill.name}</span>
+        <span className={`inline-flex shrink-0 items-center justify-end gap-2 text-[13px] font-medium ${skill.reviewDue ? "text-warning" : "text-secondary"}`} data-review-state={skill.reviewDue ? "due" : undefined}>
+          {skill.reviewDue ? "Review now" : "Open"}<ArrowRight aria-hidden="true" className="orthic-arrow size-4" />
         </span>
       </Link>
     </li>
@@ -145,9 +135,9 @@ function CurriculumReferenceGroup({ requirementTitle, skills }: { requirementTit
     <li data-course-tracker-reference-group="">
       <ul className="divide-y divide-rule" aria-label={`Further skills in ${requirementTitle}`}>
         {skills.map((skill) => (
-          <li key={skill.skillPathId} className="grid min-h-14 min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 px-3 py-3 max-sm:grid-cols-1" data-testid={`tracker-skill-${skill.skillPathId}`} data-course-tracker-reference="">
-            <span className="min-w-0 break-words text-[15px] font-normal text-secondary">{skill.name}</span>
-            <span className="text-right font-mono text-[11px] text-secondary max-sm:text-left">{skill.officialPoints.length} official requirement{skill.officialPoints.length === 1 ? "" : "s"}</span>
+          <li key={skill.skillPathId} className="grid min-h-14 min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-3 px-3 py-4" data-testid={`tracker-skill-${skill.skillPathId}`} data-course-tracker-reference="">
+            <span aria-hidden="true" className="size-2 shrink-0 rounded-full bg-rule-strong" data-testid={`tracker-status-${skill.skillPathId}`} data-tracker-status="neutral" />
+            <span className="min-w-0 break-words text-[15px] font-normal leading-snug text-secondary">{skill.name}</span>
           </li>
         ))}
       </ul>
