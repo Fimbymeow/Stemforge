@@ -25,16 +25,10 @@ test("Review presentation distinguishes base, available, recommended and due wit
 
 test("core redesigned surfaces retain the intended information hierarchy", () => {
   const skill = readFileSync("components/working-context/working-context-overview.tsx", "utf8");
-  const dashboard = readFileSync("components/dashboard-local-progress.tsx", "utf8");
   const hub = readFileSync("components/higher-maths-hub.tsx", "utf8");
   const tracker = readFileSync("components/learning/course-tracker.tsx", "utf8");
   assert.equal((skill.match(/title="Notes"/g) ?? []).length, 1);
   assert.doesNotMatch(skill, /Next:/);
-  assert.doesNotMatch(dashboard, /PracticeEntryCard|dashboard-practice|dashboard-review-summary|dashboard-mistakes-link|Needs attention|Secure and mastered|Needs work/);
-  const dashboardCourses = readFileSync("components/dashboard-courses.tsx", "utf8");
-  assert.match(dashboard, /DashboardCourses/);
-  assert.match(dashboardCourses, /Your courses/);
-  assert.match(dashboardCourses, /skills learned/);
   assert.match(hub, /SubjectRoadmapNavigator/);
   assert.doesNotMatch(hub, /PracticeEntryCard/);
   assert.doesNotMatch(hub, /View full Course Tracker/);
@@ -43,6 +37,15 @@ test("core redesigned surfaces retain the intended information hierarchy", () =>
   assert.match(skill, /motion-reduce:\[&::details-content\]:!transition-none/);
   assert.doesNotMatch(tracker, /group\/requirements/);
   assert.match(tracker, /Open \$\{skill\.name\} skill overview/);
+});
+
+test("Dashboard retains the approved Continue, Review and Activity hierarchy", () => {
+  const dashboard = readFileSync("components/dashboard-local-progress.tsx", "utf8");
+  assert.doesNotMatch(dashboard, /PracticeEntryCard|dashboard-practice|dashboard-mistakes-link|Needs attention|Secure and mastered|Needs work/);
+  assert.match(dashboard, /dashboard-review-summary/);
+  assert.match(dashboard, /DashboardActivitySummary/);
+  assert.match(dashboard, /View Higher Maths/);
+  assert.doesNotMatch(dashboard, /DashboardCourses|StudyPlanToday|GuestProgressProtection/);
 });
 
 test("shared visual primitives encode the restrained semantic hierarchy", () => {

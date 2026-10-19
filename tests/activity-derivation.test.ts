@@ -22,25 +22,25 @@ test("Dashboard recap is calm and factual for empty, low, Review, flashcard and 
 
   const oneDay = emptyEvidence();
   oneDay.attempts.push(attempt({ isCorrect: true }));
-  assert.equal(deriveDashboardActivityRecap(deriveActivityHistory(oneDay, NOW, { rangeDays: 14 })), "1 active day in the last 14 days · 1 question worked on");
+  assert.equal(deriveDashboardActivityRecap(deriveActivityHistory(oneDay, NOW, { rangeDays: 14 })), "1 active day · 1 question worked on");
 
   const severalDays = emptyEvidence();
   severalDays.attempts.push(attempt({ isCorrect: true }), attempt({ eventId: "yesterday", questionId: "q2", sequence: 2, attemptedAt: "2026-09-11T12:00:00.000Z", isCorrect: true }));
-  assert.equal(deriveDashboardActivityRecap(deriveActivityHistory(severalDays, NOW, { rangeDays: 14 })), "2 active days in the last 14 days · 2 questions worked on");
+  assert.equal(deriveDashboardActivityRecap(deriveActivityHistory(severalDays, NOW, { rangeDays: 14 })), "2 active days · 2 questions worked on");
 
   const reviewOnly = emptyEvidence();
   reviewOnly.reviewEvents.push(review());
-  assert.equal(deriveDashboardActivityRecap(deriveActivityHistory(reviewOnly, NOW, { rangeDays: 14 })), "1 active day in the last 14 days · Review completed");
+  assert.equal(deriveDashboardActivityRecap(deriveActivityHistory(reviewOnly, NOW, { rangeDays: 14 })), "1 active day · Review completed");
 
   const flashcardOnly = emptyEvidence();
   flashcardOnly.flashcardReviews.push(flashcard(), flashcard({ eventId: "flashcard_2", cardId: "card-2", sequence: 2 }));
-  assert.equal(deriveDashboardActivityRecap(deriveActivityHistory(flashcardOnly, NOW, { rangeDays: 14 })), "1 active day in the last 14 days · 2 flashcards reviewed");
+  assert.equal(deriveDashboardActivityRecap(deriveActivityHistory(flashcardOnly, NOW, { rangeDays: 14 })), "1 active day · 2 flashcards reviewed");
 
   const mixed = emptyEvidence();
   mixed.attempts.push(attempt({ isCorrect: true }));
   mixed.reviewEvents.push(review());
   mixed.flashcardReviews.push(flashcard());
-  assert.equal(deriveDashboardActivityRecap(deriveActivityHistory(mixed, NOW, { rangeDays: 14 })), "1 active day in the last 14 days · 1 question worked on · Review completed");
+  assert.equal(deriveDashboardActivityRecap(deriveActivityHistory(mixed, NOW, { rangeDays: 14 })), "1 active day · 1 question worked on · Review completed");
 });
 
 test("one canonical activity colour ramp uses the existing semantic tokens", () => {

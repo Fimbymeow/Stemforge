@@ -5,7 +5,8 @@ import type { ReviewEvent } from "../lib/review/types";
 
 test("fresh learner sees a calm empty state with the real next action", async ({ page, seriousBrowserErrors }) => {
   await page.goto("/dashboard");
-  await expect(page.getByTestId("dashboard-activity-summary")).toHaveCount(0);
+  await expect(page.getByTestId("dashboard-activity-summary")).toContainText("No activity in the last 14 days");
+  await expect(page.getByTestId("dashboard-activity-strip").locator("[data-intensity='0']")).toHaveCount(14);
   await page.goto("/activity");
   await expect(page.getByRole("heading", { name: "Activity", level: 1 })).toBeVisible();
   await expect(page.getByTestId("activity-empty-state")).toContainText("Your activity will appear here");
@@ -24,7 +25,7 @@ test("meaningful evidence renders week rows, Dashboard signal and bounded day de
     currentAttempt(QUESTION_IDS[1], 3, { eventId: "activity_second", attemptedAt: today, isCorrect: true }),
   ], [review(yesterday)]));
   await page.goto("/dashboard");
-  await expect(page.getByTestId("dashboard-activity-summary")).toContainText("2 active days in the last 14 days");
+  await expect(page.getByTestId("dashboard-activity-summary")).toContainText("2 active days");
   await expect(page.getByTestId("dashboard-activity-summary")).toContainText("2 questions worked on");
   await expect(page.getByTestId("dashboard-activity-strip").locator("[data-intensity]")).toHaveCount(14);
   await expect(page.getByTestId("dashboard-activity-strip")).toHaveAttribute("aria-label", /2 active days out of 14/);
@@ -126,9 +127,9 @@ test("Dashboard Activity uses a quiet history panel, reachable and overflow-free
     await expect(activity.getByTestId("dashboard-activity-recap")).toContainText("1 question worked on");
     await expect(activity.getByRole("link", { name: "View full activity history" })).toBeVisible();
     await expect(activity.getByTestId("dashboard-activity-strip").locator("[data-intensity]")).toHaveCount(14);
-    const courses = (await page.getByTestId("dashboard-courses-section").boundingBox())!;
+    const review = (await page.getByTestId("dashboard-review-summary").boundingBox())!;
     const history = (await activity.boundingBox())!;
-    expect(history.y).toBeGreaterThanOrEqual(courses.y + courses.height);
+    expect(history.y).toBeGreaterThanOrEqual(review.y + review.height);
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), `${viewport.width}px overflow`).toBe(0);
   }
   expect(seriousBrowserErrors).toEqual([]);

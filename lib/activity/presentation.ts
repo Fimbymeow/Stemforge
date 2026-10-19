@@ -15,7 +15,7 @@ export function activityIntensityName(level: ActivityIntensityLevel) {
 export function deriveDashboardActivityRecap(history: ActivityHistory) {
   if (!history.hasActivity) return `No activity in the last ${history.totalDayCount} days`;
 
-  const activeDays = `${history.activeDayCount} active day${history.activeDayCount === 1 ? "" : "s"} in the last ${history.totalDayCount} days`;
+  const activeDays = `${history.activeDayCount} active day${history.activeDayCount === 1 ? "" : "s"}`;
   const facts: string[] = [];
   if (history.totalDistinctQuestionsWorkedOn > 0) {
     facts.push(`${history.totalDistinctQuestionsWorkedOn} question${history.totalDistinctQuestionsWorkedOn === 1 ? "" : "s"} worked on`);

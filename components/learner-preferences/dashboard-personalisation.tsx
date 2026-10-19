@@ -7,7 +7,6 @@ import { AppTopbar } from "@/components/layout/app-topbar";
 import { MAX_FIRST_NAME_LENGTH } from "@/lib/learner-preferences";
 import { useLearnerPreferences } from "@/components/learner-preferences/use-learner-preferences";
 import { ONBOARDING_UPDATED_EVENT, readOnboardingState } from "@/lib/onboarding";
-import { getActiveSubject } from "@/lib/learning-paths";
 
 export function DashboardPersonalisation() {
   const { loaded, preferences, save, error } = useLearnerPreferences();
@@ -42,11 +41,10 @@ export function DashboardPersonalisation() {
     <>
       <header className="flex items-start justify-between gap-4 max-md:grid">
         <div>
-          <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.12em] text-navy">{getActiveSubject().subjectName}</p>
-          <h1 className="text-[32px] font-semibold leading-tight tracking-tight text-navy max-sm:text-[28px]">
+          <h1 className="font-serif text-[34px] font-normal leading-tight tracking-[-0.025em] text-navy max-sm:text-[30px]">
             {preferences.firstName ? `Welcome back, ${preferences.firstName}` : "Welcome back"}
           </h1>
-          <p className="mt-3 max-w-3xl text-base leading-relaxed text-secondary">Your plan, courses and recent learning.</p>
+          <p className="mt-2 max-w-3xl text-sm leading-relaxed text-secondary">Your plan, current course and recent learning.</p>
         </div>
       </header>
       {showPrompt ? (
