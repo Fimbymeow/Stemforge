@@ -59,41 +59,40 @@ test("Review due soon prevents a Secure claim without becoming an alarm", () => 
   assert(result.reasons.includes("review_due_soon"));
 });
 
-test("unavailable canonical skills remain coverage, while stale unknown IDs fail safely", () => {
+test("published canonical skills become supported coverage, while stale unknown IDs fail safely", () => {
   const assessment = assessedSkills(["basic-differentiation", "tangents-and-normals", "not-a-skill"]);
   const model = deriveCourseAssessmentReadiness({ courseSlug: "higher-maths", assessments: [assessment], evidence: evidence(), now: NOW });
   const summary = model.assessments[0];
   assert.equal(summary.totalCanonicalSkillCount, 2);
-  assert.equal(summary.supportedSkillCount, 1);
-  assert.equal(summary.unavailableSkillCount, 1);
-  assert.equal(summary.counts.limited_evidence, 1);
-  assert.equal(summary.skills.find((item) => item.skillPathId === "tangents-and-normals")?.coverage, "content_unavailable");
+  assert.equal(summary.supportedSkillCount, 2);
+  assert.equal(summary.unavailableSkillCount, 0);
+  assert.equal(summary.counts.limited_evidence, 2);
+  assert.equal(summary.skills.find((item) => item.skillPathId === "tangents-and-normals")?.coverage, "supported");
   assert(model.diagnostics.includes("assessment:test:unknown_skill:not-a-skill"));
 });
 
-test("topic scope expands to unpublished canonical skills instead of shrinking to live content", () => {
+test("topic scope includes the published Tangents skill", () => {
   const basic = contentResolver.getPathContext("basic-differentiation")!;
   const assessment: Assessment = {
     ...assessedSkills([]),
     scope: { kind: "topics", topicIds: [topicScopeId(basic.courseArea.slug, basic.routeTopic.slug)] },
   };
   const summary = deriveCourseAssessmentReadiness({ courseSlug: "higher-maths", assessments: [assessment], evidence: evidence(), now: NOW }).assessments[0];
-  assert(summary.skills.some((item) => item.skillPathId === "tangents-and-normals" && item.coverage === "content_unavailable"));
-  assert(summary.totalCanonicalSkillCount > summary.supportedSkillCount);
+  assert(summary.skills.some((item) => item.skillPathId === "tangents-and-normals" && item.coverage === "supported"));
+  assert.equal(summary.supportedSkillCount, 3);
+  assert(summary.totalCanonicalSkillCount > summary.supportedSkillCount, "other curriculum-reference skills remain honestly unavailable");
 });
 
-test("a requirements-scoped assessment resolves through canonical skills exactly like an equivalent skills-scoped one, including unavailable-skill honesty", () => {
-  // hm-calc-diff-chain-rule -> chain-rule; hm-calc-tangent -> tangents-and-normals (not yet available).
+test("a requirements-scoped assessment resolves through both published canonical skills", () => {
+  // hm-calc-diff-chain-rule -> chain-rule; hm-calc-tangent -> tangents-and-normals.
   const requirementsScoped: Assessment = { ...assessedSkills([]), scope: { kind: "requirements", specPointIds: ["hm-calc-diff-chain-rule", "hm-calc-tangent"] } };
   const model = deriveCourseAssessmentReadiness({ courseSlug: "higher-maths", assessments: [requirementsScoped], evidence: evidence(), now: NOW });
   const summary = model.assessments[0];
   assert.equal(summary.totalCanonicalSkillCount, 2);
-  assert.equal(summary.supportedSkillCount, 1, "chain-rule is live; tangents-and-normals is not");
-  assert.equal(summary.unavailableSkillCount, 1);
+  assert.equal(summary.supportedSkillCount, 2);
+  assert.equal(summary.unavailableSkillCount, 0);
   assert.equal(summary.skills.find((item) => item.skillPathId === "chain-rule")?.coverage, "supported");
-  assert.equal(summary.skills.find((item) => item.skillPathId === "tangents-and-normals")?.coverage, "content_unavailable");
-  // Readiness must never quietly claim full coverage just because one requirement's skill isn't live yet.
-  assert.notEqual(summary.unavailableSkillCount, 0);
+  assert.equal(summary.skills.find((item) => item.skillPathId === "tangents-and-normals")?.coverage, "supported");
 });
 
 test("an unknown official requirement ID in scope fails safely — no skills resolved, a diagnostic recorded, never a crash", () => {
@@ -193,8 +192,8 @@ test("course snapshot performs bounded course-wide derivations once", () => {
     deriveReview: (...args) => { reviews += 1; return deriveSkillReviewState(...args); },
   });
   assert.equal(mistakes, 1);
-  assert.equal(progress, 2);
-  assert.equal(reviews, 2);
+  assert.equal(progress, 3);
+  assert.equal(reviews, 3);
 });
 
 function summaryFor(learnerEvidence: ProgressEvidence, now = NOW) {

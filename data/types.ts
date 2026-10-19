@@ -7,6 +7,7 @@ export type StageVersion = number;
 export type PathVersion = number;
 
 export type LearningStageName = "Foundations" | "Applications" | "Past Paper-style Questions";
+export type QuestionStageName = LearningStageName | "Practice";
 export type ContentVariant = "default" | "tip" | "warning" | "exam";
 
 export type ContentBase = {
@@ -126,6 +127,21 @@ export type SkillPath = {
   /** @deprecated Static path Flashcards are not the canonical Flashcard contract. */
   flashcards?: Flashcard[];
   practiceSets?: PracticeSet[];
+  /**
+   * Ordered learner-facing Practice projection for this canonical skill.
+   *
+   * During the Practice-model compatibility phase, questions retain their
+   * legacy learning-stage membership for evidence, mastery and persisted
+   * session provenance. This list is the stable skill-level order only; it
+   * must not be inferred from question ID prefixes.
+   */
+  practiceQuestionIds?: string[];
+  /**
+   * Hidden provenance used by Practice-authored questions while persisted
+   * evidence and sessions still require a stageId. This is not a learner stage
+   * and must not participate in legacy mastery or completion calculations.
+   */
+  practiceCompatibilityStageId?: string;
   learningStages?: LearningStage[];
   lessonDocument?: import("@/lib/lessons/types").LessonDocument;
 };
@@ -213,7 +229,7 @@ export type Question = {
   skillPath?: string;
   skillPathId?: string;
   stageId?: string;
-  stage: LearningStageName;
+  stage: QuestionStageName;
   skill: string;
   title: string;
   questionText: string;

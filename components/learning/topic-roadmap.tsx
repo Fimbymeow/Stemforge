@@ -7,6 +7,7 @@ import { Card } from "@/components/ui";
 import { IconNodePath } from "@/components/learning/icon-node-path";
 import { getResourceHref, getSubjectForSkillPath } from "@/lib/learning-paths";
 import type { SkillPath } from "@/data/types";
+import { isPracticeCompatibleSkill } from "@/lib/practice-model";
 
 function stageDisplayName(name: string) {
   return name === "Past Paper-style Questions" ? "Exam practice" : name;
@@ -51,7 +52,11 @@ export function TopicRoadmap({ skillPaths, showHeading = true }: { skillPaths: S
               <Link href={getResourceHref("revision-notes", subject?.subjectSlug, selected.slug)} className="flex min-h-12 items-center gap-3 rounded-xl border border-line bg-white px-4 text-sm font-extrabold hover:border-forge/40 hover:bg-forge-soft">
                 <BookOpen aria-hidden="true" className="size-4 text-forge" /> Notes
               </Link>
-              {(selected.learningStages ?? []).map((stage) => (
+              {isPracticeCompatibleSkill(selected) ? (
+                <Link href={`/question/${selected.practiceQuestionIds![0]}`} className="flex min-h-12 items-center justify-between gap-3 rounded-xl border border-line bg-white px-4 text-sm font-extrabold hover:border-forge/40 hover:bg-forge-soft">
+                  <span>Practice</span><ArrowRight aria-hidden="true" className="size-4 shrink-0 text-forge" />
+                </Link>
+              ) : (selected.learningStages ?? []).map((stage) => (
                 <Link key={stage.id} href={stage.href ?? (stage.questionIds[0] ? `/question/${stage.questionIds[0]}` : selected.href)} className="flex min-h-12 items-center justify-between gap-3 rounded-xl border border-line bg-white px-4 text-sm font-extrabold hover:border-forge/40 hover:bg-forge-soft">
                   <span>{stageDisplayName(stage.name)}</span><ArrowRight aria-hidden="true" className="size-4 shrink-0 text-forge" />
                 </Link>

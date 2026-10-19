@@ -19,6 +19,7 @@ test("isolated public surface is truthful, accessible and links only to canonica
   await expect(page).toHaveTitle("Orthic — Scottish STEM Learning");
   await expect(page.getByRole("heading", { level: 1, name: "Master Scottish STEM, one skill at a time." })).toBeVisible();
   await expect(page.getByText("Launching soon. Starting with Higher Maths.")).toBeVisible();
+  await expect(page.getByText(/Foundations|Applications|Past Paper-style Questions|Exam practice/, { exact: true })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Tuition", exact: true })).toHaveAttribute("href", "https://stemforge-6an8.vercel.app/tuition");
   await expect(page.locator('a[href^="/dashboard"], a[href^="/subjects"], a[href^="/courses"], a[href^="/practice"], a[href^="/review"], a[href^="/activity"], a[href^="/account"]')).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Privacy" })).toHaveAttribute("href", "/privacy/");
@@ -82,28 +83,28 @@ test("the canonical-backed Chain Rule demo uses real equivalence marking and rem
   });
   await page.goto("/");
   const demo = page.locator("[data-chain-rule-demo]");
-  await expect(demo).toHaveAttribute("data-question-id", "orthic-public-chain-rule-square-v1");
+  await expect(demo).toHaveAttribute("data-question-id", "hm-calc-diff-chain-f-003");
   await expect(demo).toContainText("Differentiate");
-  await expect(demo).toContainText("Chain Rule");
-  await expect(demo.getByRole("link", { name: /Join the Orthic waitlist/ })).toBeHidden();
+  await expect(demo).toContainText("Higher Maths · Chain Rule · Practice");
+  await expect(demo.getByRole("link", { name: /Explore Chain Rule in Orthic/ })).toBeHidden();
 
-  await setDemoAnswer(page, "2(3x+2)");
+  await setDemoAnswer(page, "5(3x+2)^4");
   await page.getByLabel("Your answer").press("Enter");
   await expect(demo.getByText("Not quite", { exact: true })).toBeVisible();
 
-  await setDemoAnswer(page, "6(3x+2)");
+  await setDemoAnswer(page, "15(3x+2)^4");
   await demo.getByRole("button", { name: /Check answer/ }).click();
   await expect(demo.getByText("Correct", { exact: true })).toBeVisible();
 
-  await setDemoAnswer(page, "18x+12");
+  await setDemoAnswer(page, "15*(3x+2)^4");
   await demo.getByRole("button", { name: /Check answer/ }).click();
   await expect(demo.getByText("Correct", { exact: true })).toBeVisible();
 
   await demo.getByRole("button", { name: "Show hint" }).click();
-  await expect(demo.locator("[data-demo-hint]")).toContainText("Bring down the outside power 2");
+  await expect(demo.locator("[data-demo-hint]")).toContainText("Bring down the outside power");
   await demo.getByRole("button", { name: "Show worked solution" }).click();
   await expect(demo.locator("[data-demo-solution]")).toContainText("multiply by the derivative of the bracket");
-  await expect(demo.getByRole("link", { name: /Join the Orthic waitlist/ })).toHaveAttribute("href", "/#join-waitlist");
+  await expect(demo.getByRole("link", { name: /Explore Chain Rule in Orthic/ })).toHaveAttribute("href", "https://stemforge-6an8.vercel.app/subjects/higher-maths/calculus/differentiation/chain-rule");
 
   expect(backgroundRequests.filter((url) => /\/(?:api|auth|account|progress|evidence|premium)(?:\/|\?|$)/.test(new URL(url).pathname))).toEqual([]);
   expect(await page.evaluate(() => ({ local: Object.keys(localStorage), session: Object.keys(sessionStorage) }))).toEqual({ local: [], session: [] });
@@ -115,7 +116,7 @@ test("the canonical-backed Chain Rule demo uses real equivalence marking and rem
   await expect(page.getByLabel("Your answer")).toHaveJSProperty("value", "");
 });
 
-for (const width of [320, 375, 390, 430, 768, 1440]) {
+for (const width of [320, 375, 390, 430, 768, 1024, 1440]) {
   test(`Chain Rule demo remains usable without overflow at ${width}px`, async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== "desktop", "One deterministic responsive pass is sufficient.");
     await page.setViewportSize({ width, height: width < 600 ? 844 : 900 });

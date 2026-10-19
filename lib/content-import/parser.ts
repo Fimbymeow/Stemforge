@@ -14,8 +14,8 @@ import {
 import { hashCanonicalTextSource } from "@/lib/content-import/canonical";
 import { parseGraphConfigYaml } from "@/lib/content-import/graph-authoring";
 
-const QUESTION_HEADING = /^#{2,3}\s+((?:F|A|PPQ)\d{3})\s+[—-]\s+([a-z0-9]+(?:-[a-z0-9]+)*)\s*$/i;
-const SUMMARY_HEADING = /^#{1,3}\s+.*(?:all questions together for skim|QA check|Import readiness checklist)/i;
+const QUESTION_HEADING = /^#{2,3}\s+((?:F|A|PPQ|Q)\d{3})\s+[—-]\s+([a-z0-9]+(?:-[a-z0-9]+)*)\s*$/i;
+const SUMMARY_HEADING = /^#{1,3}\s+.*(?:Practice Skim List|all questions together for skim|QA check|Import readiness checklist)/i;
 const SAFE_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const PROTOTYPE_KEYS = new Set(["__proto__", "prototype", "constructor"]);
 const QUESTION_LABELS = [
@@ -37,12 +37,13 @@ export function parseMarkdownBank(input: { sourcePath: string; bytes: Uint8Array
   const advisoryLine = lines.find((line) => /^\s*-\s*skillPathId:\s*/i.test(line));
   const advisorySkillPathId = advisoryLine?.replace(/^\s*-\s*skillPathId:\s*/i, "").trim();
   const questionHeadings: Array<{ index: number; id: string; sourceOrder: string }> = [];
+  const practiceHeadingIndex = lines.findIndex((line) => /^##\s+Practice\s*$/i.test(line));
   const parseLimit = lines.findIndex((line) => SUMMARY_HEADING.test(line));
   const endIndex = parseLimit >= 0 ? parseLimit : lines.length;
   for (let index = 0; index < endIndex; index += 1) {
     const match = QUESTION_HEADING.exec(lines[index]);
     if (match) questionHeadings.push({ index, sourceOrder: match[1].toUpperCase(), id: match[2] });
-    else if (/^#{2,3}\s+(?:F|A|PPQ)\d+/i.test(lines[index])) {
+    else if (/^#{2,3}\s+(?:F|A|PPQ|Q)\d+/i.test(lines[index])) {
       diagnostics.push({
         code: "malformed_question_heading",
         severity: "error",
@@ -51,12 +52,36 @@ export function parseMarkdownBank(input: { sourcePath: string; bytes: Uint8Array
       });
     }
   }
+  const hasPracticeQuestions = questionHeadings.some((heading) => /^Q\d{3}$/.test(heading.sourceOrder));
+  const hasLegacyQuestions = questionHeadings.some((heading) => /^(?:F|A|PPQ)\d{3}$/.test(heading.sourceOrder));
+  const authoringModel = hasPracticeQuestions || practiceHeadingIndex >= 0 ? "practice" : "legacy_stages";
+  if (hasPracticeQuestions && hasLegacyQuestions) diagnostics.push({
+    code: "mixed_authoring_models",
+    severity: "error",
+    message: "A source bank must use either Q-numbered Practice questions or legacy F/A/PPQ sections, not both.",
+  });
+  if (authoringModel === "practice") {
+    if (practiceHeadingIndex < 0) diagnostics.push({ code: "missing_practice_heading", severity: "error", message: "A Practice bank must contain an exact level-two 'Practice' heading." });
+    for (const heading of questionHeadings) {
+      const nextLevelTwo = lines.findIndex((line, index) => index > practiceHeadingIndex && /^##\s+/.test(line) && index < heading.index);
+      if (!/^Q\d{3}$/.test(heading.sourceOrder) || heading.index <= practiceHeadingIndex || nextLevelTwo >= 0) {
+        diagnostics.push({
+          code: "question_outside_practice_bank",
+          severity: "error",
+          message: "Practice questions must use Q001-style headings directly beneath the Practice section.",
+          lineRange: { start: heading.index + 1, end: heading.index + 1 },
+        });
+      }
+    }
+  }
   for (let index = 1; index < questionHeadings.length; index += 1) {
     if (sourceOrderValue(questionHeadings[index].sourceOrder) <= sourceOrderValue(questionHeadings[index - 1].sourceOrder)) {
       diagnostics.push({
         code: "invalid_question_order",
         severity: "error",
-        message: "Question headings must follow strict Foundations, Applications and Past Paper-style source order without duplicate sequence values.",
+        message: authoringModel === "practice"
+          ? "Practice question headings must follow strict Q001-style source order without duplicate sequence values."
+          : "Question headings must follow strict Foundations, Applications and Past Paper-style source order without duplicate sequence values.",
         lineRange: { start: questionHeadings[index].index + 1, end: questionHeadings[index].index + 1 },
       });
     }
@@ -67,7 +92,7 @@ export function parseMarkdownBank(input: { sourcePath: string; bytes: Uint8Array
   const seenIds = new Set<string>();
   const questions = questionHeadings.slice(0, MAX_IMPORT_QUESTIONS).map((heading, position) => {
     const blockEnd = questionHeadings[position + 1]?.index ?? endIndex;
-    const question = parseQuestion(lines.slice(heading.index + 1, blockEnd), heading.id, {
+    const question = parseQuestion(lines.slice(heading.index + 1, blockEnd), heading.id, heading.sourceOrder, authoringModel, {
       start: heading.index + 1,
       end: blockEnd,
     });
@@ -96,15 +121,22 @@ export function parseMarkdownBank(input: { sourcePath: string; bytes: Uint8Array
     sourceBankId,
     sourceBankVersion: versionMatch?.[1] ?? "unknown",
     ...(advisorySkillPathId ? { advisorySkillPathId } : {}),
+    authoringModel,
     questions,
     diagnostics,
   };
 }
 
-function parseQuestion(block: string[], id: string, sourceLineRange: SourceLineRange): ImportQuestionIR {
+function parseQuestion(
+  block: string[],
+  id: string,
+  sourceOrder: string,
+  authoringModel: ContentBankIR["authoringModel"],
+  sourceLineRange: SourceLineRange,
+): ImportQuestionIR {
   const diagnostics: ImportDiagnostic[] = [];
   const field = (label: string) => extractSection(block, label);
-  const declaredStage = field("Stage");
+  const declaredStage = authoringModel === "practice" ? "Practice" : field("Stage");
   const marksText = field("Marks");
   const marks = Number(marksText);
   const questionText = field("Question");
@@ -165,7 +197,7 @@ function parseQuestion(block: string[], id: string, sourceLineRange: SourceLineR
     }
   }
   const required: Array<[string, unknown]> = [
-    ["declared_stage", declaredStage],
+    ...(authoringModel === "legacy_stages" ? [["declared_stage", declaredStage] as [string, unknown]] : []),
     ["marks", Number.isInteger(marks) && marks > 0],
     ["question_text", questionText],
     ["answer_declaration", answerCandidates.length > 0],
@@ -183,11 +215,19 @@ function parseQuestion(block: string[], id: string, sourceLineRange: SourceLineR
     });
   }
   if (!SAFE_ID.test(id)) diagnostics.push({ code: "unsafe_question_id", severity: "error", message: `Question ID "${id}" is not safe kebab-case.`, questionId: id, lineRange: sourceLineRange });
+  if (authoringModel === "practice" && /-(?:f|a|ppq)-\d+$/i.test(id)) diagnostics.push({
+    code: "learner_stage_prefix_in_practice_id",
+    severity: "error",
+    message: `Practice question "${id}" must use a stage-neutral ID such as hm-<area>-<skill>-q-001.`,
+    questionId: id,
+    lineRange: sourceLineRange,
+  });
   for (const [name, value] of [["question", questionText], ["hint", hint], ["worked solution", workedSolution], ["common mistake", commonMistake]] as const) {
     if (value.length > MAX_IMPORT_TEXT_LENGTH) diagnostics.push({ code: "question_field_too_large", severity: "error", message: `${name} exceeds the import text bound.`, questionId: id, lineRange: sourceLineRange });
   }
   return {
     id,
+    sourceOrder,
     sourceLineRange,
     declaredStage,
     ...(field("Subskill") ? { subskill: field("Subskill") } : {}),
@@ -435,12 +475,12 @@ function unique(values: string[]) {
 }
 
 function inferBankId(questionId?: string) {
-  return questionId?.replace(/-(?:f|a|ppq)-\d+$/, "");
+  return questionId?.replace(/-(?:f|a|ppq|q)-\d+$/, "");
 }
 
 function sourceOrderValue(value: string) {
-  const match = /^(F|A|PPQ)(\d{3})$/.exec(value);
-  const section = match?.[1] === "F" ? 0 : match?.[1] === "A" ? 1 : 2;
+  const match = /^(F|A|PPQ|Q)(\d{3})$/.exec(value);
+  const section = match?.[1] === "F" || match?.[1] === "Q" ? 0 : match?.[1] === "A" ? 1 : 2;
   return section * 1000 + Number(match?.[2] ?? 0);
 }
 
@@ -455,6 +495,7 @@ function emptyBank(input: { sourcePath: string; bytes: Uint8Array }, diagnostics
     rawSourceHash: hashCanonicalTextSource(input.bytes),
     sourceBankId: "unknown-bank",
     sourceBankVersion: "unknown",
+    authoringModel: "legacy_stages",
     questions: [],
     diagnostics,
   };

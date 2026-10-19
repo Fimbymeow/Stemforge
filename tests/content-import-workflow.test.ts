@@ -3,9 +3,11 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import test from "node:test";
+import { canonicalQuestionModuleRegistry } from "@/data/canonical-content";
 import {
   applyGeneratedOutputs,
   approvalReceiptHash,
+  assertGeneratedOutputPathsRegistered,
   canonicalSerialize,
   compareQuestion,
   createApprovalReceipt,
@@ -552,6 +554,42 @@ test("apply rejects path traversal and unacknowledged working-tree changes", () 
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
+});
+
+test("generated question modules require explicit canonical destination registration", () => {
+  assert.deepEqual(canonicalQuestionModuleRegistry.map((registration) => ({
+    skillPathId: registration.skillPathId,
+    outputPath: registration.outputPath,
+    runtimeStatus: registration.runtimeStatus,
+  })), [
+    {
+      skillPathId: "basic-differentiation",
+      outputPath: "content/questions/higher-maths/basic-differentiation.ts",
+      runtimeStatus: "wired",
+    },
+    {
+      skillPathId: "chain-rule",
+      outputPath: "content/questions/higher-maths/chain-rule.ts",
+      runtimeStatus: "wired",
+    },
+    {
+      skillPathId: "tangents-and-normals",
+      outputPath: "content/questions/higher-maths/tangents-and-normals.ts",
+      runtimeStatus: "wired",
+    },
+  ]);
+
+  assert.doesNotThrow(() => assertGeneratedOutputPathsRegistered([
+    { path: "content/questions/higher-maths/tangents-and-normals.ts" },
+  ], canonicalQuestionModuleRegistry));
+
+  assert.throws(() => assertGeneratedOutputPathsRegistered([
+    { path: "content/questions/higher-maths/unregistered-skill.ts" },
+  ], canonicalQuestionModuleRegistry), /registry_wiring_required_before_apply:content\/questions\/higher-maths\/unregistered-skill\.ts/);
+
+  assert.throws(() => assertGeneratedOutputPathsRegistered([
+    { path: "content/questions/arbitrary.ts" },
+  ], canonicalQuestionModuleRegistry), /registry_wiring_required_before_apply:content\/questions\/arbitrary\.ts/);
 });
 
 test("import receipt accounting exactly equals approved IDs", () => {

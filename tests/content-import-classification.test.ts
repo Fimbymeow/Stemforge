@@ -5,7 +5,7 @@ import { markQuestionAnswer } from "@/lib/answer-engine";
 import { getQuestionEvidenceOwnerSkillId } from "@/lib/curriculum/question-scope-eligibility";
 import { auditBankAssessment, classifyBank, compareQuestion } from "@/lib/content-import/classification";
 import { createImportRegistry, parseAndValidateBankConfiguration } from "@/lib/content-import/configuration";
-import type { BankImportConfiguration, ImportAnswerCandidate, RequiredCapability } from "@/lib/content-import/types";
+import type { BankImportConfiguration, ImportAnswerCandidate, LegacyBankImportConfiguration, RequiredCapability } from "@/lib/content-import/types";
 import { higherMathsDifferentiationQuestions } from "@/content/questions/higher-maths/basic-differentiation";
 import {
   BANK_DIRECTORY,
@@ -72,7 +72,7 @@ test("Stationary Points remains deliberately unconfigurable because the live pla
 
 test("configuration and classification fail closed when a source stage is not completely mapped", () => {
   const bank = loadBank("basic-differentiation-v1.md");
-  const incomplete = JSON.parse(basicConfigurationText()) as BankImportConfiguration;
+  const incomplete = JSON.parse(basicConfigurationText()) as LegacyBankImportConfiguration;
   delete incomplete.stageNameToStageId["Past Paper-style Questions"];
   const validation = parseAndValidateBankConfiguration(JSON.stringify(incomplete), registry, bank);
   assert.equal(validation.valid, false);
@@ -477,16 +477,13 @@ test("the five moved-to-Tangents and six removed-as-duplicate IDs no longer exis
   assert.equal(new Set(ids).size, 34);
 });
 
-test("the migrated Tangents questions exist under clean, new IDs, unrelated to their old Chain Rule identities", () => {
+test("the reviewed Tangents Practice questions use the complete neutral approved ID sequence", () => {
   const bank = loadBank("tangents-and-normals-v1.md");
   const ids = bank.questions.map((question) => question.id);
-  assert.deepEqual(ids, [
-    "hm-calc-tangent-a-001",
-    "hm-calc-tangent-ppq-001",
-    "hm-calc-tangent-ppq-002",
-    "hm-calc-tangent-ppq-003",
-    "hm-calc-tangent-ppq-004",
-  ]);
+  assert.deepEqual(ids, Array.from(
+    { length: 30 },
+    (_, index) => `hm-calc-tangent-q-${String(index + 1).padStart(3, "0")}`,
+  ));
 });
 
 test("F010, A001, A003 and A008 no longer emit unsupported_intended_alias after alias cleanup", () => {
@@ -682,20 +679,15 @@ test("undeclared_multi_field_assessment no longer appears anywhere in the Chain 
   assert.deepEqual(occurrences, []);
 });
 
-test("the Tangents acceptance fixture now classifies all five questions through bounded equation and multipart marking", () => {
+test("the reviewed Tangents Practice bank classifies all 30 questions through bounded affine-line marking", () => {
   const bank = loadBank("tangents-and-normals-v1.md");
   const classifications = auditBankAssessment(bank);
-  assert.equal(bank.questions.length, 5);
-  assert.ok(classifications.every((c) => c.status === "ready"));
-
-  const a001 = classifications.find((c) => c.questionId === "hm-calc-tangent-a-001")!;
-  assert.equal(a001.markerCompatibility?.strategy, "linear_equation_equivalence");
-  assert.deepEqual(a001.blockers, []);
-
-  for (const id of ["hm-calc-tangent-ppq-001", "hm-calc-tangent-ppq-002", "hm-calc-tangent-ppq-003", "hm-calc-tangent-ppq-004"]) {
-    const classification = classifications.find((c) => c.questionId === id)!;
-    assert.equal(classification.markerCompatibility?.strategy, "multipart", id);
-    assert.deepEqual(classification.blockers, [], id);
+  assert.equal(bank.questions.length, 30);
+  for (const classification of classifications) {
+    assert.equal(classification.status, "convertible", classification.questionId);
+    assert.equal(classification.markerCompatibility?.strategy, "linear_equation_equivalence", classification.questionId);
+    assert.deepEqual(classification.blockers, [], classification.questionId);
+    assert.deepEqual(classification.conversions, ["marker_proven_lexical_normalisation"], classification.questionId);
   }
 });
 

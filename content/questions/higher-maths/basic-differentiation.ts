@@ -32,6 +32,18 @@ function polynomialMarking(target: string, correct: string[]): PolynomialMarking
   return { strategy: "polynomial_form", strategyVersion: 1, target, variable: "x", fixtures };
 }
 
+export const basicDifferentiationStageQuestionIds = {
+  foundations: ["hm-calc-diff-basic-f-001", "hm-calc-diff-basic-f-002", "hm-calc-diff-basic-f-003"],
+  applications: ["hm-calc-diff-basic-a-001", "hm-calc-diff-basic-a-002", "hm-calc-diff-basic-a-003"],
+  pastPaperStyle: ["hm-calc-diff-basic-ppq-001", "hm-calc-diff-basic-ppq-002"],
+} as const;
+
+export const basicDifferentiationPracticeQuestionIds = [
+  ...basicDifferentiationStageQuestionIds.foundations,
+  ...basicDifferentiationStageQuestionIds.applications,
+  ...basicDifferentiationStageQuestionIds.pastPaperStyle,
+] as const;
+
 export const higherMathsDifferentiationQuestions: Question[] = applyReviewedHigherMathsCurriculum([
   {
     id: "hm-calc-diff-basic-f-001",

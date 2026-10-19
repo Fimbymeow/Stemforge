@@ -44,6 +44,12 @@ export const chainRuleStageQuestionIds = {
   ]
 } as const;
 
+export const chainRulePracticeQuestionIds = [
+  ...chainRuleStageQuestionIds.foundations,
+  ...chainRuleStageQuestionIds.applications,
+  ...chainRuleStageQuestionIds.pastPaperStyle,
+] as const;
+
 export const higherMathsChainRuleQuestions: Question[] = applyReviewedHigherMathsCurriculum([
   {
     "id": "hm-calc-diff-chain-f-001",

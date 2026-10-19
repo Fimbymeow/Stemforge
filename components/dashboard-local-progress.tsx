@@ -16,6 +16,8 @@ import { StudyPlanToday } from "@/components/study-plan/study-plan-today";
 import { DashboardActivitySummary } from "@/components/activity/dashboard-activity-summary";
 import { DashboardCourses } from "@/components/dashboard-courses";
 import type { StudyPlanDashboardState } from "@/lib/study-plan/dashboard-dedup";
+import { contentResolver } from "@/lib/content-resolver";
+import { isPracticeCompatibleSkill } from "@/lib/practice-model";
 
 export function DashboardLocalProgressSection({ studyPlanEnabled = false }: { studyPlanEnabled?: boolean }) {
   const [evidence, setEvidence] = useState<ProgressEvidence>(() => getEmptyProgressEvidence());
@@ -61,6 +63,10 @@ export function DashboardLocalProgressSection({ studyPlanEnabled = false }: { st
   const heroStage = heroStageId ? heroPath?.stageSummaries.find((stage) => stage.stageId === heroStageId) ?? null : null;
   const heroHref = heroOwnsResume ? recommendation.href : planFocus?.href ?? recommendation.href;
   const heroTitle = heroPath?.name ?? (heroOwnsResume ? recommendation.title : planFocus?.skillName ?? recommendation.title) ?? effectiveCourses[0]?.name ?? "Higher Maths";
+  const heroSkillPath = heroPath ? contentResolver.getPathContext(heroPath.skillPathId)?.skillPath : null;
+  const heroUsesPractice = isPracticeCompatibleSkill(heroSkillPath);
+  const heroQuestionId = heroOwnsResume ? recommendation.questionId : null;
+  const heroPracticePosition = heroQuestionId ? contentResolver.getPracticeQuestionPosition(heroQuestionId) : undefined;
 
   return (
     <section className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-8 text-navy max-sm:gap-7" aria-label="Your learning dashboard">
@@ -73,8 +79,8 @@ export function DashboardLocalProgressSection({ studyPlanEnabled = false }: { st
           </div>
           {!heroOwnsResume && planFocus?.actionType === "review" ? <p className="rounded-sm bg-amber-50 px-3 py-1 font-mono text-[11px] text-amber-800"><span aria-hidden="true">● </span>Due for review · {planFocus.suggestedMinutes} min</p> : null}
         </div>
-        <DashboardJourney path={heroPath} currentStageId={heroStageId} />
-        {heroStage ? <p className="sr-only" data-testid="dashboard-current-stage">{heroStage.name} · {heroStage.completedQuestions}/{heroStage.totalQuestions} complete</p> : null}
+        <DashboardJourney path={heroPath} currentStageId={heroStageId} practiceCompatible={heroUsesPractice} />
+        {heroUsesPractice ? <p className="mt-3 text-sm text-secondary" data-testid="dashboard-current-stage">Practice · {heroPracticePosition ? `Question ${heroPracticePosition.position} of ${heroPracticePosition.total}` : `${heroPath?.completedQuestions ?? 0} of ${heroPath?.totalQuestions ?? 0} complete`}</p> : heroStage ? <p className="sr-only" data-testid="dashboard-current-stage">{heroStage.name} · {heroStage.completedQuestions}/{heroStage.totalQuestions} complete</p> : null}
         {heroHref ? <Link href={heroHref} className="orthic-primary-action mt-4 inline-flex min-h-11 items-center justify-center gap-3 rounded-sm bg-navy px-4 text-sm font-medium text-white max-sm:w-full">Continue {heroTitle}<ArrowRight aria-hidden="true" className="orthic-arrow size-4" /></Link> : null}
       </section>
       </div>
@@ -91,8 +97,9 @@ export function DashboardLocalProgressSection({ studyPlanEnabled = false }: { st
 }
 
 /** Curriculum context only: Notes has no completion evidence and Review is not a stage. */
-function DashboardJourney({ path, currentStageId }: { path: DashboardPathSummary | null; currentStageId?: string | null }) {
+function DashboardJourney({ path, currentStageId, practiceCompatible = false }: { path: DashboardPathSummary | null; currentStageId?: string | null; practiceCompatible?: boolean }) {
   if (!path) return null;
+  if (practiceCompatible) return <ol aria-label="Learning pathway" data-testid="dashboard-learning-pathway" className="mt-3 flex flex-wrap items-center gap-3 font-mono text-[11px] text-secondary"><li>Notes</li><li aria-hidden="true">→</li><li className="rounded-sm border border-rule bg-academic-blue px-2 py-1 text-navy">Practice</li><li aria-hidden="true">→</li><li>Review</li></ol>;
   return <ol aria-label="Learning pathway" data-testid="dashboard-learning-pathway" className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 font-mono text-[11px] text-secondary">
     <li className="inline-flex min-h-8 items-center">Notes</li>
     {path.stageSummaries.map((stage) => {

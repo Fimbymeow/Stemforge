@@ -10,6 +10,7 @@ import { getActionableSpecificationGroups } from "@/lib/course-hub-presentation"
 import { deriveSkillReviewState } from "@/lib/review/derivation";
 import { derivePathDashboardSummary } from "@/lib/dashboard-derivations";
 import { contentResolver } from "@/lib/content-resolver";
+import { derivePracticeProgress, isPracticeCompatibleSkill } from "@/lib/practice-model";
 
 function initialStrandIndex(strands: CourseArea[]) {
   const available = strands.findIndex((strand) => strand.specAreas.some((area) => area.skillPaths?.some((path) => path.isAvailable)));
@@ -73,12 +74,13 @@ function RoadmapSkillRow({ path, evidence }: { path: SkillPath; evidence: Progre
   const stage = summary.stageSummaries.find((item) => item.stageId === summary.currentStageId);
   const accuracy = progress.latestAttemptAccuracyPercentage;
   const review = deriveSkillReviewState(path, evidence);
+  const practice = isPracticeCompatibleSkill(path) ? derivePracticeProgress(path, progress) : null;
   return (
     <li data-testid={`roadmap-skill-${path.slug}`}>
       <Link href={path.href} className="orthic-course-row orthic-secondary-link flex min-h-14 flex-wrap items-center justify-between gap-3 border-rule px-3 py-4 text-navy focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-navy">
         <span className="min-w-0 flex-1 font-semibold max-sm:basis-full">{path.name}</span>
         <span className="flex flex-wrap items-center gap-3 text-sm text-secondary">
-          <span>{progress.attemptedCount === 0 ? "Not started" : progress.completedQuestionIds.length === progress.totalQuestions ? "Learning complete" : `${summary.currentStageName === "Past Paper-style Questions" ? "Exam practice" : summary.currentStageName} ${stage?.completedQuestions ?? 0}/${stage?.totalQuestions ?? 0}`}</span>
+          <span>{practice ? `Practice ${practice.completedCount}/${practice.totalCount}` : progress.attemptedCount === 0 ? "Not started" : progress.completedQuestionIds.length === progress.totalQuestions ? "Learning complete" : `${summary.currentStageName === "Past Paper-style Questions" ? "Exam practice" : summary.currentStageName} ${stage?.completedQuestions ?? 0}/${stage?.totalQuestions ?? 0}`}</span>
           {accuracy !== null ? <span aria-label={`Latest answer accuracy: ${accuracy}%`} className={`tabular-nums ${accuracy === 100 ? "text-navy" : accuracy === 0 ? "text-red-800" : "text-amber-800"}`}>{accuracy}%</span> : null}
           {review.eligible && review.due && review.reason !== "history_unavailable" ? <span className="text-xs text-amber-800">Review due</span> : null}
           <span>Open</span><ArrowRight aria-hidden="true" className="orthic-arrow size-4 text-navy" />

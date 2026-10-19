@@ -29,7 +29,11 @@ export function WorkingContextHubCard({ pathId }: { pathId: string | null }) {
           <Link href={model.overviewHref} className="orthic-secondary-link inline-flex min-h-11 items-center justify-center text-sm text-secondary">View skill overview</Link>
         </div>
       </div>
-      <ol aria-label="Learning stages" className="mt-5 grid grid-cols-1 divide-y divide-rule border-y border-rule sm:grid-cols-4 sm:divide-x sm:divide-y-0">
+      {model.practiceCompatible ? <ol aria-label="Notes, Practice and Review" className="mt-5 grid grid-cols-1 divide-y divide-rule border-y border-rule sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+        <li aria-current={notesCurrent ? "step" : undefined} className={`orthic-stage px-3 py-3 text-sm ${notesCurrent ? "bg-academic-blue" : ""}`}><span className="block font-medium text-navy">Notes</span><span className="mt-1 block text-xs text-secondary">{model.notesHref ? "Available" : "Unavailable"}</span></li>
+        <li aria-current={!notesCurrent && !model.isComplete ? "step" : undefined} className={`orthic-stage px-3 py-3 text-sm ${!notesCurrent && !model.isComplete ? "bg-academic-blue" : ""}`}><span className="block font-medium text-navy">Practice</span><span className="mt-1 block text-xs text-secondary">{model.completed}/{model.total} complete</span></li>
+        <li className="orthic-stage px-3 py-3 text-sm"><span className="block font-medium text-navy">Review</span><span className="mt-1 block text-xs text-secondary">{model.reviewHref ? `${model.reviewCount} due` : "No review due"}</span></li>
+      </ol> : <ol aria-label="Learning stages" className="mt-5 grid grid-cols-1 divide-y divide-rule border-y border-rule sm:grid-cols-4 sm:divide-x sm:divide-y-0">
         <li aria-current={notesCurrent ? "step" : undefined} className={`orthic-stage px-3 py-3 text-sm ${notesCurrent ? "bg-academic-blue" : ""}`}><span className="block font-medium text-navy">Notes</span><span className="mt-1 block text-xs text-secondary">{model.notesHref ? "Available" : "Unavailable"}</span></li>
         {["Foundations", "Applications", "Past Paper-style Questions"].map((name) => {
           const stage = model.stages.find((item) => item.name === name);
@@ -40,7 +44,7 @@ export function WorkingContextHubCard({ pathId }: { pathId: string | null }) {
             <span className="mt-1 block text-xs">{stage && stage.total > 0 ? `${stage.completed}/${stage.total} · ${complete ? "Complete" : current ? "Current" : stage.completed > 0 ? "In progress" : "Available"}` : "Unavailable"}</span>
           </li>;
         })}
-      </ol>
+      </ol>}
     </section>
   );
 }

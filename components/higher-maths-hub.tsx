@@ -26,7 +26,7 @@ export function HigherMathsHub() {
       <div className="mx-auto grid min-w-0 max-w-[1220px] grid-cols-[minmax(0,1fr)] gap-7 pb-8 pt-8 max-sm:pt-6" data-testid="course-hub-page">
         <header className="flex min-w-0 items-start justify-between gap-6 border-b border-rule pb-6 max-sm:flex-col">
           <div className="min-w-0"><h1 className="text-[32px] font-semibold leading-tight tracking-tight text-navy max-sm:text-[28px]">Higher Maths</h1>
-          <p className="mt-3 max-w-3xl text-base leading-relaxed text-secondary">Learn through focused stages, practise deliberately and revisit skills when Review recommends it.</p></div>
+          <p className="mt-3 max-w-3xl text-base leading-relaxed text-secondary">Learn from clear Notes, practise each skill in one continuous sequence and return when Review is due.</p></div>
           <CourseHubProgress subject={subject} />
         </header>
 

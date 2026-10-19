@@ -165,7 +165,7 @@ test("mastered completion stays consistent while the hub advances to the next li
 
   await page.goto("/dashboard");
   await expect(page.getByTestId("dashboard-progress-summary")).toContainText("Chain rule");
-  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Foundations \u00b7 0/10 complete");
+  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Practice \u00b7 0 of 34 complete");
   await page.goto(HUB_ROUTE);
   await expect(page.getByTestId("working-context-hub")).toContainText("Chain rule");
   await page.getByTestId("course-tracker-destination").click();

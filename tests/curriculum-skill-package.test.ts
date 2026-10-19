@@ -692,7 +692,7 @@ test("the Chain Rule dependency is represented as a question-level requirement, 
   assert.ok(rule!.triggerDescription.toLowerCase().includes("chain rule"));
 });
 
-test("no Trigonometric Differentiation question-level requirement exists — none of the five current questions is a trigonometric composite", () => {
+test("no Trigonometric Differentiation requirement exists because the Practice bank contains no trigonometric composite", () => {
   assert.ok(!tangentsPackage.questionLevelRequirements.some((entry) => entry.requiredSkillId === "trigonometric-differentiation"));
 });
 
@@ -713,54 +713,43 @@ test("the real Tangents manifest validates cleanly against real Higher Maths cur
   assert.deepEqual(report.errors, []);
 });
 
-test("Tangents declares no Foundations and no Notes source — both are genuinely absent, not omitted by mistake", () => {
+test("Tangents declares the Practice V2 Notes and Practice sources without legacy learner-stage sources", () => {
   const kinds = tangentsPackage.sources.map((source) => source.kind).sort();
-  assert.deepEqual(kinds, ["applications", "pastPaperPractice"]);
+  assert.deepEqual(kinds, ["notes", "practice"]);
 });
 
-test("real Tangents source evidence resolves the actual migrated draft's declared question counts", () => {
+test("real Tangents source evidence resolves the authored Notes and 30-question Practice bank", () => {
   const evidence = resolveSkillPackageEvidence(tangentsPackage);
   const byKind = new Map(evidence.sources.map((source) => [source.kind, source]));
-  assert.equal(byKind.get("applications")?.exists, true);
-  assert.equal(byKind.get("applications")?.discoveredQuestionCount, 1);
-  assert.equal(byKind.get("pastPaperPractice")?.exists, true);
-  assert.equal(byKind.get("pastPaperPractice")?.discoveredQuestionCount, 4);
+  assert.equal(byKind.get("notes")?.exists, true);
+  assert.equal(byKind.get("practice")?.exists, true);
+  assert.equal(byKind.get("practice")?.discoveredQuestionCount, 30);
 });
 
 test("the Tangents manifest's declared source hash matches the live migrated draft's actual content hash", () => {
   const bytes = readFileSync("content-drafts/higher-maths/calculus/tangents-and-normals-v1.md");
   const actualHash = hashCanonicalTextSource(bytes);
-  for (const source of tangentsPackage.sources) {
-    assert.equal(source.expectedSourceHash, actualHash, source.kind);
-  }
+  const practice = tangentsPackage.sources.find((source) => source.kind === "practice");
+  assert.equal(practice?.expectedSourceHash, actualHash);
 });
 
-test("Tangents is not ready for import or publication, and reports its real blockers honestly", () => {
+test("Tangents package readiness records the explicit human content approval", () => {
   const validation = validateSkillPackageManifest(tangentsPackage, knownHigherMathsRefs);
   const evidence = resolveSkillPackageEvidence(tangentsPackage);
   const readiness = deriveSkillPackageReadiness(tangentsPackage, validation, evidence);
 
   assert.equal(readiness.structurallyComplete, true);
-  assert.equal(readiness.readyForImport, false);
-  assert.equal(readiness.readyForPublication, false);
+  assert.equal(readiness.readyForImport, true);
+  assert.equal(readiness.readyForPublication, true);
 
   const codes = readiness.blockers.map((blocker) => blocker.code);
-  assert.ok(codes.includes("missing-foundations-source"), "no Foundations-tier Tangents content is authored yet");
-  assert.ok(codes.includes("missing-notes-source"), "no Tangents Notes/LessonDocument exists yet");
-  assert.ok(!codes.includes("unsupported-marking-capability"), "bounded affine-equation and multipart marking now support all five migrated questions");
-  assert.ok(codes.includes("import-config-missing"), "no tangents-and-normals-v1.import.json exists");
-  assert.ok(!codes.includes("source-reference-stale"), "the manifest hash matches the freshly written draft");
+  assert.deepEqual(codes, []);
 });
 
-test("Tangents' former equation-form and multipart marking blockers are cleared without implying publication readiness", () => {
+test("all 30 Tangents Practice questions clear the bounded affine-equation marker", () => {
   const evidence = resolveSkillPackageEvidence(tangentsPackage);
-  const applications = evidence.sources.find((source) => source.kind === "applications")!;
-  const ppq = evidence.sources.find((source) => source.kind === "pastPaperPractice")!;
-  const applicationsCapabilities = applications.unsupportedMarkingCapabilities.map((entry) => entry.requiredCapability ?? entry.code);
-  const ppqCapabilities = new Set(ppq.unsupportedMarkingCapabilities.map((entry) => entry.requiredCapability ?? entry.code));
-  assert.deepEqual(applicationsCapabilities, [], "A001 uses the bounded affine x/y equation marker");
-  assert.deepEqual(ppqCapabilities, new Set());
-  assert.equal(ppq.unsupportedMarkingCapabilities.length, 0, "all four migrated PPQ questions use bounded multipart marking");
+  const practice = evidence.sources.find((source) => source.kind === "practice")!;
+  assert.deepEqual(practice.unsupportedMarkingCapabilities, []);
 });
 
 // ---- Non-regression ----

@@ -1,12 +1,13 @@
 import { getActiveSkillPath, getQuestionContext, getQuestionHref } from "@/lib/learning-paths";
-import type { LearningStage, SkillPath } from "@/data/types";
+import type { SkillPath } from "@/data/types";
+import type { ResolvedQuestionStage } from "@/lib/content-resolver";
 
 // Private-beta entry helper retained for current homepage/dashboard entry points.
 export function getBasicDifferentiationSkillPath(): SkillPath {
   return getActiveSkillPath();
 }
 
-export function getStageForQuestion(questionId: string): LearningStage | undefined {
+export function getStageForQuestion(questionId: string): ResolvedQuestionStage | undefined {
   return getQuestionContext(questionId)?.stage;
 }
 

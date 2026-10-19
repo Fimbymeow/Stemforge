@@ -7,4 +7,5 @@ export * from "@/lib/content-import/classification";
 export * from "@/lib/content-import/preview";
 export * from "@/lib/content-import/receipts";
 export * from "@/lib/content-import/generation";
+export * from "@/lib/content-import/staging";
 export * from "@/lib/content-import/apply";

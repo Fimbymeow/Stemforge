@@ -40,15 +40,17 @@ test("representative production states are evidence-derived and honest", () => {
 
   const tangents = byId.get("tangents-and-normals");
   assert.ok(tangents);
-  assert.equal(tangents.live, false);
+  assert.equal(tangents.live, true);
   assert.ok(tangents.officialRequirements.every((requirement) => requirement.id && requirement.statement));
   assert.match(tangents.contractBoundary?.learningObjective ?? "", /equation of the tangent/i);
   assert.ok(tangents.contractBoundary?.excludes.some((boundary) => /normal/i.test(boundary)));
-  assert.equal(tangents.importState, "configuration_missing");
-  assert.deepEqual(tangents.stageCounts, { Foundations: 0, Applications: 1, "Past Paper-style Questions": 4 });
-  assert.equal(tangents.nextStage, "historical_pattern_audit");
-  assert.equal(tracker.recommendedNext?.skillPathId, "tangents-and-normals");
-  assert.equal(tracker.recommendedNext?.stage, "historical_pattern_audit");
+  assert.equal(tangents.importState, "applied_verified");
+  assert.deepEqual(tangents.stageCounts, { Foundations: 0, Applications: 0, "Past Paper-style Questions": 0 });
+  assert.equal(tangents.practiceQuestionCount, 30);
+  assert.equal(tangents.canonicalQuestionCount, 30);
+  assert.equal(tangents.learnerLiveQuestionCount, 30);
+  assert.equal(tangents.notesPresent, true);
+  assert.equal(tangents.nextStage, "complete");
 });
 
 test("main production gate accepts only the explicit live baseline exception", () => {

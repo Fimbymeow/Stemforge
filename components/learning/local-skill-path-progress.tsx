@@ -14,6 +14,7 @@ import type { SkillPath } from "@/data/types";
 import { useLearnerNextAction } from "@/components/learning/use-learner-next-action";
 import { QuickPracticeAction } from "@/components/practice/quick-practice-action";
 import type { LearnerNextAction } from "@/lib/learning/next-action";
+import { isPracticeCompatibleSkill } from "@/lib/practice-model";
 
 function useLocalSkillPathProgress(skillPath: SkillPath) {
   const [version, setVersion] = useState(0);
@@ -114,7 +115,7 @@ function CompletedPathCard({ skillPath, progress, status, nextAction, hidePrimar
   const subjectAction = { href: subject?.href ?? "/subjects", label: `Return to ${subject?.subjectName ?? "subject"}` };
   const secondary = nextAction.kind === "review_question"
     ? subjectAction
-    : { href: secondaryStagesHref ?? getSkillPathHref(skillPath), label: "Review a stage" };
+    : { href: secondaryStagesHref ?? getSkillPathHref(skillPath), label: isPracticeCompatibleSkill(skillPath) ? "View Practice" : "Review a stage" };
 
   return (
     <Card data-testid="completed-path-card" className={editorial ? "!rounded-none !border-x-0 !border-rule !bg-transparent !px-0 py-4" : "animate-fade-rise border-forge/30 p-4"}>

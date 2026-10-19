@@ -10,7 +10,7 @@ export const BANKS = [
   ["stationary-points-v2.md", 43, "d59be41090a888698fad4ce3ea2d15f67f3614bb267b2b3ecfefe9b2308ad53a"],
   ["optimisation-v1.md", 14, "097edffe69b37fad6b8147617c2e5d1a141aef5dc91a9ebd5c667d13ea17792b"],
   ["basic-integration-v1.md", 20, "288d3d25181abc641e322acb7a8f30b7f0df0a0646f970d36aebd7c160230fcd"],
-  ["tangents-and-normals-v1.md", 5, "082d0f5c979095054dd2791f063e2b2b0630d4fd840f36e28c292a184c99e101"],
+  ["tangents-and-normals-v1.md", 30, "21f060b02b6bddb52b82fe03fb4461310e96f1d459c82ac79eb3012f710f7231"],
 ] as const;
 
 export function loadBank(name: string) {
@@ -68,6 +68,7 @@ export function basicConfigurationText() {
 export function questionIR(overrides: Partial<ImportQuestionIR> & { answerCandidates?: ImportAnswerCandidate[] } = {}): ImportQuestionIR {
   return {
     id: "synthetic-f-001",
+    sourceOrder: "F001",
     sourceLineRange: { start: 1, end: 20 },
     declaredStage: "Foundations",
     marks: 1,
@@ -98,6 +99,7 @@ export function syntheticBank(question: ImportQuestionIR) {
     rawSourceHash: "a".repeat(64),
     sourceBankId: "synthetic-bank",
     sourceBankVersion: "1",
+    authoringModel: "legacy_stages" as const,
     questions: [question],
     diagnostics: [],
   };

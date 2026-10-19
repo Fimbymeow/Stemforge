@@ -64,10 +64,15 @@ export function createActiveSkillPathView(
     return { ...stage, questionIds, questions: questionIds.length };
   });
 
+  const practiceQuestionCount = path.practiceCompatibilityStageId
+    ? (path.practiceQuestionIds ?? []).filter((id) => getActiveQuestionById(questions, id) !== undefined).length
+    : 0;
   return {
     ...path,
     learningStages,
-    questions: learningStages.reduce((total, stage) => total + stage.questions, 0),
+    questions: learningStages.length > 0
+      ? learningStages.reduce((total, stage) => total + stage.questions, 0)
+      : practiceQuestionCount,
   };
 }
 

@@ -2,6 +2,7 @@ import { canonicalContent, type CanonicalContentSource } from "@/data/canonical-
 import { higherMathematicsCalculusPrerequisites } from "@/data/curriculum/higher-mathematics/calculus-prerequisites";
 import { higherMathematicsOfficialSkillMappings } from "@/data/curriculum/higher-mathematics/official-skill-mappings";
 import type { LearningStageName } from "@/data/types";
+import { isPracticeCompatibleSkill } from "@/lib/practice-model";
 import { createContentResolver } from "@/lib/content-resolver";
 import type { CanonicalSkillSpecificationMapping } from "@/lib/curriculum/official-skill-mapping";
 import type { PrerequisiteRelationship } from "@/lib/curriculum/prerequisite-graph";
@@ -128,11 +129,32 @@ export function assembleTestQuestions(
   seed: string,
 ): EligiblePracticeQuestion[] {
   if (requestedCount <= 0 || candidates.length < requestedCount) return [];
+  if (candidates.every((candidate) => isPracticeCompatibleSkill(candidate.path))) {
+    const pools = new Map<string, EligiblePracticeQuestion[]>();
+    for (const candidate of candidates) {
+      const skillId = candidate.question.curriculum?.primarySkillId ?? candidate.reference.pathId;
+      pools.set(skillId, [...(pools.get(skillId) ?? []), candidate]);
+    }
+    for (const pool of pools.values()) pool.sort((left, right) => stableHash(`${seed}:${left.question.id}`) - stableHash(`${seed}:${right.question.id}`));
+    const skillOrder = selectedAssessmentSkillIds.filter((skillId) => pools.has(skillId));
+    const selected: EligiblePracticeQuestion[] = [];
+    while (selected.length < requestedCount && skillOrder.some((skillId) => Boolean(pools.get(skillId)?.length))) {
+      for (const skillId of skillOrder) {
+        if (selected.length >= requestedCount) break;
+        const next = pools.get(skillId)?.shift();
+        if (next) selected.push(next);
+      }
+    }
+    return selected;
+  }
   const bySkill = new Map<string, Map<LearningStageName, EligiblePracticeQuestion[]>>();
   for (const candidate of candidates) {
     const skillId = candidate.question.curriculum?.primarySkillId ?? candidate.reference.pathId;
     const stages = bySkill.get(skillId) ?? new Map<LearningStageName, EligiblePracticeQuestion[]>();
     const stage = candidate.question.stage;
+    // Phase 2 only makes Practice-authored content importable. Existing learner
+    // test assembly remains deliberately stage-backed until the UI migration.
+    if (stage === "Practice") continue;
     stages.set(stage, [...(stages.get(stage) ?? []), candidate]);
     bySkill.set(skillId, stages);
   }

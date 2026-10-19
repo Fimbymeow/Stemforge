@@ -31,7 +31,7 @@ test("course progress is identical to the existing version-aware derivation", ()
   const view = presentSubjectCourses(emptyLearnerPreferences(), evidence);
   assert.deepEqual(view.yourCourses[0].progress, expected);
   assert.equal(view.yourCourses[0].progress?.completedPathCount, 0);
-  assert.equal(view.yourCourses[0].progress?.availablePathCount, 2);
+  assert.equal(view.yourCourses[0].progress?.availablePathCount, 3);
   assert.deepEqual(evidence, getEmptyProgressEvidence());
 });
 

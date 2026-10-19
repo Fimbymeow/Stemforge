@@ -3,9 +3,13 @@ import { test, expect } from "./fixtures/test";
 test("homepage makes a confident, bounded product promise and all primary actions are real", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Master Higher Maths, one skill at a time.", level: 1 })).toBeVisible();
-  await expect(page.getByText("Build Higher Maths one skill at a time", { exact: false })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Higher Maths, organised by precise skills", level: 2 })).toBeVisible();
   await expect(page.getByText("No account needed. Progress can stay on this browser.")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Exam Questions", level: 3 })).toBeVisible();
+  const product = page.getByTestId("homepage-product-visual");
+  await expect(product).toContainText("Notes");
+  await expect(product).toContainText("Practice");
+  await expect(product).toContainText("Review");
+  await expect(product).not.toContainText("Foundations");
   await expect(page.getByText("Higher Physics", { exact: true })).toHaveCount(0);
   await expect(page.getByText(/public beta/i)).toHaveCount(0);
   await expect(page.getByText("not affiliated with or endorsed by Qualifications Scotland", { exact: false })).toBeVisible();

@@ -15,7 +15,7 @@ import { QuestionGraphVisual } from "@/components/questions/question-graph-visua
 import { WorkedSolutionContent } from "@/components/questions/worked-solution-content";
 import { FormulaSheetDrawer } from "@/components/questions/formula-sheet-drawer";
 import { Card, ProgressBar } from "@/components/ui";
-import type { Question } from "@/data/types";
+import type { LearningStage, Question } from "@/data/types";
 import { markQuestionAnswer } from "@/lib/answer-engine";
 import { getQuestionContext } from "@/lib/learning-paths";
 import { getEmptyProgressEvidence } from "@/lib/local-progress";
@@ -31,7 +31,7 @@ import {
   createAnswerDraftKey,
   type AnswerDraftIdentity,
 } from "@/lib/questions/answer-drafts";
-import { deriveMathInputCapabilities } from "@/lib/questions/math-input-capabilities";
+import { deriveMathInputCapabilities, hasRichMathInputProfile } from "@/lib/questions/math-input-capabilities";
 import { canonicalMathToLatex, normalizeRichMathSource } from "@/lib/questions/rich-math-normalization";
 import { deriveStageQuestionPosition } from "@/lib/questions/question-context";
 import { describeReviewReason } from "@/lib/questions/review-reason";
@@ -44,6 +44,8 @@ import {
 } from "@/lib/working-context";
 import type { GuidedSelfAssessmentOutcome } from "@/lib/progress/types";
 import { didCurrentSubmissionResolveMistake } from "@/lib/mistakes/resolution-feedback";
+import { contentResolver } from "@/lib/content-resolver";
+import { derivePracticeDependencies, isPracticeCompatibleSkill } from "@/lib/practice-model";
 
 type SubmissionIntent = "keyboard" | "pointer";
 
@@ -112,12 +114,21 @@ function QuestionWorkspaceCore({
   const context = useMemo(() => getQuestionContext(question.id), [question.id]);
   const skillPath = context?.skillPath;
   const stage = context?.stage;
+  const practiceCompatible = !isPreview && isPracticeCompatibleSkill(skillPath);
+  const practicePosition = practiceCompatible ? contentResolver.getPracticeQuestionPosition(question.id) : undefined;
+  const practiceDependencies = useMemo(() => practiceCompatible && skillPath ? derivePracticeDependencies(skillPath) : null, [practiceCompatible, skillPath]);
+  const conditionalDependencyNames = useMemo(() => {
+    const conditionalIds = new Set(practiceDependencies?.conditional.map((item) => item.skillPathId) ?? []);
+    return (question.curriculum?.requiredSkillIds ?? [])
+      .filter((skillId) => conditionalIds.has(skillId))
+      .map((skillId) => practiceDependencies?.conditional.find((item) => item.skillPathId === skillId)?.name ?? skillId);
+  }, [practiceDependencies, question.curriculum?.requiredSkillIds]);
   const stagePosition = deriveStageQuestionPosition(context);
   const position = {
-    index: context?.questionIndexInPath ?? -1,
-    current: context ? context.questionIndexInPath + 1 : 0,
-    total: context?.pathQuestions.length ?? 0,
-    previous: context?.previousQuestion,
+    index: practicePosition?.index ?? context?.questionIndexInPath ?? -1,
+    current: practicePosition?.position ?? (context ? context.questionIndexInPath + 1 : 0),
+    total: practicePosition?.total ?? context?.pathQuestions.length ?? 0,
+    previous: practicePosition?.previousQuestion ?? context?.previousQuestion,
   };
   const hasPosition = position.index >= 0 && position.total > 0;
   const currentQuestion = hasPosition ? position.current : 1;
@@ -146,7 +157,7 @@ function QuestionWorkspaceCore({
     hintViewed,
     solutionViewed: solutionVisible,
   });
-  const usesRichMathInput = question.answerType === "algebraic";
+  const usesRichMathInput = question.answerType === "algebraic" && hasRichMathInputProfile(question.marking);
   const mathInputCapabilities = useMemo(() => deriveMathInputCapabilities(question), [question]);
   const markedSubmission = submitted && submittedAnswer !== null ? markQuestionAnswer(question, submittedAnswer) : null;
   const usesGuidedMarking = markedSubmission?.outcomeKind === "guided_pending";
@@ -236,7 +247,7 @@ function QuestionWorkspaceCore({
   }, [hasMounted, skillPath, pathStatus, pathCompletedQuestionCount, pathTotalQuestionCount, session, runtime]);
 
   useEffect(() => {
-    if (!hasMounted || !skillPath || !stage || !stageStatus || stageTotalQuestionCount === 0) return;
+    if (!hasMounted || practiceCompatible || !skillPath || !stage || !stageStatus || stageTotalQuestionCount === 0) return;
     const isStageCompleteNow = stageCompletedQuestionCount >= stageTotalQuestionCount;
     if (isStageCompleteNow && wasStageCompleteRef.current === false) {
       wasStageCompleteRef.current = true;
@@ -250,7 +261,7 @@ function QuestionWorkspaceCore({
         acknowledgement === "recorded" || acknowledgement === "unavailable" || acknowledgement === "write-failed",
       );
     }
-  }, [hasMounted, skillPath, stage, stageStatus, stageCompletedQuestionCount, stageTotalQuestionCount, pathCompletedQuestionCount, pathTotalQuestionCount, session, runtime]);
+  }, [hasMounted, practiceCompatible, skillPath, stage, stageStatus, stageCompletedQuestionCount, stageTotalQuestionCount, pathCompletedQuestionCount, pathTotalQuestionCount, session, runtime]);
 
   function updateAnswer(nextAnswer: string) {
     setAnswer(nextAnswer);
@@ -455,7 +466,7 @@ function QuestionWorkspaceCore({
             </> : null}
             <Link href={fallbackPathHref}>{skillPath?.name ?? question.skillPath ?? "Question"}</Link>
             <span aria-hidden="true">/</span>
-            <span className="font-bold text-forge">{isPreview && stage?.name === "Past Paper-style Questions" ? "Exam practice" : stage?.name ?? question.stage}</span>
+            <span className="font-bold text-forge">{practiceCompatible ? "Practice" : isPreview && stage?.name === "Past Paper-style Questions" ? "Exam practice" : stage?.name ?? question.stage}</span>
             {!isPreview ? <details className="disclosure-motion ml-auto max-sm:ml-0 max-sm:w-full">
               <summary className="inline-flex min-h-10 cursor-pointer items-center text-xs font-bold text-forge">More context</summary>
               <span className="mt-2 flex flex-wrap gap-2 rounded-lg bg-paper p-2 text-xs">
@@ -471,10 +482,11 @@ function QuestionWorkspaceCore({
           <Card className="!rounded-lg !border-rule p-7 !shadow-none max-sm:p-4" data-testid="question-workspace-card">
             <div className="flex flex-wrap items-start justify-between gap-2 border-b border-line pb-3">
               <div>
-                <p className="font-mono text-[11px] font-extrabold uppercase text-forge">Current stage</p>
+                <p className="font-mono text-[11px] font-extrabold uppercase text-forge">{practiceCompatible ? "Practice" : "Current stage"}</p>
                 <p className="mt-1 font-extrabold" data-testid="stage-question-position">
-                  {isPreview && stagePosition ? stagePosition.label.replace("Past Paper-style Questions", "Exam practice") : stagePosition?.label ?? `${question.stage} · Question ${currentQuestion}`}
+                  {practiceCompatible ? `Practice · Question ${currentQuestion} of ${totalQuestions}` : isPreview && stagePosition ? stagePosition.label.replace("Past Paper-style Questions", "Exam practice") : stagePosition?.label ?? `${question.stage} · Question ${currentQuestion}`}
                 </p>
+                {practiceCompatible && conditionalDependencyNames.length ? <p className="mt-2 text-xs text-secondary">Also uses: {conditionalDependencyNames.join(", ")}</p> : null}
                 {isPreview && stage?.name === "Past Paper-style Questions" ? <p className="mt-2 text-xs leading-relaxed text-secondary">Orthic-authored practice, not copied from official past papers.</p> : null}
               </div>
               <details className="disclosure-motion text-sm text-muted">
@@ -667,8 +679,8 @@ function QuestionWorkspaceCore({
             <Link className="orthic-secondary-link inline-flex min-h-11 items-center text-sm text-secondary" href={runtime.navigation.skill}>Explore Chain Rule</Link>
           </div> : showCompletionPanel && !session && skillPath && localProgress && nextAction ? (
             <PathCompletionPanel skillPath={skillPath} progress={localProgress} nextAction={nextAction} />
-          ) : showStageCompletionPanel && !session && skillPath && stage && stageLocalProgress && nextAction ? (
-            <StageCompletionPanel skillPath={skillPath} stage={stage} progress={stageLocalProgress} nextAction={nextAction} />
+          ) : !practiceCompatible && showStageCompletionPanel && !session && skillPath && stage && stageLocalProgress && nextAction ? (
+            <StageCompletionPanel skillPath={skillPath} stage={stage as LearningStage} progress={stageLocalProgress} nextAction={nextAction} />
           ) : session ? null : (
             <div className="grid grid-cols-2 gap-3 max-md:grid-cols-1">
               <Link href={position.previous ? runtime.navigation.question(position.previous.id) ?? fallbackPathHref : fallbackPathHref} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-line bg-white text-sm font-bold transition hover:border-forge">
@@ -694,8 +706,8 @@ function QuestionWorkspaceCore({
             </Card>
           ) : null}
           <details className="disclosure-motion border-y border-rule py-2">
-            <summary className="min-h-11 cursor-pointer py-3 text-sm font-medium text-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-navy">Stage progress</summary>
-            <PanelProgress
+            <summary className="min-h-11 cursor-pointer py-3 text-sm font-medium text-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-navy">{practiceCompatible ? "Practice progress" : "Stage progress"}</summary>
+            {!practiceCompatible ? <><PanelProgress
               label={stage?.name ?? "Current stage"}
               value={stageLocalProgress?.completionPercentage ?? 0}
               valueLabel={stageLocalProgress ? `${stageLocalProgress.completedQuestionIds.length} / ${stageLocalProgress.totalQuestions}` : stagePosition ? `${stagePosition.current} / ${stagePosition.total}` : "Not tracked"}
@@ -707,7 +719,7 @@ function QuestionWorkspaceCore({
                 valueLabel={localProgress ? `${localProgress.completedQuestionIds.length} / ${localProgress.totalQuestions}` : `${currentQuestion} / ${totalQuestions}`}
                 secondary
               />
-            </div>
+            </div></> : <PanelProgress label={skillPath?.name ?? "Practice"} value={localProgress?.completionPercentage ?? 0} valueLabel={localProgress ? `${localProgress.completedQuestionIds.length} / ${totalQuestions}` : `${currentQuestion} / ${totalQuestions}`} />}
           </details>
           {isPreview ? <Link href={runtime.navigation.notes} className="orthic-secondary-link inline-flex min-h-11 items-center gap-2 rounded text-sm text-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-navy"><FileText aria-hidden="true" className="size-4" />Chain Rule Notes</Link> : relatedResources.length ? (
             <div>

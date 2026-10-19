@@ -4,6 +4,7 @@ import { calculateSkillPathProgress, getQuestionProgressForVersion, selectNextQu
 import type { ProgressEvidence } from "@/lib/progress/types";
 import { isGradedIncorrectAttempt } from "@/lib/progress/attempt-outcomes";
 import type { PracticeSession } from "@/lib/practice/practice-types";
+import { isPracticeCompatibleSkill } from "@/lib/practice-model";
 
 export type LearnerNextActionKind =
   | "resume_practice"
@@ -378,13 +379,25 @@ function questionAction(input: {
   title: string;
   reason: string;
 }): LearnerNextAction {
+  const practiceCompatible = isPracticeCompatibleSkill(input.context.skillPath);
+  const migratingLegacyStage = practiceCompatible && ["resume_question", "continue_question", "start_stage", "start_learning"].includes(input.kind);
+  const learnerTitle = practiceCompatible && input.kind === "review_question"
+    ? `Practise ${input.context.skillPath.name}`
+    : migratingLegacyStage
+      ? `${input.kind === "start_learning" ? "Start" : "Continue"} ${input.context.skillPath.name}`
+      : input.title;
+  const learnerReason = practiceCompatible && input.kind === "start_learning"
+    ? "Begin with the first question in this skill's Practice order. Your progress is saved automatically."
+    : practiceCompatible && ["start_stage", "continue_question"].includes(input.kind)
+      ? "Continue with the next question in this skill's Practice order."
+      : input.reason;
   return {
     kind: input.kind,
     intent: input.intent,
     href: `/question/${input.context.question.id}`,
-    label: input.label,
-    title: input.title,
-    reason: input.reason,
+    label: migratingLegacyStage ? (input.kind === "start_learning" ? "Start Practice" : "Continue Practice") : input.label,
+    title: learnerTitle,
+    reason: learnerReason,
     subjectId: input.context.subject.subjectSlug,
     courseId: input.context.courseArea.slug,
     pathId: input.context.skillPath.slug,

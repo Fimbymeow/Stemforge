@@ -208,10 +208,12 @@ function isTrustworthyAttempt(
   if (!attempt.isGenuine || attempt.versionEvidence.kind !== "known") return false;
   const context = resolver.getQuestionContext(attempt.questionId);
   const path = contextByPath.get(attempt.skillPathId);
+  // stageId is retained as immutable historical provenance, not mistake identity.
+  // A question may move into a new learner-facing grouping while its stable
+  // question/path/version identity and the learner's evidence remain valid.
   return Boolean(
     context && path &&
     context.skillPath.slug === attempt.skillPathId &&
-    context.stage.id === attempt.stageId &&
     attempt.versionEvidence.questionVersion <= (activeVersions[attempt.questionId] ?? 0),
   );
 }
@@ -229,11 +231,12 @@ function reviewResolvesGroup(
   return event.evidenceRefs.some((reference) => {
     if (reference.evidenceKind !== "attempt") return false;
     const linked = attemptById.get(reference.eventId);
+    // The linked Review attempt may carry a newer stage provenance than the
+    // original mistake. Stable question/path/version identity is authoritative.
     return Boolean(
       linked &&
       linked.questionId === mistake.questionId &&
       linked.skillPathId === mistake.skillPathId &&
-      linked.stageId === mistake.stageId &&
       linked.versionEvidence.kind === "known" &&
       linked.versionEvidence.questionVersion === questionVersion &&
       linked.practiceSessionId === event.source.sourceId &&

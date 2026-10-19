@@ -18,7 +18,7 @@ test("empty learner dashboard recommends a deterministic guest start without fak
   assert.equal(model.nextAction.kind, "start_learning");
   assert.equal(model.nextAction.pathId, "basic-differentiation");
   assert.equal(model.course.completionPercentage, 0);
-  assert.equal(model.course.availablePathCount, 2);
+  assert.equal(model.course.availablePathCount, 3);
   assert.equal(model.weeklyActivity.activeDays, 0);
   assert.equal(model.sync.label, "Saved on this browser");
 });
@@ -51,26 +51,26 @@ test("current mastered evidence appears in the secure and mastered lane", () => 
   assert.match(model.secureAndMastered[0]?.title ?? "", /mastered/i);
 });
 
-test("coverage framing derives '2 of 49' from the live registry, not a hard-coded constant", () => {
+test("coverage framing derives '3 of 49' from the live registry, not a hard-coded constant", () => {
   const allSkillPaths = higherMaths.courseAreas.flatMap((area) => area.specAreas).flatMap((area) => area.skillPaths ?? []);
   assert.equal(allSkillPaths.length, 49);
-  assert.equal(allSkillPaths.filter((path) => path.isAvailable).length, 2);
+  assert.equal(allSkillPaths.filter((path) => path.isAvailable).length, 3);
 
   const model = deriveLearnerDashboardModel({ evidence: evidence(), now: now() });
-  assert.equal(model.course.availablePathCount, 2);
-  assert.equal(model.course.plannedPathCount, 47);
-  assert.equal(model.course.notice, "2 of 49 Higher Maths skills available, with more on the way.");
+  assert.equal(model.course.availablePathCount, 3);
+  assert.equal(model.course.plannedPathCount, 46);
+  assert.equal(model.course.notice, "3 of 49 Higher Maths skills available, with more on the way.");
 });
 
-test("dashboard progress stays truthful when both skills are untouched", () => {
+test("dashboard progress stays truthful when all three live skills are untouched", () => {
   const model = deriveLearnerDashboardModel({ evidence: evidence(), now: now() });
-  assert.equal(model.paths.length, 2);
+  assert.equal(model.paths.length, 3);
   for (const path of model.paths) {
     assert.equal(path.completedQuestions, 0);
     assert.equal(path.completionPercentage, 0);
   }
   assert.equal(model.course.completedQuestions, 0);
-  assert.equal(model.course.totalQuestions, 42);
+  assert.equal(model.course.totalQuestions, 72);
 });
 
 test("dashboard progress stays truthful when one skill is fully complete and the other is untouched", () => {
@@ -91,7 +91,7 @@ test("dashboard progress stays truthful when one skill is fully complete and the
   assert.equal(chain.completionPercentage, 0);
   // The combined figure must never be presented as if it were per-skill or full-course completion.
   assert.ok(model.course.completionPercentage < 100);
-  assert.equal(model.course.totalQuestions, 42);
+  assert.equal(model.course.totalQuestions, 72);
 });
 
 test("dashboard progress stays truthful for a skill that is only partway complete", () => {

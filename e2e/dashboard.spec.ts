@@ -41,8 +41,9 @@ test("guest learner dashboard hydrates without errors and presents calm course a
   await expect(summary.getByRole("link", { name: "Continue Basic differentiation" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
   await expect(summary).toContainText("Basic differentiation");
   const pathway = summary.getByRole("list", { name: "Learning pathway" });
-  await expect(pathway.getByRole("listitem", { name: "Foundations: current" })).toHaveAttribute("aria-current", "step");
-  await expect(pathway.getByRole("listitem", { name: "Applications: not complete" })).toBeVisible();
+  await expect(pathway.getByRole("listitem").filter({ hasText: /^Practice$/ })).toBeVisible();
+  await expect(pathway).toContainText("Notes");
+  await expect(pathway).toContainText("Review");
   await expect(pathway.getByRole("listitem").filter({ hasText: /^Notes$/ })).not.toHaveAttribute("aria-current", "step");
   await expect(pathway).not.toContainText("✓");
   await expect(page.getByTestId("dashboard-course-progress")).toHaveCount(0);

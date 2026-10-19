@@ -11,6 +11,73 @@ The remaining source banks under `content-drafts/higher-maths/calculus` are auth
 live content. Any further content change still requires reviewed preview evidence, explicit approval,
 staged validation, verified apply and an import receipt.
 
+## Practice-bank authoring (Importer V2)
+
+New Higher Maths banks use the learner-facing model `Notes → Practice → Review`. Review remains a
+separate scheduling system and is not authored inside a question bank. A Practice bank is one
+explicitly ordered list; authors do not create Foundations, Applications, or Past Paper-style
+sections.
+
+The exact Markdown grammar is:
+
+````markdown
+# Orthic — Higher Maths Example Skill Question Bank v1
+
+- skillPathId: hm-example-skill
+
+## Practice
+
+### Q001 — hm-example-skill-q-001
+
+Subskill: Example method
+Type: algebraic
+Marks: 2
+Calculator/non-calculator: Non-calculator
+Command word: Find
+
+Curriculum metadata:
+```yaml
+curriculum:
+  primarySkillId: example-skill
+  requiredSkillIds:
+```
+
+Question: ...
+Correct answer: ...
+Accepted answers:
+- ...
+Hint: ...
+Worked solution: ...
+Common mistake: ...
+````
+
+`Q001`, `Q002`, and so on define the authored Practice order. New IDs use the neutral convention
+`hm-<area>-<skill>-q-<three digits>`; for example `hm-calc-tangent-q-001`. Existing IDs are opaque,
+stable identifiers and are never renamed to adopt this convention.
+
+The corresponding stage-free configuration is:
+
+```json
+{
+  "bankId": "hm-example-skill",
+  "sourceBankVersion": "1",
+  "targetSkillPathSlug": "example-skill",
+  "runMode": "new_content_only"
+}
+```
+
+During transition, each Practice-enabled canonical skill has an explicit hidden
+`practiceCompatibilityStageId`. New questions carry `stage: "Practice"` and that provenance ID so
+append-only evidence and persisted sessions still have a stage identity. The compatibility value
+is not a learner stage, does not enter the legacy 25/35/40 mastery calculation, and does not create
+stage quotas. Configuration fails closed until the target skill is explicitly wired for it.
+
+Legacy F/A/PPQ banks and configurations remain supported. Their authored order flattens as
+Foundations → Applications → PPQ. When a canonical skill already has an explicit
+`practiceQuestionIds` list, that existing order is preserved and newly imported IDs are appended in
+source order. Practice-authored banks use their Q order directly. The generated skill-owned module
+exports both canonical questions and `practiceQuestionIds`, keeping order approval-bound.
+
 ## Assessment-preservation rule
 
 The importer may normalise representation but must not reauthor assessment. A conversion is allowed
@@ -259,6 +326,7 @@ Permitted conversions are limited to:
 - `stage_label_to_stage_id`
 - marker-proven lexical normalisation
 - `explicit_scaffolding_field_drop`
+- `practice_compatibility_provenance`
 
 The fourth conversion requires every field to explicitly declare assessed/scaffolding status.
 None of the five supplied banks declares this, so it occurs zero times in their mechanical audit.
@@ -294,7 +362,8 @@ approved under its existing ID.
 |---|---|
 | Presentation, metadata, hint, worked-solution or common-mistake changes only | `content_revision_bump` or `question_version_bump` |
 | Prompt meaning, marks, calculator status, accepted answers, correct-answer authority, options, answer type or marking contract | `question_version_bump` |
-| Same-owner stage or ordering change | `question_version_bump` |
+| Non-semantic move into Practice compatibility provenance, with no other material change | `practice_regrouping_no_version_bump` or `question_version_bump` |
+| Other same-owner stage or ordering change | `question_version_bump` |
 | Version fields with no independently proposed content change | none |
 | Cross-path ownership transfer, canonical identity change, archive/replace or separate Marking-strategy migration | none in Programme 5 |
 
@@ -311,6 +380,12 @@ All eight Basic Differentiation collisions are reported and remain unresolved.
 hash, live-snapshot hash, importer version, importable status, all question IDs, classifications,
 diagnostics, blockers, candidate partitions, collision diffs, and exact question-fragment output
 paths and hashes.
+
+V2 previews also bind the target skill and complete Practice order. Human-readable output shows
+question IDs, primary evidence owner, conditional dependencies, marking readiness, collisions,
+available version decisions, and hidden compatibility provenance. New-bank previews use Practice
+language; legacy provenance is retained only for safety and debugging. Older embedded preview
+payloads without Practice ordering remain valid under their original hash and reconstruction rules.
 
 `previewHash` is SHA-256 over deterministic canonical serialization of the complete payload.
 Human-readable previews and payload files are generated beneath `content-import/previews` and are
@@ -332,8 +407,13 @@ were moved byte-for-byte from `differentiation.ts` to `basic-differentiation.ts`
 IDs, versions, stages, order, and evidence identity are unchanged.
 
 The generator may replace only the configured skill-owned module. It never rewrites sibling
-question files, shared helpers, or a hand-maintained registry. A new path module is staged and
-reported, but real apply refuses until its small explicit registry wiring has been reviewed.
+question files, shared helpers, or the hand-maintained canonical module registry. That registry
+declares the skill owner, exact generated destination, question export and Practice-order export.
+A registration authorises the importer to create or replace that one destination; it does not add
+unapplied questions to the live runtime. A new path module is staged and reported, but real apply
+refuses with `registry_wiring_required_before_apply` until its explicit destination registration
+has been reviewed. The human-authored bank remains the source, the importer owns generated module
+bytes, the registry owns destination authority, and the apply receipt records the actual result.
 
 ## Apply and rollback guarantee
 
@@ -342,6 +422,14 @@ Multi-file replacement is not described as atomic.
 Apply requires a clean working tree by default. An advanced/test override must carry the exact
 acknowledged status snapshot and hash. Outputs are generated in staging and the hypothetical final
 content graph is validated before replacement.
+
+For a Practice V2 bank, staged validation projects the exact approval-bound Q order onto the
+target skill's `practiceQuestionIds`, sets its canonical question count from that projection, and
+retains the registered compatibility provenance. Installation does not publish the skill:
+`isAvailable` and `status` are never changed by apply. An unavailable path with a non-empty,
+validated Practice projection is installed-but-unpublished content, while an unavailable path
+without that projection remains an honest zero-question placeholder. Installed canonical counts
+therefore remain distinct from learner-live counts, which include only `isAvailable` paths.
 
 For every destination, original bytes and hashes are retained in recovery state. Receipt bytes,
 hash, directory and same-filesystem temporary path are prepared before canonical writes.

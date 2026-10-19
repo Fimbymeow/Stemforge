@@ -346,7 +346,14 @@ export function calculateSkillPathProgress(
 ): SkillPathProgress {
   const stages = skillPath.learningStages ?? [];
   const stageProgress = Object.fromEntries(stages.map((stage) => [stage.id, calculateStageProgress(skillPath, stage, evidence, questionVersions)]));
-  const questionIds = stages.flatMap((stage) => stage.questionIds);
+  // Practice-authored skills have no learner or legacy LearningStage. Their
+  // explicit Practice order drives count progress only; the hidden
+  // compatibility stage remains excluded from legacy 25/35/40 mastery.
+  const questionIds = stages.length > 0
+    ? stages.flatMap((stage) => stage.questionIds)
+    : skillPath.practiceCompatibilityStageId
+      ? skillPath.practiceQuestionIds ?? []
+      : [];
   const states = questionIds.map((questionId) => getQuestionProgressForVersion(questionId, questionVersions[questionId] ?? 1, evidence, skillPath.slug));
   const attempted = states.filter((state) => state.attempted);
   const completed = states.filter((state) => state.completed);
@@ -436,6 +443,11 @@ export function selectNextQuestionId(
   evidence: ProgressEvidence,
   questionVersions: Readonly<Record<string, number>> = {},
 ) {
+  if (skillPath.practiceQuestionIds?.length) {
+    return skillPath.practiceQuestionIds.find((questionId) =>
+      !getQuestionProgressForVersion(questionId, questionVersions[questionId] ?? 1, evidence, skillPath.slug).completed,
+    ) ?? null;
+  }
   for (const stage of skillPath.learningStages ?? []) {
     const next = stage.questionIds.find((questionId) =>
       !getQuestionProgressForVersion(questionId, questionVersions[questionId] ?? 1, evidence, skillPath.slug).completed,

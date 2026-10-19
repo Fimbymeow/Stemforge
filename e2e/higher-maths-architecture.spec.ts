@@ -3,7 +3,7 @@ import { test, expect } from "./fixtures/test";
 test("Higher Maths hub prioritises the live path and links to the full course structure", async ({ page }) => {
   await page.goto("/subjects/higher-maths");
   await expect(page.getByRole("heading", { level: 1, name: "Higher Maths" })).toBeVisible();
-  await expect(page.getByText(/Learn through focused stages/)).toBeVisible();
+  await expect(page.getByText(/practise each skill in one continuous sequence/)).toBeVisible();
   const trackerLink = page.getByTestId("course-tracker-destination");
   await expect(trackerLink).toHaveAttribute("href", "/subjects/higher-maths/course-tracker");
   await expect(trackerLink).not.toHaveAttribute("data-emphasis");

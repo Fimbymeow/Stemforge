@@ -5,12 +5,15 @@ test("public homepage presents truthful product-led Orthic positioning", async (
   await page.goto("/");
   await expect(page).toHaveTitle(/Orthic.*Learn with Precision/);
   await expect(page.getByRole("heading", { level: 1, name: "Master Higher Maths, one skill at a time." })).toBeVisible();
-  await expect(page.getByTestId("homepage-product-visual")).toHaveAccessibleName("Orthic Basic differentiation question workspace");
+  await expect(page.getByTestId("homepage-product-visual")).toHaveAccessibleName("Orthic Chain Rule Notes, Practice and Review overview");
   await expect(page.getByText("Mechanics", { exact: false })).toHaveCount(0);
   await expect(page.getByText("Kinematics", { exact: false })).toHaveCount(0);
   await expect(page.getByText("Chemistry", { exact: true })).toHaveCount(0);
   await expect(page.getByText("Biology", { exact: true })).toHaveCount(0);
-  await expect(page.getByRole("heading", { name: "The 4-stage skill pathway", level: 2 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Higher Maths, organised by precise skills", level: 2 })).toBeVisible();
+  await expect(page.getByTestId("homepage-product-visual")).toContainText("18 of 34 questions completed");
+  await expect(page.getByTestId("homepage-product-visual")).toContainText("No review due");
+  await expect(page.getByText(/Foundations|Applications|Past Paper-style Questions|Exam practice/, { exact: true })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Official past papers & marking instructions", level: 2 })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Self-rated confidence & spaced Review", level: 2 })).toBeVisible();
   await expect(page.getByText("01 / SKILL PROGRESSION", { exact: true })).toHaveCount(0);
@@ -46,7 +49,10 @@ test("public navigation keeps course actions focused and routes real CTAs", asyn
   await expect(page.getByRole("link", { name: "Explore Higher Maths" }).first()).toHaveAttribute("href", "/subjects/higher-maths");
 
   await page.goto("/tuition");
-  await expect(page.getByRole("link", { name: "Back to Orthic" })).toHaveAttribute("href", "/");
+  await expect(page.getByRole("link", { name: "Back to Orthic" })).toHaveAttribute(
+    "href",
+    "https://orthic.co.uk/",
+  );
 });
 
 test("mobile navigation and product proof remain compact, accessible and overflow-free", async ({ page }) => {
@@ -55,6 +61,7 @@ test("mobile navigation and product proof remain compact, accessible and overflo
     { width: 1024, height: 900 },
     { width: 768, height: 1024 },
     { width: 390, height: 844 },
+    { width: 430, height: 900 },
     { width: 375, height: 812 },
     { width: 320, height: 760 },
   ]) {

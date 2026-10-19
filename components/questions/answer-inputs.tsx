@@ -4,7 +4,7 @@ import { MathContent } from "@/components/questions/math-content";
 import { GraphAnswerInput } from "@/components/questions/graph-answer-input";
 import { RichMathAnswerField } from "@/components/questions/rich-math-answer-field";
 import type { Question, QuestionOption } from "@/data/types";
-import { deriveMathInputCapabilities } from "@/lib/questions/math-input-capabilities";
+import { deriveMathInputCapabilities, hasRichMathInputProfile } from "@/lib/questions/math-input-capabilities";
 
 type InputProps = {
   question: Question;
@@ -43,6 +43,15 @@ export function NumericalInput(props: InputProps) {
 }
 
 export function AlgebraicInput(props: InputProps) {
+  if (!hasRichMathInputProfile(props.question.marking)) {
+    return (
+      <TextInput
+        {...props}
+        placeholder={props.question.marking.strategy === "linear_equation_equivalence" ? "Enter an equation in x and y" : "Enter your answer"}
+        helper="Equivalent forms are accepted when marking."
+      />
+    );
+  }
   return <RichMathAnswerField value={props.value} onChange={props.onChange} capabilities={deriveMathInputCapabilities(props.question)} disabled={props.submitted} inputId={props.inputId ?? "question-answer"} describedBy={props.describedBy} invalid={props.invalid} />;
 }
 

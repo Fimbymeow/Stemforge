@@ -35,6 +35,7 @@ export type ImportAnswerCandidate = {
 
 export type ImportQuestionIR = {
   id: string;
+  sourceOrder: string;
   sourceLineRange: SourceLineRange;
   declaredStage: string;
   subskill?: string;
@@ -62,11 +63,12 @@ export type ContentBankIR = {
   sourceBankId: string;
   sourceBankVersion: string;
   advisorySkillPathId?: string;
+  authoringModel: "legacy_stages" | "practice";
   questions: ImportQuestionIR[];
   diagnostics: ImportDiagnostic[];
 };
 
-export type BankImportConfiguration = {
+export type LegacyBankImportConfiguration = {
   bankId: string;
   sourceBankVersion: string;
   targetSkillPathSlug: string;
@@ -79,6 +81,15 @@ export type BankImportConfiguration = {
   runMode: "new_content_only" | "includes_authorised_edits";
 };
 
+export type PracticeBankImportConfiguration = {
+  bankId: string;
+  sourceBankVersion: string;
+  targetSkillPathSlug: string;
+  runMode: "new_content_only" | "includes_authorised_edits";
+};
+
+export type BankImportConfiguration = LegacyBankImportConfiguration | PracticeBankImportConfiguration;
+
 export type ImportRegistryStage = {
   id: string;
   names: string[];
@@ -86,10 +97,13 @@ export type ImportRegistryStage = {
 
 export type ImportRegistryPath = {
   slug: string;
+  subjectSlug: string;
   subject: string;
   courseArea: string;
   specArea: string;
   name: string;
+  practiceQuestionIds: string[];
+  practiceCompatibilityStageId?: string;
   stages: ImportRegistryStage[];
 };
 
@@ -121,7 +135,8 @@ export type ImportConversion =
   | "label_rename"
   | "stage_label_to_stage_id"
   | "marker_proven_lexical_normalisation"
-  | "explicit_scaffolding_field_drop";
+  | "explicit_scaffolding_field_drop"
+  | "practice_compatibility_provenance";
 
 export type ImportBlocker = {
   code: string;
@@ -195,6 +210,11 @@ export type PreviewDecisionPayload = {
   configurationHash: string;
   liveCanonicalContentSnapshotHash: string;
   sourceQuestionIds: string[];
+  practiceOrders?: Array<{
+    targetSkillPathSlug: string;
+    questionIds: string[];
+    source: "authored_practice" | "legacy_flattened" | "existing_explicit";
+  }>;
   classifications: ImportClassification[];
   eligibleCandidateIds: string[];
   blockedIds: string[];
@@ -206,7 +226,8 @@ export type PreviewDecisionPayload = {
 
 export type VersionDecision =
   | { kind: "content_revision_bump" }
-  | { kind: "question_version_bump" };
+  | { kind: "question_version_bump" }
+  | { kind: "practice_regrouping_no_version_bump" };
 
 export type ApprovalReceipt = {
   receiptVersion: 1;

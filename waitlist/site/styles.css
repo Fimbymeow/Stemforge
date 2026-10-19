@@ -149,6 +149,8 @@ button, input { font: inherit; }
 .demo-support-panel p + p, .demo-math-display + p, .demo-support-panel p + .demo-math-display { margin-top: 12px; }
 .demo-math-inline { display: inline-block; max-width: 100%; vertical-align: -.08em; }
 .demo-math-display { max-width: 100%; overflow-x: auto; padding-block: 3px; text-align: center; }
+.demo-math-inline math { display: inline math; }
+.demo-math-display math { display: block math; margin-inline: auto; }
 .demo-continue-link { display: flex; min-height: 52px; align-items: center; justify-content: space-between; gap: 16px; border-top: 1px solid var(--line); padding: 0 24px; color: var(--navy); font-size: .875rem; font-weight: 800; transition: color 125ms ease, background-color 125ms ease; }
 .demo-continue-link[hidden] { display: none; }
 .demo-continue-link:hover, .demo-continue-link:focus-visible { background: var(--canvas); color: var(--ink); }

@@ -8,6 +8,7 @@ import { deriveSkillReviewState } from "@/lib/review/derivation";
 import { deriveMistakeLog } from "@/lib/mistakes/derivation";
 import type { ReviewDueReason } from "@/lib/review/types";
 import { deriveSkillAttention, type AttentionReasonCode } from "@/lib/attention/derivation";
+import { derivePracticeProgress, isPracticeCompatibleSkill } from "@/lib/practice-model";
 
 export const WORKING_CONTEXT_NOTES_ORIGIN_PREFIX = "stemforge:working-context-notes-origin:";
 
@@ -41,6 +42,7 @@ export type WorkingContextModel = {
   reviewReason: ReviewDueReason;
   notesHref: string | null;
   practiceHref: string;
+  practiceSequenceHref: string;
   overviewHref: string;
   questionBankHref: string;
   mistakesHref: string | null;
@@ -54,6 +56,7 @@ export type WorkingContextModel = {
   status: ProgressStatus;
   completionPercentage: number;
   stages: WorkingContextStageModel[];
+  practiceCompatible: boolean;
 };
 
 export type LessonContinuationAction = {
@@ -84,10 +87,17 @@ export function deriveLessonContinuationAction(input: {
         label: "Start Review",
       };
     }
-    const foundations = stages[0];
-    return foundations?.questionIds[0]
-      ? { href: `/question/${foundations.questionIds[0]}`, label: "Revisit Foundations" }
+    const firstQuestionId = context.skillPath.practiceQuestionIds?.[0] ?? stages[0]?.questionIds[0];
+    return firstQuestionId
+      ? { href: `/question/${firstQuestionId}`, label: isPracticeCompatibleSkill(context.skillPath) ? "Revisit Practice" : "Revisit Foundations" }
       : null;
+  }
+
+  if (isPracticeCompatibleSkill(context.skillPath)) {
+    const nextQuestionId = context.skillPath.practiceQuestionIds?.find((questionId) =>
+      !progress.completedQuestionIds.includes(questionId),
+    ) ?? context.skillPath.practiceQuestionIds?.[0];
+    return nextQuestionId ? { href: `/question/${nextQuestionId}`, label: "Continue to Practice" } : null;
   }
 
   const nextAction = deriveSkillPathNextAction(input);
@@ -116,6 +126,8 @@ export function deriveWorkingContextModel(input: {
     input.evidence,
     contentResolver.getQuestionVersions(),
   );
+  const practiceCompatible = isPracticeCompatibleSkill(context.skillPath);
+  const practiceProgress = practiceCompatible ? derivePracticeProgress(context.skillPath, progress) : null;
   const nextAction = deriveSkillPathNextAction(input);
   const isComplete = progress.totalQuestions > 0
     && progress.completedQuestionIds.length >= progress.totalQuestions;
@@ -133,8 +145,11 @@ export function deriveWorkingContextModel(input: {
     : context.skillPath.learningStages?.find((stage) =>
         (progress.stageProgress[stage.id]?.completionPercentage ?? 0) < 100,
       ) ?? context.skillPath.learningStages?.at(-1);
-  const stageName = activeStage?.name ?? "Learning path";
+  const stageName = practiceCompatible ? "Practice" : activeStage?.name ?? "Learning path";
   const practiceHref = workingContextPracticeHref(input.pathId);
+  const practiceSequenceQuestionId = context.skillPath.practiceQuestionIds?.find((questionId) => !progress.completedQuestionIds.includes(questionId))
+    ?? context.skillPath.practiceQuestionIds?.[0];
+  const practiceSequenceHref = practiceSequenceQuestionId ? `/question/${practiceSequenceQuestionId}` : practiceHref;
   const reviewCount = reviewState.due ? 1 : 0;
   const reviewHref = reviewState.due
     ? `/practice?review=1&path=${encodeURIComponent(input.pathId)}`
@@ -156,13 +171,15 @@ export function deriveWorkingContextModel(input: {
       ? "Resume practice"
     : progress.attemptedCount === 0
       ? "Start"
-      : "Continue";
+      : practiceCompatible ? "Continue Practice" : "Continue";
   const stageProgress = activeStage ? progress.stageProgress[activeStage.id] : null;
   const stageCompleted = stageProgress?.completedQuestionIds.length ?? 0;
   const stageTotal = stageProgress?.totalQuestions ?? 0;
+  const displayCompleted = practiceProgress?.completedCount ?? stageCompleted;
+  const displayTotal = practiceProgress?.totalCount ?? stageTotal;
   const collapsedSummary = isComplete
-    ? "All stages complete"
-    : `${stageName} · ${stageCompleted}/${stageTotal}${reviewQuestionIds.length ? ` · ${reviewQuestionIds.length} to practise again` : ""}`;
+    ? (practiceCompatible ? "Practice complete" : "All stages complete")
+    : `${stageName} · ${displayCompleted}/${displayTotal}${reviewQuestionIds.length ? ` · ${reviewQuestionIds.length} to practise again` : ""}`;
 
   return {
     pathId: context.skillPath.slug,
@@ -174,11 +191,11 @@ export function deriveWorkingContextModel(input: {
     primaryLabel,
     primaryHref,
     nextActionReason: isFreshStart
-      ? "Read the lesson first, then continue into Foundations."
+      ? practiceCompatible ? "Read the Notes first, then continue into Practice." : "Read the lesson first, then continue into Foundations."
       : nextAction.reason,
     progressSummary: isComplete
-      ? "All stages complete"
-      : `${stageName} · ${stageCompleted} of ${stageTotal} complete`,
+      ? (practiceCompatible ? "Practice complete" : "All stages complete")
+      : `${stageName} · ${displayCompleted} of ${displayTotal} complete`,
     collapsedSummary,
     reviewCount,
     reviewHref,
@@ -188,6 +205,7 @@ export function deriveWorkingContextModel(input: {
     reviewReason: reviewState.reason,
     notesHref,
     practiceHref,
+    practiceSequenceHref,
     overviewHref: context.skillPath.href,
     questionBankHref: `/subjects/${context.subject.subjectSlug}/question-bank?path=${encodeURIComponent(context.skillPath.slug)}`,
     mistakesHref: openMistakeCount > 0 ? mistakeLog.href : null,
@@ -195,11 +213,12 @@ export function deriveWorkingContextModel(input: {
     attentionReasonCode: attention.primaryReason.code,
     attentionDetail: attention.primaryReason.detail,
     needsAttention: attention.needsAttention,
-    completed: progress.completedQuestionIds.length,
-    total: progress.totalQuestions,
+    completed: practiceProgress?.completedCount ?? progress.completedQuestionIds.length,
+    total: practiceProgress?.totalCount ?? progress.totalQuestions,
     isComplete,
     status: progress.status,
-    completionPercentage: progress.completionPercentage,
+    completionPercentage: practiceProgress?.percentage ?? progress.completionPercentage,
+    practiceCompatible,
     stages: (context.skillPath.learningStages ?? []).map((stage) => {
       const item = progress.stageProgress[stage.id];
       return {

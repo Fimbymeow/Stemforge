@@ -3,7 +3,7 @@ import test from "node:test";
 import { higherMathsDifferentiationQuestions } from "../content/questions/higher-maths/basic-differentiation";
 import { higherMathsChainRuleQuestions } from "../content/questions/higher-maths/chain-rule";
 import type { ElementaryExpressionEquivalenceMarkingContract } from "../lib/marking/types";
-import { deriveMathInputCapabilities, getMathInputCapabilities } from "../lib/questions/math-input-capabilities";
+import { deriveMathInputCapabilities, getMathInputCapabilities, hasRichMathInputProfile } from "../lib/questions/math-input-capabilities";
 import { deriveElementaryMathKeyboardControls } from "../lib/questions/math-keyboard-controls";
 
 const elementary: ElementaryExpressionEquivalenceMarkingContract = {
@@ -38,4 +38,16 @@ test("log controls are explicit and bounded by the declared contract", () => {
   const controls = deriveElementaryMathKeyboardControls(capabilities);
   assert.deepEqual(controls, [{ id: "log", label: "log", accessibleLabel: "Insert logarithm", latex: "\\log_{#0}\\left(#?\\right)" }]);
   assert.deepEqual(capabilities.allowedLogBases, [2]);
+});
+
+test("deterministic line equations use the ordinary text field rather than an unsupported rich-maths profile", () => {
+  const marking = {
+    strategy: "linear_equation_equivalence" as const,
+    strategyVersion: 1 as const,
+    target: "y=-8x-2",
+    variables: ["x", "y"] as ["x", "y"],
+    fixtures: { correct: [], incorrect: [], malformed: [], unmarkable: [] },
+  };
+  assert.equal(hasRichMathInputProfile(marking), false);
+  assert.equal(hasRichMathInputProfile(elementary), true);
 });

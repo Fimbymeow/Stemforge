@@ -30,16 +30,16 @@ test("dashboard, Higher Maths hub and path agree for mixed outcomes", async ({ p
 
   await page.goto("/dashboard");
   await expect(page.getByTestId("dashboard-progress-summary")).toContainText("Basic differentiation");
-  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Applications \u00b7 0/3 complete");
+  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Practice \u00b7 Question 4 of 8");
 
   await page.goto("/subjects/higher-maths");
-  await expect(page.getByTestId("working-context-hub")).toContainText("Applications \u00b7 0/3 complete");
+  await expect(page.getByTestId("working-context-hub")).toContainText("3/8 complete");
 
   await page.goto("/subjects/higher-maths/calculus/differentiation/basic-differentiation");
   await expect(page.locator('[data-mastery-status="in_progress"]')).toHaveAccessibleName("Progress: In progress");
   const journey = page.getByTestId("skill-learning-journey");
-  await expect(journey.locator('[data-journey-kind="stage"]').filter({ hasText: "Foundations" })).toHaveAttribute("data-journey-state", "complete");
-  await expect(journey.locator('[data-journey-kind="stage"]').filter({ hasText: "Applications" })).toContainText("0 of 3 complete");
+  await expect(journey.locator('[data-journey-kind="practice"]')).toHaveAttribute("data-journey-state", "current");
+  await expect(journey.locator('[data-journey-kind="practice"]')).toContainText("3 of 8 questions completed");
 });
 
 test("path reset clears only Basic differentiation and remains valid after refresh", async ({ page }) => {

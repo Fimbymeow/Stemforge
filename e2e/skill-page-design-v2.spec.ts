@@ -46,12 +46,11 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 1024, height: 900
     await expect(confidence.getByRole("button", { name: "Developing", exact: true })).toHaveAttribute("aria-pressed", "true");
     await expect(header.getByTestId("skill-primary-action")).toHaveAttribute("href", "/subjects/higher-maths/revision-notes?path=basic-differentiation");
     const journey = page.getByTestId("skill-learning-journey");
-    await expect(journey.getByRole("listitem")).toHaveCount(4);
+    await expect(journey.getByRole("listitem")).toHaveCount(3);
     await expect(journey.locator('[data-journey-kind="notes"]')).not.toContainText("Complete");
     await expect(page.getByTestId("skill-review")).toHaveCount(0);
     const stageBoxes = await Promise.all((await journey.getByRole("listitem").all()).map((stage) => stage.boundingBox()));
-    if (viewport.width >= 1024) expect(stageBoxes.every((box) => box!.y === stageBoxes[0]!.y)).toBe(true);
-    else for (let i = 1; i < stageBoxes.length; i++) expect(stageBoxes[i]!.y).toBeGreaterThanOrEqual(stageBoxes[i - 1]!.y + stageBoxes[i - 1]!.height);
+    for (let i = 1; i < stageBoxes.length; i++) expect(stageBoxes[i]!.y).toBeGreaterThanOrEqual(stageBoxes[i - 1]!.y + stageBoxes[i - 1]!.height);
     for (const action of await header.getByRole("button").all()) {
       expect((await action.boundingBox())!.height).toBeGreaterThanOrEqual(44);
       expect(await action.evaluate((button) => button.scrollWidth <= button.clientWidth)).toBe(true);
@@ -123,23 +122,24 @@ test("confidence disagreement preserves learner choice and exact evidence semant
   await expect(page.getByRole("group", { name: "Your confidence" }).getByRole("button", { pressed: true })).toHaveCount(0);
 });
 
-test("real stage transition, separate due Review and shared reduced motion", async ({ page }) => {
+test("Practice progress, separate due Review and shared reduced motion", async ({ page }) => {
   await seedStoredProgress(page, v3Payload(QUESTION_IDS.slice(0, 3).map((id, index) => currentAttempt(id, index + 1))));
   await page.goto(route);
   const journey = page.getByTestId("skill-learning-journey");
-  await expect(journey.locator('[aria-current="step"]')).toContainText("Applications");
+  await expect(journey.locator('[aria-current="step"]')).toContainText("Practice");
+  await expect(journey.locator('[data-journey-kind="practice"]')).toContainText("3 of 8 questions completed");
   await expect(page.getByTestId("skill-primary-action")).toHaveAttribute("href", `/question/${QUESTION_IDS[3]}`);
-  await expect(journey.locator('[data-journey-state="complete"]')).toHaveCount(1);
+  await expect(journey.locator('[data-journey-state="complete"]')).toHaveCount(0);
   await expect(page.getByTestId("skill-primary-action")).toHaveCSS("transition-duration", "0.15s");
   await page.emulateMedia({ reducedMotion: "reduce" });
   await expect(page.getByTestId("skill-primary-action")).toHaveCSS("transition-duration", "0s");
   await expect(page.getByRole("button", { name: "Developing", exact: true })).toHaveCSS("transition-duration", "0s");
   await seedStoredProgress(page, v3Payload(QUESTION_IDS.map((id, index) => currentAttempt(id, index + 1))));
   await page.goto(route);
-  await expect(journey.getByRole("listitem")).toHaveCount(4);
-  await expect(journey.locator('[data-journey-state="complete"]')).toHaveCount(3);
-  await expect(page.getByTestId("skill-review")).toContainText("Due now");
-  await expect(page.getByTestId("skill-review")).not.toHaveAttribute("aria-current", "step");
+  await expect(journey.getByRole("listitem")).toHaveCount(3);
+  await expect(journey.locator('[data-journey-kind="practice"]')).toHaveAttribute("data-journey-state", "complete");
+  await expect(journey.locator('[data-journey-kind="review"]')).toContainText("1 skill due");
+  await expect(journey.locator('[data-journey-kind="review"]')).not.toHaveAttribute("aria-current", "step");
   await expect(page.getByTestId("skill-primary-action")).toHaveAttribute("href", "/practice?review=1&path=basic-differentiation");
   await expect(page.getByTestId("completed-path-card")).toHaveCSS("animation-name", "none");
 });

@@ -7,19 +7,24 @@ import { createHigherMathsPlaceholder } from "@/data/higher-maths/placeholder";
 import { higherMathsVectorsCourseArea } from "@/data/higher-maths/vectors";
 import { basicDifferentiationLesson } from "@/data/lessons/basic-differentiation";
 import { chainRuleLesson } from "@/data/lessons/chain-rule";
-import { chainRuleStageQuestionIds } from "@/content/questions/higher-maths/chain-rule";
-
-const basicDifferentiationStageQuestionIds = {
-  foundations: ["hm-calc-diff-basic-f-001", "hm-calc-diff-basic-f-002", "hm-calc-diff-basic-f-003"],
-  applications: ["hm-calc-diff-basic-a-001", "hm-calc-diff-basic-a-002", "hm-calc-diff-basic-a-003"],
-  pastPaperStyle: ["hm-calc-diff-basic-ppq-001", "hm-calc-diff-basic-ppq-002"],
-} as const;
+import { tangentsLesson } from "@/data/lessons/tangents";
+import {
+  basicDifferentiationPracticeQuestionIds,
+  basicDifferentiationStageQuestionIds,
+} from "@/content/questions/higher-maths/basic-differentiation";
+import {
+  chainRulePracticeQuestionIds,
+  chainRuleStageQuestionIds,
+} from "@/content/questions/higher-maths/chain-rule";
+import { tangentsAndNormalsPracticeQuestionIds } from "@/content/questions/higher-maths/tangents-and-normals";
 
 const questionCount = (stages: Record<string, readonly string[]>) =>
   Object.values(stages).reduce((total, ids) => total + ids.length, 0);
 const basicDifferentiationQuestionCount = questionCount(basicDifferentiationStageQuestionIds);
 const chainRuleQuestionCount = questionCount(chainRuleStageQuestionIds);
-const publishedDifferentiationQuestionCount = basicDifferentiationQuestionCount + chainRuleQuestionCount;
+const publishedDifferentiationQuestionCount = basicDifferentiationQuestionCount
+  + chainRuleQuestionCount
+  + tangentsAndNormalsPracticeQuestionIds.length;
 
 export const higherMathsCalculusStrandIds = {
   differentiatingFunctions: "differentiating-functions",
@@ -239,6 +244,7 @@ export const higherMaths: Subject = {
                   displayOrder: 1,
                 },
               ],
+              practiceQuestionIds: [...basicDifferentiationPracticeQuestionIds],
               learningStages: [
                 {
                   id: "basic-diff-stage-foundations",
@@ -347,6 +353,7 @@ export const higherMaths: Subject = {
                   displayOrder: 1,
                 },
               ],
+              practiceQuestionIds: [...chainRulePracticeQuestionIds],
               learningStages: [
                 {
                   id: "chain-rule-stage-foundations",
@@ -458,11 +465,14 @@ export const higherMaths: Subject = {
               name: "Tangents",
               description: "Find the equation of a tangent to a curve at a given point using the derivative.",
               href: "/subjects/higher-maths/calculus/differentiation/tangents-and-normals",
-              status: "coming-soon",
-              isAvailable: false,
+              status: "available",
+              isAvailable: true,
+              practiceCompatibilityStageId: "tangents-and-normals-practice-compatibility",
+              practiceQuestionIds: [...tangentsAndNormalsPracticeQuestionIds],
+              lessonDocument: tangentsLesson,
               progress: 0,
               completed: 0,
-              questions: 0,
+              questions: tangentsAndNormalsPracticeQuestionIds.length,
             },
             createHigherMathsPlaceholder({
               slug: "increasing-and-decreasing-functions",

@@ -22,6 +22,7 @@ test("Course Hub presentation exposes only actionable skills in canonical order"
   assert.deepEqual(getActionableStrandSkillPaths(calculus).map((path) => path.name), [
     "Basic differentiation",
     "Chain rule",
+    "Tangents",
   ]);
   assert.ok(getStrandSkillPaths(calculus).length > getActionableStrandSkillPaths(calculus).length);
 });
@@ -51,9 +52,11 @@ test("Hub presentation uses shared Design V2 motion without changing curriculum 
 test("available Calculus skills use real specification ownership headings", () => {
   const calculus = subject.courseAreas.find((area) => area.slug === "calculus")!;
   const groups = getActionableSpecificationGroups(calculus);
-  assert.equal(groups.length, 1);
+  assert.equal(groups.length, 2);
   assert.equal(groups[0].title, "Differentiating functions");
   assert.deepEqual(groups[0].paths.map((path) => path.slug), ["basic-differentiation", "chain-rule"]);
+  assert.equal(groups[1].title, "Using differentiation to investigate the nature and properties of functions");
+  assert.deepEqual(groups[1].paths.map((path) => path.slug), ["tangents-and-normals"]);
 });
 
 test("the full curriculum groups each skill once without changing ownership", () => {

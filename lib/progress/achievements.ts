@@ -7,6 +7,7 @@ import type {
   ProgressEvidence,
   ProgressStatus,
 } from "@/lib/progress/types";
+import { isPracticeCompatibleSkill } from "@/lib/practice-model";
 
 export type StructuralAchievementContext = {
   subjectId: string;
@@ -41,7 +42,9 @@ export function appendAchievementTransitions(
   const next = calculateSkillPathProgress(context.skillPath, after, context.questionVersions);
   const additions: AchievementSnapshot[] = [];
 
-  for (const stage of context.skillPath.learningStages ?? []) {
+  // Legacy stage snapshots remain readable forever, but Practice-compatible skills
+  // no longer emit new learner-facing stage milestones.
+  for (const stage of isPracticeCompatibleSkill(context.skillPath) ? [] : context.skillPath.learningStages ?? []) {
     const beforeStage = previous.stageProgress[stage.id];
     const afterStage = next.stageProgress[stage.id];
     if (!beforeStage || !afterStage) continue;

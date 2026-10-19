@@ -40,26 +40,26 @@ test("production build refuses to ship without a monitored privacy contact", asy
   await assert.rejects(buildSite({ production: true, outputDirectory: path.join(os.tmpdir(), "orthic-invalid-build"), privacyEmail: "" }), /ORTHIC_PRIVACY_CONTACT_EMAIL/);
 });
 
-test("isolated source links to canonical Tuition without exposing learner-product navigation", async () => {
+test("isolated source links to canonical Tuition and the exact Orthic Chain Rule destination", async () => {
   const html = await readFile(new URL("../site/index.template.html", import.meta.url), "utf8");
   assert.match(html, /href="https:\/\/stemforge-6an8\.vercel\.app\/tuition">Tuition/);
   assert.match(html, /id="join-waitlist"/);
-  assert.match(html, /href="\/#join-waitlist">Join the Orthic waitlist/);
+  assert.match(html, /href="https:\/\/stemforge-6an8\.vercel\.app\/subjects\/higher-maths\/calculus\/differentiation\/chain-rule">Explore Chain Rule in Orthic/);
   for (const pathName of ["dashboard", "subjects", "courses", "practice", "review", "activity", "account"]) {
     assert.doesNotMatch(html, new RegExp(`href=["']/${pathName}`, "i"));
   }
   const hrefs = [...html.matchAll(/href="([^"]+)"/g)].map((match) => match[1]);
-  assert.deepEqual([...new Set(hrefs.filter((href) => href.startsWith("/")))].sort(), ["/", "/#join-waitlist", "/assets/orthic-mark.svg", "/chain-rule-demo.css", "/privacy/", "/styles.css"]);
+  assert.deepEqual([...new Set(hrefs.filter((href) => href.startsWith("/")))].sort(), ["/", "/assets/orthic-mark.svg", "/chain-rule-demo.css", "/privacy/", "/styles.css"]);
 });
 
 test("build emits the isolated canonical-backed Chain Rule demo bundle and its local maths assets", async () => {
   await withBuild({ production: false }, async (output) => {
     const html = await readFile(path.join(output, "index.html"), "utf8");
     const demo = await readFile(path.join(output, "chain-rule-demo.js"), "utf8");
-    assert.match(html, /data-question-id="orthic-public-chain-rule-square-v1"/);
+    assert.match(html, /data-question-id="hm-calc-diff-chain-f-003"/);
     assert.match(html, /src="\/chain-rule-demo\.js" type="module"/);
-    assert.match(demo, /orthic-public-chain-rule-square-v1/);
-    assert.match(demo, /Differentiate \$y=\(3x\+2\)\^2\$/);
+    assert.match(demo, /hm-calc-diff-chain-f-003/);
+    assert.match(demo, /Differentiate \$y=\(3x\+2\)\^5\$/);
     assert.doesNotMatch(demo, /\/api\/(?:auth|progress|evidence|premium)/);
   });
 });

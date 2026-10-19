@@ -15,7 +15,7 @@ test("Design V2 keeps real Notes content primary and resource navigation seconda
   await expect(definition).toHaveCSS("border-left-width", "2px");
   await expect(warning).toHaveCSS("border-left-width", "2px");
   await expect(lesson.getByTestId("lesson-worked-example").first()).toHaveCSS("border-left-width", "1px");
-  const progression = lesson.getByTestId("lesson-closure").getByRole("link", { name: "Continue to Foundations" });
+  const progression = lesson.getByTestId("lesson-closure").getByRole("link", { name: "Continue to Practice" });
   await expect(progression).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
   const resources = page.getByRole("navigation", { name: "Other learning resources" });
   await expect(resources.getByRole("link", { name: "Flashcards" })).toHaveCount(0);
@@ -116,9 +116,9 @@ test("worked examples show every step and final answer without reveal controls",
   await expect(page.getByRole("button", { name: /Show (next step|full solution)/ })).toHaveCount(0);
 });
 
-test("self-check answer needs explicit reveal and Continue to Foundations is never gated", async ({ page }) => {
+test("self-check answer needs explicit reveal and Continue to Practice is never gated", async ({ page }) => {
   await page.goto(NOTES_ROUTE);
-  const continueLink = page.getByRole("link", { name: "Continue to Foundations" });
+  const continueLink = page.getByRole("link", { name: "Continue to Practice" });
   await expect(continueLink).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
   const selfCheck = page.getByTestId("lesson-self-check");
   await expect(selfCheck).not.toHaveAttribute("open", "");
@@ -161,23 +161,23 @@ for (const width of [1440, 1024, 390, 375, 320]) {
     await expect(answer.locator(".katex")).toHaveCount(0);
     await selfCheck.getByRole("button", { name: "Reveal answer" }).click();
     await expect(answer.locator(".katex")).not.toHaveCount(0);
-    await expect(lesson.getByTestId("lesson-closure").getByRole("link", { name: "Continue to Foundations" })).toBeVisible();
+    await expect(lesson.getByTestId("lesson-closure").getByRole("link", { name: "Continue to Practice" })).toBeVisible();
     await expectNoHorizontalOverflow(page);
   });
 }
 
-test("lesson continuation follows completed stages and due Review", async ({ page }) => {
+test("lesson continuation follows the continuous Practice order and due Review", async ({ page }) => {
   await seedStoredProgress(page, v3Payload(
     QUESTION_IDS.slice(0, 3).map((id, index) => currentAttempt(id, index + 1)),
   ));
   await page.goto(NOTES_ROUTE);
-  await expect(page.getByRole("link", { name: "Continue to Applications" })).toHaveAttribute("href", `/question/${QUESTION_IDS[3]}`);
+  await expect(page.getByRole("link", { name: "Continue to Practice" })).toHaveAttribute("href", `/question/${QUESTION_IDS[3]}`);
 
   await seedStoredProgress(page, v3Payload(
     QUESTION_IDS.slice(0, 6).map((id, index) => currentAttempt(id, index + 1)),
   ));
   await page.goto(NOTES_ROUTE);
-  await expect(page.getByRole("link", { name: "Continue to Exam practice" })).toHaveAttribute("href", `/question/${QUESTION_IDS[6]}`);
+  await expect(page.getByRole("link", { name: "Continue to Practice" })).toHaveAttribute("href", `/question/${QUESTION_IDS[6]}`);
 
   await seedStoredProgress(page, v3Payload(
     QUESTION_IDS.map((id, index) => currentAttempt(id, index + 1)),

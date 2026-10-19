@@ -15,6 +15,7 @@ import { getAllSkillPathContexts, getResourceHref, getSkillPathById } from "../l
 import { resolveLessonDocument } from "../lib/lessons/resolver";
 import { basicDifferentiationLesson } from "../data/lessons/basic-differentiation";
 import { chainRuleLesson } from "../data/lessons/chain-rule";
+import { tangentsLesson } from "../data/lessons/tangents";
 import { higherMathsDifferentiationQuestions } from "../content/questions/higher-maths/basic-differentiation";
 import { higherMathsChainRuleQuestions } from "../content/questions/higher-maths/chain-rule";
 
@@ -22,7 +23,7 @@ const pathId = "basic-differentiation";
 const context = contentResolver.getPathContext(pathId)!;
 const questionIds = context.skillPath.learningStages!.flatMap((stage) => stage.questionIds);
 
-test("fresh state starts with Notes while Foundations remains canonical", () => {
+test("fresh state starts with Notes while the canonical Practice order remains available", () => {
   const model = deriveWorkingContextModel({ pathId, evidence: emptyEvidence() })!;
   assert.equal(model.primaryLabel, "Start");
   assert.equal(model.primaryHref, "/subjects/higher-maths/revision-notes?path=basic-differentiation");
@@ -32,10 +33,10 @@ test("fresh state starts with Notes while Foundations remains canonical", () => 
   assert.equal(model.questionBankHref, "/subjects/higher-maths/question-bank?path=basic-differentiation");
 });
 
-test("lesson continuation follows canonical stages and genuine scheduled Review", () => {
+test("lesson continuation follows one canonical Practice sequence and genuine scheduled Review", () => {
   assert.deepEqual(deriveLessonContinuationAction({ pathId, evidence: emptyEvidence() }), {
     href: `/question/${questionIds[0]}`,
-    label: "Continue to Foundations",
+    label: "Continue to Practice",
   });
 
   const foundations = context.skillPath.learningStages![0];
@@ -44,7 +45,7 @@ test("lesson continuation follows canonical stages and genuine scheduled Review"
     evidence: evidence(foundations.questionIds.map((id, index) => attempt(id, index + 1, true))),
   }), {
     href: `/question/${questionIds[3]}`,
-    label: "Continue to Applications",
+    label: "Continue to Practice",
   });
 
   assert.deepEqual(deriveLessonContinuationAction({
@@ -52,7 +53,7 @@ test("lesson continuation follows canonical stages and genuine scheduled Review"
     evidence: evidence(questionIds.slice(0, 6).map((id, index) => attempt(id, index + 1, true))),
   }), {
     href: `/question/${questionIds[6]}`,
-    label: "Continue to Exam practice",
+    label: "Continue to Practice",
   });
 
   assert.deepEqual(deriveLessonContinuationAction({
@@ -64,25 +65,25 @@ test("lesson continuation follows canonical stages and genuine scheduled Review"
   });
 });
 
-test("real incomplete evidence resumes the exact current-version question", () => {
+test("real incomplete evidence resumes the exact current-version Practice question", () => {
   const model = deriveWorkingContextModel({
     pathId,
     evidence: evidence([attempt(questionIds[1], 1, false)]),
   })!;
-  assert.equal(model.primaryLabel, "Continue");
+  assert.equal(model.primaryLabel, "Continue Practice");
   assert.equal(model.primaryHref, `/question/${questionIds[1]}`);
   assert.match(model.nextActionReason, /last attempted/i);
 });
 
-test("stage completion advances deterministically and reports the real stage count", () => {
+test("crossing a historical stage boundary continues the Practice sequence without exposing that boundary", () => {
   const foundations = context.skillPath.learningStages![0];
   const model = deriveWorkingContextModel({
     pathId,
     evidence: evidence(foundations.questionIds.map((id, index) => attempt(id, index + 1, true))),
   })!;
-  assert.equal(model.stageName, "Applications");
+  assert.equal(model.stageName, "Practice");
   assert.equal(model.primaryHref, `/question/${questionIds[3]}`);
-  assert.equal(model.collapsedSummary, "Applications · 0/3");
+  assert.equal(model.collapsedSummary, "Practice · 3/8");
 });
 
 test("completed content offers path-scoped practice", () => {
@@ -143,20 +144,27 @@ test("path parsing accepts only an available canonical path", () => {
   assert.equal(parseWorkingContextPathId("trigonometric-differentiation"), null);
 });
 
-test("the working-context model's own notesHref is skill-aware for both live skills", () => {
+test("the working-context model's own notesHref and Practice count are skill-aware for all live skills", () => {
   const basicModel = deriveWorkingContextModel({ pathId: "basic-differentiation", evidence: emptyEvidence() })!;
   const chainRuleModel = deriveWorkingContextModel({ pathId: "chain-rule", evidence: emptyEvidence() })!;
+  const tangentsModel = deriveWorkingContextModel({ pathId: "tangents-and-normals", evidence: emptyEvidence() })!;
   assert.equal(basicModel.notesHref, "/subjects/higher-maths/revision-notes?path=basic-differentiation");
   assert.equal(chainRuleModel.notesHref, "/subjects/higher-maths/revision-notes?path=chain-rule");
+  assert.equal(tangentsModel.notesHref, "/subjects/higher-maths/revision-notes?path=tangents-and-normals");
+  assert.deepEqual({ stage: tangentsModel.stageName, completed: tangentsModel.completed, total: tangentsModel.total, review: tangentsModel.reviewCount }, {
+    stage: "Practice", completed: 0, total: 30, review: 0,
+  });
   assert.notEqual(basicModel.notesHref, chainRuleModel.notesHref);
 });
 
 test("Notes route resolves per skill, not from a single hard-coded active skill", () => {
   const basicHref = getResourceHref("revision-notes", "higher-maths", "basic-differentiation");
   const chainRuleHref = getResourceHref("revision-notes", "higher-maths", "chain-rule");
+  const tangentsHref = getResourceHref("revision-notes", "higher-maths", "tangents-and-normals");
 
   assert.equal(basicHref, "/subjects/higher-maths/revision-notes?path=basic-differentiation");
   assert.equal(chainRuleHref, "/subjects/higher-maths/revision-notes?path=chain-rule");
+  assert.equal(tangentsHref, "/subjects/higher-maths/revision-notes?path=tangents-and-normals");
   assert.notEqual(basicHref, chainRuleHref, "Basic Differentiation and Chain Rule must generate different Notes URLs");
 
   // The route-builder's own resolved query parameter must resolve back to the correct lesson,
@@ -164,9 +172,11 @@ test("Notes route resolves per skill, not from a single hard-coded active skill"
   // state model, and no fallback to a different skill.
   const basicSlug = parseWorkingContextPathId("basic-differentiation");
   const chainRuleSlug = parseWorkingContextPathId("chain-rule");
-  assert.ok(basicSlug && chainRuleSlug);
+  const tangentsSlug = parseWorkingContextPathId("tangents-and-normals");
+  assert.ok(basicSlug && chainRuleSlug && tangentsSlug);
   assert.equal(resolveLessonDocument(getSkillPathById(basicSlug!)!)?.document, basicDifferentiationLesson);
   assert.equal(resolveLessonDocument(getSkillPathById(chainRuleSlug!)!)?.document, chainRuleLesson);
+  assert.equal(resolveLessonDocument(getSkillPathById(tangentsSlug!)!)?.document, tangentsLesson);
 });
 
 test("an unavailable skill cannot inherit another skill's Notes route", () => {

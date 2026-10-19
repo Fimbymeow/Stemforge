@@ -7,6 +7,7 @@ import { QuickPracticeAction } from "@/components/practice/quick-practice-action
 import type { SkillPath } from "@/data/types";
 import type { SkillPathProgress } from "@/lib/local-progress";
 import type { LearnerNextAction } from "@/lib/learning/next-action";
+import { isPracticeCompatibleSkill } from "@/lib/practice-model";
 
 export function getPathCompletionSupportingSentence(status: CompletedTierStatus, reviewCount: number) {
   if (reviewCount > 0) {
@@ -31,7 +32,7 @@ export function PathCompletionPanel({ skillPath, progress, nextAction }: { skill
 
   const secondary = nextAction.kind === "review_question"
     ? subjectAction
-    : { href: getSkillPathHref(skillPath), label: "Review a stage" };
+    : { href: getSkillPathHref(skillPath), label: isPracticeCompatibleSkill(skillPath) ? "View Practice" : "Review a stage" };
 
   return (
     <Card role="status" aria-live="polite" data-testid="path-completion-panel" className="animate-fade-rise p-4">

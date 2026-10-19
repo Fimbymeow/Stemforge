@@ -8,7 +8,7 @@ test("question context and navigation derive from canonical ownership", async ({
   await expect(breadcrumb.getByRole("link", { name: "Calculus" })).toHaveAttribute("href", "/subjects/higher-maths/calculus");
   await expect(breadcrumb.getByRole("link", { name: "Differentiating functions" })).toHaveAttribute("href", "/subjects/higher-maths/calculus/differentiation");
   await expect(breadcrumb).toContainText("Basic differentiation");
-  await expect(page.getByTestId("stage-question-position")).toHaveText("Question 1 of 3 in Foundations");
+  await expect(page.getByTestId("stage-question-position")).toHaveText("Practice \u00b7 Question 1 of 8");
   await expect(page.getByRole("link", { name: "Previous" })).toHaveAttribute("href", "/subjects/higher-maths/calculus/differentiation/basic-differentiation");
 
   await page.getByLabel("Your answer").fill("5x^4");

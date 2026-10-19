@@ -31,7 +31,7 @@ test("fresh tracker derives the full curriculum and only actionable skills recei
     const skill = findSkill(model, id); assert.ok(skill);
     assert.equal(skill.availability, "actionable");
     assert.equal(skill.structuralStatus, "Not started");
-    assert.equal(skill.progressLabel, "Not started");
+    assert.equal(skill.progressLabel, id === "basic-differentiation" ? "Practice 0/8 complete" : "Practice 0/34 complete");
     assert.deepEqual(skill.action, { label: "Open skill", href: contentResolver.getPathContext(id)!.skillPath.href });
   }
   const reference = findSkill(model, "trigonometric-differentiation"); assert.ok(reference);
@@ -68,7 +68,7 @@ test("partial weak evidence retains its detailed progress derivation for the Ski
   const skill = findSkill(deriveHigherMathsCourseTracker(higherMaths, progress), "basic-differentiation"); assert.ok(skill);
   assert.equal(skill.structuralStatus, "In progress");
   assert.equal(skill.knowledgeStatus, "Needs practice");
-  assert.equal(skill.progressLabel, "Foundations · 1/3 complete");
+  assert.equal(skill.progressLabel, "Practice 1/8 complete");
 });
 
 test("healthy partial evidence retains the active stage derivation for detailed surfaces", () => {
@@ -76,7 +76,7 @@ test("healthy partial evidence retains the active stage derivation for detailed 
   const skill = findSkill(deriveHigherMathsCourseTracker(higherMaths, progress), "chain-rule"); assert.ok(skill);
   assert.equal(skill.structuralStatus, "In progress");
   assert.equal(skill.knowledgeStatus, "Healthy");
-  assert.match(skill.progressLabel ?? "", /^Foundations · 1\/\d+ complete$/);
+  assert.equal(skill.progressLabel, "Practice 1/34 complete");
 });
 
 test("completed mastery wording and independent Review due state remain derived", () => {
@@ -84,7 +84,7 @@ test("completed mastery wording and independent Review due state remain derived"
   const skill = findSkill(deriveHigherMathsCourseTracker(higherMaths, progress, new Date("2026-08-07T12:00:00Z")), "basic-differentiation"); assert.ok(skill);
   assert.equal(skill.structuralStatus, "Completed");
   assert.equal(skill.knowledgeStatus, "Healthy");
-  assert.equal(skill.progressLabel, "Mastered");
+  assert.equal(skill.progressLabel, "Practice 8/8 complete");
   assert.equal(skill.reviewDue, true);
 });
 
@@ -137,7 +137,8 @@ test("Course Tracker source guards the calmer product boundary", () => {
   const component = readFileSync("components/learning/course-tracker.tsx", "utf8");
   const page = readFileSync("app/subjects/higher-maths/course-tracker/page.tsx", "utf8");
   assert.doesNotMatch(component + page, /skills available|coming soon|Set confidence/i);
-  assert.doesNotMatch(component, /ConfidenceControl|ReviewStatus|MasteryMark|tracker-progress|skill\.progressLabel|bg-gradient|bg-forge-soft\/35/);
+  assert.doesNotMatch(component, /ConfidenceControl|ReviewStatus|MasteryMark|tracker-progress|bg-gradient|bg-forge-soft\/35/);
+  assert.match(component, /Notes available/);
   assert.doesNotMatch(component, /Official requirements/);
   assert.match(component, /data-course-tracker-reference-group/);
   assert.match(component, /Review now/);

@@ -16,6 +16,7 @@ import type {
   StudyPlanCandidate,
   StudyPlanDiagnostic,
 } from "@/lib/study-plan/types";
+import { isPracticeCompatibleSkill } from "@/lib/practice-model";
 
 type CandidateBuildInput = {
   now: Date;
@@ -126,9 +127,13 @@ export function buildStudyPlanCandidates(
       continue;
     }
 
-    if (progress.status === "in_progress") {
+    const practiceBankComplete = isPracticeCompatibleSkill(context.skillPath)
+      && progress.totalQuestions > 0
+      && progress.completedQuestionIds.length === progress.totalQuestions;
+    if (progress.status === "in_progress" && !practiceBankComplete) {
       const stage = context.skillPath.learningStages?.find((item) => item.id === nextAction.stageId);
-      if (!stage || stage.status !== "available" || !isValidStudyPlanHref(nextAction.href)) {
+      const practiceCompatible = isPracticeCompatibleSkill(context.skillPath);
+      if ((!practiceCompatible && (!stage || stage.status !== "available")) || !isValidStudyPlanHref(nextAction.href)) {
         diagnostics.push(diagnostic(pathId, null, "excluded", "continuation_destination_unavailable"));
         continue;
       }
@@ -140,13 +145,13 @@ export function buildStudyPlanCandidates(
         href: nextAction.href!,
         reasonCode: latestMistakeAt ? "continue_with_mistake" : "continue",
         tier: latestMistakeAt ? 2 : 3,
-        stageId: stage.id,
-        stageName: stage.name,
-        suggestedMinutes: estimateStageMinutes(stage),
+        stageId: practiceCompatible ? null : stage!.id,
+        stageName: practiceCompatible ? "Practice" : stage!.name,
+        suggestedMinutes: stage ? estimateStageMinutes(stage) : estimateTargetedPracticeMinutes(),
         dueAt: null,
         latestActivityAt: latestPathActivity(pathId, input.evidence),
         latestMistakeAt,
-        examPractice: stage.name === "Past Paper-style Questions",
+        examPractice: Boolean(!practiceCompatible && stage?.name === "Past Paper-style Questions"),
         assessmentQualifier,
         learnerFlaggedNeedsWork: input.learnerConfidence?.get(pathId) === "needs_work",
       });
@@ -189,7 +194,8 @@ export function buildStudyPlanCandidates(
     const { context, assessmentQualifier } = nextUnstarted;
     const nextAction = deriveSkillPathNextAction({ pathId: context.skillPath.slug, evidence: input.evidence });
     const stage = context.skillPath.learningStages?.find((item) => item.id === nextAction.stageId);
-    if (stage?.status === "available" && isValidStudyPlanHref(nextAction.href)) {
+    const practiceCompatible = isPracticeCompatibleSkill(context.skillPath);
+    if ((practiceCompatible || stage?.status === "available") && isValidStudyPlanHref(nextAction.href)) {
       const candidate = createCandidate({
         pathId: context.skillPath.slug,
         skillName: context.skillPath.name,
@@ -197,9 +203,9 @@ export function buildStudyPlanCandidates(
         href: nextAction.href!,
         reasonCode: "next_skill",
         tier: 6,
-        stageId: stage.id,
-        stageName: stage.name,
-        suggestedMinutes: estimateStageMinutes(stage),
+        stageId: practiceCompatible ? null : stage!.id,
+        stageName: practiceCompatible ? "Practice" : stage!.name,
+        suggestedMinutes: stage ? estimateStageMinutes(stage) : estimateTargetedPracticeMinutes(),
         dueAt: null,
         latestActivityAt: null,
         latestMistakeAt: null,

@@ -33,6 +33,8 @@ function resetOtherPathsToHonestPlaceholders(subject: Subject, keepSlugs: readon
         delete path.formulaCards;
         delete path.workedExamples;
         delete path.flashcards;
+        delete path.practiceQuestionIds;
+        delete path.practiceCompatibilityStageId;
       }
       spec.questions = (spec.skillPaths ?? []).reduce((total, path) => total + (path.learningStages ?? [])
         .filter((stage) => stage.contentStatus === "active")
@@ -98,6 +100,7 @@ export function createTwoPathFixture(): CanonicalContentSource {
     status: "available",
     isAvailable: true,
     questions: 3,
+    practiceQuestionIds: ["fixture-int-f-001", "fixture-int-f-002", "fixture-int-a-001"],
     learningStages: [
       stage(TEST_FOUNDATIONS_STAGE_ID, "Foundations", ["fixture-int-f-001", "fixture-int-f-002"], "green"),
       stage(TEST_APPLICATIONS_STAGE_ID, "Applications", ["fixture-int-a-001"], "blue"),

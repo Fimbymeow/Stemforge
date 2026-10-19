@@ -109,6 +109,16 @@ test("Review independent success resolves only its exactly linked question/versi
   assert.equal(item.resolutionSource, "review_independent_success");
 });
 
+test("Review independent success resolves a mistake recorded with historical stage provenance", () => {
+  const wrong = attempt(BASIC_1, 1, false, { stageId: "legacy-stage-provenance" });
+  const correct = attempt(BASIC_1, 2, true, { practiceSessionId: "review_session_legacy_stage" });
+  const evidence = withAttempts(wrong, correct);
+  evidence.reviewEvents.push(review(correct, "independent_success"));
+  const item = onlyItem(model(evidence));
+  assert.equal(item.state, "resolved");
+  assert.equal(item.resolutionSource, "review_independent_success");
+});
+
 test("an assisted Review outcome does not resolve", () => {
   const wrong = attempt(BASIC_1, 1, false);
   const correct = attempt(BASIC_1, 2, true, { practiceSessionId: "review_session_assisted" });
@@ -138,12 +148,15 @@ test("mistakes across Basic Differentiation and Chain Rule remain isolated", () 
   assert.deepEqual(result.openGroups.map((group) => group.skillPathId).sort(), ["basic-differentiation", "chain-rule"]);
 });
 
-test("mismatched skill and stage evidence is ignored safely", () => {
-  const evidence = withAttempts(
+test("mismatched skill evidence is ignored while historical stage provenance remains valid", () => {
+  assert.equal(model(withAttempts(
     attempt(BASIC_1, 1, false, { skillPathId: "chain-rule" }),
-    attempt(BASIC_1, 2, false, { stageId: "chain-rule-stage-foundations" }),
-  );
-  assert.equal(model(evidence).openCount, 0);
+  )).openCount, 0);
+  const legacyStage = onlyItem(model(withAttempts(
+    attempt(BASIC_1, 2, false, { stageId: "legacy-stage-provenance" }),
+  )));
+  assert.equal(legacyStage.state, "open");
+  assert.equal(legacyStage.stageId, "basic-diff-stage-foundations");
 });
 
 test("open ordering is deterministic by latest occurrence then question order", () => {

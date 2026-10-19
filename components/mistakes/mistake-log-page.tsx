@@ -14,6 +14,8 @@ import {
   type MistakeSkillGroup,
 } from "@/lib/mistakes/derivation";
 import type { ProgressEvidence } from "@/lib/progress/types";
+import { contentResolver } from "@/lib/content-resolver";
+import { isPracticeCompatibleSkill } from "@/lib/practice-model";
 
 export function MistakeLogPage() {
   const [evidence, setEvidence] = useState<ProgressEvidence>(() => getEmptyProgressEvidence());
@@ -152,7 +154,7 @@ function MistakeRow({ item, history }: { item: MistakeItem; history: boolean }) 
           <StatusPill variant={item.state === "open" ? "warning" : "neutral"}>{stateLabel}</StatusPill>
         </div>
         <p className="mt-2 text-sm text-secondary">
-          {displayStageName(item.stageName)} · {mistakeCount(item.incorrectAttemptCount, "incorrect attempt")}
+          {isPracticeCompatibleSkill(contentResolver.getPathContext(item.skillPathId)?.skillPath) ? "Practice" : displayStageName(item.stageName)} · {mistakeCount(item.incorrectAttemptCount, "incorrect attempt")}
           {item.resolvedAt
             ? <> before resolving · Resolved <time dateTime={item.resolvedAt}>{formatDate(item.resolvedAt)}</time></>
             : <> · Last attempted <time dateTime={item.latestIncorrectAt}>{formatDate(item.latestIncorrectAt)}</time></>}

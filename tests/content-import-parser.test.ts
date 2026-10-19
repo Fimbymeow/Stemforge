@@ -18,7 +18,7 @@ test("text-source hashes normalize line endings only", () => {
   assert.notEqual(hashCanonicalTextSource("a\nB\n"), sha256(lf), "content changes remain significant");
 });
 
-test("all six byte-identical banks parse their exact authoritative 166-question total", () => {
+test("all six byte-identical banks parse their exact authoritative 191-question total", () => {
   let total = 0;
   for (const [name, expectedCount, expectedHash] of BANKS) {
     const bank = loadBank(name);
@@ -27,7 +27,7 @@ test("all six byte-identical banks parse their exact authoritative 166-question 
     assert.equal(bank.diagnostics.filter((item) => item.severity === "error").length, 0, name);
     total += bank.questions.length;
   }
-  assert.equal(total, 166);
+  assert.equal(total, 191);
 });
 
 test("both real answer declaration shapes and both heading depths are preserved", () => {
@@ -39,13 +39,16 @@ test("both real answer declaration shapes and both heading depths are preserved"
   assert.equal(chain.questions[0].sourceLineRange.start, 42);
 });
 
-test("the migrated Tangents bank uses the same structured answer-field shape as the questions it was copied from", () => {
+test("the reviewed Tangents Practice bank uses bounded line answers and its approved dependency split", () => {
   const tangents = loadBank("tangents-and-normals-v1.md");
-  assert.equal(tangents.questions[0].answerDeclarationShape, "yaml_answer_fields");
-  assert.equal(tangents.questions[0].id, "hm-calc-tangent-a-001");
+  assert.equal(tangents.questions.length, 30);
+  assert.ok(tangents.questions.every((question) => question.answerDeclarationShape === "bare_correct_answer"));
+  assert.equal(tangents.questions[0].id, "hm-calc-tangent-q-001");
+  assert.equal(tangents.questions.at(-1)?.id, "hm-calc-tangent-q-030");
   assert.ok(tangents.questions.every((question) => question.curriculum?.primarySkillId === "tangents-and-normals"));
-  assert.ok(tangents.questions.every((question) =>
-    JSON.stringify(question.curriculum?.requiredSkillIds) === JSON.stringify(["chain-rule"])));
+  assert.equal(tangents.questions.filter((question) => question.curriculum?.requiredSkillIds.length === 0).length, 21);
+  assert.equal(tangents.questions.filter((question) =>
+    JSON.stringify(question.curriculum?.requiredSkillIds) === JSON.stringify(["chain-rule"])).length, 9);
 });
 
 test("canonical curriculum YAML parses exact owner and conditional requirement fields", () => {

@@ -13,9 +13,9 @@ test("fresh learner gets real production entry points with no activation query",
   await page.goto(hub);
   const card = page.getByTestId("working-context-hub");
   await expect(card).toContainText("Basic differentiation");
-  const foundations = card.getByRole("list", { name: "Learning stages" }).getByRole("listitem").filter({ hasText: "Foundations" });
-  await expect(foundations).toContainText("0/3");
-  await expect(foundations).not.toContainText("0/8");
+  const pathway = card.getByRole("list", { name: "Notes, Practice and Review" });
+  await expect(pathway.getByRole("listitem")).toHaveCount(3);
+  await expect(pathway.getByRole("listitem").filter({ hasText: "Practice" })).toContainText("0/8");
   await expect(card.getByRole("link", { name: "Basic differentiation" })).toHaveAttribute("href", overview);
   await expect(card.getByRole("link", { name: "Start", exact: true })).toHaveAttribute("href", "/subjects/higher-maths/revision-notes?path=basic-differentiation");
   await expect(card.getByRole("link", { name: "Notes" })).toHaveCount(0);
@@ -42,39 +42,39 @@ test("expanding Current Path on the Question Workspace does not move the questio
   expect(after).toEqual(before);
 });
 
-test("real evidence drives Continue and stage progress across hub, overview and question", async ({ page }) => {
+test("real evidence drives continuous Practice progress across hub, overview and question", async ({ page }) => {
   await seedStoredProgress(page, v3Payload([
     currentAttempt(QUESTION_IDS[0], 1),
     currentAttempt(QUESTION_IDS[1], 2, { isCorrect: false, answer: "wrong" }),
   ]));
 
   await page.goto(hub);
-  await expect(page.getByTestId("working-context-hub").getByRole("link", { name: "Continue", exact: true })).toHaveAttribute("href", `/question/${QUESTION_IDS[1]}`);
+  await expect(page.getByTestId("working-context-hub").getByRole("link", { name: "Continue Practice", exact: true })).toHaveAttribute("href", `/question/${QUESTION_IDS[1]}`);
 
   await page.goto(overview);
-  await expect(page.getByRole("link", { name: "Continue", exact: true }).first()).toHaveAttribute("href", `/question/${QUESTION_IDS[1]}`);
-  const foundations = page.getByTestId("skill-learning-journey").locator('[data-journey-kind="stage"]').filter({ hasText: "Foundations" });
-  await expect(foundations).toHaveAttribute("aria-current", "step");
-  await expect(foundations).toContainText("1 of 3 complete");
+  await expect(page.getByRole("link", { name: "Continue Practice", exact: true }).first()).toHaveAttribute("href", `/question/${QUESTION_IDS[1]}`);
+  const practice = page.getByTestId("skill-learning-journey").locator('[data-journey-kind="practice"]');
+  await expect(practice).toHaveAttribute("aria-current", "step");
+  await expect(practice).toContainText("1 of 8 questions completed");
 
   await page.goto(`/question/${QUESTION_IDS[1]}`);
   const trigger = page.getByRole("button", { name: "Current Path: Basic differentiation" });
   await trigger.click();
-  await expect(page.getByTestId("working-context-desktop-panel")).toContainText("Foundations");
-  await expect(page.getByTestId("working-context-desktop-panel").getByRole("link", { name: "Continue", exact: true })).toHaveAttribute("href", `/question/${QUESTION_IDS[1]}`);
+  await expect(page.getByTestId("working-context-desktop-panel")).toContainText("Practice");
+  await expect(page.getByTestId("working-context-desktop-panel").getByRole("link", { name: "Continue Practice", exact: true })).toHaveAttribute("href", `/question/${QUESTION_IDS[1]}`);
 });
 
-test("stage transition is deterministic and stage rows remain directly explorable", async ({ page }) => {
+test("historical stage boundaries do not interrupt the continuous Practice sequence", async ({ page }) => {
   await seedStoredProgress(page, v3Payload(
     QUESTION_IDS.slice(0, 3).map((id, index) => currentAttempt(id, index + 1)),
   ));
   await page.goto(overview);
   const journey = page.getByTestId("skill-learning-journey");
-  const currentStage = journey.locator('[data-journey-kind="stage"][aria-current="step"]');
-  await expect(currentStage).toContainText("Applications");
-  await expect(currentStage).toContainText("0 of 3 complete");
-  await expect(journey.locator('[data-journey-kind="stage"]').filter({ hasText: "Foundations" })).toHaveAttribute("data-journey-state", "complete");
-  await expect(journey.locator('[data-journey-kind="stage"]').filter({ hasText: "Exam practice" }).getByRole("link", { name: "Start" })).toHaveAttribute("href", `/question/${QUESTION_IDS[6]}`);
+  const currentPractice = journey.locator('[data-journey-kind="practice"][aria-current="step"]');
+  await expect(currentPractice).toContainText("3 of 8 questions completed");
+  await expect(currentPractice.getByRole("link", { name: "Continue Practice" })).toHaveAttribute("href", `/question/${QUESTION_IDS[3]}`);
+  await expect(journey).not.toContainText("Foundations");
+  await expect(journey).not.toContainText("Applications");
 });
 
 test("overview uses one honest compact journey instead of repeated stage cards", async ({ page }) => {
@@ -86,12 +86,12 @@ test("overview uses one honest compact journey instead of repeated stage cards",
   await expect(page.getByTestId("skill-path-compact-header")).toBeVisible();
   await expect(page.getByText("Skill overview", { exact: true })).toHaveCount(0);
   const journey = page.getByTestId("skill-learning-journey");
-  await expect(journey.getByRole("listitem")).toHaveCount(4);
+  await expect(journey.getByRole("listitem")).toHaveCount(3);
   const notes = journey.locator('[data-journey-kind="notes"]');
   await expect(notes).not.toHaveAttribute("aria-current", "step");
   await expect(notes).toHaveAttribute("data-journey-state", "available");
   await expect(notes).not.toContainText("Complete");
-  await expect(journey.locator('[data-journey-kind="stage"]').filter({ hasText: "Foundations" })).toHaveAttribute("aria-current", "step");
+  await expect(journey.locator('[data-journey-kind="practice"]')).toHaveAttribute("aria-current", "step");
   await expect(page.getByTestId("skill-review")).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Browse Questions" })).toHaveAttribute("href", "/subjects/higher-maths/question-bank?path=basic-differentiation");
   await expect(page.getByRole("progressbar")).toHaveCount(1);
@@ -105,11 +105,10 @@ test("Chain Rule uses the same truthful journey with its real 34-question progre
   await expect(breadcrumb).toContainText("Differentiating functions");
   await expect(page.getByTestId("skill-path-hero-progress")).toContainText("0 of 34 questions complete");
   const journey = page.getByTestId("skill-learning-journey");
-  await expect(journey.getByRole("listitem")).toHaveCount(4);
+  await expect(journey.getByRole("listitem")).toHaveCount(3);
   await expect(journey.locator('[data-journey-kind="notes"]')).toHaveAttribute("data-journey-state", "available");
   await expect(journey.locator('[data-journey-kind="notes"]')).not.toContainText("Complete");
-  await expect(journey.locator('[data-journey-kind="stage"]').filter({ hasText: "Foundations" })).toHaveAttribute("aria-current", "step");
-  await expect(journey.locator('[data-journey-kind="stage"]')).toHaveCount(3);
+  await expect(journey.locator('[data-journey-kind="practice"]')).toHaveAttribute("aria-current", "step");
 });
 
 test("skill journey stays ordered and overflow-free at 375px and 320px", async ({ page }) => {
@@ -117,9 +116,9 @@ test("skill journey stays ordered and overflow-free at 375px and 320px", async (
     await page.setViewportSize({ width, height: 720 });
     await page.goto(overview);
     const journey = page.getByTestId("skill-learning-journey");
-    await expect(journey.getByRole("listitem")).toHaveCount(4);
+    await expect(journey.getByRole("listitem")).toHaveCount(3);
     await expect(journey.getByRole("listitem").first()).toContainText("Notes");
-    await expect(journey.getByRole("listitem").last()).toContainText("Exam practice");
+    await expect(journey.getByRole("listitem").last()).toContainText("Review");
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
   }
 });
@@ -136,8 +135,8 @@ test("completed overview stays compact and renders exactly one primary action", 
   await expect(completed).toHaveCSS("animation-name", "none");
   expect(await completed.evaluate((card) => getComputedStyle(card).backgroundImage)).toBe("none");
   await expect(page.getByTestId("skill-path-hero-progress")).toContainText("8 of 8 questions complete");
-  await expect(page.getByTestId("completed-path-card").getByRole("link", { name: "Start learning" })).toHaveAttribute("href", "/question/hm-calc-diff-chain-f-001");
-  await expect(page.getByTestId("skill-learning-journey").locator('[data-journey-kind="stage"]').filter({ hasText: "Foundations" }).getByRole("link", { name: "Revisit" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
+  await expect(page.getByTestId("completed-path-card").getByRole("link", { name: "Start Practice" })).toHaveAttribute("href", "/question/hm-calc-diff-chain-f-001");
+  await expect(page.getByTestId("skill-learning-journey").locator('[data-journey-kind="practice"]').getByRole("link", { name: "Revisit Practice" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
 });
 
 test("completed overview retains distinct Review guidance when supported by real evidence", async ({ page }) => {
@@ -149,7 +148,7 @@ test("completed overview retains distinct Review guidance when supported by real
   await expect(completed.getByText("Learned", { exact: true })).toHaveCount(0);
 });
 
-test("completed overview links its secondary action to the compact stage list", async ({ page }) => {
+test("completed overview links its secondary action to the compact Practice row", async ({ page }) => {
   await seedStoredProgress(page, v3Payload(QUESTION_IDS.map((id, index) => currentAttempt(id, index + 1))));
   await page.goto(overview);
   const [ids, duplicateIds] = await page.evaluate(() => {
@@ -158,8 +157,8 @@ test("completed overview links its secondary action to the compact stage list", 
   });
   expect(ids).toContain("stages");
   expect(duplicateIds).toHaveLength(0);
-  await expect(page.getByRole("heading", { name: "Curriculum pathway", level: 2 })).toBeVisible();
-  await expect(page.getByTestId("completed-path-card").getByRole("link", { name: "Review a stage" })).toHaveAttribute("href", "#stages");
+  await expect(page.getByRole("heading", { name: "Learn this skill", level: 2 })).toBeVisible();
+  await expect(page.getByTestId("completed-path-card").getByRole("link", { name: "View Practice" })).toHaveAttribute("href", "#stages");
 });
 
 test("completed overview with genuine review due shows one review-aware primary action, not a duplicate CTA", async ({ page }) => {
@@ -170,10 +169,10 @@ test("completed overview with genuine review due shows one review-aware primary 
   await expect(primaryActions).toHaveCount(1);
   await expect(primaryActions).toHaveAttribute("href", "/practice?review=1&path=basic-differentiation");
   const journey = page.getByTestId("skill-learning-journey");
-  await expect(page.getByTestId("skill-review")).not.toHaveAttribute("aria-current", "step");
-  await expect(page.getByTestId("skill-review")).toContainText("Due");
-  await expect(page.getByTestId("skill-review").getByRole("link", { name: "Review this skill" })).toHaveAttribute("href", "/practice?review=1&path=basic-differentiation");
-  await expect(journey.locator('[data-journey-kind="stage"]').filter({ hasText: "Foundations" }).getByRole("link", { name: "Revisit" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
+  const review = journey.locator('[data-journey-kind="review"]');
+  await expect(review).toContainText("1 skill due");
+  await expect(review.getByRole("link", { name: "Start Review" })).toHaveCount(0);
+  await expect(journey.locator('[data-journey-kind="practice"]').getByRole("link", { name: "Revisit Practice" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
 });
 
 test("hub skill title has a visible resting underline and Current Path rows are affordant at rest", async ({ page }) => {
@@ -289,7 +288,7 @@ test("mobile Current Path opens a trapped modal and closes with Escape", async (
   await page.goto(hub);
   await page.getByTestId("working-context-hub").getByRole("link", { name: "Start", exact: true }).click();
   await expect(page).toHaveURL(/\/subjects\/higher-maths\/revision-notes\?path=basic-differentiation$/);
-  await page.getByRole("link", { name: "Continue to Foundations" }).click();
+  await page.getByRole("link", { name: "Continue to Practice" }).click();
   await expect(page).toHaveURL(new RegExp(`/question/${QUESTION_IDS[0]}$`));
   const trigger = page.getByRole("button", { name: "Current Path: Basic differentiation" });
   await trigger.click();

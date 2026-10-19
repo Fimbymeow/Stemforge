@@ -11,9 +11,9 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 1024, height: 900
     await expect(page.getByRole("heading", { name: "Higher Maths", level: 1 })).toBeVisible();
     const learning = page.getByTestId("working-context-hub");
     await expect(page.getByTestId("course-hub-progress")).toHaveAccessibleName("Course progress: 0 of 49 skills learned, 0%");
-    const stages = learning.getByRole("list", { name: "Learning stages" });
-    await expect(stages.getByRole("listitem")).toHaveCount(4);
-    await expect(stages.getByText("Exam practice", { exact: true })).toBeVisible();
+    const stages = learning.getByRole("list", { name: "Notes, Practice and Review" });
+    await expect(stages.getByRole("listitem")).toHaveCount(3);
+    await expect(stages.getByText("Practice", { exact: true })).toBeVisible();
     await expect(stages.getByRole("listitem").first()).toHaveText("NotesAvailable");
     await expect(learning.getByText("Start learning", { exact: true })).toBeVisible();
     await expect(learning.getByRole("link", { name: "Start", exact: true })).toHaveAttribute("href", "/subjects/higher-maths/revision-notes?path=basic-differentiation");
@@ -51,7 +51,7 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 1024, height: 900
 test("real in-progress and review-due states preserve existing destinations", async ({ page }) => {
   await seedStoredProgress(page, v3Payload([currentAttempt(QUESTION_IDS[0], 1)]));
   await page.goto(hub);
-  await expect(page.getByTestId("working-context-hub").getByRole("link", { name: "Continue", exact: true })).toHaveAttribute("href", `/question/${QUESTION_IDS[1]}`);
+  await expect(page.getByTestId("working-context-hub").getByRole("link", { name: "Continue Practice", exact: true })).toHaveAttribute("href", `/question/${QUESTION_IDS[1]}`);
   await seedStoredProgress(page, v3Payload(QUESTION_IDS.map((id, index) => currentAttempt(id, index + 1))));
   await page.goto(hub);
   await expect(page.getByTestId("review-entry-card")).toHaveAccessibleName("Review, 1 skill due");

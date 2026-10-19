@@ -24,9 +24,7 @@ test("new learner gets calm course access before the one-click learning entry", 
 
   await page.goto(PATH_ROUTE);
   await expect(page.getByTestId("skill-primary-action")).toHaveAttribute("href", "/subjects/higher-maths/revision-notes?path=basic-differentiation");
-  await expect(page.getByTestId("skill-learning-journey").locator('[aria-current="step"]').getByRole("link", { name: "Start", exact: true })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
-  await expect(page.locator('[data-recommended="true"]')).toContainText("Foundations");
-  await expect(page.getByTestId("skill-learning-journey").locator('[data-journey-kind="stage"]').filter({ hasText: "Applications" }).getByRole("link", { name: "Start" })).toHaveAttribute("href", `/question/${QUESTION_IDS[3]}`);
+  await expect(page.getByTestId("skill-learning-journey").locator('[aria-current="step"]').getByRole("link", { name: "Start Practice", exact: true })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
 
   await page.goto(BANK_ROUTE);
   await expect(page.getByText("Best next step")).toHaveCount(0);
@@ -44,7 +42,7 @@ test("an incomplete question is resumed consistently instead of opening generic 
   await expectPrimaryAction(page, "Continue Basic differentiation", `/question/${QUESTION_IDS[1]}`);
   for (const route of [HUB_ROUTE, PATH_ROUTE]) {
     await page.goto(route);
-    await expectPrimaryAction(page, "Continue", `/question/${QUESTION_IDS[1]}`);
+    await expectPrimaryAction(page, "Continue Practice", `/question/${QUESTION_IDS[1]}`);
   }
 
   await page.goto("/subjects");
@@ -72,7 +70,7 @@ test("a valid unfinished practice session becomes the shared primary action", as
   await expect(page.getByRole("link", { name: "Resume practice" })).toHaveCount(0);
 });
 
-test("stage completion advances to the next recommended stage without hard-locking exploration", async ({ page }) => {
+test("Practice continues through the canonical sequence without surfacing historical stages", async ({ page }) => {
   await seedStoredProgress(page, v3Payload(
     QUESTION_IDS.slice(0, 3).map((id, index) => currentAttempt(id, index + 1)),
   ));
@@ -81,15 +79,15 @@ test("stage completion advances to the next recommended stage without hard-locki
   await expectPrimaryAction(page, "Continue Basic differentiation", `/question/${QUESTION_IDS[3]}`);
 
   await page.goto(HUB_ROUTE);
-  await expectPrimaryAction(page, "Continue", `/question/${QUESTION_IDS[3]}`);
+  await expectPrimaryAction(page, "Continue Practice", `/question/${QUESTION_IDS[3]}`);
 
   await page.goto(PATH_ROUTE);
-  await expectPrimaryAction(page, "Continue", `/question/${QUESTION_IDS[3]}`);
-  const recommended = page.locator('[data-recommended="true"]');
-  await expect(recommended).toContainText("Applications");
+  await expectPrimaryAction(page, "Continue Practice", `/question/${QUESTION_IDS[3]}`);
   const journey = page.getByTestId("skill-learning-journey");
-  await expect(journey.locator('[data-journey-kind="stage"]').filter({ hasText: "Exam practice" }).getByRole("link", { name: "Start" })).toHaveAttribute("href", `/question/${QUESTION_IDS[6]}`);
-  await expect(journey.locator('[data-journey-kind="stage"]').filter({ hasText: "Foundations" }).getByRole("link", { name: "Revisit" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
+  await expect(journey.locator('[data-journey-kind="practice"]')).toContainText("3 of 8 questions completed");
+  await expect(journey.locator('[data-journey-kind="practice"]').getByRole("link", { name: "Continue Practice" })).toHaveAttribute("href", `/question/${QUESTION_IDS[3]}`);
+  await expect(journey).not.toContainText("Applications");
+  await expect(journey).not.toContainText("Exam practice");
 });
 
 test("completed Basic Differentiation advances Learn to Chain Rule while scheduled Review remains separately available", async ({ page }) => {
@@ -134,7 +132,7 @@ test("question completion uses the shared next action and mobile hierarchy stays
   await page.getByLabel("Your answer").fill("5x^4");
   await page.getByRole("button", { name: "Submit Answer" }).click();
   const next = page.getByTestId("next-question-action");
-  await expect(next).toHaveText(/Continue Foundations/);
+  await expect(next).toHaveText(/Continue Practice/);
   await expect(next).toHaveAttribute("href", `/question/${QUESTION_IDS[1]}`);
   await next.focus();
   await expect(next).toBeFocused();

@@ -253,11 +253,9 @@ export function validateContent(input: ContentValidationInput): ContentValidatio
           counts.resources += countResources(skillPath);
           countResourceLifecycle(skillPath, counts);
           validatePlaceholderHonesty(skillPath, pathLocation, issue);
-          const declaredPathQuestionCount = (skillPath.learningStages ?? [])
-            .filter((stage) => stage.contentStatus === "active")
-            .reduce((total, stage) => total + stage.questionIds.length, 0);
+          const declaredPathQuestionCount = canonicalPathQuestionIds(skillPath).length;
           if (skillPath.questions !== declaredPathQuestionCount) {
-            issue("error", "path-question-count-mismatch", `Skill path "${skillPath.slug}" declares ${String(skillPath.questions)} questions but its active stages reference ${String(declaredPathQuestionCount)}.`, pathLocation);
+            issue("error", "path-question-count-mismatch", `Skill path "${skillPath.slug}" declares ${String(skillPath.questions)} questions but its canonical membership contains ${String(declaredPathQuestionCount)}.`, pathLocation);
           }
 
           const existingPath = skillPaths.get(skillPath.slug);
@@ -269,6 +267,7 @@ export function validateContent(input: ContentValidationInput): ContentValidatio
 
           validateResources(skillPath, pathLocation, validateId, issue);
           validateLesson(skillPath, pathLocation, issue);
+          validatePracticeProjection(subject, skillPath, pathLocation, issue);
 
           for (const stage of skillPath.learningStages ?? []) {
             const stageLocation = `${pathLocation}/stage:${stage.id}`;
@@ -300,10 +299,8 @@ export function validateContent(input: ContentValidationInput): ContentValidatio
         }
         if ((specArea.skillPaths?.length ?? 0) > 0) {
           const derivedSpecAreaQuestions = (specArea.skillPaths ?? [])
-            .filter((path) => path.contentStatus === "active")
-            .reduce((total, path) => total + (path.learningStages ?? [])
-              .filter((stage) => stage.contentStatus === "active")
-              .reduce((stageTotal, stage) => stageTotal + stage.questionIds.length, 0), 0);
+            .filter((path) => path.contentStatus === "active" && path.isAvailable)
+            .reduce((total, path) => total + canonicalPathQuestionIds(path).length, 0);
           if (specArea.questions !== derivedSpecAreaQuestions) {
             issue("error", "spec-area-question-count-mismatch", `Spec area "${specArea.slug}" declares ${String(specArea.questions)} questions but its active skill stages reference ${String(derivedSpecAreaQuestions)}.`, specLocation);
           }
@@ -370,16 +367,36 @@ export function validateContent(input: ContentValidationInput): ContentValidatio
     if (references.length > 1) issue("error", "question-in-multiple-stages", `Question "${questionId}" is referenced by more than one canonical stage.`, ...references);
   }
 
+  for (const path of skillPaths.values()) {
+    for (const questionId of path.skillPath.practiceQuestionIds ?? []) {
+      const active = activeQuestions.get(questionId);
+      if (!questions.has(questionId)) {
+        issue("error", "missing-practice-question-reference", `Practice order references question "${questionId}", but that question does not exist.`, path.location);
+      } else if (!active) {
+        issue("error", "practice-references-archived-question", `Practice order references question "${questionId}", but it has no active version.`, path.location);
+      } else if (active.question.skillPathId !== path.skillPath.slug) {
+        issue("error", "cross-path-practice-reference", `Practice order for "${path.skillPath.slug}" references question "${questionId}" owned by "${active.question.skillPathId ?? "unknown"}".`, path.location, active.location);
+      }
+    }
+  }
+
   for (const { question, location } of activeQuestions.values()) {
     const path = question.skillPathId ? skillPaths.get(question.skillPathId) : undefined;
     const stage = question.stageId ? stages.get(question.stageId) : undefined;
     const references = questionReferences.get(question.id) ?? [];
+    const isPracticeCompatibilityQuestion = Boolean(
+      path && question.stage === "Practice" &&
+      path.skillPath.practiceCompatibilityStageId === question.stageId,
+    );
 
     if (!question.skillPathId) issue("error", "missing-skill-path-reference", `Question "${question.id}" has no skillPathId.`, location);
     else if (!path) issue("error", "invalid-skill-path-reference", `Question "${question.id}" references missing skill path "${question.skillPathId}".`, location);
     if (!question.stageId) issue("error", "missing-stage-reference", `Question "${question.id}" has no stageId.`, location);
-    else if (!stage) issue("error", "invalid-stage-reference", `Question "${question.id}" references missing stage "${question.stageId}".`, location);
-    if (!references.length) issue("error", "orphan-question", `Question "${question.id}" is not referenced by any canonical stage.`, location);
+    else if (!stage && !isPracticeCompatibilityQuestion) issue("error", "invalid-stage-reference", `Question "${question.id}" references missing stage "${question.stageId}".`, location);
+    if (!references.length && !isPracticeCompatibilityQuestion) issue("error", "orphan-question", `Question "${question.id}" is not referenced by any canonical stage.`, location);
+    if (isPracticeCompatibilityQuestion && !path?.skillPath.practiceQuestionIds?.includes(question.id)) {
+      issue("error", "orphan-practice-question", `Practice question "${question.id}" is not present in its skill's explicit Practice order.`, location, path?.location ?? location);
+    }
 
     if (path) {
       compareReference(question.subject, path.subject.subjectName, "subject", question.id, location, issue);
@@ -443,6 +460,74 @@ export function formatValidationReport(report: ContentValidationReport) {
   return lines.join("\n");
 }
 
+function validatePracticeProjection(
+  subject: Subject,
+  skillPath: SkillPath,
+  location: string,
+  issue: IssueWriter,
+) {
+  const activeStageQuestionIds = (skillPath.learningStages ?? [])
+    .filter((stage) => stage.contentStatus === "active")
+    .flatMap((stage) => stage.questionIds);
+  const projection = skillPath.practiceQuestionIds;
+  if (skillPath.practiceCompatibilityStageId && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(skillPath.practiceCompatibilityStageId)) {
+    issue("error", "invalid-practice-compatibility-stage", `Skill path "${skillPath.slug}" has an unsafe Practice compatibility provenance ID.`, location);
+  }
+
+  if (
+    subject.subjectSlug === "higher-maths" &&
+    skillPath.contentStatus === "active" &&
+    skillPath.isAvailable &&
+    activeStageQuestionIds.length > 0 &&
+    projection === undefined
+  ) {
+    issue(
+      "error",
+      "missing-practice-projection",
+      `Available Higher Maths skill path "${skillPath.slug}" must declare an explicit Practice question order.`,
+      location,
+    );
+    return;
+  }
+  if (projection === undefined) return;
+  if (!Array.isArray(projection)) {
+    issue("error", "invalid-practice-projection", `Skill path "${skillPath.slug}" Practice question order must be an array.`, location);
+    return;
+  }
+
+  for (const questionId of findDuplicates(projection)) {
+    issue(
+      "error",
+      "duplicate-practice-question",
+      `Skill path "${skillPath.slug}" includes question "${questionId}" more than once in its Practice order.`,
+      location,
+    );
+  }
+
+  const stageMembership = new Set(activeStageQuestionIds);
+  const practiceMembership = new Set(projection);
+  for (const questionId of practiceMembership) {
+    if (!stageMembership.has(questionId) && !skillPath.practiceCompatibilityStageId) {
+      issue(
+        "error",
+        "practice-question-outside-legacy-stages",
+        `Skill path "${skillPath.slug}" Practice order references "${questionId}", which is not in an active legacy stage.`,
+        location,
+      );
+    }
+  }
+  for (const questionId of stageMembership) {
+    if (!practiceMembership.has(questionId)) {
+      issue(
+        "error",
+        "practice-question-missing",
+        `Skill path "${skillPath.slug}" Practice order omits active legacy-stage question "${questionId}".`,
+        location,
+      );
+    }
+  }
+}
+
 function validateQuestion(question: Question, location: string, issue: IssueWriter, knownSkillIds: ReadonlySet<string>) {
   validateRequiredText(question.questionText, "Question text", location, issue);
   validateRequiredText(question.correctAnswer, "Correct answer", location, issue);
@@ -457,7 +542,7 @@ function validateQuestion(question: Question, location: string, issue: IssueWrit
   validateRequiredText(question.commonMistake, "Common mistake", location, issue, completenessSeverity);
   if (typeof question.calculatorAllowed !== "boolean") issue("error", "invalid-calculator-metadata", `Question "${question.id}" calculatorAllowed must be Boolean.`, location);
   if (!new Set(["draft", "ready"]).has(question.status)) issue("error", "invalid-question-status", `Question "${question.id}" status must be draft or ready.`, location);
-  if (!new Set(["Foundations", "Applications", "Past Paper-style Questions"]).has(question.stage)) issue("error", "invalid-question-stage-name", `Question "${question.id}" has an unsupported stage name.`, location);
+  if (!new Set(["Foundations", "Applications", "Past Paper-style Questions", "Practice"]).has(question.stage)) issue("error", "invalid-question-stage-name", `Question "${question.id}" has an unsupported stage name.`, location);
   if (!new Set(["multiple_choice", "numerical", "algebraic", "written", "multi_step", "graph_structured", "nature_table"]).has(question.answerType)) issue("error", "invalid-answer-type", `Question "${question.id}" has an unsupported answer type.`, location);
   if (!Number.isInteger(question.marks) || question.marks <= 0) issue("error", "invalid-marks", `Question "${question.id}" must have positive whole-number marks.`, location);
   if (!Number.isInteger(question.displayOrder) || question.displayOrder <= 0) issue("error", "invalid-display-order", `Question "${question.id}" must have a positive whole-number displayOrder.`, location);
@@ -719,7 +804,7 @@ function validateStageShape(
 
 function validatePlaceholderHonesty(skillPath: SkillPath, location: string, issue: IssueWriter) {
   if (skillPath.isAvailable) {
-    const referencedQuestions = (skillPath.learningStages ?? []).reduce((total, stage) => total + stage.questionIds.length, 0);
+    const referencedQuestions = canonicalPathQuestionIds(skillPath).length;
     if (skillPath.questions === 0 || referencedQuestions === 0) {
       issue("error", "empty-path-marked-available", `Skill path "${skillPath.slug}" cannot be available without published questions.`, location);
     }
@@ -731,6 +816,21 @@ function validatePlaceholderHonesty(skillPath: SkillPath, location: string, issu
 
   if (skillPath.status === "available") {
     issue("error", "unavailable-placeholder-marked-available", `Placeholder "${skillPath.slug}" cannot have available status.`, location);
+  }
+  const installedPractice = Boolean(
+    skillPath.practiceCompatibilityStageId && (skillPath.practiceQuestionIds?.length ?? 0) > 0,
+  );
+  if (installedPractice) {
+    if (skillPath.completed !== 0 || skillPath.progress !== 0) {
+      issue("error", "unpublished-content-enters-progress", `Unpublished Practice content for "${skillPath.slug}" must contribute zero completions and progress.`, location);
+    }
+    if ((skillPath.learningStages?.length ?? 0) > 0) {
+      issue("error", "unpublished-practice-has-learner-stages", `Unpublished Practice content for "${skillPath.slug}" must not introduce learner stages.`, location);
+    }
+    if (skillPath.recommendedAction || (skillPath.sidebarLinks?.length ?? 0) > 0) {
+      issue("error", "unpublished-content-has-active-action", `Unpublished Practice content for "${skillPath.slug}" cannot expose an active learning action.`, location);
+    }
+    return;
   }
   if (skillPath.questions !== 0 || skillPath.completed !== 0 || skillPath.progress !== 0) {
     issue("error", "placeholder-enters-progress", `Placeholder "${skillPath.slug}" must contribute zero questions, completions and progress.`, location);
@@ -745,6 +845,15 @@ function validatePlaceholderHonesty(skillPath: SkillPath, location: string, issu
   if (skillPath.recommendedAction || (skillPath.sidebarLinks?.length ?? 0) > 0) {
     issue("error", "placeholder-has-active-action", `Placeholder "${skillPath.slug}" cannot expose an active learning action.`, location);
   }
+}
+
+function canonicalPathQuestionIds(skillPath: SkillPath) {
+  const stageQuestionIds = (skillPath.learningStages ?? [])
+    .filter((stage) => stage.contentStatus === "active")
+    .flatMap((stage) => stage.questionIds);
+  if (stageQuestionIds.length > 0 || (skillPath.learningStages?.length ?? 0) > 0) return stageQuestionIds;
+  if (skillPath.practiceCompatibilityStageId) return skillPath.practiceQuestionIds ?? [];
+  return stageQuestionIds;
 }
 
 function validateResources(

@@ -48,8 +48,8 @@ test("mobile final completion is readable, stacked and free of horizontal overfl
   await expect(panel).toBeVisible();
   await expect(panel).toContainText("Basic differentiation mastered");
   await expect(panel).toContainText("8 / 8 completed");
-  const primary = panel.getByRole("link", { name: "Start learning" });
-  const secondary = panel.getByRole("link", { name: "Review a stage" });
+  const primary = panel.getByRole("link", { name: "Start Practice" });
+  const secondary = panel.getByRole("link", { name: "View Practice" });
   await expect(primary).toBeVisible();
   await expect(primary).toHaveAttribute("href", "/question/hm-calc-diff-chain-f-001");
   await expect(secondary).toBeVisible();
@@ -60,7 +60,7 @@ test("mobile final completion is readable, stacked and free of horizontal overfl
       const box = link.getBoundingClientRect();
       return { x: box.x, y: box.y, width: box.width, height: box.height };
     };
-    return [boxFor("Start learning"), boxFor("Review a stage")];
+    return [boxFor("Start Practice"), boxFor("View Practice")];
   });
   expect(primaryBox).not.toBeNull();
   expect(secondaryBox).not.toBeNull();

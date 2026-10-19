@@ -102,7 +102,7 @@ test("lesson resolution prefers native, adapts legacy and returns null for empty
   assert.equal(resolveLessonDocument(legacyPath)?.source, "legacy_adapter");
 
   const allPaths = higherMaths.courseAreas.flatMap((course) => course.specAreas).flatMap((area) => area.skillPaths ?? []);
-  const livePathSlugs = new Set(["basic-differentiation", "chain-rule"]);
+  const livePathSlugs = new Set(["basic-differentiation", "chain-rule", "tangents-and-normals"]);
   for (const path of allPaths) {
     const result = resolveLessonDocument(path);
     if (livePathSlugs.has(path.slug)) assert.ok(result);

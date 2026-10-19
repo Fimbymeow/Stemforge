@@ -113,7 +113,7 @@ function TrackerSkillRow({ skill }: { skill: CourseTrackerSkill }) {
   return (
     <li className="min-w-0" data-testid={`tracker-skill-${skill.skillPathId}`} data-course-tracker-skill="" data-tracker-row-kind="actionable">
       <Link href={skill.reviewDue ? `/practice?review=1&path=${encodeURIComponent(skill.skillPathId)}` : skill.action.href} aria-label={skill.reviewDue ? `Review now: ${skill.name}` : `Open ${skill.name} skill overview`} className="orthic-course-row orthic-secondary-link grid min-h-14 min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 px-3 py-3 transition-colors duration-150 hover:bg-shell focus-visible:bg-shell focus-visible:outline focus-visible:outline-2 focus-visible:outline-navy motion-reduce:transition-none max-sm:grid-cols-1">
-        <span className="min-w-0 break-words text-[15px] font-medium text-navy">{skill.name}</span>
+        <span className="min-w-0"><span className="block break-words text-[15px] font-medium text-navy">{skill.name}</span>{skill.progressLabel ? <span className="mt-1 block text-xs text-secondary">Notes available · {skill.progressLabel}</span> : null}</span>
         <span className="flex items-center justify-end gap-4 text-[13px] text-secondary max-sm:w-full max-sm:justify-between">
           {learnerConfidence ? (
             <span className={`inline-flex items-center gap-1 ${CONFIDENCE_COLOR[learnerConfidence]}`} data-testid={`tracker-confidence-${skill.skillPathId}`}>

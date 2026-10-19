@@ -42,12 +42,12 @@ function sourceWithAvailablePath(skillPathId: string): CanonicalContentSource {
   return source;
 }
 
-test("all 42 live Higher Maths questions carry explicit manually reviewed metadata", () => {
-  assert.equal(canonicalContent.questions.length, 42);
+test("all 72 live Higher Maths questions carry explicit manually reviewed metadata", () => {
+  assert.equal(canonicalContent.questions.length, 72);
   assert.equal(Object.keys(higherMathsLiveQuestionCurriculum).length, 42);
   assert(canonicalContent.questions.every((candidate) => candidate.curriculum));
-  assert.equal(canonicalContent.questions.filter((candidate) => candidate.curriculum?.requiredSkillIds.length === 0).length, 11);
-  assert.equal(canonicalContent.questions.filter((candidate) => (candidate.curriculum?.requiredSkillIds.length ?? 0) > 0).length, 31);
+  assert.equal(canonicalContent.questions.filter((candidate) => candidate.curriculum?.requiredSkillIds.length === 0).length, 32);
+  assert.equal(canonicalContent.questions.filter((candidate) => (candidate.curriculum?.requiredSkillIds.length ?? 0) > 0).length, 40);
   assert.deepEqual(question().curriculum, { primarySkillId: chain, requiredSkillIds: [basic] });
 });
 

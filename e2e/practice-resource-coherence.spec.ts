@@ -63,6 +63,7 @@ test("Question Bank exposes both published skills while future paths stay collap
   await skills.getByRole("button", { name: "Skills: All skills" }).click();
   await skills.getByLabel("Chain rule").click();
   await expect(page.getByRole("heading", { name: "34 matching questions" })).toBeVisible();
+  await skills.getByRole("button", { name: "Done" }).click();
   await page.getByRole("button", { name: "Reset filters" }).click();
   await expect(page.getByRole("heading", { name: "42 matching questions" })).toBeVisible();
   await page.getByRole("link", { name: "Open Differentiate a power" }).click();
@@ -95,7 +96,7 @@ test("resource pages lead with available content and continue into staged learni
   await expect(page.getByRole("heading", { name: "Power rule", exact: true })).toBeVisible();
   await expect(page.getByText("Chain rule", { exact: true })).not.toBeVisible();
   await expect(page.getByTestId("notes-practice")).toHaveCount(0);
-  await page.getByRole("link", { name: "Continue to Foundations" }).click();
+  await page.getByRole("link", { name: "Continue to Practice" }).click();
   await expect(page).toHaveURL("/question/hm-calc-diff-basic-f-001");
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
 });
@@ -109,9 +110,9 @@ test("question support remains Notes-only before and after an attempt", async ({
   await expect(page.getByRole("link", { name: /Worked example:/ })).toHaveCount(0);
 });
 
-test("keyboard users can move from Notes into Foundations", async ({ page }) => {
+test("keyboard users can move from Notes into Practice", async ({ page }) => {
   await page.goto("/subjects/higher-maths/revision-notes");
-  const continuation = page.getByRole("link", { name: "Continue to Foundations" });
+  const continuation = page.getByRole("link", { name: "Continue to Practice" });
   await continuation.focus();
   await expect(continuation).toBeFocused();
   await continuation.press("Enter");

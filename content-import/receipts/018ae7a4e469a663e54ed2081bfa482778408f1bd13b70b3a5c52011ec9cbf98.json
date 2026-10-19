@@ -1,0 +1,44 @@
+{
+  "receiptVersion": 1,
+  "approvalReceiptHash": "018ae7a4e469a663e54ed2081bfa482778408f1bd13b70b3a5c52011ec9cbf98",
+  "appliedQuestionIds": [
+    "hm-calc-tangent-q-001",
+    "hm-calc-tangent-q-002",
+    "hm-calc-tangent-q-003",
+    "hm-calc-tangent-q-004",
+    "hm-calc-tangent-q-005",
+    "hm-calc-tangent-q-006",
+    "hm-calc-tangent-q-007",
+    "hm-calc-tangent-q-008",
+    "hm-calc-tangent-q-009",
+    "hm-calc-tangent-q-010",
+    "hm-calc-tangent-q-011",
+    "hm-calc-tangent-q-012",
+    "hm-calc-tangent-q-013",
+    "hm-calc-tangent-q-014",
+    "hm-calc-tangent-q-015",
+    "hm-calc-tangent-q-016",
+    "hm-calc-tangent-q-017",
+    "hm-calc-tangent-q-018",
+    "hm-calc-tangent-q-019",
+    "hm-calc-tangent-q-020",
+    "hm-calc-tangent-q-021",
+    "hm-calc-tangent-q-022",
+    "hm-calc-tangent-q-023",
+    "hm-calc-tangent-q-024",
+    "hm-calc-tangent-q-025",
+    "hm-calc-tangent-q-026",
+    "hm-calc-tangent-q-027",
+    "hm-calc-tangent-q-028",
+    "hm-calc-tangent-q-029",
+    "hm-calc-tangent-q-030"
+  ],
+  "outputPaths": [
+    "content/questions/higher-maths/tangents-and-normals.ts"
+  ],
+  "finalOutputHashes": {
+    "content/questions/higher-maths/tangents-and-normals.ts": "efb2ad4b985c286499cf5761ef2300010cbf45ce743cfbfbf7e285b4c27d36db"
+  },
+  "appliedAt": "2026-10-16T18:28:52.143Z",
+  "compilerVersion": 1
+}

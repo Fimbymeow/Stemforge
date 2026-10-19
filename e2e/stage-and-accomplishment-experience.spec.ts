@@ -63,20 +63,18 @@ async function seedPracticeSession(page: import("@playwright/test").Page, questi
   return sessionId as string;
 }
 
-test("completing a stage without completing the whole path shows a one-time stage-completion moment", async ({ page }) => {
+test("completing a historical stage boundary continues Practice without a stage-completion moment", async ({ page }) => {
   await seedStoredProgress(page, v3Payload(priorAttempts(FOUNDATIONS_IDS.slice(0, 2))));
   await openQuestion(page, FOUNDATIONS_IDS[2]);
   await submitAnswer(page, QUESTION_ANSWERS[FOUNDATIONS_IDS[2] as keyof typeof QUESTION_ANSWERS]);
 
-  const stagePanel = page.getByTestId("stage-completion-panel");
-  await expect(stagePanel).toBeVisible();
-  // Three independently-correct answers reach the "mastered" stage tier, not merely "completed" —
-  // assert on the stage name and a valid tier suffix rather than over-specifying the exact tier.
-  await expect(stagePanel.getByRole("heading", { name: /^Foundations (complete|secure|mastered)$/ })).toBeVisible();
+  await expect(page.getByTestId("stage-completion-panel")).toHaveCount(0);
   await expect(page.getByTestId("path-completion-panel")).toHaveCount(0);
+  await expect(page.getByTestId("next-question-action")).toHaveText(/Continue Practice/);
+  await expect(page.getByTestId("next-question-action")).toHaveAttribute("href", `/question/${QUESTION_IDS[3]}`);
 
   const stored = await page.evaluate((key) => JSON.parse(window.localStorage.getItem(key) ?? "null"), STAGE_CELEBRATION_STORAGE_KEY);
-  expect(stored?.data?.paths?.["basic-differentiation:basic-diff-stage-foundations"]?.lastAcknowledgedStatus).toBeTruthy();
+  expect(stored).toBeNull();
 
   // Revisit must not replay the one-time moment.
   await openQuestion(page, FOUNDATIONS_IDS[1]);
@@ -145,44 +143,42 @@ test("a review-recommended question explains why in grounded, non-judgemental te
   await expect(reason).not.toContainText(/weak|falling behind|diagnos/i);
 });
 
-test("reduced motion keeps the stage-completion panel readable, polite and keyboard usable", async ({ page }) => {
+test("reduced motion keeps Practice continuation keyboard usable at a historical stage boundary", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await seedStoredProgress(page, v3Payload(priorAttempts(FOUNDATIONS_IDS.slice(0, 2))));
   await openQuestion(page, FOUNDATIONS_IDS[2]);
   await submitAnswer(page, QUESTION_ANSWERS[FOUNDATIONS_IDS[2] as keyof typeof QUESTION_ANSWERS]);
 
-  const panel = page.getByTestId("stage-completion-panel");
-  await expect(panel).toBeVisible();
-  await expect(panel).toHaveAttribute("role", "status");
-  await expect(panel).toHaveAttribute("aria-live", "polite");
+  await expect(page.getByTestId("stage-completion-panel")).toHaveCount(0);
   expect(await page.evaluate(() => window.matchMedia("(prefers-reduced-motion: reduce)").matches)).toBe(true);
-  const primary = panel.getByTestId("stage-completion-primary-action");
+  const primary = page.getByTestId("next-question-action");
   await primary.focus();
   await expect(primary).toBeFocused();
-  await expect(panel).toBeVisible();
+  await expect(primary).toHaveText(/Continue Practice/);
 });
 
-test("stage-completion panel and accomplishment language fit without overflow on mobile", async ({ page }) => {
+test("Practice continuation fits without overflow on mobile at a historical stage boundary", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await seedStoredProgress(page, v3Payload(priorAttempts(FOUNDATIONS_IDS.slice(0, 2))));
   await openQuestion(page, FOUNDATIONS_IDS[2]);
   await submitAnswer(page, QUESTION_ANSWERS[FOUNDATIONS_IDS[2] as keyof typeof QUESTION_ANSWERS]);
 
-  await expect(page.getByTestId("stage-completion-panel")).toBeVisible();
+  await expect(page.getByTestId("stage-completion-panel")).toHaveCount(0);
+  await expect(page.getByTestId("next-question-action")).toHaveText(/Continue Practice/);
   await expectNoHorizontalOverflow(page);
 
   await page.goto("/dashboard");
   await expectNoHorizontalOverflow(page);
 });
 
-test("stage completion drives the retained dashboard recommendation and denominator without an activity widget", async ({ page }) => {
+test("Practice progress drives the retained dashboard recommendation without an activity widget", async ({ page }) => {
   await seedStoredProgress(page, v3Payload(priorAttempts(FOUNDATIONS_IDS.slice(0, 2))));
   await openQuestion(page, FOUNDATIONS_IDS[2]);
   await submitAnswer(page, QUESTION_ANSWERS[FOUNDATIONS_IDS[2] as keyof typeof QUESTION_ANSWERS]);
 
   await page.goto("/dashboard");
-  await expect(page.getByTestId("dashboard-progress-summary")).toContainText("Begin Applications");
-  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Applications \u00b7 0/3 complete");
+  await expect(page.getByTestId("dashboard-progress-summary")).toContainText("Continue Basic differentiation");
+  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Practice \u00b7 3 of 8 complete");
   await expect(page.getByRole("heading", { name: "Recent activity" })).toHaveCount(0);
   await expect(page.getByText(/^Stage Completed$/)).toHaveCount(0);
 });

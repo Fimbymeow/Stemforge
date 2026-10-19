@@ -123,6 +123,10 @@ export function deriveMathInputCapabilities(question: Pick<Question, "marking">)
   return getMathInputCapabilities(question.marking);
 }
 
+export function hasRichMathInputProfile(marking: QuestionMarkingContract): boolean {
+  return Object.hasOwn(ALGEBRAIC_REGISTRY, `${marking.strategy}@${marking.strategyVersion}`);
+}
+
 function profile(overrides: Partial<Omit<MathInputCapabilities, "version">>): MathInputCapabilities {
   return Object.freeze({ ...NONE, ...overrides, version: MATH_INPUT_CAPABILITY_VERSION });
 }

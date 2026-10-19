@@ -52,15 +52,15 @@ test("availability count and assembly share one pool, never exceed capacity or d
   assert.deepEqual(insufficient.selectedQuestions, []);
 });
 
-test("multi-skill assembly balances assessed skills and prefers assessment-like stage diversity", () => {
+test("multi-skill assembly balances assessed skills without using legacy stages as a learner-facing selector", () => {
   const plan = createBuildATestPlan({ selectedRequirementIds: [basicRequirement, chainRequirement], requestedCount: 10, seed: "balance" });
   const skillIds = plan.selectedQuestions.map((candidate) => candidate.question.curriculum!.primarySkillId);
-  const stages = new Set(plan.selectedQuestions.map((candidate) => candidate.question.stage));
   assert(skillIds.includes("basic-differentiation"));
   assert(skillIds.includes("chain-rule"));
   assert(Math.abs(skillIds.filter((id) => id === "basic-differentiation").length - skillIds.filter((id) => id === "chain-rule").length) <= 1);
-  assert(stages.has("Applications"));
-  assert(stages.has("Past Paper-style Questions"));
+  for (const candidate of plan.selectedQuestions) {
+    assert(candidate.path.practiceQuestionIds?.includes(candidate.question.id));
+  }
 });
 
 test("assembly is deterministic for an injected seed", () => {
@@ -70,15 +70,17 @@ test("assembly is deterministic for an injected seed", () => {
   assert.deepEqual(first, second);
 });
 
-test("empty, no-content and partial-content scopes remain honest", () => {
+test("empty and newly published Tangents scopes remain honest", () => {
   assert.equal(createBuildATestPlan({ selectedRequirementIds: [], requestedCount: 5, seed: "empty" }).status, "empty_selection");
-  const empty = createBuildATestPlan({ selectedRequirementIds: [tangentRequirement], requestedCount: 5, seed: "none" });
-  assert.equal(empty.status, "no_content");
-  assert.deepEqual(empty.unavailableRequirementIds, [tangentRequirement]);
+  const tangents = createBuildATestPlan({ selectedRequirementIds: [tangentRequirement], requestedCount: 5, seed: "tangents" });
+  assert.equal(tangents.status, "ready");
+  assert.deepEqual(tangents.unavailableRequirementIds, []);
+  assert(tangents.selectedQuestions.every((candidate) => candidate.question.curriculum?.primarySkillId === "tangents-and-normals"));
   const partial = createBuildATestPlan({ selectedRequirementIds: [chainRequirement, tangentRequirement], requestedCount: 5, seed: "partial" });
   assert.equal(partial.status, "ready");
-  assert.deepEqual(partial.unavailableRequirementIds, [tangentRequirement]);
-  assert(partial.selectedQuestions.every((candidate) => candidate.question.curriculum?.primarySkillId === "chain-rule"));
+  assert.deepEqual(partial.unavailableRequirementIds, []);
+  assert(partial.selectedQuestions.some((candidate) => candidate.question.curriculum?.primarySkillId === "chain-rule"));
+  assert(partial.selectedQuestions.some((candidate) => candidate.question.curriculum?.primarySkillId === "tangents-and-normals"));
 });
 
 test("Build a Test creates a normal valid Practice session with a distinct origin", () => {

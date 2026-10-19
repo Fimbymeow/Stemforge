@@ -28,11 +28,11 @@ function hintCompleted() {
     isCorrect: true, answer: "correct", hintViewedBeforeSubmission: true })));
 }
 
-test("upward stage and path transitions append immutable snapshots once", () => {
+test("Practice-compatible skills append path achievements without generating new legacy-stage milestones", () => {
   const empty = evidence();
   const completed = appendAchievementTransitions(empty, hintCompleted(), context, "2026-07-13T10:00:00.000Z", ids);
   assert.equal(completed.achievementSnapshots.filter((item) => item.kind === "path_completed").length, 1);
-  assert.equal(completed.achievementSnapshots.filter((item) => item.kind === "stage_completed").length, 3);
+  assert.equal(completed.achievementSnapshots.filter((item) => item.kind === "stage_completed").length, 0);
 
   const firstStageQuestion = questions[0];
   const secureEvidence = { ...completed, attempts: [...completed.attempts, attempt({ ...firstStageQuestion,
@@ -40,14 +40,14 @@ test("upward stage and path transitions append immutable snapshots once", () => 
     eventId: "upgrade1", sequence: 20,
     isCorrect: true, answer: "correct", hintViewedBeforeSubmission: false })] };
   const secure = appendAchievementTransitions(completed, secureEvidence, context, "2026-07-13T11:00:00.000Z", ids);
-  assert.ok(secure.achievementSnapshots.some((item) => item.kind === "stage_secure"));
+  assert.ok(!secure.achievementSnapshots.some((item) => item.kind === "stage_secure"));
 
   const masteredEvidence = { ...secure, attempts: [...secure.attempts, ...questions.slice(1).map((item, index) => attempt({
     ...item, versionEvidence: { kind: "known", questionVersion: questionVersions[item.questionId] ?? 1 },
     eventId: `upgrade${index + 2}`, sequence: 21 + index, isCorrect: true, answer: "correct", hintViewedBeforeSubmission: false,
   }))] };
   const mastered = appendAchievementTransitions(secure, masteredEvidence, context, "2026-07-13T12:00:00.000Z", ids);
-  assert.ok(mastered.achievementSnapshots.some((item) => item.kind === "stage_mastered"));
+  assert.ok(!mastered.achievementSnapshots.some((item) => item.kind === "stage_mastered"));
   assert.ok(mastered.achievementSnapshots.some((item) => item.kind === "path_secure"));
   assert.ok(mastered.achievementSnapshots.some((item) => item.kind === "path_mastered"));
   assert.equal(getStrongestPathAchievement(mastered.achievementSnapshots, path.slug)?.kind, "path_mastered");

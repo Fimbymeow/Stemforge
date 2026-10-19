@@ -48,13 +48,13 @@ test.describe("feature-flagged Study Plan Today", () => {
   });
 
   for (const width of [1440, 1024, 390, 375, 320]) {
-    test(`real Foundations resume retains the focal composition at ${width}px`, async ({ page }, testInfo) => {
+    test(`real Practice resume retains the focal composition at ${width}px`, async ({ page }, testInfo) => {
       await page.setViewportSize({ width, height: width === 320 ? 700 : width < 1024 ? 812 : 900 });
       await seedStoredProgress(page, v3Payload([currentAttempt("hm-calc-diff-basic-f-001", 1, { isCorrect: false })]));
       await page.goto("/dashboard");
       const focus = page.getByTestId("dashboard-progress-summary");
       await expect(focus.getByRole("link", { name: "Continue Basic differentiation" })).toHaveAttribute("href", "/question/hm-calc-diff-basic-f-001");
-      await expect(focus).toContainText("Foundations");
+      await expect(focus).toContainText("Practice");
       await createPlan(page);
       await expect(focus.getByRole("link", { name: "Continue Basic differentiation" })).toHaveAttribute("href", "/question/hm-calc-diff-basic-f-001");
       await expect(page.getByTestId("study-plan-today").getByRole("link", { name: "Start" })).toBeVisible();

@@ -49,6 +49,7 @@ export function createPreviewDecisionPayload(input: {
   const blockedIds = classifications.filter((item) => item.status === "blocked").map((item) => item.questionId);
   const unchangedIds = classifications.filter((item) => item.status === "unchanged").map((item) => item.questionId);
   const sourceQuestionIds = input.bank.questions.map((question) => question.id);
+  const practiceOrders = derivePracticeOrders(input.bank, input.registry, classifications);
   const diagnostics: ImportDiagnostic[] = [...input.bank.diagnostics, ...classifications.flatMap((item) => item.diagnostics)];
   const plannedOutputs = classifications.flatMap((classification) => classification.canonicalQuestion ? [{
     questionId: classification.questionId,
@@ -68,6 +69,7 @@ export function createPreviewDecisionPayload(input: {
     configurationHash: input.configurationHash,
     liveCanonicalContentSnapshotHash: createCanonicalContentSnapshotHash(input.subjects, input.questions),
     sourceQuestionIds,
+    practiceOrders,
     classifications,
     eligibleCandidateIds,
     blockedIds,
@@ -129,6 +131,7 @@ export function renderPreview(payload: PreviewDecisionPayload) {
     `Source: ${payload.sourcePath}`,
     `Compiler: ${payload.compilerVersion}`,
     `Importable: ${payload.importable ? "yes" : "no"}`,
+    `Authoring model: ${payload.practiceOrders?.some((order) => order.source === "authored_practice") ? "Practice" : "Legacy stages"}`,
     "",
     "## Accounting",
     "",
@@ -138,17 +141,61 @@ export function renderPreview(payload: PreviewDecisionPayload) {
     `- Unchanged: ${counts.unchanged}`,
     `- Exact-ID collisions: ${counts.collisions}`,
     "",
+    "## Practice order",
+    "",
+    ...(payload.practiceOrders ?? []).flatMap((order) => [
+      `### ${order.targetSkillPathSlug}`,
+      `Source: ${order.source}`,
+      ...order.questionIds.map((id, index) => `${index + 1}. ${id}`),
+      "",
+    ]),
     "## Questions",
     "",
     ...payload.classifications.flatMap((item) => [
       `### ${item.questionId} — ${item.status}`,
       `Source lines: ${item.sourceLineRange.start}-${item.sourceLineRange.end}`,
-      `Target: ${item.targetSkillPathSlug ?? "unresolved"} / ${item.targetStageId ?? "unresolved"}`,
+      `Target skill: ${item.targetSkillPathSlug ?? "unresolved"}`,
+      `Learner-facing bank: Practice`,
+      `Compatibility provenance: ${item.targetStageId ?? "unresolved"}`,
+      `Ownership: ${item.canonicalQuestion?.curriculum?.primarySkillId ?? "unresolved"}`,
+      `Dependencies: ${item.canonicalQuestion?.curriculum?.requiredSkillIds.join(", ") || "none"}`,
+      `Marking readiness: ${item.markerCompatibility?.strategy ? `ready (${item.markerCompatibility.strategy} v${item.markerCompatibility.strategyVersion})` : "blocked"}`,
+      ...(payload.collisionDiffs.filter((collision) => collision.questionId === item.questionId).flatMap((collision) => [
+        `Collision: ${collision.identical ? "identical" : "changed"}`,
+        `Version decisions: ${collision.availableVersionDecisions.join(", ") || "none"}`,
+      ])),
       ...(item.blockers.length ? item.blockers.map((blocker) => `- Blocker: ${blocker.code} — ${blocker.message}`) : ["- No blockers"]),
       ...(item.diagnostics.length ? item.diagnostics.map((diagnostic) => `- ${diagnostic.severity}: ${diagnostic.code} — ${diagnostic.message}`) : []),
       "",
     ]),
   ].join("\n");
+}
+
+function derivePracticeOrders(
+  bank: ContentBankIR,
+  registry: ImportRegistry,
+  classifications: ImportClassification[],
+): NonNullable<PreviewDecisionPayload["practiceOrders"]> {
+  const sourceIndex = new Map(bank.questions.map((question, index) => [question.id, index]));
+  const paths = [...new Set(classifications.map((item) => item.targetSkillPathSlug).filter((value): value is string => Boolean(value)))].sort();
+  return paths.map((targetSkillPathSlug) => {
+    const authored = classifications
+      .filter((item) => item.targetSkillPathSlug === targetSkillPathSlug)
+      .map((item) => item.questionId)
+      .sort((left, right) => (sourceIndex.get(left) ?? 0) - (sourceIndex.get(right) ?? 0));
+    const existing = registry.paths.get(targetSkillPathSlug)?.practiceQuestionIds ?? [];
+    if (bank.authoringModel === "practice") return {
+      targetSkillPathSlug,
+      questionIds: [...authored, ...existing.filter((id) => !authored.includes(id))],
+      source: "authored_practice" as const,
+    };
+    if (existing.length) return {
+      targetSkillPathSlug,
+      questionIds: [...existing, ...authored.filter((id) => !existing.includes(id))],
+      source: "existing_explicit" as const,
+    };
+    return { targetSkillPathSlug, questionIds: authored, source: "legacy_flattened" as const };
+  });
 }
 
 export function assertPreviewAccounting(source: string[], eligible: string[], blocked: string[], unchanged: string[]) {

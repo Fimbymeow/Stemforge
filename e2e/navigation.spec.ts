@@ -4,7 +4,7 @@ import { readStoredProgress } from "./fixtures/progress";
 test("fresh student reaches the Basic differentiation path through the app", async ({ page }) => {
   await page.goto("/dashboard");
   await expect(page.getByRole("heading", { name: "Welcome back", level: 1 })).toBeVisible();
-  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Foundations \u00b7 0/3 complete");
+  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Practice · 0 of 8 complete");
 
   await page.getByRole("link", { name: "Subjects" }).click();
   await expect(page).toHaveURL(/\/subjects$/);
@@ -12,17 +12,17 @@ test("fresh student reaches the Basic differentiation path through the app", asy
   await expect(page).toHaveURL(/\/subjects\/higher-maths$/);
   await page.getByRole("link", { name: "Start", exact: true }).click();
   await expect(page).toHaveURL(/\/subjects\/higher-maths\/revision-notes\?path=basic-differentiation$/);
-  await expect(page.getByRole("link", { name: "Continue to Foundations" })).toHaveAttribute("href", "/question/hm-calc-diff-basic-f-001");
+  await expect(page.getByRole("link", { name: "Continue to Practice" })).toHaveAttribute("href", "/question/hm-calc-diff-basic-f-001");
   await page.getByRole("button", { name: "Current Path: Basic differentiation" }).click();
   await page.getByRole("link", { name: "View full overview" }).click();
   await expect(page.getByRole("heading", { name: "Basic differentiation", level: 1 })).toBeVisible();
   await expect(page.getByTestId("skill-path-hero-progress")).toContainText("8");
   await expect(page.locator('[data-mastery-status="not_started"]')).toHaveAccessibleName("Progress: Not started");
   const journey = page.getByTestId("skill-learning-journey");
-  await expect(journey.locator('[data-journey-kind="stage"]')).toHaveCount(3);
-  await expect(journey.locator('[data-journey-kind="stage"]').filter({ hasText: "Foundations" })).toContainText("0 of 3 complete");
-  await expect(journey.locator('[data-journey-kind="stage"]').filter({ hasText: "Applications" })).toContainText("Not started");
-  await expect(journey.locator('[data-journey-kind="stage"]').filter({ hasText: "Exam practice" })).toContainText("Not started");
+  await expect(journey.getByRole("listitem")).toHaveCount(3);
+  await expect(journey.locator('[data-journey-kind="notes"]')).toContainText("Available");
+  await expect(journey.locator('[data-journey-kind="practice"]')).toContainText("0 of 8 questions completed");
+  await expect(journey.locator('[data-journey-kind="review"]')).toContainText("No review due");
   expect(await readStoredProgress(page)).toBeNull();
 });
 
@@ -48,6 +48,6 @@ test("disabled account navigation hydrates without console or page errors and fa
   await expect(page.getByRole("heading", { name: "Accounts are not available" })).toBeVisible();
   await page.getByRole("link", { name: "Continue as a guest" }).click();
   await expect(page).toHaveURL(/\/dashboard$/);
-  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Foundations \u00b7 0/3 complete");
+  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Practice · 0 of 8 complete");
   expect(seriousBrowserErrors).toEqual([]);
 });

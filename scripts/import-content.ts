@@ -1,17 +1,18 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 import { basename, extname, isAbsolute, relative, resolve } from "node:path";
-import { canonicalContent } from "@/data/canonical-content";
-import type { Question, Subject } from "@/data/types";
+import { canonicalContent, canonicalQuestionModuleRegistry } from "@/data/canonical-content";
 import { validateContent } from "@/lib/content-validation";
 import {
   CONTENT_IMPORT_COMPILER_VERSION,
   applyGeneratedOutputs,
+  assertGeneratedOutputPathsRegistered,
   approvalReceiptHash,
+  createAcknowledgedWorkingTreeSnapshot,
   createApprovalReceipt,
   createCanonicalContentSnapshotHash,
-  createImportRegistry,
+  createStagedCanonicalContent,
   generateApprovedSkillModules,
-  materializeApprovedQuestions,
   previewHash,
   reconstructPreviewDecisionPayload,
   renderPreview,
@@ -34,7 +35,7 @@ async function main() {
   if (!command || !target || !["preview", "approve", "apply"].includes(command)) usage();
   if (command === "preview") return preview(target, args);
   if (command === "approve") return approve(target, args);
-  return apply(target);
+  return apply(target, args);
 }
 
 function preview(bankArgument: string, args: string[]) {
@@ -103,7 +104,11 @@ function approve(previewArgument: string, args: string[]) {
   console.log(`Approval receipt created: ${relative(root, output).replaceAll("\\", "/")}`);
 }
 
-function apply(approvalArgument: string) {
+function apply(approvalArgument: string, args: string[]) {
+  const acknowledgeCurrentWorkingTree = args.includes("--acknowledge-current-working-tree");
+  const acknowledgedWorkingTree = acknowledgeCurrentWorkingTree
+    ? createAcknowledgedWorkingTreeSnapshot(readGitStatus())
+    : undefined;
   const approvalPath = safePathWithin(resolve("content-import", "approvals"), approvalArgument);
   const receipt = JSON.parse(readFileSync(approvalPath, "utf8")) as ApprovalReceipt;
   const reconstructed = reconstructFromPayloadIdentity(receipt.previewDecisionPayload);
@@ -130,10 +135,13 @@ function apply(approvalArgument: string) {
     throw new Error("approval_is_stale");
   }
   const outputs = generateApprovedSkillModules(receipt, registry);
-  outputs.forEach((output) => {
-    if (!existsSync(resolve(root, output.path))) throw new Error(`registry_wiring_required_before_apply:${output.path}`);
+  assertGeneratedOutputPathsRegistered(outputs, canonicalQuestionModuleRegistry);
+  const hypothetical = createStagedCanonicalContent({
+    approval: receipt,
+    registry,
+    subjects: canonicalContent.subjects,
+    questions: canonicalContent.questions,
   });
-  const hypothetical = hypotheticalContent(receipt, registry);
   const report = validateContent(hypothetical);
   if (report.errors.length) throw new Error(`staged_content_graph_invalid:${report.errors.map((item) => item.code).join(",")}`);
   const importReceipt: ImportReceipt = {
@@ -172,9 +180,17 @@ function apply(approvalArgument: string) {
       const stagedReport = validateContent(hypothetical);
       if (stagedReport.errors.length) throw new Error("staged_content_graph_invalid");
     },
+    acknowledgedWorkingTree,
   });
   console.log(`Applied ${importReceipt.appliedQuestionIds.length} approved questions.`);
   console.log(`Import receipt: ${applied.receiptPath}`);
+}
+
+function readGitStatus() {
+  return execFileSync("git", ["status", "--porcelain=v1", "-uall"], {
+    cwd: root,
+    encoding: "utf8",
+  }).split(/\r?\n/).filter(Boolean);
 }
 
 function reconstructFromPayloadIdentity(payload: PreviewDecisionPayload) {
@@ -193,26 +209,6 @@ function reconstructFromPayloadIdentity(payload: PreviewDecisionPayload) {
     subjects: canonicalContent.subjects,
     questions: canonicalContent.questions,
   });
-}
-
-function hypotheticalContent(receipt: ApprovalReceipt, registry: ReturnType<typeof createImportRegistry>) {
-  const byPath = materializeApprovedQuestions(receipt, registry);
-  const questions = [...canonicalContent.questions];
-  for (const [pathSlug, pathQuestions] of byPath) {
-    const retained = questions.filter((question) => question.skillPathId !== pathSlug);
-    questions.splice(0, questions.length, ...retained, ...pathQuestions);
-  }
-  const subjects = structuredClone(canonicalContent.subjects) as Subject[];
-  for (const subject of subjects) for (const course of subject.courseAreas) for (const spec of course.specAreas) for (const path of spec.skillPaths ?? []) {
-    const pathQuestions = byPath.get(path.slug);
-    if (!pathQuestions) continue;
-    for (const stage of path.learningStages ?? []) {
-      stage.questionIds = pathQuestions.filter((question) => question.stageId === stage.id).sort((a, b) => a.displayOrder - b.displayOrder).map((question) => question.id);
-      stage.questions = stage.questionIds.length;
-    }
-    path.questions = pathQuestions.length;
-  }
-  return { subjects, questions: questions as Question[] };
 }
 
 function safePathWithin(boundary: string, argument: string) {

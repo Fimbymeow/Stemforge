@@ -17,6 +17,8 @@ import {
 } from "@/lib/curriculum/skill-package";
 import { resolveLessonDocument } from "@/lib/lessons/resolver";
 import { sha256 } from "@/lib/content-import/canonical";
+import { approvalReceiptHash } from "@/lib/content-import/receipts";
+import type { ApprovalReceipt } from "@/lib/content-import/types";
 
 export type ProductionStage =
   | "official_mapping"
@@ -57,8 +59,12 @@ export type HigherMathsProductionEntry = {
     exists: boolean;
   }>;
   notesPresent: boolean;
+  practiceQuestionCount: number | null;
   stageCounts: Record<LearningStageName, number>;
+  /** All canonical questions installed for the skill, including unpublished Practice content. */
   canonicalQuestionCount: number;
+  /** Questions exposed through a learner-available skill path. */
+  learnerLiveQuestionCount: number;
   markingReady: boolean;
   qa: {
     mathematical: boolean;
@@ -116,8 +122,24 @@ export function buildHigherMathsProductionTracker(repoRoot: string = process.cwd
     const mapping = mappingById.get(path.slug);
     const contract = contractById.get(path.slug);
     const questions = contentResolver.getPathQuestions(path.slug);
-    const canonicalStageCounts = stageCountRecord(path.learningStages ?? []);
     const evidence = manifest ? resolveSkillPackageEvidence(manifest, repoRoot) : null;
+    const approvalEvidence = manifest?.importReference
+      ? findApprovalEvidence(repoRoot, manifest.importReference.bankId)
+      : null;
+    const importQuestionIds = questions.length > 0
+      ? questions.map((question) => question.id)
+      : approvalEvidence?.approvedQuestionIds ?? [];
+    const importState = deriveImportState(
+      manifest,
+      evidence?.importConfigurationExists ?? false,
+      importQuestionIds,
+      repoRoot,
+      approvalEvidence?.approvalHash,
+    );
+    const installedQuestionCount = importState === "applied_verified" || importState === "applied_then_modified"
+      ? importQuestionIds.length
+      : questions.length;
+    const canonicalStageCounts = stageCountRecord(path.learningStages ?? []);
     const stageCounts = manifest && evidence ? productionStageCountRecord(manifest, evidence, canonicalStageCounts) : canonicalStageCounts;
     const validation = manifest ? validateSkillPackageManifest(manifest, known) : null;
     const readiness = manifest && evidence && validation
@@ -169,9 +191,11 @@ export function buildHigherMathsProductionTracker(repoRoot: string = process.cwd
           exists: resolvedSource?.exists ?? false,
         };
       }) ?? [],
-      notesPresent: Boolean(lesson),
+      notesPresent: Boolean(lesson) || Boolean(evidence?.sources.find((source) => source.kind === "notes")?.exists),
+      practiceQuestionCount: evidence?.sources.find((source) => source.kind === "practice")?.discoveredQuestionCount ?? null,
       stageCounts,
-      canonicalQuestionCount: questions.length,
+      canonicalQuestionCount: installedQuestionCount,
+      learnerLiveQuestionCount: path.isAvailable ? questions.length : 0,
       markingReady,
       qa: {
         mathematical: manifest?.qaEvidence.mathematicalQaComplete ?? false,
@@ -180,7 +204,7 @@ export function buildHigherMathsProductionTracker(repoRoot: string = process.cwd
         marking: manifest?.qaEvidence.markingQaComplete ?? false,
         contentApproval: manifest?.productionEvidence.contentApprovalComplete ?? false,
       },
-      importState: deriveImportState(manifest, evidence?.importConfigurationExists ?? false, questions.map((question) => question.id), repoRoot),
+      importState,
       publicationReady: readiness?.readyForPublication ?? false,
       liveReadinessAccepted,
       blockers,
@@ -210,20 +234,26 @@ function deriveImportState(
   configurationExists: boolean,
   canonicalQuestionIds: string[],
   repoRoot: string,
+  expectedApprovalHash?: string,
 ): HigherMathsProductionEntry["importState"] {
   if (!manifest) return "not_started";
   if (!manifest.importReference) return "not_required";
   if (!configurationExists) return "configuration_missing";
-  const applyReceiptState = findApplyReceiptState(repoRoot, canonicalQuestionIds);
+  const applyReceiptState = findApplyReceiptState(repoRoot, canonicalQuestionIds, expectedApprovalHash);
   if (applyReceiptState) return applyReceiptState;
   if (hasApprovalReceipt(repoRoot, manifest.importReference.bankId, canonicalQuestionIds)) return "approved_not_applied";
   return "configured_not_approved";
 }
 
-function findApplyReceiptState(repoRoot: string, canonicalQuestionIds: string[]): "applied_verified" | "applied_then_modified" | null {
+function findApplyReceiptState(
+  repoRoot: string,
+  canonicalQuestionIds: string[],
+  expectedApprovalHash?: string,
+): "applied_verified" | "applied_then_modified" | null {
   if (canonicalQuestionIds.length === 0) return null;
   let foundAppliedIds = false;
   const verified = readJsonDirectory(repoRoot, "content-import/receipts").some((record) => {
+    if (expectedApprovalHash && record.approvalReceiptHash !== expectedApprovalHash) return false;
     const appliedIds = stringArray(record.appliedQuestionIds);
     const outputPaths = stringArray(record.outputPaths);
     const hashes = isRecord(record.finalOutputHashes) ? record.finalOutputHashes : {};
@@ -236,6 +266,19 @@ function findApplyReceiptState(repoRoot: string, canonicalQuestionIds: string[])
     });
   });
   return verified ? "applied_verified" : foundAppliedIds ? "applied_then_modified" : null;
+}
+
+function findApprovalEvidence(repoRoot: string, bankId: string) {
+  for (const record of readJsonDirectory(repoRoot, "content-import/approvals")) {
+    const payload = isRecord(record.previewDecisionPayload) ? record.previewDecisionPayload : {};
+    const configuration = isRecord(payload.configuration) ? payload.configuration : {};
+    if (configuration.bankId !== bankId) continue;
+    return {
+      approvalHash: approvalReceiptHash(record as unknown as ApprovalReceipt),
+      approvedQuestionIds: stringArray(record.approvedQuestionIds),
+    };
+  }
+  return null;
 }
 
 function hasApprovalReceipt(repoRoot: string, bankId: string, canonicalQuestionIds: string[]) {
@@ -277,6 +320,14 @@ function deriveNextProductionStage(
   if (entry.live && manifest?.knownIssues.some((issue) => issue.blocksStandardPublication)) return "content_correction";
   if (!manifest || !entry.historicalPatternAuditComplete) return "historical_pattern_audit";
   if (!entry.notesPresent) return "notes";
+  if (entry.practiceQuestionCount !== null) {
+    if (entry.practiceQuestionCount === 0) return "foundations";
+    if (!entry.markingReady) return "marking_readiness";
+    if (!entry.qa.mathematical || !entry.qa.curriculum || !entry.qa.originality || !entry.qa.marking) return "content_qa";
+    if (!entry.qa.contentApproval) return "content_approval";
+    if (!entry.live) return "integration_publication";
+    return entry.publicationReady ? "complete" : "content_correction";
+  }
   if (entry.stageCounts.Foundations === 0) return "foundations";
   if (entry.stageCounts.Applications === 0) return "applications";
   if (entry.stageCounts["Past Paper-style Questions"] === 0) return "exam_practice";
@@ -373,7 +424,9 @@ export function formatHigherMathsProductionEntry(entry: HigherMathsProductionEnt
     `Pattern audit: ${yesNo(entry.historicalPatternAuditComplete)}`,
     ...entry.sources.map((source) => `Source ${source.kind}: ${source.exists ? "present" : "missing"} at ${source.path}; hash=${source.hashMatches === null ? "not_declared" : source.hashMatches ? "match" : "mismatch"}${source.expectedHash ? ` (${source.expectedHash})` : ""}`),
     `Notes: ${yesNo(entry.notesPresent)}`,
-    `Questions: Foundations ${entry.stageCounts.Foundations}; Applications ${entry.stageCounts.Applications}; Exam Practice ${entry.stageCounts["Past Paper-style Questions"]}; canonical total ${entry.canonicalQuestionCount}`,
+    entry.practiceQuestionCount !== null
+      ? `Questions: Practice ${entry.practiceQuestionCount}; installed canonical ${entry.canonicalQuestionCount}; learner-live ${entry.learnerLiveQuestionCount}`
+      : `Questions: Foundations ${entry.stageCounts.Foundations}; Applications ${entry.stageCounts.Applications}; Exam Practice ${entry.stageCounts["Past Paper-style Questions"]}; installed canonical ${entry.canonicalQuestionCount}; learner-live ${entry.learnerLiveQuestionCount}`,
     `Marking ready: ${yesNo(entry.markingReady)}`,
     `QA: mathematical=${yesNo(entry.qa.mathematical)} curriculum=${yesNo(entry.qa.curriculum)} originality=${yesNo(entry.qa.originality)} marking=${yesNo(entry.qa.marking)} content-approval=${yesNo(entry.qa.contentApproval)}`,
     `Import: ${entry.importState}`,

@@ -248,7 +248,15 @@ function acceptanceFixture(): CanonicalContentSource {
   tangents.status = "available";
   tangents.questions = questions.length;
   tangents.learningStages = [stage(stageId, questions.map((question) => question.id))];
-  return { ...copy, questions: [...copy.questions, ...questions] };
+  tangents.practiceQuestionIds = questions.map((question) => question.id);
+  tangents.practiceCompatibilityStageId = undefined;
+  return {
+    ...copy,
+    questions: [
+      ...copy.questions.filter((question) => question.skillPathId !== "tangents-and-normals"),
+      ...questions,
+    ],
+  };
 }
 
 function findPath(subject: CanonicalContentSource["subjects"][number], pathId: string): SkillPath {

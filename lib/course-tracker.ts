@@ -8,6 +8,7 @@ import { getSkillPathProgress } from "@/lib/local-progress";
 import { deriveMistakeLog } from "@/lib/mistakes/derivation";
 import type { ProgressEvidence, ProgressStatus } from "@/lib/progress/types";
 import { createReviewDerivationCache, deriveSkillReviewState } from "@/lib/review/derivation";
+import { derivePracticeProgress, isPracticeCompatibleSkill } from "@/lib/practice-model";
 
 const higherMathsOfficialMappingBySkill = new Map(
   higherMathematicsOfficialSkillMappings.map((mapping) => [mapping.skillPathId, mapping]),
@@ -254,6 +255,10 @@ function trackerProgressLabel(
   path: NonNullable<ReturnType<typeof contentResolver.getPathContext>>["skillPath"],
   progress: ReturnType<typeof getSkillPathProgress>,
 ) {
+  if (isPracticeCompatibleSkill(path)) {
+    const practice = derivePracticeProgress(path, progress);
+    return `Practice ${practice.completedCount}/${practice.totalCount} complete`;
+  }
   if (progress.status === "not_started") return "Not started";
   if (progress.status === "completed") return "Learned";
   if (progress.status === "secure") return "Secure";

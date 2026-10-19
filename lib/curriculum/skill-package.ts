@@ -28,11 +28,12 @@ import {
 
 export const SKILL_PACKAGE_SCHEMA_VERSION = 2;
 
-/** Which of the four learner-facing content sources a reference describes. */
-export type SkillPackageSourceKind = "notes" | "foundations" | "applications" | "pastPaperPractice";
+/** Which learner-facing content source a reference describes. */
+export type SkillPackageSourceKind = "notes" | "practice" | "foundations" | "applications" | "pastPaperPractice";
 
 export const SKILL_PACKAGE_SOURCE_KINDS: readonly SkillPackageSourceKind[] = [
   "notes",
+  "practice",
   "foundations",
   "applications",
   "pastPaperPractice",
@@ -255,6 +256,12 @@ export function validateSkillPackageManifest(
 
   findDuplicates(manifest.sources.map((source) => source.kind)).forEach((duplicateKind) =>
     issue("error", "duplicate-source-kind", `Manifest declares more than one source of kind "${duplicateKind}".`, location));
+  const hasPracticeSource = manifest.sources.some((source) => source.kind === "practice");
+  const hasLegacyQuestionSource = manifest.sources.some((source) =>
+    source.kind === "foundations" || source.kind === "applications" || source.kind === "pastPaperPractice");
+  if (hasPracticeSource && hasLegacyQuestionSource) {
+    issue("error", "mixed-question-authoring-models", "A package must declare either one Practice source or the legacy Foundations/Applications/Past Paper Practice sources, never both.", location);
+  }
   manifest.sources.forEach((source, index) => {
     const sourceLocation = `${location}/source[${index}]`;
     if (!SKILL_PACKAGE_SOURCE_KINDS.includes(source.kind)) {
@@ -340,6 +347,7 @@ export type SkillPackageReadiness = {
 
 const SOURCE_MISSING_BLOCKER_CODE: Record<SkillPackageSourceKind, string> = {
   notes: "missing-notes-source",
+  practice: "missing-practice-source",
   foundations: "missing-foundations-source",
   applications: "missing-applications-source",
   pastPaperPractice: "missing-ppq-source",
@@ -353,6 +361,7 @@ const SOURCE_MISSING_BLOCKER_CODE: Record<SkillPackageSourceKind, string> = {
  */
 const SOURCE_MISSING_BLOCKER_TIER: Record<SkillPackageSourceKind, SkillPackageBlocker["tier"]> = {
   notes: "publication",
+  practice: "preview",
   foundations: "preview",
   applications: "preview",
   pastPaperPractice: "preview",
@@ -370,6 +379,7 @@ const BLOCKER_PRIORITY: string[] = [
   "missing-coverage-claim",
   "unknown-prerequisite",
   "unknown-question-level-requirement-skill",
+  "missing-practice-source",
   "missing-foundations-source",
   "missing-applications-source",
   "missing-ppq-source",
@@ -405,6 +415,7 @@ const STRUCTURAL_BLOCKING_CODES: ReadonlySet<string> = new Set(["manifest-invali
 
 const PACKAGE_PREVIEW_BLOCKING_CODES: ReadonlySet<string> = new Set([
   "missing-notes-source",
+  "missing-practice-source",
   "missing-foundations-source",
   "missing-applications-source",
   "missing-ppq-source",
@@ -412,6 +423,7 @@ const PACKAGE_PREVIEW_BLOCKING_CODES: ReadonlySet<string> = new Set([
 ]);
 
 const IMPORT_BLOCKING_CODES: ReadonlySet<string> = new Set([
+  "missing-practice-source",
   "missing-foundations-source",
   "missing-applications-source",
   "missing-ppq-source",
@@ -454,7 +466,11 @@ export function deriveSkillPackageReadiness(
   }
 
   const evidenceByKind = new Map(evidence.sources.map((source) => [source.kind, source]));
-  for (const kind of SKILL_PACKAGE_SOURCE_KINDS) {
+  const usesPracticeAuthoring = manifest.sources.some((source) => source.kind === "practice");
+  const requiredSourceKinds: readonly SkillPackageSourceKind[] = usesPracticeAuthoring
+    ? ["notes", "practice"]
+    : ["notes", "foundations", "applications", "pastPaperPractice"];
+  for (const kind of requiredSourceKinds) {
     const declared = manifest.sources.find((source) => source.kind === kind);
     const resolved = evidenceByKind.get(kind);
     if (!declared || !resolved || !resolved.exists) {
@@ -531,6 +547,7 @@ export function deriveSkillPackageReadiness(
 
 function describeSourceKind(kind: SkillPackageSourceKind): string {
   if (kind === "pastPaperPractice") return "Past Paper Practice";
+  if (kind === "practice") return "Practice";
   return kind === "notes" ? "Notes" : kind === "foundations" ? "Foundations" : "Applications";
 }
 

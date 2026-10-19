@@ -24,7 +24,7 @@ test("studyPlanScopeOptions groups the full canonical course and labels live ver
   assert.equal(calculus.courseAreaId, "calculus");
   assert.equal(calculus.courseAreaName, "Calculus");
 
-  // The topic layer is real grouping, not a flat area->skills list: both live skills sit under
+  // The topic layer is real grouping, not a flat area->skills list: the live skills sit under
   // one "Differentiation" topic rather than being enumerated directly on the area.
   assert(calculus.topics.length > 1);
   const differentiation = calculus.topics.find((topic) => topic.topicScopeId === topicScopeId("calculus", "differentiation"))!;
@@ -32,11 +32,11 @@ test("studyPlanScopeOptions groups the full canonical course and labels live ver
   assert.equal(differentiation.topicScopeId, topicScopeId("calculus", "differentiation"));
   assert.deepEqual(
     differentiation.skills.filter((skill) => skill.isAvailable).map((skill) => skill.skillPathId).sort(),
-    ["basic-differentiation", "chain-rule"],
+    ["basic-differentiation", "chain-rule", "tangents-and-normals"],
   );
 
   const tangents = differentiation.skills.find((skill) => skill.skillPathId === "tangents-and-normals");
-  assert.equal(tangents?.isAvailable, false, "canonical unavailable skills remain selectable without looking live");
+  assert.equal(tangents?.isAvailable, true, "published Tangents is selectable as live content");
 });
 
 test("studyPlanScopeOptions does not invent skill paths for a course whose canonical structure has none", () => {
@@ -111,7 +111,7 @@ test("studyPlanRequirementScopeOptions groups the official specification by cour
 
   const tangent = differentiating.requirements.find((requirement) => requirement.specPointId === "hm-calc-tangent")
     ?? calculus.strands.flatMap((strand) => strand.requirements).find((requirement) => requirement.specPointId === "hm-calc-tangent")!;
-  assert.equal(tangent.availableSkillCount, 0, "tangents-and-normals is not yet available in Orthic");
+  assert.equal(tangent.availableSkillCount, 1, "published Tangents is available in Orthic");
   assert.equal(tangent.totalSkillCount, 1);
 });
 

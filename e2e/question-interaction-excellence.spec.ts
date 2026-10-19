@@ -10,10 +10,10 @@ import { higherMathsDifferentiationQuestions } from "../content/questions/higher
 
 const firstQuestion = higherMathsDifferentiationQuestions[0];
 
-test("the question and answer dominate first arrival with accurate stage context", async ({ page }) => {
+test("the question and answer dominate first arrival with accurate Practice context", async ({ page }) => {
   await openQuestion(page, QUESTION_IDS[0]);
   await expect(page.locator("main")).toHaveCount(1);
-  await expect(page.getByTestId("stage-question-position")).toHaveText("Question 1 of 3 in Foundations");
+  await expect(page.getByTestId("stage-question-position")).toHaveText("Practice · Question 1 of 8");
   await expect(page.getByRole("heading", { level: 1, name: "Differentiate a power" })).toBeVisible();
   await expect(page.getByLabel("Your answer")).toBeVisible();
   await expect(page.getByText("Original Qualifications Scotland-style practice; not copied from Qualifications Scotland materials.")).toBeHidden();

@@ -10,7 +10,8 @@ import type {
 } from "@/lib/content-import/types";
 
 const SAFE_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-const CONFIG_KEYS = new Set(["bankId", "sourceBankVersion", "targetSkillPathSlug", "stageNameToStageId", "pathOverrides", "runMode"]);
+const LEGACY_CONFIG_KEYS = new Set(["bankId", "sourceBankVersion", "targetSkillPathSlug", "stageNameToStageId", "pathOverrides", "runMode"]);
+const PRACTICE_CONFIG_KEYS = new Set(["bankId", "sourceBankVersion", "targetSkillPathSlug", "runMode"]);
 const OVERRIDE_KEYS = new Set(["questionIds", "targetSkillPathSlug", "stageNameToStageId"]);
 const PROTOTYPE_KEYS = new Set(["__proto__", "prototype", "constructor"]);
 
@@ -22,10 +23,13 @@ export function createImportRegistry(subjects: readonly Subject[], questions: re
         for (const path of specArea.skillPaths ?? []) {
           paths.set(path.slug, {
             slug: path.slug,
+            subjectSlug: subject.subjectSlug,
             subject: subject.subjectName,
             courseArea: course.name,
             specArea: specArea.name,
             name: path.name,
+            practiceQuestionIds: [...(path.practiceQuestionIds ?? [])],
+            ...(path.practiceCompatibilityStageId ? { practiceCompatibilityStageId: path.practiceCompatibilityStageId } : {}),
             stages: (path.learningStages ?? []).map((stage) => ({
               id: stage.id,
               names: [...new Set([stage.name, stage.label, stage.title])],
@@ -52,14 +56,16 @@ export function parseAndValidateBankConfiguration(
   }
   if (!isPlainRecord(value)) return { valid: false, diagnostics: [{ code: "malformed_configuration", severity: "error", message: "Import configuration must be a plain object." }] };
   rejectPrototypeKeys(value, diagnostics);
-  rejectExtraKeys(value, CONFIG_KEYS, "configuration", diagnostics);
+  const isLegacyConfiguration = Object.hasOwn(value, "stageNameToStageId") || Object.hasOwn(value, "pathOverrides");
+  rejectExtraKeys(value, isLegacyConfiguration ? LEGACY_CONFIG_KEYS : PRACTICE_CONFIG_KEYS, "configuration", diagnostics);
   const configuration = value as unknown as BankImportConfiguration;
   if (!safeText(configuration.bankId)) diagnostics.push(error("invalid_bank_id", "bankId must be a bounded safe ID."));
   if (!safeVersion(configuration.sourceBankVersion)) diagnostics.push(error("invalid_source_bank_version", "sourceBankVersion must be a bounded numeric version string."));
   if (!safeText(configuration.targetSkillPathSlug)) diagnostics.push(error("invalid_target_skill_path", "targetSkillPathSlug must be a bounded safe slug."));
   if (!["new_content_only", "includes_authorised_edits"].includes(configuration.runMode)) diagnostics.push(error("invalid_run_mode", "runMode is not supported."));
-  validateStageMap(configuration.stageNameToStageId, configuration.targetSkillPathSlug, registry, diagnostics);
-  if (configuration.pathOverrides !== undefined) {
+  if (isLegacyConfiguration) validateStageMap(value.stageNameToStageId, configuration.targetSkillPathSlug, registry, diagnostics);
+  else validatePracticeTarget(configuration.targetSkillPathSlug, registry, diagnostics);
+  if ("pathOverrides" in configuration && configuration.pathOverrides !== undefined) {
     if (!Array.isArray(configuration.pathOverrides) || configuration.pathOverrides.length > 50) diagnostics.push(error("malformed_path_overrides", "pathOverrides must be an array of at most 50 entries."));
     else {
       const assigned = new Set<string>();
@@ -84,6 +90,8 @@ export function parseAndValidateBankConfiguration(
     }
   }
   if (bank) {
+    if (bank.authoringModel === "practice" && isLegacyConfiguration) diagnostics.push(error("practice_bank_uses_legacy_configuration", "Practice banks must use the stage-free Practice import configuration."));
+    if (bank.authoringModel === "legacy_stages" && !isLegacyConfiguration) diagnostics.push(error("legacy_bank_requires_stage_configuration", "Legacy F/A/PPQ banks still require explicit stageNameToStageId mapping."));
     const runtimeOverrides = Array.isArray(value.pathOverrides)
       ? value.pathOverrides.filter(isPlainRecord)
       : [];
@@ -103,12 +111,22 @@ export function parseAndValidateBankConfiguration(
         Array.isArray(candidate.questionIds) && candidate.questionIds.includes(question.id));
       const targetSkillPathSlug = override?.targetSkillPathSlug ?? value.targetSkillPathSlug;
       const stageNameToStageId = override?.stageNameToStageId ?? value.stageNameToStageId;
-      if (typeof targetSkillPathSlug !== "string" || !isPlainRecord(stageNameToStageId)) continue;
-      const targetStageId = stageNameToStageId[question.declaredStage];
+      if (typeof targetSkillPathSlug !== "string") continue;
       const path = registry.paths.get(targetSkillPathSlug);
-      if (typeof targetStageId !== "string" || !path?.stages.some((stage) => stage.id === targetStageId)) {
+      const targetStageId = bank.authoringModel === "practice"
+        ? path?.practiceCompatibilityStageId
+        : isPlainRecord(stageNameToStageId) ? stageNameToStageId[question.declaredStage] : undefined;
+      const validPlacement = bank.authoringModel === "practice"
+        ? typeof targetStageId === "string"
+        : typeof targetStageId === "string" && path?.stages.some((stage) => stage.id === targetStageId);
+      if (!validPlacement) {
         diagnostics.push({
-          ...error("unmapped_source_stage", `Question "${question.id}" source stage "${question.declaredStage}" has no explicit valid canonical stage mapping.`),
+          ...error(
+            bank.authoringModel === "practice" ? "practice_compatibility_stage_not_wired" : "unmapped_source_stage",
+            bank.authoringModel === "practice"
+              ? `Question "${question.id}" targets skill "${targetSkillPathSlug}", which has no explicit Practice compatibility provenance ID.`
+              : `Question "${question.id}" source stage "${question.declaredStage}" has no explicit valid canonical stage mapping.`,
+          ),
           questionId: question.id,
           lineRange: question.sourceLineRange,
         });
@@ -126,11 +144,26 @@ export function parseAndValidateBankConfiguration(
   };
 }
 
-export function resolveConfiguredPlacement(configuration: BankImportConfiguration, questionId: string, declaredStage: string) {
-  const override = configuration.pathOverrides?.find((candidate) => candidate.questionIds.includes(questionId));
+export function resolveConfiguredPlacement(configuration: BankImportConfiguration, questionId: string, declaredStage: string, registry: ImportRegistry) {
+  const override = "pathOverrides" in configuration
+    ? configuration.pathOverrides?.find((candidate) => candidate.questionIds.includes(questionId))
+    : undefined;
   const targetSkillPathSlug = override?.targetSkillPathSlug ?? configuration.targetSkillPathSlug;
+  if (!("stageNameToStageId" in configuration)) {
+    return { targetSkillPathSlug, targetStageId: registry.paths.get(targetSkillPathSlug)?.practiceCompatibilityStageId };
+  }
   const stageNameToStageId = override?.stageNameToStageId ?? configuration.stageNameToStageId;
   return { targetSkillPathSlug, targetStageId: stageNameToStageId[declaredStage] };
+}
+
+function validatePracticeTarget(pathSlug: unknown, registry: ImportRegistry, diagnostics: ImportDiagnostic[]) {
+  const path = typeof pathSlug === "string" ? registry.paths.get(pathSlug) : undefined;
+  if (!path) {
+    diagnostics.push(error("unknown_target_skill_path", `Configured skill path "${String(pathSlug)}" does not exist in the live registry.`));
+    return;
+  }
+  if (path.subjectSlug !== "higher-maths") diagnostics.push(error("practice_authoring_scope", "Practice-bank authoring is currently restricted to Higher Maths."));
+  if (!path.practiceCompatibilityStageId) diagnostics.push(error("practice_compatibility_stage_not_wired", `Skill path "${path.slug}" has no Practice compatibility provenance ID.`));
 }
 
 function validateStageMap(value: unknown, pathSlug: unknown, registry: ImportRegistry, diagnostics: ImportDiagnostic[]) {

@@ -40,6 +40,7 @@ import { useModalFocusTrap } from "@/lib/use-modal-focus-trap";
 import { formatNeedsPracticeLabel } from "@/lib/working-context";
 import { deriveMistakeLog } from "@/lib/mistakes/derivation";
 import { SkillFilterPicker } from "@/components/question-bank-skill-picker";
+import { isPracticeCompatibleSkill } from "@/lib/practice-model";
 
 const STATUS_FILTERS: Array<{ id: QuestionBankProgressFilter; label: string }> = [
   { id: "all", label: "All questions" },
@@ -76,12 +77,13 @@ type Group = {
 function buildGroups(entries: QuestionBankQuestionEntry[]): Group[] {
   const groups = new Map<string, Group>();
   for (const entry of entries) {
-    const key = `${entry.context.skillPath.slug}:${entry.context.stage.id}`;
+    const practiceCompatible = isPracticeCompatibleSkill(entry.context.skillPath);
+    const key = practiceCompatible ? `${entry.context.skillPath.slug}:practice` : `${entry.context.skillPath.slug}:${entry.context.stage.id}`;
     const group = groups.get(key) ?? {
       pathId: entry.context.skillPath.slug,
       pathName: entry.context.skillPath.name,
-      stageId: entry.context.stage.id,
-      stageName: entry.context.stage.name,
+      stageId: practiceCompatible ? `${entry.context.skillPath.slug}-practice` : entry.context.stage.id,
+      stageName: practiceCompatible ? "Practice" : entry.context.stage.name,
       allEntries: [],
       eligibleIds: [],
     };
@@ -98,6 +100,7 @@ export function QuestionBank({ subjectSlug }: { subjectSlug: string }) {
   const searchParams = useSearchParams();
   const hasMounted = useHasMounted();
   const subject = getSubjectBySlug(subjectSlug);
+  const practiceModelSubject = subjectSlug === "higher-maths";
   const [version, setVersion] = useState(0);
   const [searchInput, setSearchInput] = useState("");
   const [appliedSearch, setAppliedSearch] = useState("");
@@ -138,11 +141,11 @@ export function QuestionBank({ subjectSlug }: { subjectSlug: string }) {
         courseAreaId: rawUrlState.courseAreaId,
         specAreaId: rawUrlState.specAreaId,
         skillPathIds: rawUrlState.skillPathIds,
-        stageIds: rawUrlState.stageIds,
+        stageIds: practiceModelSubject ? [] : rawUrlState.stageIds,
       },
       options,
     ),
-    [rawUrlState, options],
+    [rawUrlState, options, practiceModelSubject],
   );
   const typeValid = rawUrlState.type === "all" || (Object.keys(ANSWER_TYPE_LABELS) as AnswerType[]).includes(rawUrlState.type as AnswerType);
   const effectiveType = typeValid ? rawUrlState.type : "all";
@@ -156,12 +159,12 @@ export function QuestionBank({ subjectSlug }: { subjectSlug: string }) {
     courseAreaId: normalizedFilters.courseAreaId || undefined,
     specAreaId: normalizedFilters.specAreaId || undefined,
     skillPathIds: normalizedFilters.skillPathIds,
-    stageIds: normalizedFilters.stageIds,
+    stageIds: practiceModelSubject ? [] : normalizedFilters.stageIds,
     typeFilter: effectiveType,
     calculatorFilter: rawUrlState.calc,
     sort: rawUrlState.sort,
     openMistakeQuestionIds,
-  }), [evidence, subjectSlug, appliedSearch, rawUrlState.status, rawUrlState.calc, rawUrlState.sort, effectiveType, normalizedFilters, openMistakeQuestionIds]);
+  }), [evidence, subjectSlug, appliedSearch, rawUrlState.status, rawUrlState.calc, rawUrlState.sort, effectiveType, normalizedFilters, openMistakeQuestionIds, practiceModelSubject]);
 
   const entryById = useMemo(() => new Map(allEntries.map((entry) => [entry.question.id, entry])), [allEntries]);
   const pagination = paginateQuestionIds(questions.map((entry) => entry.question.id), rawUrlState.page);
@@ -186,8 +189,9 @@ export function QuestionBank({ subjectSlug }: { subjectSlug: string }) {
   const reviewDueScope = useMemo(() => {
     const seen = new Map<string, string>();
     for (const entry of reviewDueEligible) {
-      const key = `${entry.context.skillPath.slug}:${entry.context.stage.id}`;
-      seen.set(key, `${entry.context.skillPath.name} · ${entry.context.stage.name}`);
+      const practiceCompatible = isPracticeCompatibleSkill(entry.context.skillPath);
+      const key = practiceCompatible ? entry.context.skillPath.slug : `${entry.context.skillPath.slug}:${entry.context.stage.id}`;
+      seen.set(key, `${entry.context.skillPath.name} · ${practiceCompatible ? "Practice" : entry.context.stage.name}`);
     }
     return [...seen.values()];
   }, [reviewDueEligible]);
@@ -369,14 +373,14 @@ export function QuestionBank({ subjectSlug }: { subjectSlug: string }) {
         allLabel="All skills"
         mobile={mobile}
       />
-      <StageMultiFilter
+      {!practiceModelSubject ? <StageMultiFilter
         label="Stages"
         values={normalizedFilters.stageIds}
         onClear={() => updateFilters({ stageIds: [] })}
         onToggle={(ids, checked) => toggleMultiValue("stageIds", ids, checked)}
         options={stageChoices}
         allLabel="All stages"
-      />
+      /> : null}
       <details className="group disclosure-motion border-y border-rule">
         <summary className="orthic-secondary-link flex min-h-11 cursor-pointer list-none items-center justify-between font-medium text-sm">More filters<ChevronDown aria-hidden="true" className="orthic-disclosure-chevron size-4 group-open:rotate-180" /></summary>
         <div className="grid gap-4 pb-4 pt-2">
@@ -452,7 +456,7 @@ export function QuestionBank({ subjectSlug }: { subjectSlug: string }) {
                 <label className="relative block min-w-0 flex-1">
                   <span className="sr-only">Search questions</span>
                   <Search className="pointer-events-none absolute left-3 top-3.5 size-4 text-muted" />
-                  <input value={searchInput} onChange={(event) => setSearchInput(event.target.value)} placeholder="Search questions, skills or stages" className="min-h-12 w-full rounded border border-rule bg-white pl-10 pr-4 max-md:min-h-11" />
+                  <input value={searchInput} onChange={(event) => setSearchInput(event.target.value)} placeholder={practiceModelSubject ? "Search questions or skills" : "Search questions, skills or stages"} className="min-h-12 w-full rounded border border-rule bg-white pl-10 pr-4 max-md:min-h-11" />
                 </label>
                 <button ref={filterTriggerRef} type="button" onClick={() => setMobileFiltersOpen(true)} className="inline-flex min-h-11 w-fit shrink-0 items-center gap-2 rounded border border-rule bg-white px-3 font-bold lg:hidden">
                   <Filter className="size-4" />Filters{hasActiveFilters ? <span className="rounded-full bg-forge px-1.5 text-xs text-white">{activeChips.length}</span> : null}
@@ -502,7 +506,7 @@ export function QuestionBank({ subjectSlug }: { subjectSlug: string }) {
                       onChange={(event) => setSelected((current) => setQuestionGroupSelection(current, group.eligibleIds, event.target.checked))}
                       aria-label={groupLabel}
                     />
-                    Select this stage
+                    Select this {group.stageName === "Practice" ? "skill" : "stage"}
                   </label>
                 </div>
                 <ol className="divide-y divide-line px-4 max-sm:px-3">{visibleEntries.map((entry) => <QuestionRow
@@ -611,11 +615,12 @@ function MobileFilterSheet({ containerRef, closeRef, onClose, children }: { cont
 
 function QuestionRow({ entry, selected, expanded, onSelected, onToggleExpand }: { entry: QuestionBankQuestionEntry; selected: boolean; expanded: boolean; onSelected: (checked: boolean) => void; onToggleExpand: () => void }) {
   const eligibility = checkPracticeEligibility(entry.question);
-  const position = entry.context.questionIndexInPath + 1;
+  const practiceCompatible = isPracticeCompatibleSkill(entry.context.skillPath);
+  const position = contentResolver.getPracticeQuestionPosition(entry.question.id)?.position ?? entry.context.questionIndexInPath + 1;
   // Keep authored math delimiters intact; never truncate through a TeX expression.
   const excerpt = entry.question.questionText.split(/\n\s*\n/)[0];
   const panelId = `question-bank-preview-${entry.question.id}`;
-  const label = `Select ${entry.context.skillPath.name}, ${entry.context.stage.name}, Question ${position}`;
+  const label = `Select ${entry.context.skillPath.name}, ${practiceCompatible ? "Practice" : entry.context.stage.name}, Question ${position}`;
   const hasInteractiveVisualAnswer = VISUAL_ANSWER_TYPES.has(entry.question.answerType);
   return <li data-testid="question-bank-row" className={`orthic-plan-row grid min-w-0 gap-2 py-4 transition-colors duration-150 focus-within:bg-academic-blue/55 hover:bg-shell motion-reduce:transition-none ${selected ? "bg-academic-blue/55" : ""}`}>
     <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3 max-sm:grid-cols-[auto_minmax(0,1fr)]">
@@ -705,7 +710,7 @@ function ReviewSelection({ entries, onClose, onRemove, onClear, onStart, closeRe
   return <div className="fixed inset-0 z-50 grid place-items-center bg-ink/45 p-3" role="presentation" onMouseDown={(event) => { if (event.currentTarget === event.target) onClose(); }}>
     <section role="dialog" aria-modal="true" aria-labelledby="review-selection-title" data-question-bank-dialog className="orthic-transition-standard !duration-[180ms] max-h-[85vh] w-full max-w-2xl overflow-auto rounded-lg bg-white p-5 shadow-card">
       <div className="flex items-start justify-between gap-3"><div><p className="text-xs font-extrabold uppercase text-forge">Custom practice</p><h2 id="review-selection-title" className="text-2xl font-extrabold">Review selection</h2><p className="mt-1 text-sm text-muted">{entries.length} questions · {entries.reduce((total, entry) => total + entry.question.marks, 0)} marks</p></div><button ref={closeRef} type="button" onClick={onClose} aria-label="Close selection review" className="orthic-transition-fast grid size-11 place-items-center rounded border border-rule"><X className="size-5" /></button></div>
-      <ul className="mt-4 divide-y divide-line">{entries.map((entry) => <li key={entry.question.id} className="flex items-center justify-between gap-3 py-3"><div><p className="text-xs font-bold text-muted">{entry.context.skillPath.name} · {entry.context.stage.name}</p><p className="font-bold"><InlineMathContent>{entry.question.title}</InlineMathContent></p></div><button type="button" onClick={() => onRemove(entry.question.id)} aria-label={`Remove ${entry.question.title}`} className="min-h-11 px-2 font-bold text-muted">Remove</button></li>)}</ul>
+      <ul className="mt-4 divide-y divide-line">{entries.map((entry) => <li key={entry.question.id} className="flex items-center justify-between gap-3 py-3"><div><p className="text-xs font-bold text-muted">{entry.context.skillPath.name} · {isPracticeCompatibleSkill(entry.context.skillPath) ? "Practice" : entry.context.stage.name}</p><p className="font-bold"><InlineMathContent>{entry.question.title}</InlineMathContent></p></div><button type="button" onClick={() => onRemove(entry.question.id)} aria-label={`Remove ${entry.question.title}`} className="min-h-11 px-2 font-bold text-muted">Remove</button></li>)}</ul>
       <div className="mt-4 flex flex-wrap justify-between gap-2"><button type="button" onClick={onClear} className="orthic-transition-fast min-h-11 px-3 font-bold text-muted">Clear all</button><div className="flex gap-2"><button type="button" onClick={onClose} className="orthic-transition-fast min-h-11 rounded border border-rule px-3 font-bold">Return to filters</button><button type="button" onClick={onStart} disabled={!entries.length} className="min-h-11 rounded-lg orthic-primary-action bg-navy px-4 font-semibold text-white disabled:opacity-40">Start selected practice</button></div></div>
     </section>
   </div>;

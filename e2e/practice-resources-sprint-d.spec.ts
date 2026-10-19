@@ -149,7 +149,7 @@ test("official formula sheet opens in structured, Quick and custom Higher Maths 
   await verifyFormulaDrawer(page);
 
   await page.goto("/subjects/higher-maths/question-bank");
-  await page.getByLabel("Select Basic differentiation, Foundations, Question 1").check();
+  await page.getByLabel("Select Basic differentiation, Practice, Question 1").check();
   await page.getByRole("button", { name: "Start selected practice" }).click();
   const conflict = page.getByRole("dialog", { name: "You already have active practice" });
   await expect(conflict).toBeVisible();

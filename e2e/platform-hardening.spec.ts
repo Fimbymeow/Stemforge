@@ -49,7 +49,7 @@ test("critical guest journey is accessible, persistent, isolated, and console-cl
 
   await page.goto("/subjects/higher-maths/revision-notes");
   await expect(page.getByRole("heading", { name: "Power rule", exact: true })).toBeVisible();
-  await page.getByRole("link", { name: "Continue to Foundations" }).click();
+  await page.getByRole("link", { name: "Continue to Practice" }).click();
   await expect(page).toHaveURL(`/question/${QUESTION_IDS[1]}`);
   const afterResource = await readStoredProgress(page) as { data?: { attempts?: unknown[] } } | null;
   expect(afterResource?.data?.attempts).toHaveLength(1);

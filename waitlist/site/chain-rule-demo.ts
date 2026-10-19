@@ -1,6 +1,6 @@
 import "mathlive/static.css";
 import "mathlive/fonts.css";
-import { convertLatexToMarkup } from "mathlive/ssr";
+import { convertLatexToMathMl } from "mathlive/ssr";
 import { markQuestionAnswer } from "../../lib/answer-engine";
 import { deriveMathInputCapabilities } from "../../lib/questions/math-input-capabilities";
 import { normalizeRichMathSource } from "../../lib/questions/rich-math-normalization";
@@ -129,13 +129,13 @@ function renderMathText(container: HTMLElement, source: string) {
       paragraph = null;
       const math = document.createElement("div");
       math.className = "demo-math-display";
-      math.innerHTML = convertLatexToMarkup(match[1].trim());
+      math.innerHTML = `<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">${convertLatexToMathMl(match[1].trim())}</math>`;
       container.append(math);
     } else {
       paragraph ??= appendParagraph();
       const math = document.createElement("span");
       math.className = "demo-math-inline";
-      math.innerHTML = convertLatexToMarkup(match[2]);
+      math.innerHTML = `<math xmlns="http://www.w3.org/1998/Math/MathML">${convertLatexToMathMl(match[2])}</math>`;
       paragraph.append(math);
     }
     cursor = (match.index ?? 0) + match[0].length;

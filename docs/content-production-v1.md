@@ -1,6 +1,8 @@
 # Higher Maths content production v1
 
-**v1.2 update:** formalised question ownership and stage-specific cross-topic integration. Ownership follows the primary assessed objective; conditional prior knowledge remains attached to the owning question through the existing curriculum metadata and must be honoured by eligibility.
+**v2.0 update:** new Higher Maths production uses one ordered Practice bank. Legacy three-stage banks remain readable during migration, but are no longer the authoring requirement.
+
+**v1.2 update:** formalised question ownership and cross-topic integration. Ownership follows the primary assessed objective; conditional prior knowledge remains attached to the owning question through the existing curriculum metadata and must be honoured by eligibility.
 
 **v1.1 update:** added an explicit, coverage-based worked-example requirement to step 4 (Notes) and the publication gate. See that step and the gate list below; the rule is deliberately not a numeric quota. This update strengthens the standard going forward — it does not retroactively require re-authoring already-published Notes such as Chain Rule's.
 
@@ -14,17 +16,20 @@ The generated production tracker is the operational view. Do not maintain a seco
 
 ## Required production sequence
 
-1. **Official mapping** — map the skill to one or more of the 58 official Higher Maths requirements.
-2. **Skill contract** — define assessed scope, exclusions and hard prerequisites. Set each question's `curriculum.primarySkillId` from its primary assessed objective, not from every topic appearing in its prompt. Add question-level `curriculum.requiredSkillIds` only where that particular question genuinely needs extra knowledge.
-3. **Historical-paper pattern audit** — record that assessment patterns were abstracted for calibration without copying source questions.
-4. **Notes** — author and validate the native `LessonDocument`. Notes must include a fully worked example for every distinct method or case the skill's assessed scope introduces. This is a coverage requirement, not a numeric quota: a skill covering one method needs one worked example that actually demonstrates it end to end; a skill covering three genuinely distinct methods or cases (for example, three different differentiation rules, or a split by sign/boundary case) needs a worked example for each, no more and no fewer than the scope demands. A worked example restates the full method — problem, reasoning, and answer — not just a final answer or an isolated formula.
-5. **Foundations** — produce the introductory question stage.
-6. **Applications** — produce standard application questions.
-7. **Past Paper-style Questions** — produce original exam-style questions.
-8. **Marking readiness** — every accepted answer must be supported by the existing marker; unsupported shapes block publication.
-9. **Content QA** — complete mathematical, curriculum, originality and marking QA.
-10. **Content approval** — record explicit content-owner approval separately from automated checks.
-11. **Integration and publication** — use the existing preview/approval/apply workflow where import is required, validate the final graph, and verify the live skill.
+1. **Resolve canonical skill** — confirm the exact skill path and official mapping.
+2. **Freeze contract** — define assessed scope, exclusions and hard prerequisites.
+3. **Specification audit** — reconcile the contract with the official Higher Maths requirements.
+4. **Historical assessment audit** — abstract real assessment patterns without copying source material.
+5. **Identify prerequisites and natural integrations** — distinguish universal prerequisites from question-level requirements.
+6. **Coverage blueprint** — plan required methods, representations, archetypes and progression without stage quotas.
+7. **Notes** — author and validate the native `LessonDocument`, including a complete worked example for every distinct method or case.
+8. **Ordered Practice bank** — author one Q-numbered Practice list. Set each question's `curriculum.primarySkillId` from its primary assessed objective and add `curriculum.requiredSkillIds` only where that question genuinely needs extra knowledge.
+9. **Practice Skim List** — produce one prompt-only list containing every Practice question, with no answers, hints, or solutions.
+10. **QA** — complete mathematical, curriculum, originality and marking QA. Review the Skim List for coverage, repetition, coefficient repetition, unnatural combinations, missing historical archetypes and difficulty progression.
+11. **Preview** — use the deterministic importer preview and inspect Practice order, ownership, dependencies, marking readiness, collisions and version decisions.
+12. **Approval** — record explicit content-owner approval separately from automated checks.
+13. **Import** — apply only an approval-fresh, atomically valid import.
+14. **Production validation** — validate the final canonical graph and verify the live skill.
 
 Every stage must use real evidence. Missing evidence stays incomplete; filenames, hashes and manifests are references, not proof of human review.
 
@@ -46,9 +51,10 @@ not per-field evidence.
 
 Question ownership is determined by the primary assessed objective: the mathematical evidence the learner must produce for the question to have done its main job. A method, representation or context used on the way does not become the owner merely because it appears in the prompt or solution.
 
-- **Foundations** should isolate the canonical skill as far as practical. Use only the universal hard prerequisites and incidental algebra/notation needed to execute the new skill; avoid conditional cross-topic demands.
-- **Applications** may combine the canonical skill with light, already-learned prerequisite or context skills, while keeping the canonical skill as the primary assessed objective.
-- **Past Paper-style Questions** may use authentic cross-topic integration with previously learned skills. Do not strip realistic context merely to make the question single-topic.
+A Practice question may use prerequisite or naturally integrated Higher Maths knowledge provided one
+canonical skill remains clearly responsible for the evidence. If several skills are equally central,
+defer the question to future Mixed Practice or custom papers. Do not introduce forced isolated,
+combined, or mixed quotas.
 
 Keep ownership and requirements separate using the repository's existing fields:
 
@@ -70,7 +76,7 @@ A standard live skill must have:
 - canonical registration and official mapping;
 - a matching skill contract;
 - completed historical-pattern audit;
-- validated Notes and non-empty Foundations, Applications and Past Paper-style stages;
+- validated Notes and a non-empty explicitly ordered Practice bank;
 - a worked example covering every distinct method or case in that skill's assessed scope (coverage-based, not a fixed count);
 - supported marking for every question and accepted answer;
 - completed mathematical, curriculum, originality and marking QA;

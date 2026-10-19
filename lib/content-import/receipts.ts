@@ -26,8 +26,11 @@ export function validateApprovalReceipt(
     diagnostics.push(error("approval_reconstruction_required", "Approval validation requires a freshly reconstructed preview."));
   } else {
     const reconstructed = context.reconstructedPayload;
-    if (canonicalSerialize(payload) !== canonicalSerialize(reconstructed) ||
-        receipt.previewHash !== previewHash(reconstructed)) {
+    const comparableReconstructed = payload.practiceOrders === undefined
+      ? omitPracticeOrders(reconstructed)
+      : reconstructed;
+    if (canonicalSerialize(payload) !== canonicalSerialize(comparableReconstructed) ||
+        receipt.previewHash !== previewHash(comparableReconstructed)) {
       diagnostics.push(error("reconstructed_preview_mismatch", "Embedded preview does not exactly match the current reconstructed preview."));
     }
   }
@@ -156,12 +159,20 @@ function isApprovalReceiptShape(value: unknown): value is ApprovalReceipt {
 }
 
 function isPreviewPayloadShape(value: unknown): value is PreviewDecisionPayload {
-  return exactRecord(value, [
+  if (!exactRecord(value)) return false;
+  const requiredKeys = [
     "payloadVersion", "compilerVersion", "importable", "sourcePath", "sourceBytesHash",
     "configurationPath", "configurationBytesHash", "configuration",
     "configurationHash", "liveCanonicalContentSnapshotHash", "sourceQuestionIds", "classifications",
     "eligibleCandidateIds", "blockedIds", "unchangedIds", "collisionDiffs", "plannedOutputs", "diagnostics",
-  ]) && value.payloadVersion === 1 && value.compilerVersion === 1 && typeof value.importable === "boolean" &&
+  ];
+  const allowedKeys = new Set([...requiredKeys, "practiceOrders"]);
+  if (!requiredKeys.every((key) => Object.hasOwn(value, key)) || Object.keys(value).some((key) => !allowedKeys.has(key))) return false;
+  const practiceOrdersValid = value.practiceOrders === undefined || (Array.isArray(value.practiceOrders) && value.practiceOrders.every((order) =>
+    exactRecord(order, ["targetSkillPathSlug", "questionIds", "source"]) &&
+    typeof order.targetSkillPathSlug === "string" && stringArray(order.questionIds) &&
+    ["authored_practice", "legacy_flattened", "existing_explicit"].includes(String(order.source))));
+  return practiceOrdersValid && value.payloadVersion === 1 && value.compilerVersion === 1 && typeof value.importable === "boolean" &&
     typeof value.sourcePath === "string" && typeof value.sourceBytesHash === "string" &&
     typeof value.configurationPath === "string" && typeof value.configurationBytesHash === "string" &&
     typeof value.configurationHash === "string" && typeof value.liveCanonicalContentSnapshotHash === "string" &&
@@ -184,8 +195,14 @@ function isImportReceiptShape(value: unknown): value is ImportReceipt {
 function isVersionDecisionShape(value: unknown): value is VersionDecision {
   if (!exactRecord(value)) return false;
   const kind = value.kind;
-  if (!["content_revision_bump", "question_version_bump"].includes(String(kind))) return false;
+  if (!["content_revision_bump", "question_version_bump", "practice_regrouping_no_version_bump"].includes(String(kind))) return false;
   return exactRecord(value, ["kind"]);
+}
+
+function omitPracticeOrders(payload: PreviewDecisionPayload): PreviewDecisionPayload {
+  const legacy = { ...payload };
+  delete legacy.practiceOrders;
+  return legacy;
 }
 
 function exactRecord(value: unknown, allowed?: string[]): value is Record<string, unknown> {

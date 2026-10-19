@@ -90,6 +90,7 @@ export function getActiveContinueHref(nextQuestionId?: string | null) {
 }
 
 export function getSkillPathQuestionIds(skillPath: SkillPath) {
+  if (skillPath.practiceQuestionIds?.length) return [...skillPath.practiceQuestionIds];
   return getActiveStages(skillPath).flatMap((stage) => stage.questionIds);
 }
 

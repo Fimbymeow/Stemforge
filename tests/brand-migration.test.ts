@@ -45,11 +45,13 @@ test("homepage metadata and product visual are Orthic-specific and non-fabricate
   assert.doesNotMatch(layout, /alternates: \{ canonical: "\/" \}/);
   assert.doesNotMatch(layout, /stemforge-6an8/);
   assert.match(hero, /ProductVisual/);
-  assert.match(visual, /Basic differentiation/);
+  assert.match(visual, /Chain Rule/);
   assert.match(visual, /Notes/);
-  assert.match(visual, /Foundations/);
-  assert.match(visual, /Applications/);
-  assert.match(visual, /Exam Questions/);
+  assert.match(visual, /Practice/);
+  assert.match(visual, /18 of 34 questions completed/);
+  assert.match(visual, /Review/);
+  assert.match(visual, /No review due/);
+  assert.doesNotMatch(visual, /Foundations|Applications|Past Paper-style Questions|Exam practice/);
   assert.doesNotMatch(home + hero + visual, /orthic-skill-page|mockup-dashboard|Mechanics|Kinematics|12-day|avatar/i);
 });
 

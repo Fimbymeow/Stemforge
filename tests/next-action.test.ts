@@ -12,20 +12,22 @@ const path = resolver.getPathContext("basic-differentiation")!.skillPath;
 const questionIds = (path.learningStages ?? []).flatMap((stage) => stage.questionIds);
 const chainPath = resolver.getPathContext("chain-rule")!.skillPath;
 const chainQuestionIds = (chainPath.learningStages ?? []).flatMap((stage) => stage.questionIds);
+const tangentsPath = resolver.getPathContext("tangents-and-normals")!.skillPath;
+const tangentsQuestionIds = tangentsPath.practiceQuestionIds ?? [];
 
 test("new learner starts the first valid available question without inferring review", () => {
   const action = deriveLearnerNextAction({ evidence: emptyEvidence() });
   assert.equal(action.kind, "start_learning");
   assert.equal(action.questionId, questionIds[0]);
   assert.equal(action.href, `/question/${questionIds[0]}`);
-  assert.equal(action.label, "Start learning");
+  assert.equal(action.label, "Start Practice");
 });
 
 test("a current-version incomplete attempt resumes before unrelated practice", () => {
   const action = deriveLearnerNextAction({ evidence: evidence([attempt(questionIds[1], 1, false)]) });
   assert.equal(action.kind, "resume_question");
   assert.equal(action.questionId, questionIds[1]);
-  assert.equal(action.label, "Resume question");
+  assert.equal(action.label, "Continue Practice");
 });
 
 test("a recorded hint without an answer resumes the exact unfinished question", () => {
@@ -55,7 +57,7 @@ test("the next incomplete question is selected deterministically", () => {
   assert.deepEqual(second, first);
 });
 
-test("completing a stage begins the next stage while keeping it directly available", () => {
+test("crossing a historical stage boundary continues one learner-facing Practice sequence", () => {
   const foundations = path.learningStages![0];
   const action = deriveLearnerNextAction({
     evidence: evidence(foundations.questionIds.map((id, index) => attempt(id, index + 1, true))),
@@ -63,7 +65,7 @@ test("completing a stage begins the next stage while keeping it directly availab
   assert.equal(action.kind, "start_stage");
   assert.equal(action.stageId, path.learningStages![1].id);
   assert.equal(action.questionId, path.learningStages![1].questionIds[0]);
-  assert.equal(action.label, "Begin Applications");
+  assert.equal(action.label, "Continue Practice");
 });
 
 test("completed guided content that needs another attempt uses practice language, not scheduled Review language", () => {
@@ -74,9 +76,9 @@ test("completed guided content that needs another attempt uses practice language
   assert.equal(action.label, "Practise 1 question again");
 });
 
-test("completed content with no review due recommends existing practice and never locked inventory", () => {
+test("completed available content with no review due recommends existing practice and never locked inventory", () => {
   const action = deriveLearnerNextAction({
-    evidence: evidence([...questionIds, ...chainQuestionIds].map((id, index) => attempt(id, index + 1, true))),
+    evidence: evidence([...questionIds, ...chainQuestionIds, ...tangentsQuestionIds].map((id, index) => attempt(id, index + 1, true))),
   });
   assert.equal(action.kind, "practice_again");
   assert.equal(action.href, "/practice?path=basic-differentiation");

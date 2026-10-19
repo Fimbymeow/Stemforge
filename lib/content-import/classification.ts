@@ -38,7 +38,7 @@ export function classifyBank(
 ): { classifications: ImportClassification[]; collisionDiffs: CollisionDiff[] } {
   const collisionDiffs: CollisionDiff[] = [];
   const classifications = bank.questions.map((question) => {
-    const placement = resolveConfiguredPlacement(configuration, question.id, question.declaredStage);
+    const placement = resolveConfiguredPlacement(configuration, question.id, question.declaredStage, registry);
     const diagnostics = [...question.diagnostics];
     const existing = registry.questions.get(question.id);
     if (bank.advisorySkillPathId && bank.advisorySkillPathId !== configuration.bankId) {
@@ -90,7 +90,9 @@ export function classifyBank(
         message: `Source stage "${question.declaredStage}" has no explicit canonical stage mapping.`,
       });
     }
-    const conversions: ImportConversion[] = ["label_rename", "stage_label_to_stage_id"];
+    const conversions: ImportConversion[] = configuration && !("stageNameToStageId" in configuration)
+      ? ["label_rename", "practice_compatibility_provenance"]
+      : ["label_rename", "stage_label_to_stage_id"];
     if (assessed.conversion) conversions.push(assessed.conversion);
     let markerCompatibility: MarkerCompatibilityCheck | undefined;
     let canonicalQuestion: Question | undefined;
@@ -424,7 +426,7 @@ function toCanonicalQuestion(
     calculatorAllowed: !/non-calculator/i.test(source.calculatorStatus ?? ""),
     source: "Original Orthic QS-style content",
     status: "ready",
-    displayOrder: sourceOrder(source.id),
+    displayOrder: authoredOrder(source.sourceOrder),
   };
 }
 
@@ -663,9 +665,9 @@ function inferVariable(value: string) {
   return /[a-z]/i.exec(value.replace(/sqrt/gi, ""))?.[0].toLowerCase() ?? "x";
 }
 
-function sourceOrder(id: string) {
-  const match = /-(f|a|ppq)-(\d+)$/.exec(id);
-  const offset = match?.[1] === "f" ? 0 : match?.[1] === "a" ? 1000 : 2000;
+function authoredOrder(sourceOrder: string) {
+  const match = /^(F|A|PPQ|Q)(\d{3})$/.exec(sourceOrder);
+  const offset = match?.[1] === "F" || match?.[1] === "Q" ? 0 : match?.[1] === "A" ? 1000 : 2000;
   return offset + Number(match?.[2] ?? 0);
 }
 
@@ -690,6 +692,10 @@ function deriveVersionDecisions(
   if (existing.skillPathId !== proposed.skillPathId) return [];
   const material = fields.filter((field) => field.likelyImpact !== "version_fields");
   if (!material.length) return [];
+  const practiceRegrouping = material.every((field) =>
+    ["stage", "stageId", "displayOrder"].includes(field.field) && field.likelyImpact === "placement") &&
+    proposed.stage === "Practice";
+  if (practiceRegrouping) return ["practice_regrouping_no_version_bump", "question_version_bump"];
   const questionVersionRequired = material.some((field) =>
     ["accepted_answers", "marking_strategy", "assessment_meaning", "placement", "identity"].includes(field.likelyImpact));
   return questionVersionRequired

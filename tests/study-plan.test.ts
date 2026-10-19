@@ -23,10 +23,11 @@ import type { Assessment, StudyPlanCandidate, StudyPlanGenerationInput, StudyPla
 
 const BASIC = context("basic-differentiation");
 const CHAIN = context("chain-rule");
+const TANGENTS = context("tangents-and-normals");
 const NOW = new Date("2026-07-13T09:00:00.000Z");
 const WEEK_START = "2026-07-13";
 
-test("worked 180-minute fixture prioritises one Basic Review and Chain Rule Applications without double counting", () => {
+test("worked 180-minute fixture prioritises one Basic Review and Chain Rule Practice without double counting", () => {
   const input = workedInput();
   const result = generateStudyPlan(input);
 
@@ -53,12 +54,20 @@ test("worked 180-minute fixture prioritises one Basic Review and Chain Rule Appl
       skill: "chain-rule",
       action: "continue_stage",
       reason: "continue",
-      stage: "Applications",
+      stage: "Practice",
+      minutes: 20,
+    },
+    {
+      date: "2026-07-13",
+      skill: "tangents-and-normals",
+      action: "continue_stage",
+      reason: "next_skill",
+      stage: "Practice",
       minutes: 20,
     },
   ]);
-  assert.equal(result.allocatedMinutes, 40);
-  assert.equal(result.unusedMinutes, 140);
+  assert.equal(result.allocatedMinutes, 60);
+  assert.equal(result.unusedMinutes, 120);
   assert.equal(result.items.filter((item) => item.skillPathId === BASIC.skillPath.slug).length, 1);
   assert.equal(result.diagnostics.some((item) => item.code === "mistake_absorbed_by_review"), true);
 });
@@ -78,9 +87,10 @@ test("missed Wednesday preservation keeps completed Monday work, skips the moved
   assert.deepEqual(result.items.map((item) => [item.skillPathId, item.date, item.state]), [
     ["basic-differentiation", "2026-07-13", "completed"],
     ["chain-rule", "2026-07-15", "skipped"],
+    ["tangents-and-normals", "2026-07-13", "planned"],
   ]);
-  assert.equal(result.allocatedMinutes, 20);
-  assert.equal(result.unusedMinutes, 160);
+  assert.equal(result.allocatedMinutes, 40);
+  assert.equal(result.unusedMinutes, 140);
   assert.equal(result.items.some((item) => item.date === "2026-07-18"), false);
 });
 
@@ -176,15 +186,15 @@ test("exam tomorrow suppresses new starts, while no explicit assessment still su
   assert.equal(normal.items[0].skillPathId, "basic-differentiation");
 });
 
-test("medium exam phase moves exam-practice continuation ahead within its existing tier", () => {
+test("medium exam phase does not reintroduce legacy exam-practice priority for Practice-compatible skills", () => {
   const evidence = twoInProgressSkillsEvidence();
   const far = buildStudyPlanCandidates({ now: NOW, courseSlug: "higher-maths", evidence, assessments: [wholeCourseAssessment("2026-10-01")] });
   const medium = buildStudyPlanCandidates({ now: NOW, courseSlug: "higher-maths", evidence, assessments: [wholeCourseAssessment("2026-07-25")] });
   const farItems = allocateStudyPlan(allocationInput(far.candidates, "far")).items;
   const mediumItems = allocateStudyPlan(allocationInput(medium.candidates, "medium")).items;
   assert.deepEqual(farItems.map((item) => item.skillPathId), ["basic-differentiation", "chain-rule"]);
-  assert.deepEqual(mediumItems.map((item) => item.skillPathId), ["chain-rule", "basic-differentiation"]);
-  assert.equal(mediumItems[0].stageName, "Past Paper-style Questions");
+  assert.deepEqual(mediumItems.map((item) => item.skillPathId), ["basic-differentiation", "chain-rule"]);
+  assert.equal(mediumItems[0].stageName, "Practice");
 });
 
 test("Review changes predictably from not due to due soon to due", () => {
@@ -464,6 +474,7 @@ function completedAvailableEvidence(at: string): ProgressEvidence {
   return evidence([
     ...completedPathEvidence(BASIC, at, () => ++sequence).attempts,
     ...completedPathEvidence(CHAIN, at, () => ++sequence).attempts,
+    ...completedPathEvidence(TANGENTS, at, () => ++sequence).attempts,
   ]);
 }
 
@@ -472,8 +483,10 @@ function completedPathEvidence(
   at: string,
   nextSequence: () => number = sequenceCounter(),
 ): ProgressEvidence {
-  return evidence(path.skillPath.learningStages!.flatMap((stage) =>
-    stage.questionIds.map((questionId) => attemptFor(questionId, nextSequence(), true, at))));
+  const questionIds = path.skillPath.practiceQuestionIds?.length
+    ? path.skillPath.practiceQuestionIds
+    : path.skillPath.learningStages!.flatMap((stage) => stage.questionIds);
+  return evidence(questionIds.map((questionId) => attemptFor(questionId, nextSequence(), true, at)));
 }
 
 function attemptFor(questionId: string, sequence: number, isCorrect: boolean, attemptedAt: string): QuestionAttempt {

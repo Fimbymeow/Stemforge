@@ -13,6 +13,7 @@ import { contentResolver } from "@/lib/content-resolver";
 import { deriveSkillConfidenceSuggestion, getHigherMathsSkillOfficialPoints } from "@/lib/course-tracker";
 import { getEmptyProgressEvidence, getProgressEvidence } from "@/lib/local-progress";
 import type { ProgressEvidence } from "@/lib/progress/types";
+import { derivePracticeDependencies } from "@/lib/practice-model";
 
 export function WorkingContextOverview({ pathId }: { pathId: string }) {
   const model = useWorkingContextModel(pathId);
@@ -38,6 +39,7 @@ export function WorkingContextOverview({ pathId }: { pathId: string }) {
     [pathId, subjectSlug, evidence],
   );
   const officialPoints = useMemo(() => getHigherMathsSkillOfficialPoints(pathId), [pathId]);
+  const dependencies = useMemo(() => skillPath && model?.practiceCompatible ? derivePracticeDependencies(skillPath) : null, [skillPath, model?.practiceCompatible]);
   if (!model) return null;
 
   return (
@@ -66,7 +68,7 @@ export function WorkingContextOverview({ pathId }: { pathId: string }) {
           {model.needsAttention ? (
             <p className="mt-3 text-sm font-semibold text-muted" data-testid="skill-attention-reason">{model.attentionDetail}</p>
           ) : null}
-          <p className="mt-3 text-sm text-secondary">{model.isComplete ? "All learning stages complete" : `Current stage: ${displayStageName(model.stageName)}`}</p>
+          <p className="mt-3 text-sm text-secondary">{model.practiceCompatible ? (model.isComplete ? "Practice complete" : `Practice · ${model.completed} of ${model.total} complete`) : model.isComplete ? "All learning stages complete" : `Current stage: ${displayStageName(model.stageName)}`}</p>
           </div>
           <div className="min-w-0 rounded-sm border border-rule bg-paper p-4">
           {confidenceEvidence ? (
@@ -82,6 +84,13 @@ export function WorkingContextOverview({ pathId }: { pathId: string }) {
           <Link href={model.primaryHref} data-testid="skill-primary-action" className="orthic-primary-action mt-4 inline-flex min-h-11 w-full items-center justify-center gap-3 rounded-sm bg-navy px-4 py-3 text-sm font-semibold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-navy">{model.primaryLabel}<ArrowRight aria-hidden="true" className="orthic-arrow size-4" /></Link>
           </div>
         </header>
+
+        {dependencies && (dependencies.prerequisites.length > 0 || dependencies.conditional.length > 0) ? (
+          <section aria-label="Skill dependencies" className="grid gap-4 border-y border-rule py-5 md:grid-cols-2">
+            {dependencies.prerequisites.length > 0 ? <div><h2 className="text-sm font-semibold text-navy">Prerequisites</h2><ul className="mt-2 grid gap-1 text-sm text-secondary">{dependencies.prerequisites.map((item) => <li key={item.skillPathId}><Link className="orthic-secondary-link inline-flex min-h-11 items-center" href={item.href}>{item.name}</Link></li>)}</ul></div> : null}
+            {dependencies.conditional.length > 0 ? <div><h2 className="text-sm font-semibold text-navy">Some questions also use</h2><ul className="mt-2 grid gap-1 text-sm text-secondary">{dependencies.conditional.map((item) => <li key={item.skillPathId}><Link className="orthic-secondary-link inline-flex min-h-11 items-center" href={item.href}>{item.name}</Link></li>)}</ul></div> : null}
+          </section>
+        ) : null}
 
         <SkillLearningJourney model={model} />
 
@@ -116,6 +125,19 @@ export function WorkingContextOverview({ pathId }: { pathId: string }) {
 
 function SkillLearningJourney({ model }: { model: NonNullable<ReturnType<typeof useWorkingContextModel>> }) {
   const reviewDue = model.reviewEligible && Boolean(model.reviewHref);
+
+  if (model.practiceCompatible) {
+    return (
+      <section aria-labelledby="stages" className="grid gap-3">
+        <h2 id="stages" tabIndex={-1} className="border-b border-rule pb-3 text-2xl font-semibold tracking-tight text-navy">Learn this skill</h2>
+        <ol aria-label="Notes, Practice and Review" data-testid="skill-learning-journey" className="divide-y divide-rule border-y border-rule">
+          <PracticeJourneyRow title="Notes" copy="Understand the method and worked examples." meta={model.notesHref ? "Available" : "Unavailable"} href={model.notesHref} action="Open Notes" />
+          <PracticeJourneyRow title="Practice" copy="Work through the skill's questions in one continuous sequence." meta={`${model.completed} of ${model.total} questions completed`} href={model.practiceSequenceHref} action={model.isComplete ? "Revisit Practice" : model.completed > 0 ? "Continue Practice" : "Start Practice"} current={!model.isComplete} completed={model.isComplete} />
+          <PracticeJourneyRow title="Review" copy="Revisit previous learning when it is due." meta={reviewDue ? `${model.reviewCount} skill due` : "No review due"} href={null} action={null} reviewDue={reviewDue} />
+        </ol>
+      </section>
+    );
+  }
 
   return (
     <section aria-labelledby="stages" className="grid gap-3">
@@ -164,6 +186,14 @@ function SkillLearningJourney({ model }: { model: NonNullable<ReturnType<typeof 
       </aside> : null}
     </section>
   );
+}
+
+function PracticeJourneyRow({ title, copy, meta, href, action, current = false, completed = false, reviewDue = false }: { title: string; copy: string; meta: string; href: string | null; action: string | null; current?: boolean; completed?: boolean; reviewDue?: boolean }) {
+  const state = reviewDue ? "due" : completed ? "complete" : title === "Review" ? "not-due" : current ? "current" : "available";
+  return <li className={`grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-1 py-5 max-sm:grid-cols-1 ${current ? "bg-academic-blue/50 px-4" : ""}`} aria-current={current ? "step" : undefined} aria-label={`${title}: ${state}`} data-journey-kind={title.toLowerCase()} data-journey-state={state}>
+    <div className="min-w-0"><h3 className="text-base font-semibold text-navy">{title}</h3><p className="mt-1 text-sm leading-relaxed text-secondary">{copy}</p><p className={`mt-2 text-xs ${reviewDue ? "text-amber-800" : "text-secondary"}`}>{meta}</p></div>
+    {href && action ? <Link href={href} className={`${current ? "orthic-primary-action bg-navy px-4 text-white" : "orthic-secondary-link text-navy"} inline-flex min-h-11 items-center justify-center gap-2 rounded-sm text-sm font-medium`}>{action}<ArrowRight aria-hidden="true" className="orthic-arrow size-4" /></Link> : null}
+  </li>;
 }
 
 type JourneyState = "available" | "complete" | "current" | "unavailable" | "future";
