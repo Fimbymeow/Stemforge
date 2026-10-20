@@ -157,7 +157,8 @@ async function expectPrimaryAction(page: Page, name: string, href: string) {
 }
 
 async function expectHigherMathsCourseAccess(page: Page) {
-  const access = page.getByRole("link", { name: "Open Higher Maths", exact: true });
+  const onDashboard = new URL(page.url()).pathname === "/dashboard";
+  const access = page.getByRole("link", { name: onDashboard ? "View Higher Maths" : "Open Higher Maths", exact: true });
   await expect(access).toHaveCount(1);
   await expect(access).toBeVisible();
   await expect(access).toHaveAttribute("href", HUB_ROUTE);

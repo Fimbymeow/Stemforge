@@ -9,7 +9,7 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 1024, height: 900
     await expect(page.getByRole("heading", { name: "Courses", level: 1 })).toBeVisible();
     const row = page.getByTestId("subject-card-higher-maths");
     await expect(page.getByTestId("your-courses").getByRole("article")).toHaveCount(1);
-    await expect(row).toContainText("0 of 2 skills learned");
+    await expect(row).toContainText("0 of 3 skills learned");
     await expect(page.getByTestId("explore-courses")).toHaveCount(0);
     await expect(page.getByText(/Current focus|coming soon|Higher Physics|Advanced Higher/)).toHaveCount(0);
     await expect(page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Subjects", exact: true })).toHaveAttribute("aria-current", "page");
@@ -31,7 +31,7 @@ test("real learned/review-due evidence stays high-level and does not replace cou
   await seedStoredProgress(page, v3Payload(QUESTION_IDS.map((id, index) => currentAttempt(id, index + 1))));
   await page.goto("/subjects");
   const row = page.getByTestId("subject-card-higher-maths");
-  await expect(row).toContainText("1 of 2 skills learned");
+  await expect(row).toContainText("1 of 3 skills learned");
   await expect(row).toContainText("1 review due");
   await expect(row.getByRole("link")).toHaveCount(1);
   await expect(row.getByRole("link", { name: "Open Higher Maths" })).toHaveAttribute("href", "/subjects/higher-maths");

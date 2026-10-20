@@ -170,7 +170,7 @@ test("completed overview with genuine review due shows one review-aware primary 
   await expect(primaryActions).toHaveAttribute("href", "/practice?review=1&path=basic-differentiation");
   const journey = page.getByTestId("skill-learning-journey");
   const review = journey.locator('[data-journey-kind="review"]');
-  await expect(review).toContainText("1 skill due");
+  await expect(review).toContainText("1 due");
   await expect(review.getByRole("link", { name: "Start Review" })).toHaveCount(0);
   await expect(journey.locator('[data-journey-kind="practice"]').getByRole("link", { name: "Revisit Practice" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
 });
@@ -184,7 +184,7 @@ test("hub skill title has a visible resting underline and Current Path rows are 
   await page.getByRole("button", { name: "Current Path: Basic differentiation" }).click();
   const panel = page.getByTestId("working-context-desktop-panel");
   const notesRow = panel.getByRole("link", { name: /Notes/ });
-  await expect(notesRow).toHaveCSS("background-color", "rgb(245, 244, 240)");
+  await expect(notesRow).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
   const box = await notesRow.boundingBox();
   expect(box?.height).toBeGreaterThanOrEqual(44);
   const exitRow = panel.getByRole("link", { name: "Leave to Higher Maths" });
@@ -225,7 +225,7 @@ test("scheduled Review exposes one contextual Practice Session entry and a recen
   await page.goto(`/question/${QUESTION_IDS[7]}`);
   await page.getByRole("button", { name: "Current Path: Basic differentiation" }).click();
   const panel = page.getByTestId("working-context-desktop-panel");
-  await expect(panel.getByRole("link", { name: "Review 1 skill due" })).toHaveAttribute("href", "/practice?review=1&path=basic-differentiation");
+  await expect(panel.getByRole("link", { name: "Review", exact: true })).toHaveAttribute("href", "/practice?review=1&path=basic-differentiation");
   await page.goto(hub);
   await expect(page.getByTestId("review-entry-card")).toHaveAttribute("href", "/practice?review=1");
   await expect(page.getByTestId("review-entry-card")).toHaveAccessibleName("Review, 1 skill due");
@@ -233,14 +233,14 @@ test("scheduled Review exposes one contextual Practice Session entry and a recen
   await seedStoredProgress(page, v3Payload(recentCompletion()));
   await page.goto(`/question/${QUESTION_IDS[7]}`);
   await page.getByRole("button", { name: "Current Path: Basic differentiation" }).click();
-  await expect(page.getByTestId("working-context-desktop-panel").getByText(/skill due/)).toHaveCount(0);
+  await expect(page.getByTestId("working-context-desktop-panel").getByRole("link", { name: "Review", exact: true })).toHaveAttribute("href", "/practice?review=1&path=basic-differentiation");
 });
 
 test("scheduled Review count and destination stay coherent across rail, hub and overview", async ({ page }) => {
   await seedStoredProgress(page, v3Payload(QUESTION_IDS.map((id, index) => currentAttempt(id, index + 1))));
   await page.goto(`/question/${QUESTION_IDS[7]}`);
   await page.getByRole("button", { name: "Current Path: Basic differentiation" }).click();
-  await expect(page.getByTestId("working-context-desktop-panel").getByRole("link", { name: "Review 1 skill due" })).toHaveAttribute("href", "/practice?review=1&path=basic-differentiation");
+  await expect(page.getByTestId("working-context-desktop-panel").getByRole("link", { name: "Review", exact: true })).toHaveAttribute("href", "/practice?review=1&path=basic-differentiation");
 
   await page.goto(hub);
   await expect(page.getByTestId("review-entry-card")).toHaveAttribute("href", "/practice?review=1");

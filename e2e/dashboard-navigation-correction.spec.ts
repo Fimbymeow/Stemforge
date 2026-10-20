@@ -18,7 +18,7 @@ test("revised dashboard and subject access remain distinct, ordered and overflow
       await page.goto(route);
       await expect(page.locator("main")).toHaveCount(1);
       await expect(page.getByRole("navigation", { name: "Main" })).toBeVisible();
-      const courseAccess = page.getByRole("link", { name: "Open Higher Maths", exact: true });
+      const courseAccess = page.getByRole("link", { name: route === "/dashboard" ? "View Higher Maths" : "Open Higher Maths", exact: true });
       await expect(courseAccess).toBeVisible();
       await expect(courseAccess).toHaveAttribute("href", "/subjects/higher-maths");
 
@@ -49,7 +49,7 @@ test("Courses presents real enrolled course access without roadmap placeholders"
   const maths = page.getByTestId("subject-card-higher-maths");
   const mathsBox = await maths.boundingBox();
   expect(mathsBox).not.toBeNull();
-  await expect(maths).toContainText("0 of 2 skills learned");
+  await expect(maths).toContainText("0 of 3 skills learned");
   await expect(maths).toContainText("Open course");
   await expect(maths.getByRole("heading", { name: "Higher Maths", level: 3 })).toBeVisible();
   await expect(maths.getByText("Maths", { exact: true })).toHaveCount(0);
@@ -68,7 +68,7 @@ test("review and active-practice recommendations never replace course access at 
     QUESTION_IDS.map((id, index) => currentAttempt(id, index + 1, { hintViewedBeforeSubmission: index === 0 })),
   ));
   await page.goto("/dashboard");
-  await expect(page.getByRole("link", { name: "Open Higher Maths", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "View Higher Maths", exact: true })).toBeVisible();
   await expect(page.getByTestId("dashboard-progress-summary").getByRole("link", { name: "Continue Basic differentiation", exact: true })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
   await expectNoHorizontalOverflow(page);
 
@@ -78,7 +78,7 @@ test("review and active-practice recommendations never replace course access at 
   const sessionPath = new URL(page.url()).pathname;
 
   await page.goto("/dashboard");
-  await expect(page.getByRole("link", { name: "Open Higher Maths", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "View Higher Maths", exact: true })).toBeVisible();
   await expect(page.getByTestId("dashboard-progress-summary").getByRole("link", { name: "Continue Basic differentiation", exact: true })).toHaveAttribute("href", sessionPath);
   await expectNoHorizontalOverflow(page);
 

@@ -50,7 +50,7 @@ test("Higher Maths opens an unscoped Question Bank from its course actions", asy
   await page.goto("/subjects/higher-maths");
   await page.getByTestId("question-bank-destination").click();
   await expect(page).toHaveURL("/subjects/higher-maths/question-bank");
-  await expect(page.getByRole("heading", { name: "42 matching questions" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "72 matching questions" })).toBeVisible();
   await expect(page.getByRole("button", { name: /Remove .* filter/ })).toHaveCount(0);
 });
 
@@ -65,7 +65,8 @@ test("Course tracker distinguishes official requirements within its selected uni
   await expect(chain.getByRole("link", { name: "Open Chain rule skill overview" })).toBeVisible();
   await expect(tracker.locator("[data-mastery-status]")).toHaveCount(0);
   const unavailable = page.getByTestId("tracker-skill-trigonometric-differentiation");
-  await expect(unavailable).toContainText("official requirement");
+  await expect(unavailable).toContainText("Trigonometric differentiation");
+  await expect(unavailable).not.toContainText("official requirement");
   await expect(unavailable.getByRole("link")).toHaveCount(0);
   await expect(page.getByTestId("tracker-requirements-basic-differentiation")).toHaveCount(0);
   const disclosure = page.getByTestId("course-wide-requirements").getByText("Reasoning across the course", { exact: true });
@@ -108,10 +109,10 @@ test("Practice destinations reuse Quick Practice and preserve Question Bank acce
   await expect(page.getByRole("heading", { name: "Question Bank", exact: true })).toBeVisible();
 });
 
-test("Maths exposes Notes and Practice without standalone resource destinations", async ({ page }) => {
-  await page.goto("/subjects/higher-maths/calculus/differentiation");
+test("Maths exposes Notes and Practice from a skill without standalone area or resource destinations", async ({ page }) => {
+  await page.goto("/subjects/higher-maths/calculus/differentiation/basic-differentiation");
   await expect(page.getByRole("link", { name: "Notes" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Practice" })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Practice/ }).first()).toBeVisible();
   await expect(page.getByRole("link", { name: /Formula cards/i })).toHaveCount(0);
   await expect(page.getByRole("link", { name: /Worked examples/i })).toHaveCount(0);
   await expect(page.getByRole("link", { name: /Flashcards/i })).toHaveCount(0);

@@ -57,7 +57,7 @@ test("Quick Practice never overwrites an active session and can resume it explic
 
 test("Question Bank exposes both published skills while future paths stay collapsed", async ({ page, seriousBrowserErrors }) => {
   await page.goto("/subjects/higher-maths/question-bank");
-  await expect(page.getByRole("heading", { name: "42 matching questions" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "72 matching questions" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Open Differentiate a power" })).toBeVisible();
   const skills = page.getByRole("group", { name: "Skills" });
   await skills.getByRole("button", { name: "Skills: All skills" }).click();
@@ -65,7 +65,7 @@ test("Question Bank exposes both published skills while future paths stay collap
   await expect(page.getByRole("heading", { name: "34 matching questions" })).toBeVisible();
   await skills.getByRole("button", { name: "Done" }).click();
   await page.getByRole("button", { name: "Reset filters" }).click();
-  await expect(page.getByRole("heading", { name: "42 matching questions" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "72 matching questions" })).toBeVisible();
   await page.getByRole("link", { name: "Open Differentiate a power" }).click();
   await expect(page).toHaveURL(/\/question\/hm-calc-diff-basic-f-001$/);
   expect(seriousBrowserErrors).toEqual([]);

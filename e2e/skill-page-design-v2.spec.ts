@@ -138,8 +138,10 @@ test("Practice progress, separate due Review and shared reduced motion", async (
   await page.goto(route);
   await expect(journey.getByRole("listitem")).toHaveCount(3);
   await expect(journey.locator('[data-journey-kind="practice"]')).toHaveAttribute("data-journey-state", "complete");
-  await expect(journey.locator('[data-journey-kind="review"]')).toContainText("Due for review");
-  await expect(journey.locator('[data-journey-kind="review"]')).not.toHaveAttribute("aria-current", "step");
+  const review = journey.locator('[data-journey-kind="review"]');
+  await expect(review).toContainText("1 due");
+  await expect(review.getByRole("link", { name: "Start Review" })).toHaveCount(0);
+  await expect(review).not.toHaveAttribute("aria-current", "step");
   await expect(page.getByTestId("skill-primary-action")).toHaveAttribute("href", "/practice?review=1&path=basic-differentiation");
   await expect(page.getByTestId("completed-path-card")).toHaveCSS("animation-name", "none");
 });

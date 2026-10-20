@@ -139,7 +139,7 @@ test("the fixture remains outside production content and learner persistence", a
   expect(contentResolver.getAllPathContexts()).toHaveLength(49);
   expect(higherMathsDifferentiationQuestions).toHaveLength(8);
   expect(higherMathsChainRuleQuestions).toHaveLength(34);
-  expect(contentResolver.getQuestions()).toHaveLength(42);
+  expect(contentResolver.getQuestions()).toHaveLength(72);
   expect(contentResolver.getQuestion(`${ELEMENTARY_EXPRESSION_E2E_QUESTION_ID}-sin`)).toBeUndefined();
 
   await page.goto(fixtureHref("sin"));

@@ -6,7 +6,7 @@ test("Question Bank opens directly into compact discovery with published-only fi
   await page.goto(bank);
   await expect(page.getByRole("heading", { name: "Question Bank", exact: true })).toBeVisible();
   await expect(page.getByText("Best next step")).toHaveCount(0);
-  await expect(page.getByText("42 questions available")).toBeVisible();
+  await expect(page.getByText("72 questions available")).toBeVisible();
   await page.getByLabel("Course area").selectOption({ label: "Calculus" });
   await page.getByLabel("Specification area").selectOption({ label: "Differentiation" });
   await page.getByRole("button", { name: "Skills: All skills" }).click();
@@ -15,7 +15,7 @@ test("Question Bank opens directly into compact discovery with published-only fi
   await expect(page.getByRole("group", { name: "Stages" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "8 matching questions" })).toBeVisible();
   await page.getByRole("button", { name: "Reset filters" }).click();
-  await expect(page.getByRole("heading", { name: "42 matching questions" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "72 matching questions" })).toBeVisible();
 });
 
 test("skill filter state is shareable through the URL and legacy stage parameters are discarded", async ({ page }) => {
@@ -166,7 +166,7 @@ for (const width of [1440, 1024, 390, 375, 320]) {
   test(`Design V2 Question Bank controls, maths and restrained motion remain usable at ${width}px`, async ({ page, seriousBrowserErrors }, testInfo) => {
     await page.setViewportSize({ width, height: 900 });
     await page.goto(bank);
-    await expect(page.getByText("42 questions available")).toBeVisible();
+    await expect(page.getByText("72 questions available")).toBeVisible();
     const row = page.getByTestId("question-bank-row").first();
     await expect(row.getByTestId("question-bank-math-excerpt").locator(".katex").first()).toBeVisible();
     await row.getByRole("button", { name: "Preview", exact: true }).focus();
@@ -231,9 +231,10 @@ test("mobile inline feedback and the selection tray coexist without stale dock s
   }
 });
 
-test("the learner roadmap exposes one Practice destination without legacy stage controls", async ({ page }) => {
+test("the learner course page exposes Practice skills without a legacy spec-area screen", async ({ page }) => {
   await page.goto("/subjects/higher-maths/calculus/differentiation");
-  await expect(page.getByText("Practice", { exact: true })).toBeVisible();
+  await expect(page).toHaveURL("/subjects/higher-maths#course-area-calculus");
+  await expect(page.getByTestId("roadmap-skill-basic-differentiation").getByRole("link", { name: "Basic differentiation" })).toBeVisible();
   await expect(page.getByText("Foundations", { exact: true })).toHaveCount(0);
   await expect(page.getByText("Applications", { exact: true })).toHaveCount(0);
   await expect(page.getByText("Exam practice", { exact: true })).toHaveCount(0);

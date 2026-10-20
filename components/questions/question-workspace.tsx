@@ -461,18 +461,15 @@ function QuestionWorkspaceCore({
           <nav className="flex flex-wrap items-center gap-2 text-sm text-muted" aria-label="Breadcrumb">
             <Link className="inline-flex min-h-11 items-center" href={isPreview ? runtime.navigation.home : context?.subject.href ?? "/subjects"}>{isPreview ? "Preview overview" : context?.subject.subjectName ?? question.subject}</Link>
             <span aria-hidden="true">/</span>
-            {!isPreview ? <><Link href={context?.courseArea.href ?? "/subjects"}>{context?.courseArea.name ?? question.courseArea}</Link>
-            <span aria-hidden="true">/</span>
-            </> : null}
             <Link href={fallbackPathHref}>{skillPath?.name ?? question.skillPath ?? "Question"}</Link>
             <span aria-hidden="true">/</span>
             <span className="font-bold text-forge">{practiceCompatible ? "Practice" : isPreview && stage?.name === "Past Paper-style Questions" ? "Exam practice" : stage?.name ?? question.stage}</span>
             {!isPreview ? <details className="disclosure-motion ml-auto max-sm:ml-0 max-sm:w-full">
               <summary className="inline-flex min-h-10 cursor-pointer items-center text-xs font-bold text-forge">More context</summary>
               <span className="mt-2 flex flex-wrap gap-2 rounded-lg bg-paper p-2 text-xs">
-                <Link href={context?.courseArea.href ?? "/subjects"}>{context?.courseArea.name ?? question.courseArea}</Link>
+                <span>{context?.courseArea.name ?? question.courseArea}</span>
                 <span aria-hidden="true">/</span>
-                <Link href={context?.specificationStrand.href ?? fallbackPathHref}>{context?.specificationStrand.name ?? question.specArea}</Link>
+                <span>{context?.specificationStrand.name ?? question.specArea}</span>
               </span>
             </details> : null}
           </nav>

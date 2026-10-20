@@ -32,7 +32,11 @@ test("the full sidebar remains usable at common laptop widths and collapses belo
   await page.goto("/subjects/higher-maths/course-tracker");
   expect((await page.getByTestId("course-tracker").boundingBox())!.width).toBeGreaterThan(680);
   await page.goto(`/question/${QUESTION_IDS[0]}`);
-  expect((await page.getByTestId("question-interaction").boundingBox())!.width).toBeGreaterThan(400);
+  const interaction = page.getByTestId("question-interaction");
+  expect((await interaction.boundingBox())!.width).toBeGreaterThan(320);
+  await expect(interaction.getByLabel("Your answer")).toBeVisible();
+  await expect(interaction.getByRole("button", { name: "Submit Answer" })).toBeVisible();
+  expect(await interaction.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
   await page.getByTestId("working-context-trigger").click();
   await expect(page.getByTestId("working-context-desktop-panel")).toBeVisible();

@@ -61,6 +61,9 @@ test("Practice V2 learning journey uses whitespace and omits redundant availabil
   assert.doesNotMatch(journey, /model\.notesHref \? "Available"/);
   assert.match(journey, /meta=\{model\.notesHref \? null : "Unavailable"\}/);
   assert.match(journey, /emphasized/);
+  assert.match(journey, /meta=\{reviewDue \? "1 due" : "Nothing due"\}/);
+  assert.match(journey, /href=\{model\.reviewActionHref\}/);
+  assert.match(journey, /action=\{reviewDue \? "Start Review" : "Open Review"\}/);
 });
 
 test("Design V2 Skill Page separates Review and uses real derived primary actions", () => {

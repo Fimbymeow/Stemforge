@@ -1,4 +1,5 @@
 import type { CourseTrackerSkill, CourseTrackerSkillConfidence } from "@/lib/course-tracker";
+import type { ConfidenceLevel } from "@/lib/confidence/types";
 import { CONFIDENCE_LEVEL_RANK } from "@/lib/confidence/types";
 
 export type CourseTrackerSkillGroup =
@@ -6,6 +7,14 @@ export type CourseTrackerSkillGroup =
   | { kind: "curriculum_references"; skills: CourseTrackerSkill[] };
 
 export type CourseTrackerStatusTone = "review-due" | "confident" | "developing" | "needs-work" | "neutral";
+
+export const COURSE_TRACKER_STATUS_DOT: Record<CourseTrackerStatusTone, string> = {
+  "review-due": "bg-warning",
+  confident: "bg-success",
+  developing: "bg-warning",
+  "needs-work": "bg-danger",
+  neutral: "bg-rule-strong",
+};
 
 /** Preserve canonical order while compacting each contiguous run of curriculum-reference skills. */
 export function groupCourseTrackerSkills(skills: readonly CourseTrackerSkill[]): CourseTrackerSkillGroup[] {
@@ -35,11 +44,31 @@ export function hasCourseTrackerConfidenceDisagreement(confidence: CourseTracker
  * Review remains the actionable priority; no new learner state is inferred here.
  */
 export function getCourseTrackerStatusTone(skill: CourseTrackerSkill): CourseTrackerStatusTone {
-  if (skill.reviewDue) return "review-due";
-  switch (skill.confidence?.learnerLevel) {
+  return getSkillStatusTone({
+    reviewDue: skill.reviewDue,
+    learnerConfidence: skill.confidence?.learnerLevel,
+  });
+}
+
+export function getSkillStatusTone(input: {
+  reviewDue: boolean;
+  learnerConfidence?: ConfidenceLevel | null;
+}): CourseTrackerStatusTone {
+  if (input.reviewDue) return "review-due";
+  switch (input.learnerConfidence) {
     case "confident": return "confident";
     case "developing": return "developing";
     case "needs_work": return "needs-work";
     default: return "neutral";
+  }
+}
+
+export function getSkillStatusLabel(tone: CourseTrackerStatusTone) {
+  switch (tone) {
+    case "review-due": return "Review due";
+    case "confident": return "Confidence: confident";
+    case "developing": return "Confidence: developing";
+    case "needs-work": return "Confidence: needs work";
+    default: return "No learning status recorded";
   }
 }

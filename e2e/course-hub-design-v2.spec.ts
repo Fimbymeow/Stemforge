@@ -22,7 +22,8 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 1024, height: 900
     const skills = page.getByTestId("roadmap-strand-calculus");
     await expect(tools.getByRole("link")).toHaveCount(5);
     await expect(selectors.getByRole("button")).toHaveCount(4);
-    await expect(skills.getByRole("listitem")).toHaveCount(2);
+    await expect(skills.getByRole("listitem")).toHaveCount(3);
+    await expect(skills.getByText("Tangents", { exact: true })).toBeVisible();
     await expect(skills.getByRole("heading", { name: "Differentiating functions", level: 4 })).toBeVisible();
     await expect(skills.getByText("Start with the power rule", { exact: false })).toHaveCount(0);
     const boxes = await Promise.all([learning, tools, selectors, skills].map((locator) => locator.boundingBox()));
@@ -56,19 +57,22 @@ test("real in-progress and review-due states preserve existing destinations", as
   await page.goto(hub);
   await expect(page.getByTestId("review-entry-card")).toHaveAccessibleName("Review, 1 skill due");
   await expect(page.getByTestId("course-hub-progress")).toHaveAccessibleName("Course progress: 1 of 49 skills learned, 2%");
-  await expect(page.getByTestId("roadmap-skill-basic-differentiation").getByText("Review due", { exact: true })).toBeVisible();
-  await expect(page.getByTestId("roadmap-skill-basic-differentiation").getByLabel("Latest answer accuracy: 100%", { exact: true })).toBeVisible();
+  const row = page.getByTestId("roadmap-skill-basic-differentiation");
+  await expect(row.getByTestId("roadmap-status-basic-differentiation")).toHaveAttribute("data-roadmap-status", "review-due");
+  await expect(row.getByRole("link", { name: "Open Basic differentiation skill overview" })).toHaveAttribute("href", "/subjects/higher-maths/calculus/differentiation/basic-differentiation");
+  await expect(row.getByText("Review due", { exact: true })).toHaveCount(0);
+  await expect(row.getByLabel(/Latest answer accuracy/)).toHaveCount(0);
   await expect(page.getByTestId("past-papers-destination")).toHaveAttribute("href", `${hub}/past-papers`);
 });
 
-test("skill accuracy uses existing graded evidence, not completion or confidence", async ({ page }) => {
+test("course-page rows keep detailed progress off the discovery surface", async ({ page }) => {
   await seedStoredProgress(page, v3Payload([currentAttempt(QUESTION_IDS[0], 1, { isCorrect: false })]));
   await page.goto(hub);
-  await expect(page.getByTestId("roadmap-skill-basic-differentiation").getByLabel("Latest answer accuracy: 0%", { exact: true })).toBeVisible();
+  await expect(page.getByTestId("roadmap-skill-basic-differentiation").getByLabel(/Latest answer accuracy/)).toHaveCount(0);
   await expect(page.getByTestId("roadmap-skill-chain-rule").getByLabel(/Latest answer accuracy/)).toHaveCount(0);
   await seedStoredProgress(page, v3Payload([currentAttempt(QUESTION_IDS[0], 1), currentAttempt(QUESTION_IDS[1], 2, { isCorrect: false })]));
   await page.goto(hub);
-  await expect(page.getByTestId("roadmap-skill-basic-differentiation").getByLabel("Latest answer accuracy: 50%", { exact: true })).toBeVisible();
+  await expect(page.getByTestId("roadmap-skill-basic-differentiation").getByText(/Practice|complete|%/)).toHaveCount(0);
 });
 
 test("Hub motion is restrained and reduced motion removes transitions", async ({ page }) => {

@@ -4,6 +4,7 @@ import { PRACTICE_SESSIONS_STORAGE_KEY } from "../lib/practice/practice-types";
 const chainRuleRequirement = "differentiating a composite function using the chain rule";
 const powerRuleRequirement = "differentiating an algebraic function which is, or can be simplified to, an expression in powers of x";
 const tangentRequirement = "determining the equation of a tangent to a curve at a given point by differentiation";
+const unavailableRequirement = "determining where a function is strictly increasing or decreasing";
 
 test("Practice exposes Build a Test without adding a new global destination", async ({ page }) => {
   await page.goto("/practice");
@@ -24,22 +25,22 @@ test("Practice exposes Build a Test without adding a new global destination", as
 test("requirement tree keeps official scope visible while making live coverage easy to scan", async ({ page }) => {
   await page.goto("/practice/test");
 
-  await expect(page.getByTestId("area-availability-calculus")).toHaveText("2 of 19 available");
+  await expect(page.getByTestId("area-availability-calculus")).toHaveText("3 of 19 available");
   await openArea(page, "Calculus");
   await expect(page.getByTestId("strand-availability-differentiating-functions")).toHaveText("2 of 3 available");
 
   const calculus = page.getByTestId("requirement-area-calculus");
   const requirements = calculus.locator('label[data-availability]');
   await expect(requirements).toHaveCount(19);
-  await expect(calculus.locator('label[data-availability="available"]')).toHaveCount(2);
-  await expect(calculus.locator('label[data-availability="unavailable"]')).toHaveCount(17);
+  await expect(calculus.locator('label[data-availability="available"]')).toHaveCount(3);
+  await expect(calculus.locator('label[data-availability="unavailable"]')).toHaveCount(16);
 
   const tangent = requirementCheckbox(page, tangentRequirement);
   await expect(tangent).toBeEnabled();
   await tangent.check();
   await expect(tangent).toBeChecked();
   await expect(page.getByTestId("area-availability-calculus")).toContainText("1 selected");
-  await expect(calculus.locator('label[data-availability="unavailable"]').filter({ has: tangent })).toContainText("No questions available yet");
+  await expect(calculus.locator('label[data-availability="available"]').filter({ has: tangent })).toContainText("21 matching questions");
 });
 
 test("Chain Rule builds an exact normal Practice Session without widening evidence ownership", async ({ page }) => {
@@ -85,7 +86,7 @@ test("Build a Test reports insufficient and partially available selections hones
   await page.getByRole("button", { name: "Clear all" }).click();
   await openArea(page, "Calculus");
   await requirementCheckbox(page, chainRuleRequirement).check();
-  await requirementCheckbox(page, tangentRequirement).check();
+  await requirementCheckbox(page, unavailableRequirement).check();
   await page.getByRole("button", { name: /^Short/ }).click();
 
   await expect(page.getByTestId("test-availability-status")).toHaveText("34 questions available for this scope · 5 will be selected.");

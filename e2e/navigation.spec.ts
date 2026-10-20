@@ -4,7 +4,7 @@ import { readStoredProgress } from "./fixtures/progress";
 test("fresh student reaches the Basic differentiation path through the app", async ({ page }) => {
   await page.goto("/dashboard");
   await expect(page.getByRole("heading", { name: "Welcome back", level: 1 })).toBeVisible();
-  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Practice · 0 of 8 complete");
+  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Practice · Question 1 of 8");
 
   await page.getByRole("link", { name: "Subjects" }).click();
   await expect(page).toHaveURL(/\/subjects$/);
@@ -20,9 +20,11 @@ test("fresh student reaches the Basic differentiation path through the app", asy
   await expect(page.locator('[data-mastery-status="not_started"]')).toHaveAccessibleName("Progress: Not started");
   const journey = page.getByTestId("skill-learning-journey");
   await expect(journey.getByRole("listitem")).toHaveCount(3);
-  await expect(journey.locator('[data-journey-kind="notes"]')).toContainText("Available");
+  await expect(journey.locator('[data-journey-kind="notes"]')).not.toContainText("Available");
   await expect(journey.locator('[data-journey-kind="practice"]')).toContainText("0 of 8 questions completed");
-  await expect(journey.locator('[data-journey-kind="review"]')).toContainText("No review due");
+  const review = journey.locator('[data-journey-kind="review"]');
+  await expect(review).toContainText("Nothing due");
+  await expect(review.getByRole("link", { name: "Open Review" })).toHaveAttribute("href", "/practice?review=1&path=basic-differentiation");
   expect(await readStoredProgress(page)).toBeNull();
 });
 
@@ -48,6 +50,6 @@ test("disabled account navigation hydrates without console or page errors and fa
   await expect(page.getByRole("heading", { name: "Accounts are not available" })).toBeVisible();
   await page.getByRole("link", { name: "Continue as a guest" }).click();
   await expect(page).toHaveURL(/\/dashboard$/);
-  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Practice · 0 of 8 complete");
+  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Practice · Question 1 of 8");
   expect(seriousBrowserErrors).toEqual([]);
 });

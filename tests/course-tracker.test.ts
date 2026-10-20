@@ -152,7 +152,8 @@ test("Course Tracker source guards the calmer product boundary", () => {
   assert.doesNotMatch(component, /CONFIDENCE_LABEL|tracker-confidence|CircleAlert/);
   assert.match(component, /data-tracker-status/);
   assert.match(component, /data-course-tracker-reference-group/);
-  assert.match(component, /Review now/);
+  assert.doesNotMatch(component, /Review now/);
+  assert.match(component, /aria-label=\{`Open \$\{skill\.name\} skill overview\. \$\{getSkillStatusLabel\(statusTone\)\}`\}/);
   assert.match(component, /Reasoning across the course/);
   assert.match(component, /Confirmed current by Qualifications Scotland/);
 });

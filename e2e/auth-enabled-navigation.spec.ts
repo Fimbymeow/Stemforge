@@ -5,7 +5,7 @@ test("enabled account navigation hydrates without console or page errors", async
   await page.goto("/dashboard");
 
   await expect(page.getByRole("link", { name: "Account" })).toBeVisible();
-  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Practice \u00b7 0 of 8 complete");
+  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Practice \u00b7 Question 1 of 8");
   expect(seriousBrowserErrors).toEqual([]);
 });
 
@@ -137,14 +137,12 @@ test("meaningful guest progress gets one dismissible non-blocking protection pro
   const prompt = page.getByTestId("guest-progress-protection");
   await expect(prompt).toContainText("Your progress currently lives on this browser");
   await expect(page.getByTestId("dashboard-progress-summary")).toBeVisible();
-  const courses = await page.getByTestId("dashboard-courses-section").boundingBox();
+  await expect(page.getByTestId("dashboard-courses-section")).toHaveCount(0);
   const protection = await prompt.boundingBox();
-  expect(courses).not.toBeNull();
   expect(protection).not.toBeNull();
   const activity = await page.getByTestId("dashboard-activity-summary").boundingBox();
   expect(activity).not.toBeNull();
   expect(protection!.y).toBeGreaterThanOrEqual(activity!.y + activity!.height);
-  expect(protection!.y).toBeGreaterThanOrEqual(courses!.y + courses!.height);
   await prompt.getByRole("button", { name: "Dismiss account protection reminder" }).click();
   await expect(prompt).toHaveCount(0);
   await page.reload();

@@ -8,6 +8,11 @@ import { deriveCourseDashboardSummary } from "../lib/dashboard-derivations";
 import { deriveLearnerNextAction } from "../lib/learning/next-action";
 import { discoverEligiblePracticeQuestions } from "../lib/practice/practice-eligibility";
 import { queryAvailableQuestionBankQuestions } from "../lib/question-bank-query";
+import {
+  getCourseAreaAnchorId,
+  getCourseAreaSlugFromHash,
+  getHigherMathsCourseAreaHref,
+} from "../lib/course-area-navigation";
 import { attempt, evidence } from "./progress-fixtures";
 
 const existingCalculusPaths = [
@@ -40,6 +45,13 @@ test("Higher Maths exposes the four approved course areas without a standalone R
     ["Algebra and Trigonometry", "Vectors", "Calculus", "Lines, Circles and Sequences"],
   );
   assert.equal(higherMaths.courseAreas.some((courseArea) => courseArea.name === "Reasoning"), false);
+});
+
+test("legacy Higher Maths area context maps back to the canonical course page", () => {
+  assert.equal(getCourseAreaAnchorId("calculus"), "course-area-calculus");
+  assert.equal(getHigherMathsCourseAreaHref("calculus"), "/subjects/higher-maths#course-area-calculus");
+  assert.equal(getCourseAreaSlugFromHash("#course-area-lines-circles-and-sequences"), "lines-circles-and-sequences");
+  assert.equal(getCourseAreaSlugFromHash("#unrelated"), null);
 });
 
 test("every path resolves to a strand declared by its own course area", () => {

@@ -178,7 +178,7 @@ test("Practice progress drives the retained dashboard recommendation without an 
 
   await page.goto("/dashboard");
   await expect(page.getByTestId("dashboard-progress-summary")).toContainText("Continue Basic differentiation");
-  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Practice \u00b7 3 of 8 complete");
+  await expect(page.getByTestId("dashboard-current-stage")).toHaveText("Practice \u00b7 Question 4 of 8");
   await expect(page.getByRole("heading", { name: "Recent activity" })).toHaveCount(0);
   await expect(page.getByText(/^Stage Completed$/)).toHaveCount(0);
 });

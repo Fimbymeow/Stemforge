@@ -50,7 +50,7 @@ test("course presentation resolves from learner data and remains mobile-safe", a
   await page.setViewportSize({ width: 320, height: 568 });
   await page.goto("/dashboard");
   await expect(page.getByRole("heading", { name: "Welcome back, Ada" })).toBeVisible();
-  await expect(page.getByTestId("dashboard-courses").getByRole("link", { name: "Open Higher Maths" })).toBeVisible();
-  await expect(page.getByTestId("dashboard-courses").getByText("Higher Physics")).toHaveCount(0);
+  await expect(page.getByTestId("dashboard-progress-summary").getByRole("link", { name: "View Higher Maths" })).toHaveAttribute("href", "/subjects/higher-maths");
+  await expect(page.getByTestId("dashboard-courses-section")).toHaveCount(0);
   await expectNoHorizontalOverflow(page);
 });

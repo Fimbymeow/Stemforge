@@ -16,7 +16,7 @@ test("published Tangents exposes honest Notes, Practice and dependency semantics
   await expect(page.getByText("Basic differentiation", { exact: true })).toBeVisible();
   await expect(page.getByText("Chain rule", { exact: true })).toBeVisible();
   await expect(page.getByText(/0 of 30 questions completed/i)).toBeVisible();
-  await expect(page.getByText(/No review due/i)).toBeVisible();
+  await expect(page.getByText("Nothing due", { exact: true })).toBeVisible();
   await expect(page.getByText(/Foundations|Applications|Past Paper-style Questions/i)).toHaveCount(0);
 
   await page.goto(notesRoute);

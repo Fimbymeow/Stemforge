@@ -199,7 +199,7 @@ export function deriveWorkingContextModel(input: {
     collapsedSummary,
     reviewCount,
     reviewHref,
-    reviewActionHref: reviewHref ?? practiceHref,
+    reviewActionHref: `/practice?review=1&path=${encodeURIComponent(input.pathId)}`,
     reviewEligible: reviewState.eligible,
     reviewDueSoon: reviewState.dueSoon,
     reviewReason: reviewState.reason,

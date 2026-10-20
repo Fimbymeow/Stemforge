@@ -7,7 +7,7 @@ test("Dashboard context surface spans the workspace even beyond the content meas
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/dashboard");
     const bar = page.getByTestId("workspace-context-bar");
-    await expect(bar).toHaveCSS("background-color", "rgb(248, 247, 243)");
+    await expect(bar).toHaveCSS("background-color", "rgb(248, 242, 234)");
     const box = (await bar.boundingBox())!;
     expect(box.x).toBe(width >= 1024 ? 240 : 0);
     expect(box.x + box.width).toBe(width);
@@ -62,7 +62,7 @@ test("guest learner dashboard hydrates without errors and presents the approved 
   await expect(summary.getByRole("link", { name: "View Higher Maths" })).toHaveAttribute("href", "/subjects/higher-maths");
   await expect(page.getByTestId("dashboard-courses-section")).toHaveCount(0);
   await expect(page.getByTestId("dashboard-review-summary")).toContainText("No skills due");
-  await expect(page.getByTestId("dashboard-review-summary").getByRole("link", { name: "View schedule" })).toHaveAttribute("href", "/practice?review=1");
+  await expect(page.getByTestId("dashboard-review-summary").getByRole("link", { name: "View schedule" })).toHaveCount(0);
   await expect(page.getByTestId("dashboard-activity-summary")).toContainText("No activity in the last 14 days");
   await expect(page.getByTestId("dashboard-activity-strip").locator("[data-intensity]")).toHaveCount(14);
   await expect(page.getByText("Needs attention", { exact: true })).toHaveCount(0);
@@ -105,7 +105,7 @@ test("due Review stays visually secondary to the sole filled Continue action", a
   await expect(review).toContainText("Basic differentiation");
   await expect(review).toContainText("Due for review · 20 min");
   await expect(review.getByRole("link", { name: "Start Review" })).toHaveAttribute("href", "/practice?review=1");
-  await expect(review.getByRole("link", { name: "Start Review" })).toHaveCSS("background-color", "rgb(252, 251, 248)");
+  await expect(review.getByRole("link", { name: "Start Review" })).toHaveCSS("background-color", "rgb(255, 253, 249)");
 });
 
 test("dashboard keeps weekly activity out of the primary recommendation", async ({ page }) => {

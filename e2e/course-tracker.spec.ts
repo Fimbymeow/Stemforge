@@ -66,29 +66,28 @@ test("official requirements live collapsed, keyboard accessible and exact on Ski
   await expect(disclosure).toContainText(point.officialStatement!);
 });
 
-test("Review now replaces Open and launches scoped Review without stage progress or mastery", async ({ page, seriousBrowserErrors }) => {
+test("review-due status remains visible while Open preserves the skill-overview decision point", async ({ page, seriousBrowserErrors }) => {
   const attempts = higherMathsDifferentiationQuestions.map((question, index) => attempt({ questionId: question.id, stageId: question.stageId, versionEvidence: { kind: "known", questionVersion: question.questionVersion }, attemptedAt: "2026-06-01T10:00:00.000Z", sequence: index + 1, eventId: `tracker-complete-${index}` }));
   await seedStoredProgress(page, payload(attempts));
   await page.goto(route);
   const basic = page.getByTestId("tracker-skill-basic-differentiation");
   await expect(basic.getByText(/Mastered|Learned|Foundations|Applications|Past Paper-style Questions/)).toHaveCount(0);
   await expect(basic.locator("[data-mastery-status]")).toHaveCount(0);
-  await expect(basic.locator('[data-review-state="due"]')).toHaveText("Review now");
   await expect(basic.getByTestId("tracker-status-basic-differentiation")).toHaveAttribute("data-tracker-status", "review-due");
-  const action = basic.getByRole("link", { name: "Review now: Basic differentiation" });
-  await expect(action).toHaveAttribute("href", "/practice?review=1&path=basic-differentiation");
+  const action = basic.getByRole("link", { name: "Open Basic differentiation skill overview" });
+  await expect(action).toHaveAttribute("href", "/subjects/higher-maths/calculus/differentiation/basic-differentiation");
   await expect(basic.getByRole("link")).toHaveCount(1);
-  await expect(basic.getByText("Open", { exact: true })).toHaveCount(0);
+  await expect(basic.getByText("Open", { exact: true })).toBeVisible();
+  await expect(basic.getByText("Review now", { exact: true })).toHaveCount(0);
   await expect(basic.getByText(/Available|Recommended/, { exact: true })).toHaveCount(0);
   await action.focus();
   await expect(action).toBeFocused();
   await action.press("Enter");
-  await expect(page).toHaveURL(/\/practice\?review=1&path=basic-differentiation/);
-  const launch = page.getByTestId("review-launch-card");
-  await expect(launch).toContainText("Basic differentiation is ready to review");
-  await launch.getByRole("button", { name: "Start Review" }).click();
-  await expect(page).toHaveURL(/\/practice\/session\/[^?]+$/);
-  await expect(page.getByTestId("practice-session-panel")).toContainText("Review");
+  await expect(page).toHaveURL(/\/subjects\/higher-maths\/calculus\/differentiation\/basic-differentiation$/);
+  const reviewRow = page.getByTestId("skill-learning-journey").locator('[data-journey-kind="review"]');
+  await expect(reviewRow).toContainText("1 due");
+  await expect(reviewRow.getByRole("link", { name: "Start Review" })).toHaveCount(0);
+  await expect(page.getByTestId("skill-primary-action")).toHaveAttribute("href", "/practice?review=1&path=basic-differentiation");
   expect(seriousBrowserErrors).toEqual([]);
 });
 

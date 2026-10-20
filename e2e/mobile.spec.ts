@@ -4,7 +4,7 @@ import { expectNoHorizontalOverflow, openQuestion, openWorkedSolution, submitAns
 
 test("mobile student can navigate, answer, use support and continue without overflow", async ({ page }) => {
   await page.goto("/dashboard");
-  await expect(page.getByRole("link", { name: "Open Higher Maths", exact: true })).toHaveAttribute("href", "/subjects/higher-maths");
+  await expect(page.getByRole("link", { name: "View Higher Maths", exact: true })).toHaveAttribute("href", "/subjects/higher-maths");
   await expect(page.getByRole("link", { name: "Continue Basic differentiation" })).toHaveAttribute("href", `/question/${QUESTION_IDS[0]}`);
   await expect(page.getByRole("heading", { name: "Course progress" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Recent activity" })).toHaveCount(0);
@@ -73,7 +73,7 @@ test("mobile final completion is readable, stacked and free of horizontal overfl
 
 test("mobile taxonomy and question context remain readable without page overflow", async ({ page }) => {
   await page.goto("/subjects/higher-maths/question-bank");
-  await expect(page.getByRole("heading", { name: "42 matching questions" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "72 matching questions" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Open Differentiate a power" })).toBeVisible();
   await expect(page.getByText("Future Higher Maths coverage", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: /^Filters/ }).click();
@@ -85,7 +85,7 @@ test("mobile taxonomy and question context remain readable without page overflow
   await expect(filters).toBeVisible();
   await expect(filters.getByRole("button", { name: "Skills: All skills" })).toBeFocused();
   await expect(filters.getByLabel("Sort")).toBeVisible();
-  await expect(filters.getByRole("button", { name: "Select all 42 filtered questions" })).toBeVisible();
+  await expect(filters.getByRole("button", { name: "Select all 72 filtered questions" })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
 
   await page.goto("/question/hm-calc-diff-basic-a-001");

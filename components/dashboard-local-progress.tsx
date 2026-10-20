@@ -59,8 +59,7 @@ export function DashboardLocalProgressSection() {
         <DashboardJourney path={heroPath} currentStageId={heroStageId} practiceCompatible={heroUsesPractice} />
         {heroUsesPractice ? (
           <p className="mt-3 text-xs text-secondary" data-testid="dashboard-current-stage">
-            Practice <span aria-hidden="true" className="mx-2 text-rule">·</span>
-            {heroPracticePosition ? `Question ${heroPracticePosition.position} of ${heroPracticePosition.total}` : `${heroPath?.completedQuestions ?? 0} of ${heroPath?.totalQuestions ?? 0} complete`}
+            {`Practice · ${heroPracticePosition ? `Question ${heroPracticePosition.position} of ${heroPracticePosition.total}` : `${heroPath?.completedQuestions ?? 0} of ${heroPath?.totalQuestions ?? 0} complete`}`}
           </p>
         ) : heroStage ? (
           <p className="sr-only" data-testid="dashboard-current-stage">{heroStage.name} · {heroStage.completedQuestions}/{heroStage.totalQuestions} complete</p>
@@ -78,12 +77,7 @@ export function DashboardLocalProgressSection() {
       </section>
 
       <section aria-labelledby="dashboard-review-title" data-testid="dashboard-review-summary" className="border-b border-rule py-7 max-sm:py-6">
-        <div className="flex min-w-0 items-center justify-between gap-4">
-          <h2 id="dashboard-review-title" className="font-mono text-[11px] font-semibold uppercase tracking-[0.12em]">Review</h2>
-          <Link href="/practice?review=1" className="orthic-secondary-link inline-flex min-h-11 items-center gap-1 text-xs font-medium text-secondary">
-            View schedule <span aria-hidden="true" className="orthic-arrow">→</span>
-          </Link>
-        </div>
+        <h2 id="dashboard-review-title" className="font-mono text-[11px] font-semibold uppercase tracking-[0.12em]">Review</h2>
         <div className="mt-1 flex min-w-0 items-center justify-between gap-5 border-t border-rule pt-4 max-sm:items-start">
           <div className="flex min-w-0 items-center gap-3">
             <span aria-hidden="true" className={`size-2 shrink-0 rounded-full ${reviewSkillName ? "bg-amber-600" : "bg-rule-strong"}`} />

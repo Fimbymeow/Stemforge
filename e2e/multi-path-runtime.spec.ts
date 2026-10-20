@@ -5,8 +5,10 @@ test("question context and navigation derive from canonical ownership", async ({
   const breadcrumb = page.getByRole("navigation", { name: "Breadcrumb" });
   await expect(breadcrumb.getByRole("link", { name: "Higher Maths" })).toHaveAttribute("href", "/subjects/higher-maths");
   await breadcrumb.getByText("More context").click();
-  await expect(breadcrumb.getByRole("link", { name: "Calculus" })).toHaveAttribute("href", "/subjects/higher-maths/calculus");
-  await expect(breadcrumb.getByRole("link", { name: "Differentiating functions" })).toHaveAttribute("href", "/subjects/higher-maths/calculus/differentiation");
+  await expect(breadcrumb.getByText("Calculus", { exact: true })).toBeVisible();
+  await expect(breadcrumb.getByText("Differentiating functions", { exact: true })).toBeVisible();
+  await expect(breadcrumb.locator('a[href="/subjects/higher-maths/calculus"]')).toHaveCount(0);
+  await expect(breadcrumb.locator('a[href="/subjects/higher-maths/calculus/differentiation"]')).toHaveCount(0);
   await expect(breadcrumb).toContainText("Basic differentiation");
   await expect(page.getByTestId("stage-question-position")).toHaveText("Practice \u00b7 Question 1 of 8");
   await expect(page.getByRole("link", { name: "Previous" })).toHaveAttribute("href", "/subjects/higher-maths/calculus/differentiation/basic-differentiation");
@@ -18,7 +20,7 @@ test("question context and navigation derive from canonical ownership", async ({
 
 test("question bank leads with available questions and keeps future taxonomy secondary", async ({ page }) => {
   await page.goto("/subjects/higher-maths/question-bank");
-  await expect(page.getByRole("heading", { name: "42 matching questions" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "72 matching questions" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Open Differentiate a power" })).toBeVisible();
   const search = page.getByRole("textbox", { name: "Search questions" });
   await search.fill("evaluate");

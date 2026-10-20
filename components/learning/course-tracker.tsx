@@ -6,19 +6,10 @@ import { ArrowRight } from "lucide-react";
 import type { Subject } from "@/data/types";
 import { deriveHigherMathsCourseTracker } from "@/lib/course-tracker";
 import type { CourseTrackerRequirement, CourseTrackerSkill } from "@/lib/course-tracker";
-import { getCourseTrackerStatusTone, groupCourseTrackerSkills } from "@/lib/course-tracker-presentation";
-import type { CourseTrackerStatusTone } from "@/lib/course-tracker-presentation";
+import { COURSE_TRACKER_STATUS_DOT, getCourseTrackerStatusTone, getSkillStatusLabel, groupCourseTrackerSkills } from "@/lib/course-tracker-presentation";
 import { getEmptyProgressEvidence, getProgressEvidence } from "@/lib/local-progress";
 import type { ProgressEvidence } from "@/lib/progress/types";
 import { useLearnerConfidence } from "@/components/confidence/use-learner-confidence";
-
-const TRACKER_STATUS_DOT: Record<CourseTrackerStatusTone, string> = {
-  "review-due": "bg-warning",
-  confident: "bg-success",
-  developing: "bg-warning",
-  "needs-work": "bg-danger",
-  neutral: "bg-rule-strong",
-};
 
 export function CourseTracker({ subject }: { subject: Subject }) {
   const [evidence, setEvidence] = useState<ProgressEvidence>(() => getEmptyProgressEvidence());
@@ -119,11 +110,11 @@ function TrackerSkillRow({ skill }: { skill: CourseTrackerSkill }) {
   const statusTone = getCourseTrackerStatusTone(skill);
   return (
     <li className="min-w-0" data-testid={`tracker-skill-${skill.skillPathId}`} data-course-tracker-skill="" data-tracker-row-kind="actionable">
-      <Link href={skill.reviewDue ? `/practice?review=1&path=${encodeURIComponent(skill.skillPathId)}` : skill.action.href} aria-label={skill.reviewDue ? `Review now: ${skill.name}` : `Open ${skill.name} skill overview`} className="orthic-course-row orthic-secondary-link grid min-h-14 min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-3 py-4 transition-colors duration-150 hover:bg-shell focus-visible:bg-shell focus-visible:outline focus-visible:outline-2 focus-visible:outline-navy motion-reduce:transition-none">
-        <span aria-hidden="true" className={`size-2 shrink-0 rounded-full ${TRACKER_STATUS_DOT[statusTone]}`} data-testid={`tracker-status-${skill.skillPathId}`} data-tracker-status={statusTone} />
+      <Link href={skill.action.href} aria-label={`Open ${skill.name} skill overview. ${getSkillStatusLabel(statusTone)}`} className="orthic-course-row orthic-secondary-link grid min-h-14 min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-3 py-4 transition-colors duration-150 hover:bg-shell focus-visible:bg-shell focus-visible:outline focus-visible:outline-2 focus-visible:outline-navy motion-reduce:transition-none">
+        <span aria-hidden="true" className={`size-2 shrink-0 rounded-full ${COURSE_TRACKER_STATUS_DOT[statusTone]}`} data-testid={`tracker-status-${skill.skillPathId}`} data-tracker-status={statusTone} />
         <span className="min-w-0 break-words text-[15px] font-medium leading-snug text-navy">{skill.name}</span>
-        <span className={`inline-flex shrink-0 items-center justify-end gap-2 text-[13px] font-medium ${skill.reviewDue ? "text-warning" : "text-secondary"}`} data-review-state={skill.reviewDue ? "due" : undefined}>
-          {skill.reviewDue ? "Review now" : "Open"}<ArrowRight aria-hidden="true" className="orthic-arrow size-4" />
+        <span className="inline-flex shrink-0 items-center justify-end gap-2 text-[13px] font-medium text-secondary">
+          Open<ArrowRight aria-hidden="true" className="orthic-arrow size-4" />
         </span>
       </Link>
     </li>

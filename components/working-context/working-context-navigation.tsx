@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import { ChevronDown, Compass, X } from "lucide-react";
 import { useWorkingContextModel } from "@/components/working-context/use-working-context-model";
 import { useModalFocusTrap } from "@/lib/use-modal-focus-trap";
-import { formatReviewDueLabel, type WorkingContextModel } from "@/lib/working-context";
+import type { WorkingContextModel } from "@/lib/working-context";
 
 export function WorkingContextNavigation({
   pathId,
@@ -83,7 +83,7 @@ export function WorkingContextNavigation({
         <section
           id={panelId}
           aria-label={`${model.skillName} working context`}
-          className="mt-2 grid gap-3 rounded-lg border border-line bg-white p-3 max-lg:hidden"
+          className="mt-2 grid gap-3 rounded-sm border border-rule bg-paper p-4 max-lg:hidden"
           data-testid="working-context-desktop-panel"
         >
           <WorkingContextActions model={model} />
@@ -118,19 +118,18 @@ function WorkingContextActions({
       </div>
       <Link
         href={model.primaryHref}
-        className="inline-flex min-h-11 items-center justify-center rounded-lg bg-forge px-4 text-sm font-extrabold text-white"
+        className="orthic-secondary-link inline-flex min-h-11 items-center justify-between gap-3 border-y border-rule py-2 text-sm font-semibold text-navy"
       >
-        {model.primaryLabel}
+        <span>{model.primaryLabel}</span><span aria-hidden="true" className="orthic-arrow">→</span>
       </Link>
       <div>
-        <p className="mb-1 px-2 text-[11px] font-extrabold uppercase tracking-wide text-muted">In this skill</p>
-        <nav aria-label="Learning actions" className="grid gap-1">
+        <nav aria-label="Learning actions" className="divide-y divide-rule">
           {model.notesHref ? <WorkingLink href={model.notesHref}>Notes</WorkingLink> : null}
           <WorkingLink href={model.practiceHref}>Practice</WorkingLink>
-          {model.reviewHref ? <WorkingLink href={model.reviewHref}>{formatReviewDueLabel(model.reviewCount)}</WorkingLink> : null}
+          <WorkingLink href={model.reviewActionHref}>Review</WorkingLink>
         </nav>
       </div>
-      <nav aria-label="Context navigation" className="grid gap-1 border-t border-line pt-2">
+      <nav aria-label="Context navigation" className="grid gap-1 border-t border-rule pt-2">
         <ContextLink href={model.overviewHref}>View full overview</ContextLink>
         <ContextLink href={model.higherMathsHref} className="mt-1">Leave to Higher Maths</ContextLink>
       </nav>
@@ -140,7 +139,7 @@ function WorkingContextActions({
 
 function WorkingLink({ href, children, className = "" }: { href: string; children: React.ReactNode; className?: string }) {
   return (
-    <Link href={href} className={`flex min-h-11 items-center justify-between gap-2 rounded-lg bg-paper px-3 text-sm font-bold text-ink hover:bg-forge-soft hover:text-forge ${className}`}>
+    <Link href={href} className={`orthic-secondary-link flex min-h-11 items-center justify-between gap-2 px-1 py-2 text-sm font-semibold text-navy ${className}`}>
       <span>{children}</span>
       <span aria-hidden="true" className="text-muted">→</span>
     </Link>
@@ -238,12 +237,11 @@ function WorkingContextSheet({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="max-h-[min(82dvh,720px)] w-full overflow-y-auto rounded-t-2xl border border-line bg-white px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-4 shadow-2xl"
+        className="max-h-[min(82dvh,720px)] w-full overflow-y-auto rounded-t-2xl border border-rule bg-paper px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-4 shadow-2xl"
         data-testid="working-context-sheet"
       >
         <div className="mb-4 flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-extrabold uppercase tracking-wide text-forge">Working context</p>
             <h2 id={titleId} className="mt-1 text-xl font-extrabold">{model.skillName}</h2>
           </div>
           <button ref={closeRef} type="button" onClick={onClose} aria-label="Close working context" className="grid min-h-11 min-w-11 place-items-center rounded-full border border-line text-muted">

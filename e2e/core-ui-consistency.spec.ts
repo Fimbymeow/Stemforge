@@ -13,11 +13,11 @@ test("Courses presents only usable course access without roadmap placeholders", 
   expect(seriousBrowserErrors).toEqual([]);
 });
 
-test("Dashboard omits empty Activity while keeping the course rail quiet", async ({ page }) => {
+test("Dashboard keeps course access in Continue Learning and renders the quiet Activity state", async ({ page }) => {
   await page.goto("/dashboard");
-  await expect(page.getByTestId("dashboard-courses")).toBeVisible();
-  await expect(page.getByTestId("dashboard-activity-summary")).toHaveCount(0);
-  await expect(page.getByTestId("dashboard-courses-section").getByRole("link", { name: "View all" })).toHaveAttribute("href", "/subjects");
+  await expect(page.getByTestId("dashboard-courses-section")).toHaveCount(0);
+  await expect(page.getByTestId("dashboard-progress-summary").getByRole("link", { name: "View Higher Maths" })).toHaveAttribute("href", "/subjects/higher-maths");
+  await expect(page.getByTestId("dashboard-activity-summary")).toContainText("No activity in the last 14 days");
 });
 
 test("Practice and Review use solid restrained setup surfaces", async ({ page }) => {

@@ -13,30 +13,28 @@ test("Higher Maths hub prioritises the live path and links to the full course st
   await expect(page.getByRole("link", { name: "Start", exact: true })).toHaveAttribute("href", "/subjects/higher-maths/revision-notes?path=basic-differentiation");
   await expect(page.getByText(/1 of 51|1 \/ 51|1 of 50|1 \/ 50/i)).toHaveCount(0);
   await expect(page.getByText(/skills available|coming soon/i)).toHaveCount(0);
+  await expect(page.locator('a[href="/subjects/higher-maths/calculus"]')).toHaveCount(0);
+  await expect(page.getByTestId("roadmap-skill-basic-differentiation").getByRole("link", { name: "Basic differentiation" })).toHaveAttribute(
+    "href",
+    "/subjects/higher-maths/calculus/differentiation/basic-differentiation",
+  );
 
   await trackerLink.click();
   await expect(page).toHaveURL("/subjects/higher-maths/course-tracker");
   for (const area of ["Algebra and Trigonometry", "Vectors", "Calculus", "Lines, Circles and Sequences"]) await expect(page.getByTestId("course-tracker-unit-navigation").getByRole("button", { name: area })).toBeVisible();
 });
 
-test("generic course and spec-area hubs distinguish published and planned coverage", async ({ page }) => {
+test("legacy Higher Maths area and spec-area URLs return to the course with area context", async ({ page }) => {
   await page.goto("/subjects/higher-maths/calculus");
-  await expect(page.getByRole("heading", { level: 1, name: "Calculus" })).toBeVisible();
-  await expect(page.getByText("Partially available", { exact: true })).toBeVisible();
-  await expect(page.getByRole("navigation", { name: "Breadcrumb" })).toContainText("Higher Maths");
-  await expect(page.getByRole("link", { name: /Differentiation/ })).toBeVisible();
-
-  await page.goto("/subjects/higher-maths/algebra-and-trigonometry");
-  await expect(page.getByRole("heading", { level: 1, name: "Algebra and Trigonometry" })).toBeVisible();
-  await expect(page.getByText("Planned coverage", { exact: true }).first()).toBeVisible();
-  await expect(page.getByText("0% Complete")).toHaveCount(0);
+  await expect(page).toHaveURL("/subjects/higher-maths#course-area-calculus");
+  await expect(page.getByRole("heading", { level: 1, name: "Higher Maths" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Calculus", exact: true })).toHaveAttribute("aria-current", "true");
+  await expect(page.getByText("Partially available", { exact: true })).toHaveCount(0);
 
   await page.goto("/subjects/higher-maths/algebra-and-trigonometry/polynomials");
-  await expect(page.getByRole("heading", { level: 1, name: "Polynomials" })).toBeVisible();
-  await expect(page.getByText("No questions or learning resources are here yet.")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Factorising cubics and quartics" })).toBeVisible();
-  await expect(page.getByRole("navigation", { name: "Breadcrumb" })).toContainText("Algebra and Trigonometry");
-  await expect(page.getByRole("link", { name: /Practise/ })).toHaveCount(0);
+  await expect(page).toHaveURL("/subjects/higher-maths#course-area-algebra-and-trigonometry");
+  await expect(page.getByRole("button", { name: "Algebra and Trigonometry", exact: true })).toHaveAttribute("aria-current", "true");
+  await expect(page.getByRole("heading", { level: 1, name: "Polynomials" })).toHaveCount(0);
 });
 
 test("planned paths have no learning workspace while existing deep links remain live", async ({ page }) => {
@@ -49,7 +47,7 @@ test("planned paths have no learning workspace while existing deep links remain 
 
 test("Question Bank keeps active questions usable and groups future coverage broadly", async ({ page }) => {
   await page.goto("/subjects/higher-maths/question-bank");
-  await expect(page.getByRole("heading", { name: "42 matching questions" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "72 matching questions" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Open Differentiate a power" })).toBeVisible();
   await page.getByText("Future Higher Maths coverage", { exact: true }).click();
   await expect(page.getByText("Algebra and Trigonometry", { exact: true })).toBeVisible();

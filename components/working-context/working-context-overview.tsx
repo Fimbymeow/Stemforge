@@ -68,7 +68,6 @@ export function WorkingContextOverview({ pathId }: { pathId: string }) {
           {model.needsAttention ? (
             <p className="mt-3 text-sm font-semibold text-muted" data-testid="skill-attention-reason">{model.attentionDetail}</p>
           ) : null}
-          <p className="mt-3 text-sm text-secondary">{model.practiceCompatible ? (model.isComplete ? "Practice complete" : `Practice · ${model.completed} of ${model.total} complete`) : model.isComplete ? "All learning stages complete" : `Current stage: ${displayStageName(model.stageName)}`}</p>
           </div>
           <div className="min-w-0 rounded-sm border border-rule bg-paper p-4">
           {confidenceEvidence ? (
@@ -130,10 +129,10 @@ function SkillLearningJourney({ model }: { model: NonNullable<ReturnType<typeof 
     return (
       <section aria-labelledby="stages">
         <h2 id="stages" tabIndex={-1} className="text-2xl font-semibold tracking-tight text-navy">Learn this skill</h2>
-        <ol aria-label="Notes, Practice and Review" data-testid="skill-learning-journey" className="mt-5 grid gap-2">
+        <ol aria-label="Notes, Practice and Review" data-testid="skill-learning-journey" className="mt-6 divide-y divide-rule">
           <PracticeJourneyRow title="Notes" copy="Understand the method and worked examples." meta={model.notesHref ? null : "Unavailable"} href={model.notesHref} action="Open Notes" />
-          <PracticeJourneyRow title="Practice" copy="Work through the skill's questions in one continuous sequence." meta={`${model.completed} of ${model.total} questions completed`} href={model.practiceSequenceHref} action={model.isComplete ? "Revisit Practice" : model.completed > 0 ? "Continue Practice" : "Start Practice"} current={!model.isComplete} completed={model.isComplete} emphasized />
-          <PracticeJourneyRow title="Review" copy="Revisit previous learning when it is due." meta={reviewDue ? "Due for review" : null} href={null} action={null} reviewDue={reviewDue} />
+          <PracticeJourneyRow title="Practice" copy="Work through the skill's questions." meta={`${model.completed} of ${model.total} questions completed`} href={model.practiceSequenceHref} action={model.isComplete ? "Revisit Practice" : model.completed > 0 ? "Continue Practice" : "Start Practice"} current={!model.isComplete} completed={model.isComplete} emphasized />
+          <PracticeJourneyRow title="Review" copy="Revisit previous learning when it is due." meta={reviewDue ? "1 due" : "Nothing due"} href={reviewDue ? null : model.reviewActionHref} action={reviewDue ? null : "Open Review"} reviewDue={reviewDue} />
         </ol>
       </section>
     );
@@ -190,9 +189,9 @@ function SkillLearningJourney({ model }: { model: NonNullable<ReturnType<typeof 
 
 function PracticeJourneyRow({ title, copy, meta, href, action, current = false, completed = false, reviewDue = false, emphasized = false }: { title: string; copy: string; meta: string | null; href: string | null; action: string | null; current?: boolean; completed?: boolean; reviewDue?: boolean; emphasized?: boolean }) {
   const state = reviewDue ? "due" : completed ? "complete" : title === "Review" ? "not-due" : current ? "current" : "available";
-  return <li className={`grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-4 rounded-sm px-1 py-4 max-sm:grid-cols-1 ${emphasized ? "bg-surface-dim px-4" : ""}`} aria-current={current ? "step" : undefined} aria-label={`${title}: ${state}`} data-journey-kind={title.toLowerCase()} data-journey-state={state}>
+  return <li className={`grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-1 py-5 max-sm:grid-cols-1 ${emphasized ? "bg-surface-dim/50 px-4" : ""}`} aria-current={current ? "step" : undefined} aria-label={`${title}: ${state}`} data-journey-kind={title.toLowerCase()} data-journey-state={state}>
     <div className="min-w-0"><h3 className="text-base font-semibold text-navy">{title}</h3><p className="mt-1 text-sm leading-relaxed text-secondary">{copy}</p>{meta ? <p className={`mt-2 text-xs ${reviewDue ? "text-warning" : "text-secondary"}`}>{meta}</p> : null}</div>
-    {href && action ? <Link href={href} className={`${current ? "orthic-primary-action bg-navy px-4 text-white" : "orthic-secondary-link text-navy"} inline-flex min-h-11 items-center justify-center gap-2 rounded-sm text-sm font-medium`}>{action}<ArrowRight aria-hidden="true" className="orthic-arrow size-4" /></Link> : null}
+    {href && action ? <Link href={href} className={`orthic-secondary-link inline-flex min-h-11 items-center justify-center gap-2 text-sm ${current ? "font-semibold text-navy" : "font-medium text-navy"}`}>{action}<ArrowRight aria-hidden="true" className="orthic-arrow size-4" /></Link> : null}
   </li>;
 }
 
