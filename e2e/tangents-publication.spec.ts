@@ -14,7 +14,7 @@ test("published Tangents exposes honest Notes, Practice and dependency semantics
   await page.goto(skillRoute);
   await expect(page.getByRole("heading", { name: "Tangents", level: 1 })).toBeVisible();
   await expect(page.getByText("Basic differentiation", { exact: true })).toBeVisible();
-  await expect(page.getByText("Chain rule", { exact: true })).toBeVisible();
+  await expect(page.getByText("Chain rule", { exact: true })).toHaveCount(0);
   await expect(page.getByText(/0 of 30 questions completed/i)).toBeVisible();
   await expect(page.getByText("Nothing due", { exact: true })).toBeVisible();
   await expect(page.getByText(/Foundations|Applications|Past Paper-style Questions/i)).toHaveCount(0);
@@ -29,11 +29,13 @@ test("published Tangents exposes honest Notes, Practice and dependency semantics
 
   await page.goto("/question/hm-calc-tangent-q-001");
   await expect(page.getByTestId("stage-question-position")).toContainText("Question 1 of 30");
-  await expect(page.getByText(/Chain rule/i)).toHaveCount(0);
+  await expect(page.getByTestId("question-required-skills")).toHaveCount(0);
 
   await page.goto("/question/hm-calc-tangent-q-019");
   await expect(page.getByTestId("stage-question-position")).toContainText("Question 19 of 30");
-  await expect(page.getByText(/Chain rule/i)).toBeVisible();
+  const requiredSkills = page.getByTestId("question-required-skills");
+  await expect(requiredSkills).toContainText("You'll need for this question:");
+  await expect(requiredSkills.getByRole("link", { name: "Chain rule" })).toHaveAttribute("href", "/subjects/higher-maths/calculus/differentiation/chain-rule");
 
   await page.goto("/question/hm-calc-tangent-q-028");
   await expect(page.getByTestId("stage-question-position")).toContainText("Question 28 of 30");

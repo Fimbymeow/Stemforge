@@ -86,8 +86,8 @@ test("review-due status remains visible while Open preserves the skill-overview 
   await expect(page).toHaveURL(/\/subjects\/higher-maths\/calculus\/differentiation\/basic-differentiation$/);
   const reviewRow = page.getByTestId("skill-learning-journey").locator('[data-journey-kind="review"]');
   await expect(reviewRow).toContainText("1 due");
-  await expect(reviewRow.getByRole("link", { name: "Start Review" })).toHaveCount(0);
-  await expect(page.getByTestId("skill-primary-action")).toHaveAttribute("href", "/practice?review=1&path=basic-differentiation");
+  await expect(reviewRow.getByRole("link", { name: "Start Review" })).toHaveAttribute("href", "/practice?review=1&path=basic-differentiation");
+  await expect(page.getByTestId("skill-primary-action")).toHaveCount(0);
   expect(seriousBrowserErrors).toEqual([]);
 });
 

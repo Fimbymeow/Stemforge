@@ -66,10 +66,17 @@ test("Practice V2 learning journey uses whitespace and omits redundant availabil
   assert.match(journey, /action=\{reviewDue \? "Start Review" : "Open Review"\}/);
 });
 
+test("Practice V2 skill overview shows only formal prerequisites and leaves conditional dependencies to questions", () => {
+  const source = readFileSync("components/working-context/working-context-overview.tsx", "utf8");
+  assert.match(source, /aria-label="Skill prerequisites"/);
+  assert.match(source, /dependencies\.prerequisites\.length > 0/);
+  assert.doesNotMatch(source, /Some questions also use/);
+  assert.doesNotMatch(source, /dependencies\.conditional\.map/);
+});
+
 test("Design V2 Skill Page separates Review and uses real derived primary actions", () => {
   const source = readFileSync("components/working-context/working-context-overview.tsx", "utf8");
-  assert.match(source, /href=\{model.primaryHref\} data-testid="skill-primary-action"/);
-  assert.match(source, /\{model.primaryLabel\}<ArrowRight/);
+  assert.match(source, /!model\.practiceCompatible \? <Link href=\{model.primaryHref\}/);
   assert.match(source, /md:grid-cols-4/);
   assert.match(source, /model.reviewEligible \? <aside/);
   assert.match(source, /aria-label="Curriculum pathway"/);

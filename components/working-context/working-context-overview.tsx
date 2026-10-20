@@ -80,14 +80,13 @@ export function WorkingContextOverview({ pathId }: { pathId: string }) {
               variant="detailed"
             />
           ) : null}
-          <Link href={model.primaryHref} data-testid="skill-primary-action" className="orthic-primary-action mt-4 inline-flex min-h-11 w-full items-center justify-center gap-3 rounded-sm bg-navy px-4 py-3 text-sm font-semibold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-navy">{model.primaryLabel}<ArrowRight aria-hidden="true" className="orthic-arrow size-4" /></Link>
+          {!model.practiceCompatible ? <Link href={model.primaryHref} data-testid="skill-primary-action" className="orthic-primary-action mt-4 inline-flex min-h-11 w-full items-center justify-center gap-3 rounded-sm bg-navy px-4 py-3 text-sm font-semibold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-navy">{model.primaryLabel}<ArrowRight aria-hidden="true" className="orthic-arrow size-4" /></Link> : null}
           </div>
         </header>
 
-        {dependencies && (dependencies.prerequisites.length > 0 || dependencies.conditional.length > 0) ? (
-          <section aria-label="Skill dependencies" className="grid gap-4 border-y border-rule py-5 md:grid-cols-2">
-            {dependencies.prerequisites.length > 0 ? <div><h2 className="text-sm font-semibold text-navy">Prerequisites</h2><ul className="mt-2 grid gap-1 text-sm text-secondary">{dependencies.prerequisites.map((item) => <li key={item.skillPathId}><Link className="orthic-secondary-link inline-flex min-h-11 items-center" href={item.href}>{item.name}</Link></li>)}</ul></div> : null}
-            {dependencies.conditional.length > 0 ? <div><h2 className="text-sm font-semibold text-navy">Some questions also use</h2><ul className="mt-2 grid gap-1 text-sm text-secondary">{dependencies.conditional.map((item) => <li key={item.skillPathId}><Link className="orthic-secondary-link inline-flex min-h-11 items-center" href={item.href}>{item.name}</Link></li>)}</ul></div> : null}
+        {dependencies && dependencies.prerequisites.length > 0 ? (
+          <section aria-label="Skill prerequisites" className="border-y border-rule py-5">
+            <h2 className="text-sm font-semibold text-navy">Prerequisites</h2><ul className="mt-2 grid gap-1 text-sm text-secondary">{dependencies.prerequisites.map((item) => <li key={item.skillPathId}><Link className="orthic-secondary-link inline-flex min-h-11 items-center" href={item.href}>{item.name}</Link></li>)}</ul>
           </section>
         ) : null}
 
@@ -126,13 +125,21 @@ function SkillLearningJourney({ model }: { model: NonNullable<ReturnType<typeof 
   const reviewDue = model.reviewEligible && Boolean(model.reviewHref);
 
   if (model.practiceCompatible) {
+    const primaryIsPractice = !model.isComplete && model.primaryHref !== model.notesHref;
+    const practiceHref = primaryIsPractice ? model.primaryHref : model.practiceSequenceHref;
+    const practiceAction = model.isComplete
+      ? "Revisit Practice"
+      : primaryIsPractice
+        ? model.primaryLabel
+        : "Start Practice";
+
     return (
       <section aria-labelledby="stages">
         <h2 id="stages" tabIndex={-1} className="text-2xl font-semibold tracking-tight text-navy">Learn this skill</h2>
         <ol aria-label="Notes, Practice and Review" data-testid="skill-learning-journey" className="mt-6 divide-y divide-rule">
           <PracticeJourneyRow title="Notes" copy="Understand the method and worked examples." meta={model.notesHref ? null : "Unavailable"} href={model.notesHref} action="Open Notes" />
-          <PracticeJourneyRow title="Practice" copy="Work through the skill's questions." meta={`${model.completed} of ${model.total} questions completed`} href={model.practiceSequenceHref} action={model.isComplete ? "Revisit Practice" : model.completed > 0 ? "Continue Practice" : "Start Practice"} current={!model.isComplete} completed={model.isComplete} emphasized />
-          <PracticeJourneyRow title="Review" copy="Revisit previous learning when it is due." meta={reviewDue ? "1 due" : "Nothing due"} href={reviewDue ? null : model.reviewActionHref} action={reviewDue ? null : "Open Review"} reviewDue={reviewDue} />
+          <PracticeJourneyRow title="Practice" copy="Work through the skill's questions." meta={`${model.completed} of ${model.total} questions completed`} href={practiceHref} action={practiceAction} current={!model.isComplete} completed={model.isComplete} emphasized />
+          <PracticeJourneyRow title="Review" copy={reviewDue ? "Revisit previous learning when it is due." : "Revisit previous learning."} meta={reviewDue ? "1 due" : "Nothing due"} href={model.reviewActionHref} action={reviewDue ? "Start Review" : "Open Review"} reviewDue={reviewDue} />
         </ol>
       </section>
     );

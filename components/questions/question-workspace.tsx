@@ -117,11 +117,11 @@ function QuestionWorkspaceCore({
   const practiceCompatible = !isPreview && isPracticeCompatibleSkill(skillPath);
   const practicePosition = practiceCompatible ? contentResolver.getPracticeQuestionPosition(question.id) : undefined;
   const practiceDependencies = useMemo(() => practiceCompatible && skillPath ? derivePracticeDependencies(skillPath) : null, [practiceCompatible, skillPath]);
-  const conditionalDependencyNames = useMemo(() => {
-    const conditionalIds = new Set(practiceDependencies?.conditional.map((item) => item.skillPathId) ?? []);
+  const questionConditionalDependencies = useMemo(() => {
+    const conditionalById = new Map(practiceDependencies?.conditional.map((item) => [item.skillPathId, item]) ?? []);
     return (question.curriculum?.requiredSkillIds ?? [])
-      .filter((skillId) => conditionalIds.has(skillId))
-      .map((skillId) => practiceDependencies?.conditional.find((item) => item.skillPathId === skillId)?.name ?? skillId);
+      .map((skillId) => conditionalById.get(skillId))
+      .filter((item): item is NonNullable<typeof item> => Boolean(item));
   }, [practiceDependencies, question.curriculum?.requiredSkillIds]);
   const stagePosition = deriveStageQuestionPosition(context);
   const position = {
@@ -483,7 +483,7 @@ function QuestionWorkspaceCore({
                 <p className="mt-1 font-extrabold" data-testid="stage-question-position">
                   {practiceCompatible ? `Practice · Question ${currentQuestion} of ${totalQuestions}` : isPreview && stagePosition ? stagePosition.label.replace("Past Paper-style Questions", "Exam practice") : stagePosition?.label ?? `${question.stage} · Question ${currentQuestion}`}
                 </p>
-                {practiceCompatible && conditionalDependencyNames.length ? <p className="mt-2 text-xs text-secondary">Also uses: {conditionalDependencyNames.join(", ")}</p> : null}
+                {practiceCompatible && questionConditionalDependencies.length ? <p className="mt-2 text-xs leading-relaxed text-secondary" data-testid="question-required-skills">You&apos;ll need for this question: {questionConditionalDependencies.map((dependency, index) => <span key={dependency.skillPathId}>{index > 0 ? ", " : null}<Link href={dependency.href} className="orthic-secondary-link font-medium text-navy">{dependency.name}</Link></span>)}</p> : null}
                 {isPreview && stage?.name === "Past Paper-style Questions" ? <p className="mt-2 text-xs leading-relaxed text-secondary">Orthic-authored practice, not copied from official past papers.</p> : null}
               </div>
               <details className="disclosure-motion text-sm text-muted">

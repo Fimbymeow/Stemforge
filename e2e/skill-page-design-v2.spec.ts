@@ -43,7 +43,7 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 1024, height: 900
     await expect(developing).toHaveAttribute("aria-pressed", "true");
     await page.reload();
     await expect(confidence.getByRole("button", { name: "Developing", exact: true })).toHaveAttribute("aria-pressed", "true");
-    await expect(header.getByTestId("skill-primary-action")).toHaveAttribute("href", "/subjects/higher-maths/revision-notes?path=basic-differentiation");
+    await expect(header.getByTestId("skill-primary-action")).toHaveCount(0);
     const journey = page.getByTestId("skill-learning-journey");
     await expect(journey.getByRole("listitem")).toHaveCount(3);
     await expect(journey.locator('[data-journey-kind="notes"]')).not.toContainText(/Available|Complete/);
@@ -128,11 +128,11 @@ test("Practice progress, separate due Review and shared reduced motion", async (
   const journey = page.getByTestId("skill-learning-journey");
   await expect(journey.locator('[aria-current="step"]')).toContainText("Practice");
   await expect(journey.locator('[data-journey-kind="practice"]')).toContainText("3 of 8 questions completed");
-  await expect(page.getByTestId("skill-primary-action")).toHaveAttribute("href", `/question/${QUESTION_IDS[3]}`);
+  await expect(journey.locator('[data-journey-kind="practice"]').getByRole("link", { name: "Continue Practice" })).toHaveAttribute("href", `/question/${QUESTION_IDS[3]}`);
   await expect(journey.locator('[data-journey-state="complete"]')).toHaveCount(0);
-  await expect(page.getByTestId("skill-primary-action")).toHaveCSS("transition-duration", "0.15s");
+  await expect(journey.locator('[data-journey-kind="practice"]').getByRole("link", { name: "Continue Practice" })).toHaveCSS("transition-duration", "0.12s");
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await expect(page.getByTestId("skill-primary-action")).toHaveCSS("transition-duration", "0s");
+  await expect(journey.locator('[data-journey-kind="practice"]').getByRole("link", { name: "Continue Practice" })).toHaveCSS("transition-duration", "0s");
   await expect(page.getByRole("button", { name: "Developing", exact: true })).toHaveCSS("transition-duration", "0s");
   await seedStoredProgress(page, v3Payload(QUESTION_IDS.map((id, index) => currentAttempt(id, index + 1))));
   await page.goto(route);
@@ -140,8 +140,8 @@ test("Practice progress, separate due Review and shared reduced motion", async (
   await expect(journey.locator('[data-journey-kind="practice"]')).toHaveAttribute("data-journey-state", "complete");
   const review = journey.locator('[data-journey-kind="review"]');
   await expect(review).toContainText("1 due");
-  await expect(review.getByRole("link", { name: "Start Review" })).toHaveCount(0);
+  await expect(review.getByRole("link", { name: "Start Review" })).toHaveAttribute("href", "/practice?review=1&path=basic-differentiation");
   await expect(review).not.toHaveAttribute("aria-current", "step");
-  await expect(page.getByTestId("skill-primary-action")).toHaveAttribute("href", "/practice?review=1&path=basic-differentiation");
+  await expect(page.getByTestId("skill-primary-action")).toHaveCount(0);
   await expect(page.getByTestId("completed-path-card")).toHaveCSS("animation-name", "none");
 });
