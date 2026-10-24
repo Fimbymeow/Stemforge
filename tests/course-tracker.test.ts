@@ -119,14 +119,16 @@ test("untouched actionable skills retain no suggestion and curriculum references
   assert.equal(reference.confidence, null);
 });
 
-test("compact status tones project existing Review and confidence state without changing it", () => {
+test("compact status tones derive only from canonical learning status", () => {
   const model = deriveHigherMathsCourseTracker(higherMaths, empty(), new Date("2026-08-07T12:00:00Z"));
   const basic = findSkill(model, "basic-differentiation"); assert.ok(basic);
   assert.equal(getCourseTrackerStatusTone(basic), "neutral");
-  assert.equal(getCourseTrackerStatusTone({ ...basic, confidence: { ...basic.confidence!, learnerLevel: "confident" } }), "confident");
-  assert.equal(getCourseTrackerStatusTone({ ...basic, confidence: { ...basic.confidence!, learnerLevel: "developing" } }), "developing");
-  assert.equal(getCourseTrackerStatusTone({ ...basic, confidence: { ...basic.confidence!, learnerLevel: "needs_work" } }), "needs-work");
-  assert.equal(getCourseTrackerStatusTone({ ...basic, reviewDue: true, confidence: { ...basic.confidence!, learnerLevel: "confident" } }), "review-due");
+  assert.equal(getCourseTrackerStatusTone({ ...basic, confidence: { ...basic.confidence!, learnerLevel: "confident" } }), "neutral");
+  assert.equal(getCourseTrackerStatusTone({ ...basic, reviewDue: true }), "neutral");
+  assert.equal(getCourseTrackerStatusTone({ ...basic, masteryStatus: "in_progress" }), "learning");
+  assert.equal(getCourseTrackerStatusTone({ ...basic, masteryStatus: "completed" }), "learning");
+  assert.equal(getCourseTrackerStatusTone({ ...basic, masteryStatus: "secure" }), "secure");
+  assert.equal(getCourseTrackerStatusTone({ ...basic, masteryStatus: "mastered" }), "secure");
 });
 
 test("a deterministic mature 49-skill model stays compact with 25 actionable rows", () => {
@@ -153,7 +155,7 @@ test("Course Tracker source guards the calmer product boundary", () => {
   assert.match(component, /data-tracker-status/);
   assert.match(component, /data-course-tracker-reference-group/);
   assert.doesNotMatch(component, /Review now/);
-  assert.match(component, /aria-label=\{`Open \$\{skill\.name\} skill overview\. \$\{getSkillStatusLabel\(statusTone\)\}`\}/);
+  assert.match(component, /aria-label=\{`Open \$\{skill\.name\} skill overview\. \$\{getSkillStatusLabel\(skill\.masteryStatus\)\}`\}/);
   assert.match(component, /Reasoning across the course/);
   assert.match(component, /Confirmed current by Qualifications Scotland/);
 });

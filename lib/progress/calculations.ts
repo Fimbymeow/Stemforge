@@ -15,6 +15,7 @@ import type {
 import { effectiveAttemptOutcome, isGradedAttempt, isGradedCorrectAttempt, isGradedIncorrectAttempt } from "@/lib/progress/attempt-outcomes";
 import type { ReviewEvent } from "@/lib/review/types";
 import type { FlashcardReviewEvent } from "@/lib/flashcards/types";
+import { isPracticeOnlySkill } from "@/lib/practice-capability";
 
 export const MASTERY_CONTRIBUTIONS: Readonly<Record<QuestionOutcome, number>> = {
   not_attempted: 0,
@@ -372,7 +373,10 @@ export function calculateSkillPathProgress(
   const masteryScore = calculatePathWeightedMastery(stages, stageProgress);
   const historicalMasteryScore = calculatePathWeightedMasteryByField(stages, stageProgress, "historicalMasteryScore");
   const independentPerformancePercentage = percent(states.filter((state) => state.correctWithoutSolution).length, states.length);
-  const allStagesCompleted = stages.length > 0 && stages.every((stage) => stageProgress[stage.id]?.completionPercentage === 100);
+  const practiceOnly = isPracticeOnlySkill(skillPath);
+  const structurallyCompleted = practiceOnly
+    ? states.length > 0 && completed.length === states.length
+    : stages.length > 0 && stages.every((stage) => stageProgress[stage.id]?.completionPercentage === 100);
   const pastPaperStage = stages.find((stage) => stage.name === "Past Paper-style Questions");
   const pastPaperMastery = pastPaperStage ? stageProgress[pastPaperStage.id]?.masteryScore ?? 0 : null;
 
@@ -393,7 +397,7 @@ export function calculateSkillPathProgress(
     accuracyPercentage: latestGraded.length ? percent(latestCorrect.length, latestGraded.length) : null,
     masteryScore,
     independentPerformancePercentage,
-    status: derivePathStatus({ attemptedCount: attempted.length, allStagesCompleted, masteryScore, independentPerformancePercentage, pastPaperMastery }),
+    status: derivePathStatus({ attemptedCount: attempted.length, structurallyCompleted, masteryScore, independentPerformancePercentage, pastPaperMastery }),
     stageProgress,
     currentVersionCompletedQuestionIds: states.filter((state) => state.currentVersionCompleted).map((state) => state.questionId),
     historicalCompletedQuestionIds: states.filter((state) => state.historicalCompleted).map((state) => state.questionId),
@@ -405,14 +409,18 @@ export function calculateSkillPathProgress(
     historicalMasteryScore,
     currentVersionStatus: derivePathStatus({
       attemptedCount: states.filter((state) => state.currentVersionAttempted).length,
-      allStagesCompleted: stages.length > 0 && stages.every((stage) => stageProgress[stage.id]?.currentVersionCompletionPercentage === 100),
+      structurallyCompleted: practiceOnly
+        ? states.length > 0 && states.every((state) => state.currentVersionCompleted)
+        : stages.length > 0 && stages.every((stage) => stageProgress[stage.id]?.currentVersionCompletionPercentage === 100),
       masteryScore,
       independentPerformancePercentage,
       pastPaperMastery,
     }),
     historicalStatus: derivePathStatus({
       attemptedCount: states.filter((state) => state.historicalAttempted).length,
-      allStagesCompleted: stages.length > 0 && stages.every((stage) => stageProgress[stage.id]?.historicalCompletionPercentage === 100),
+      structurallyCompleted: practiceOnly
+        ? states.length > 0 && states.every((state) => state.historicalCompleted)
+        : stages.length > 0 && stages.every((stage) => stageProgress[stage.id]?.historicalCompletionPercentage === 100),
       masteryScore: historicalMasteryScore,
       independentPerformancePercentage: percent(
         states.filter((state) => state.historicalMasteryContribution >= MASTERY_CONTRIBUTIONS.correct_with_hint).length,
@@ -493,9 +501,9 @@ function deriveStageStatus(input: { attemptedCount: number; completedCount: numb
   return "completed";
 }
 
-function derivePathStatus(input: { attemptedCount: number; allStagesCompleted: boolean; masteryScore: number; independentPerformancePercentage: number; pastPaperMastery: number | null }): ProgressStatus {
-  if (!input.attemptedCount && !input.allStagesCompleted) return "not_started";
-  if (!input.allStagesCompleted) return "in_progress";
+function derivePathStatus(input: { attemptedCount: number; structurallyCompleted: boolean; masteryScore: number; independentPerformancePercentage: number; pastPaperMastery: number | null }): ProgressStatus {
+  if (!input.attemptedCount && !input.structurallyCompleted) return "not_started";
+  if (!input.structurallyCompleted) return "in_progress";
   if (
     input.masteryScore >= 90 &&
     input.independentPerformancePercentage >= 70 &&

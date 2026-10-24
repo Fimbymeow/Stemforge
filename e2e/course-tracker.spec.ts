@@ -66,14 +66,15 @@ test("official requirements live collapsed, keyboard accessible and exact on Ski
   await expect(disclosure).toContainText(point.officialStatement!);
 });
 
-test("review-due status remains visible while Open preserves the skill-overview decision point", async ({ page, seriousBrowserErrors }) => {
+test("Review due stays separate from the evidence dot while Open preserves the skill-overview decision point", async ({ page, seriousBrowserErrors }) => {
   const attempts = higherMathsDifferentiationQuestions.map((question, index) => attempt({ questionId: question.id, stageId: question.stageId, versionEvidence: { kind: "known", questionVersion: question.questionVersion }, attemptedAt: "2026-06-01T10:00:00.000Z", sequence: index + 1, eventId: `tracker-complete-${index}` }));
   await seedStoredProgress(page, payload(attempts));
   await page.goto(route);
   const basic = page.getByTestId("tracker-skill-basic-differentiation");
   await expect(basic.getByText(/Mastered|Learned|Foundations|Applications|Past Paper-style Questions/)).toHaveCount(0);
   await expect(basic.locator("[data-mastery-status]")).toHaveCount(0);
-  await expect(basic.getByTestId("tracker-status-basic-differentiation")).toHaveAttribute("data-tracker-status", "review-due");
+  await expect(basic.getByTestId("tracker-status-basic-differentiation")).toHaveAttribute("data-tracker-status", "secure");
+  await expect(basic.getByTestId("tracker-status-basic-differentiation")).toHaveCSS("background-color", "rgb(47, 122, 77)");
   const action = basic.getByRole("link", { name: "Open Basic differentiation skill overview" });
   await expect(action).toHaveAttribute("href", "/subjects/higher-maths/calculus/differentiation/basic-differentiation");
   await expect(basic.getByRole("link")).toHaveCount(1);
@@ -98,7 +99,7 @@ test("recent completion hides non-due Review states", async ({ page }) => {
   await page.goto(route);
   const basic = page.getByTestId("tracker-skill-basic-differentiation");
   await expect(basic.locator("[data-review-state]")).toHaveCount(0);
-  await expect(basic.getByTestId("tracker-status-basic-differentiation")).toHaveAttribute("data-tracker-status", "neutral");
+  await expect(basic.getByTestId("tracker-status-basic-differentiation")).toHaveAttribute("data-tracker-status", "secure");
   await expect(basic.getByText(/Review|Available|Recommended/, { exact: true })).toHaveCount(0);
   await expect(basic.getByRole("link", { name: "Open Basic differentiation skill overview" })).toBeVisible();
 });
@@ -116,29 +117,26 @@ test("detailed progress remains off the compact Tracker row", async ({ page }) =
   expect(await basic.evaluate((element) => getComputedStyle(element).backgroundColor)).toBe("rgba(0, 0, 0, 0)");
 });
 
-test("saved confidence remains stored but tracker exposes only its compact semantic indicator", async ({ page }) => {
+test("saved confidence remains stored without changing the evidence status indicator", async ({ page }) => {
   await seedStoredProgress(page, payload([attempt()]));
   await seedConfidence(page, "confident");
   await page.goto(route);
   const basic = page.getByTestId("tracker-skill-basic-differentiation");
   await expect(basic.getByText(/Confident|Developing|Needs work|Unrated/, { exact: true })).toHaveCount(0);
-  await expect(basic.getByTestId("tracker-status-basic-differentiation")).toHaveAttribute("data-tracker-status", "confident");
-  await expect(basic.getByTestId("tracker-status-basic-differentiation")).toHaveCSS("background-color", "rgb(47, 122, 77)");
+  await expect(basic.getByTestId("tracker-status-basic-differentiation")).toHaveAttribute("data-tracker-status", "learning");
+  await expect(basic.getByTestId("tracker-status-basic-differentiation")).toHaveCSS("background-color", "rgb(15, 23, 42)");
   await expect(basic.getByText(/Orthic suggests|Set confidence|Your confidence and recent evidence differ/, { exact: true })).toHaveCount(0);
   await expect(basic.locator("button, details[class*='confidence']")).toHaveCount(0);
 });
 
-test("saved confidence uses the existing restrained semantic colour mapping", async ({ page }) => {
-  for (const [level, tone, colour] of [
-    ["confident", "confident", "rgb(47, 122, 77)"],
-    ["developing", "developing", "rgb(138, 97, 24)"],
-    ["needs_work", "needs-work", "rgb(178, 58, 52)"],
-  ] as const) {
+test("every saved confidence level leaves the evidence colour unchanged", async ({ page }) => {
+  await seedStoredProgress(page, payload([attempt()]));
+  for (const level of ["confident", "developing", "needs_work"] as const) {
     await seedConfidence(page, level);
     await page.goto(route);
     const status = page.getByTestId("tracker-status-basic-differentiation");
-    await expect(status).toHaveAttribute("data-tracker-status", tone);
-    await expect(status).toHaveCSS("background-color", colour);
+    await expect(status).toHaveAttribute("data-tracker-status", "learning");
+    await expect(status).toHaveCSS("background-color", "rgb(15, 23, 42)");
     await expect(page.getByTestId("tracker-skill-basic-differentiation").getByText(/Confident|Developing|Needs work/, { exact: true })).toHaveCount(0);
   }
 });

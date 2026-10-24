@@ -7,10 +7,9 @@ import type { CourseArea, SkillPath, Subject } from "@/data/types";
 import { getEmptyProgressEvidence, getProgressEvidence } from "@/lib/local-progress";
 import type { ProgressEvidence } from "@/lib/progress/types";
 import { getActionableSpecificationGroups } from "@/lib/course-hub-presentation";
-import { deriveSkillReviewState } from "@/lib/review/derivation";
 import { getCourseAreaAnchorId, getCourseAreaSlugFromHash } from "@/lib/course-area-navigation";
-import { useLearnerConfidence } from "@/components/confidence/use-learner-confidence";
 import { COURSE_TRACKER_STATUS_DOT, getSkillStatusLabel, getSkillStatusTone } from "@/lib/course-tracker-presentation";
+import { getSkillPathProgress } from "@/lib/local-progress";
 
 function initialStrandIndex(strands: CourseArea[]) {
   const available = strands.findIndex((strand) => strand.specAreas.some((area) => area.skillPaths?.some((path) => path.isAvailable)));
@@ -21,11 +20,6 @@ export function SubjectRoadmapNavigator({ subject }: { subject: Subject }) {
   const strands = subject.courseAreas;
   const [strandIndex, setStrandIndex] = useState(() => initialStrandIndex(strands));
   const [evidence, setEvidence] = useState<ProgressEvidence>(() => getEmptyProgressEvidence());
-  const confidence = useLearnerConfidence();
-  const learnerConfidenceMap = useMemo(
-    () => new Map(Object.values(confidence.ratings).map((rating) => [rating.skillPathId, rating.level])),
-    [confidence.ratings],
-  );
   const strand = strands[strandIndex];
 
   useEffect(() => {
@@ -74,7 +68,7 @@ export function SubjectRoadmapNavigator({ subject }: { subject: Subject }) {
           <div className="space-y-7">{groups.map((group) => <section key={group.id} aria-labelledby={`group-${group.id}`} data-testid={`spec-group-${group.id}`}>
             <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-rule pb-3"><h4 id={`group-${group.id}`} className="text-base font-semibold text-navy">{group.title}</h4><span className="font-mono text-[11px] text-secondary">{group.paths.length} available skill{group.paths.length === 1 ? "" : "s"}</span></div>
             <ul className="divide-y divide-rule border-b border-rule" aria-label={`${group.title} learning activities`}>
-              {group.paths.map((path) => <RoadmapSkillRow key={path.slug} path={path} evidence={evidence} learnerConfidence={learnerConfidenceMap.get(path.slug)} />)}
+              {group.paths.map((path) => <RoadmapSkillRow key={path.slug} path={path} evidence={evidence} />)}
             </ul>
           </section>)}</div>
         ) : (
@@ -85,15 +79,12 @@ export function SubjectRoadmapNavigator({ subject }: { subject: Subject }) {
   );
 }
 
-function RoadmapSkillRow({ path, evidence, learnerConfidence }: { path: SkillPath; evidence: ProgressEvidence; learnerConfidence?: "needs_work" | "developing" | "confident" }) {
-  const review = deriveSkillReviewState(path, evidence);
-  const statusTone = getSkillStatusTone({
-    reviewDue: review.eligible && review.due && review.reason !== "history_unavailable",
-    learnerConfidence,
-  });
+function RoadmapSkillRow({ path, evidence }: { path: SkillPath; evidence: ProgressEvidence }) {
+  const progress = getSkillPathProgress(path, evidence);
+  const statusTone = getSkillStatusTone({ progressStatus: progress.status });
   return (
     <li data-testid={`roadmap-skill-${path.slug}`}>
-      <Link href={path.href} aria-label={`Open ${path.name} skill overview. ${getSkillStatusLabel(statusTone)}`} className="orthic-course-row orthic-secondary-link grid min-h-14 min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-rule px-3 py-4 text-navy focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-navy">
+      <Link href={path.href} aria-label={`Open ${path.name} skill overview. ${getSkillStatusLabel(progress.status)}`} className="orthic-course-row orthic-secondary-link grid min-h-14 min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-rule px-3 py-4 text-navy focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-navy">
         <span aria-hidden="true" className={`size-2 shrink-0 rounded-full ${COURSE_TRACKER_STATUS_DOT[statusTone]}`} data-testid={`roadmap-status-${path.slug}`} data-roadmap-status={statusTone} />
         <span className="min-w-0 break-words font-semibold">{path.name}</span>
         <span className="inline-flex shrink-0 items-center gap-2 text-sm font-medium text-secondary">Open<ArrowRight aria-hidden="true" className="orthic-arrow size-4 text-navy" /></span>

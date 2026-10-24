@@ -3,10 +3,12 @@ import test from "node:test";
 import { canonicalQuestionModuleRegistry } from "../data/canonical-content";
 import { higherPhysics } from "../data/higher-physics";
 import { contentResolver } from "../lib/content-resolver";
-import { derivePracticeDependencies, isPracticeCompatibleSkill } from "../lib/practice-model";
+import { derivePracticeDependencies, isPracticeCompatibleSkill, isPracticeOnlySkill } from "../lib/practice-model";
 import { calculateSkillPathProgress, selectNextQuestionId } from "../lib/progress/calculations";
 import type { ProgressEvidence } from "../lib/progress/types";
-import { deriveSkillReviewState } from "../lib/review/derivation";
+import type { ReviewEvent } from "../lib/review/types";
+import { deriveSkillFirstCompletedAt, deriveSkillReviewState } from "../lib/review/derivation";
+import { deriveCourseDashboardSummary } from "../lib/dashboard-derivations";
 import { compatibilityAttempt } from "./fixtures/practice-compatibility";
 
 const emptyEvidence = (): ProgressEvidence => ({
@@ -64,19 +66,75 @@ test("skill dependencies distinguish universal prerequisites from question-level
   });
 });
 
-test("Practice-only Tangents increments count progress without inventing legacy mastery or Review eligibility", () => {
+test("Practice-only Tangents derives structural completion and Review eligibility without inventing legacy mastery", () => {
   const tangents = contentResolver.getPathContext("tangents-and-normals")!.skillPath;
-  const questionId = tangents.practiceQuestionIds![0];
-  const progress = calculateSkillPathProgress(tangents, {
+  const ids = tangents.practiceQuestionIds!;
+  const versions = contentResolver.getQuestionVersions();
+  const at = (count: number): ProgressEvidence => ({
     ...emptyEvidence(),
-    attempts: [compatibilityAttempt(questionId, 1, true)],
-  }, contentResolver.getQuestionVersions());
-  assert.deepEqual({ completed: progress.completedQuestionIds.length, total: progress.totalQuestions, percentage: progress.completionPercentage }, {
-    completed: 1, total: 30, percentage: 3,
+    attempts: ids.slice(0, count).map((questionId, index) => compatibilityAttempt(questionId, index + 1, true)),
   });
-  assert.equal(progress.masteryScore, 0);
-  assert.deepEqual(progress.stageProgress, {});
-  assert.equal(deriveSkillReviewState(tangents, emptyEvidence()).eligible, false);
+
+  assert.equal(isPracticeOnlySkill(tangents), true);
+  const fresh = calculateSkillPathProgress(tangents, at(0), versions);
+  const partial = calculateSkillPathProgress(tangents, at(29), versions);
+  const complete = calculateSkillPathProgress(tangents, at(30), versions);
+  assert.deepEqual({ completed: fresh.completedQuestionIds.length, status: fresh.status }, { completed: 0, status: "not_started" });
+  assert.deepEqual({ completed: partial.completedQuestionIds.length, status: partial.status }, { completed: 29, status: "in_progress" });
+  assert.deepEqual({ completed: complete.completedQuestionIds.length, total: complete.totalQuestions, percentage: complete.completionPercentage, status: complete.status }, {
+    completed: 30, total: 30, percentage: 100, status: "completed",
+  });
+  assert.equal(complete.masteryScore, 0);
+  assert.deepEqual(complete.stageProgress, {});
+  assert.equal(tangents.learningStages?.length ?? 0, 0);
+
+  assert.equal(deriveSkillReviewState(tangents, at(0)).eligible, false);
+  assert.equal(deriveSkillReviewState(tangents, at(29)).eligible, false);
+  const baseline = deriveSkillFirstCompletedAt(tangents, at(30), versions);
+  assert.equal(baseline.status, "eligible");
+  assert.equal(baseline.firstCompletedAt, at(30).attempts.at(-1)?.attemptedAt);
+  const review = deriveSkillReviewState(tangents, at(30), new Date("2026-07-03T10:31:00.000Z"));
+  assert.equal(review.eligible, true);
+  assert.equal(review.due, true);
+  assert.equal(review.reason, "due_after_time");
+
+  const completedReview: ReviewEvent = {
+    eventId: "tangents-review-success",
+    source: { sourceType: "practice_session", sourceId: "review_session_tangents" },
+    target: { targetType: "skill", targetId: tangents.slug },
+    targetVersion: { versionType: "skill_path", version: tangents.pathVersion },
+    outcome: "independent_success",
+    occurredAt: "2026-07-03T11:00:00.000Z",
+    sequence: 31,
+    priorEventId: null,
+    schedulerVersion: 1,
+    stageAfter: 1,
+    evidenceRefs: [],
+    questionIds: ids.slice(0, 5),
+  };
+  const spaced = deriveSkillReviewState(
+    tangents,
+    { ...at(30), reviewEvents: [completedReview] },
+    new Date("2026-07-04T11:00:00.000Z"),
+  );
+  assert.equal(spaced.eligible, true);
+  assert.equal(spaced.due, false);
+  assert.equal(spaced.dueAt, "2026-07-10T11:00:00.000Z");
+  const ordinaryError = compatibilityAttempt(ids[0], 32, false, {
+    eventId: "tangents-ordinary-error",
+    attemptedAt: "2026-07-04T10:00:00.000Z",
+  });
+  const recovery = deriveSkillReviewState(
+    tangents,
+    { ...at(30), attempts: [...at(30).attempts, ordinaryError], reviewEvents: [completedReview] },
+    new Date("2026-07-04T11:00:00.000Z"),
+  );
+  assert.equal(recovery.due, true);
+  assert.equal(recovery.reason, "recently_incorrect");
+  assert.deepEqual(recovery.ordinaryRecoveryQuestionIds, [ids[0]]);
+
+  const course = deriveCourseDashboardSummary([tangents], at(30), versions);
+  assert.equal(course.completedPathCount, 1);
 });
 
 test("published Tangents uses its 30-question Practice projection while Higher Physics retains its legacy stage model", () => {

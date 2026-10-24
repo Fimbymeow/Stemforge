@@ -91,6 +91,8 @@ test("detailed confidence changes presentation only, retaining shared choice and
   assert.match(source, /onClick=\{\(\) => choose\(option\)\}/);
   assert.match(source, /shouldPromptConfidenceDisagreement/);
   assert.match(source, /confidence.clearRating\(skillPathId\)/);
+  assert.doesNotMatch(source, /Your rating:/);
+  assert.doesNotMatch(source, /Orthic suggests/);
 });
 
 test("confidence confirmation uses one shared persistence write and restrained shared colours", () => {

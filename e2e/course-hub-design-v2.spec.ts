@@ -58,7 +58,7 @@ test("real in-progress and review-due states preserve existing destinations", as
   await expect(page.getByTestId("review-entry-card")).toHaveAccessibleName("Review, 1 skill due");
   await expect(page.getByTestId("course-hub-progress")).toHaveAccessibleName("Course progress: 1 of 49 skills learned, 2%");
   const row = page.getByTestId("roadmap-skill-basic-differentiation");
-  await expect(row.getByTestId("roadmap-status-basic-differentiation")).toHaveAttribute("data-roadmap-status", "review-due");
+  await expect(row.getByTestId("roadmap-status-basic-differentiation")).toHaveAttribute("data-roadmap-status", "secure");
   await expect(row.getByRole("link", { name: "Open Basic differentiation skill overview" })).toHaveAttribute("href", "/subjects/higher-maths/calculus/differentiation/basic-differentiation");
   await expect(row.getByText("Review due", { exact: true })).toHaveCount(0);
   await expect(row.getByLabel(/Latest answer accuracy/)).toHaveCount(0);

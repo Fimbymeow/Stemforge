@@ -1,18 +1,16 @@
 import type { CourseTrackerSkill, CourseTrackerSkillConfidence } from "@/lib/course-tracker";
-import type { ConfidenceLevel } from "@/lib/confidence/types";
 import { CONFIDENCE_LEVEL_RANK } from "@/lib/confidence/types";
+import type { ProgressStatus } from "@/lib/progress/types";
 
 export type CourseTrackerSkillGroup =
   | { kind: "actionable"; skill: CourseTrackerSkill }
   | { kind: "curriculum_references"; skills: CourseTrackerSkill[] };
 
-export type CourseTrackerStatusTone = "review-due" | "confident" | "developing" | "needs-work" | "neutral";
+export type CourseTrackerStatusTone = "learning" | "secure" | "neutral";
 
 export const COURSE_TRACKER_STATUS_DOT: Record<CourseTrackerStatusTone, string> = {
-  "review-due": "bg-warning",
-  confident: "bg-success",
-  developing: "bg-warning",
-  "needs-work": "bg-danger",
+  learning: "bg-navy",
+  secure: "bg-success",
   neutral: "bg-rule-strong",
 };
 
@@ -40,35 +38,35 @@ export function hasCourseTrackerConfidenceDisagreement(confidence: CourseTracker
 }
 
 /**
- * Compact tracker rows project existing Review and learner-confidence state into colour only.
- * Review remains the actionable priority; no new learner state is inferred here.
+ * Compact course rows project canonical learning/evidence status only. Learner
+ * confidence and spaced-Review timing remain independent concepts.
  */
 export function getCourseTrackerStatusTone(skill: CourseTrackerSkill): CourseTrackerStatusTone {
   return getSkillStatusTone({
-    reviewDue: skill.reviewDue,
-    learnerConfidence: skill.confidence?.learnerLevel,
+    progressStatus: skill.masteryStatus,
   });
 }
 
 export function getSkillStatusTone(input: {
-  reviewDue: boolean;
-  learnerConfidence?: ConfidenceLevel | null;
+  progressStatus: ProgressStatus | null;
 }): CourseTrackerStatusTone {
-  if (input.reviewDue) return "review-due";
-  switch (input.learnerConfidence) {
-    case "confident": return "confident";
-    case "developing": return "developing";
-    case "needs_work": return "needs-work";
+  switch (input.progressStatus) {
+    case "in_progress":
+    case "completed":
+      return "learning";
+    case "secure":
+    case "mastered":
+      return "secure";
     default: return "neutral";
   }
 }
 
-export function getSkillStatusLabel(tone: CourseTrackerStatusTone) {
-  switch (tone) {
-    case "review-due": return "Review due";
-    case "confident": return "Confidence: confident";
-    case "developing": return "Confidence: developing";
-    case "needs-work": return "Confidence: needs work";
-    default: return "No learning status recorded";
+export function getSkillStatusLabel(status: ProgressStatus | null) {
+  switch (status) {
+    case "in_progress": return "Learning in progress";
+    case "completed": return "Practice completed";
+    case "secure": return "Learning secure";
+    case "mastered": return "Learning mastered";
+    default: return "Not started";
   }
 }

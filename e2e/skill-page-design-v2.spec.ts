@@ -4,19 +4,19 @@ import { currentAttempt, QUESTION_IDS, seedStoredProgress, v3Payload } from "./f
 
 const route = "/subjects/higher-maths/calculus/differentiation/basic-differentiation";
 
-test("guest confidence uses one shared store across Skill Page, Tracker and tabs", async ({ page, context }) => {
+test("guest confidence persists while the Tracker dot remains evidence-derived", async ({ page, context }) => {
   await page.goto(route);
   const tracker = await context.newPage();
   await tracker.goto("/subjects/higher-maths/course-tracker");
   const saved = tracker.getByTestId("tracker-status-basic-differentiation");
-  for (const [label, tone, color] of [["Developing", "developing", "rgb(138, 97, 24)"], ["Needs work", "needs-work", "rgb(178, 58, 52)"], ["Confident", "confident", "rgb(47, 122, 77)"]] as const) {
+  for (const [label, color] of [["Developing", "rgb(138, 97, 24)"], ["Needs work", "rgb(178, 58, 52)"], ["Confident", "rgb(47, 122, 77)"]] as const) {
     const choice = page.getByRole("button", { name: label, exact: true });
     await choice.click();
     await expect(choice).toHaveAttribute("aria-pressed", "true");
     await expect(choice).toHaveCSS("color", color);
     await expect(page.getByRole("dialog")).toHaveCount(0);
-    await expect(saved).toHaveAttribute("data-tracker-status", tone);
-    await expect(saved).toHaveCSS("background-color", color);
+    await expect(saved).toHaveAttribute("data-tracker-status", "neutral");
+    await expect(saved).toHaveCSS("background-color", "rgb(212, 211, 205)");
     await page.reload();
     await expect(choice).toHaveAttribute("aria-pressed", "true");
   }
@@ -24,7 +24,7 @@ test("guest confidence uses one shared store across Skill Page, Tracker and tabs
   await expect(page.getByRole("group", { name: "Your confidence" }).getByRole("button", { pressed: true })).toHaveCount(0);
   await expect(saved).toHaveAttribute("data-tracker-status", "neutral");
   await page.reload();
-  await expect(page.getByText("Not rated", { exact: true })).toBeVisible();
+  await expect(page.getByText("Your rating:", { exact: false })).toHaveCount(0);
   await tracker.close();
 });
 
@@ -108,15 +108,15 @@ test("confidence disagreement preserves learner choice and exact evidence semant
   await page.reload();
   await expect(page.getByRole("button", { name: "Confident", exact: true })).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByRole("dialog")).toHaveCount(0);
-  await expect(page.getByText("Orthic suggests needs work.", { exact: true })).toBeVisible();
+  await expect(page.getByText("Orthic suggests needs work.", { exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: "Confident", exact: true }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await page.goto("/subjects/higher-maths/course-tracker");
   const savedConfidence = page.getByTestId("tracker-status-basic-differentiation");
-  await expect(savedConfidence).toHaveAttribute("data-tracker-status", "confident");
-  await expect(savedConfidence).toHaveCSS("background-color", "rgb(47, 122, 77)");
+  await expect(savedConfidence).toHaveAttribute("data-tracker-status", "learning");
+  await expect(savedConfidence).toHaveCSS("background-color", "rgb(15, 23, 42)");
   await page.reload();
-  await expect(savedConfidence).toHaveAttribute("data-tracker-status", "confident");
+  await expect(savedConfidence).toHaveAttribute("data-tracker-status", "learning");
   await page.goto(route);
   await page.getByRole("button", { name: "Clear rating", exact: true }).click();
   await expect(page.getByRole("group", { name: "Your confidence" }).getByRole("button", { pressed: true })).toHaveCount(0);

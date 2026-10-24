@@ -8,6 +8,7 @@ import { compareCoordinate, compareEvidence } from "@/lib/review/outcomes";
 import { resolveCanonicalReviewTip } from "@/lib/review/replay";
 import { reviewDueAt } from "@/lib/review/scheduler";
 import { REVIEW_SESSION_ID_PREFIX, type ReviewDueState, type ReviewTargetRef } from "@/lib/review/types";
+import { getStructuralQuestionIds } from "@/lib/practice-capability";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const MAX_BASELINE_EVENTS = 10_000;
@@ -60,7 +61,7 @@ export function deriveSkillFirstCompletedAt(
 ): BaselineResult {
   const cached = cache?.baselineBySkill.get(skillPath.slug);
   if (cached) return cached;
-  const activeIds = new Set((skillPath.learningStages ?? []).flatMap((stage) => stage.questionIds));
+  const activeIds = new Set(getStructuralQuestionIds(skillPath));
   const events: Array<
     | { kind: "attempt"; value: QuestionAttempt; occurredAt: string; sequence: number; eventId: string }
     | { kind: "support"; value: QuestionSupportEvent; occurredAt: string; sequence: number; eventId: string }
@@ -146,7 +147,7 @@ export function deriveOrdinaryRecovery(
   questionVersions: Readonly<Record<string, number>> = contentResolver.getQuestionVersions(),
 ) {
   const reviewSourceIds = new Set(evidence.reviewEvents.map((event) => event.source.sourceId));
-  const activeIds = new Set((skillPath.learningStages ?? []).flatMap((stage) => stage.questionIds));
+  const activeIds = new Set(getStructuralQuestionIds(skillPath));
   const open: string[] = [];
   for (const questionId of activeIds) {
     const currentVersion = questionVersions[questionId] ?? 1;

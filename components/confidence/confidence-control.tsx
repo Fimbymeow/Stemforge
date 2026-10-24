@@ -5,7 +5,7 @@ import { Check } from "lucide-react";
 import { ConfidenceDisagreementDialog } from "@/components/confidence/confidence-disagreement-dialog";
 import type { UseLearnerConfidenceResult } from "@/components/confidence/use-learner-confidence";
 import { shouldPromptConfidenceDisagreement } from "@/lib/confidence/disagreement";
-import { CONFIDENCE_LEVELS, CONFIDENCE_LEVEL_RANK } from "@/lib/confidence/types";
+import { CONFIDENCE_LEVELS } from "@/lib/confidence/types";
 import type { ConfidenceLevel, ConfidenceSuggestion } from "@/lib/confidence/types";
 import { CONFIDENCE_LABEL, CONFIDENCE_SELECTED } from "@/components/confidence/confidence-presentation";
 
@@ -31,9 +31,8 @@ type ConfidenceControlProps = {
 };
 
 /**
- * Shared learner-confidence control — the same component (same state, same disagreement logic)
- * renders on both Course Tracker rows (`variant="compact"`) and the Skill Page header
- * (`variant="detailed"`), per Part H's "no duplicate logic" instruction.
+ * Shared learner-confidence control. Detailed skill pages and any compact
+ * confidence consumer use the same persistence and disagreement logic.
  *
  * A learner's own rating is always what's displayed (Part I) — Orthic's suggestion never replaces
  * it. It only surfaces to gate a confirmation when the learner picks a level that rates themselves
@@ -66,7 +65,6 @@ export function ConfidenceControl({ skillPathId, skillName, confidence, suggesti
     if (saved) setPendingLevel(null);
   }
 
-  const showSuggestionHint = suggestion !== null && level !== null && CONFIDENCE_LEVEL_RANK[level] > CONFIDENCE_LEVEL_RANK[suggestion.level];
   const summaryLabel = level ? CONFIDENCE_LABEL[level] : variant === "detailed" ? "Not rated" : "Set confidence";
   const summaryTone = level ? CONFIDENCE_TONE[level] : "border-transparent bg-transparent text-muted";
 
@@ -77,7 +75,7 @@ export function ConfidenceControl({ skillPathId, skillName, confidence, suggesti
         <div className="mt-3 grid grid-cols-3 overflow-hidden rounded-sm border border-rule">
           {CONFIDENCE_LEVELS.map((option) => <button key={option} type="button" aria-pressed={option === level} onClick={() => choose(option)} className={`orthic-stage min-h-14 min-w-0 border-r border-rule px-1 py-2 text-[11px] font-medium last:border-r-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-navy sm:px-2 sm:text-xs ${option === level ? CONFIDENCE_SELECTED[option] : "bg-white text-secondary"}`}>{CONFIDENCE_LABEL[option]}</button>)}
         </div>
-        <div className="mt-2 flex min-h-11 flex-wrap items-center justify-between gap-2 text-xs text-secondary"><span>{level ? `Your rating: ${CONFIDENCE_LABEL[level]}` : "Not rated"}</span>{level ? <button type="button" onClick={() => confidence.clearRating(skillPathId)} className="orthic-secondary-link min-h-11 px-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-navy">Clear rating</button> : null}</div>
+        {level ? <div className="mt-2 flex min-h-11 justify-end"><button type="button" onClick={() => confidence.clearRating(skillPathId)} className="orthic-secondary-link min-h-11 px-1 text-xs text-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-navy">Clear rating</button></div> : null}
       </fieldset> : <details className="group/confidence relative">
         <summary
           aria-label={`Your confidence for ${skillName}: ${level ? CONFIDENCE_LABEL[level] : "not rated"}. Click to change.`}
@@ -112,9 +110,6 @@ export function ConfidenceControl({ skillPathId, skillName, confidence, suggesti
           ) : null}
         </div>
       </details>}
-      {showSuggestionHint ? (
-        <p className="mt-1 text-xs text-muted">Orthic suggests {CONFIDENCE_LABEL[suggestion.level].toLowerCase()}.</p>
-      ) : null}
       <ConfidenceDisagreementDialog
         open={pendingLevel !== null}
         skillName={skillName}

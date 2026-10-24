@@ -2,6 +2,7 @@ import { higherMathematicsCalculusPrerequisites } from "@/data/curriculum/higher
 import type { Question, SkillPath } from "@/data/types";
 import { contentResolver } from "@/lib/content-resolver";
 import type { SkillPathProgress } from "@/lib/progress/types";
+export { isPracticeOnlySkill } from "@/lib/practice-capability";
 
 /** Explicit capability boundary for the Notes -> Practice -> Review learner model. */
 export function isPracticeCompatibleSkill(path: SkillPath | null | undefined): boolean {
